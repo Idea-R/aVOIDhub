@@ -1,0 +1,188 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Exo+2:wght@100;200;300;400;500;600;700;800;900&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    cursor: none !important;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-gray-900 text-white font-display;
+    background-image: 
+      radial-gradient(circle at 25% 25%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 75% 75%, rgba(147, 51, 234, 0.15) 0%, transparent 50%),
+      url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="1"%3E%3C/circle%3E%3C/g%3E%3C/g%3E%3C/svg%3E');
+    overflow-x: hidden;
+  }
+}
+
+@layer components {
+  /* Custom Cursor */
+  .custom-cursor {
+    @apply fixed top-0 left-0 w-6 h-6 pointer-events-none transform -translate-x-1/2 -translate-y-1/2;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.8) 0%, rgba(59, 130, 246, 0.3) 70%, transparent 100%);
+    border-radius: 50%;
+    transition: transform 0.1s ease-out;
+    z-index: 99999; /* Highest possible z-index */
+  }
+
+  /* Error Dashboard Button Styles */
+  .btn-secondary-sm {
+    @apply px-3 py-2 bg-white/10 text-white/80 hover:bg-white/20 rounded-lg transition-all duration-200 text-sm cursor-pointer;
+  }
+
+  .custom-cursor.hover {
+    @apply scale-150;
+    background: radial-gradient(circle, rgba(147, 51, 234, 0.8) 0%, rgba(147, 51, 234, 0.3) 70%, transparent 100%);
+  }
+
+  /* Cursor Trail */
+  .cursor-trail {
+    @apply fixed top-0 left-0 w-4 h-4 pointer-events-none;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.6) 0%, rgba(59, 130, 246, 0.2) 70%, transparent 100%);
+    border-radius: 50%;
+    z-index: 99998; /* Just below main cursor */
+    transition: opacity 0.1s ease-out;
+  }
+
+  /* Navigation Styles */
+  .nav-link {
+    @apply relative px-4 py-2 text-white/80 hover:text-white transition-all duration-300;
+  }
+
+  .nav-link::after {
+    @apply absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300;
+    content: '';
+  }
+
+  .nav-link:hover::after {
+    @apply w-full;
+  }
+
+  .nav-link.active {
+    @apply text-white;
+  }
+
+  .nav-link.active::after {
+    @apply w-full;
+  }
+
+  /* Game Card Styles */
+  .game-card {
+    @apply relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-white/10 transition-all duration-500 hover:scale-105 hover:border-blue-500/50 cursor-none;
+  }
+
+  .game-card::before {
+    @apply absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 opacity-0 transition-opacity duration-500;
+    content: '';
+  }
+
+  .game-card:hover::before {
+    @apply opacity-100;
+  }
+
+  /* Button Styles */
+  .btn-primary {
+    @apply px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl cursor-none;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-3 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-xl hover:bg-white/20 transition-all duration-300 transform hover:scale-105 active:scale-95 border border-white/20 cursor-none;
+  }
+
+  .btn-ghost {
+    @apply px-4 py-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 cursor-none;
+  }
+
+  /* Input Styles */
+  .input-field {
+    @apply w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300;
+  }
+
+  /* Leaderboard Styles */
+  .leaderboard-row {
+    @apply flex items-center px-6 py-4 hover:bg-white/5 transition-colors duration-200 border-b border-white/10 cursor-none;
+  }
+
+  .leaderboard-rank {
+    @apply w-12 h-12 flex items-center justify-center rounded-full font-bold text-lg;
+  }
+
+  .leaderboard-rank.rank-1 {
+    @apply bg-gradient-to-br from-yellow-400 to-yellow-600 text-black;
+  }
+
+  .leaderboard-rank.rank-2 {
+    @apply bg-gradient-to-br from-gray-300 to-gray-500 text-black;
+  }
+
+  .leaderboard-rank.rank-3 {
+    @apply bg-gradient-to-br from-orange-400 to-orange-600 text-black;
+  }
+
+  .leaderboard-rank.rank-other {
+    @apply bg-white/10 text-white/80;
+  }
+
+  /* Achievement Styles */
+  .achievement-badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-green-500 to-emerald-500 text-white;
+  }
+
+  .achievement-locked {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-700 text-gray-400;
+  }
+
+  /* Modal Styles */
+  .modal-overlay {
+    @apply fixed inset-0 bg-black/80 backdrop-blur-sm z-40;
+  }
+
+  .modal-content {
+    @apply fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-800 rounded-2xl border border-white/20 p-6 z-50 max-w-md w-full mx-4;
+  }
+
+  /* Stats Card */
+  .stats-card {
+    @apply bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm rounded-xl p-6 border border-white/10;
+  }
+
+  /* Glowing Text */
+  .glow-text {
+    @apply bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent;
+    text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+  }
+
+  /* Loading Spinner */
+  .loading-spinner {
+    @apply animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500;
+  }
+}
+
+@layer utilities {
+  .text-glow {
+    text-shadow: 0 0 10px currentColor;
+  }
+
+  .bg-space {
+    background-image: 
+      radial-gradient(circle at 25% 25%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 75% 75%, rgba(147, 51, 234, 0.15) 0%, transparent 50%),
+      url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="1"%3E%3C/circle%3E%3C/g%3E%3C/g%3E%3C/svg%3E');
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}

@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>aVOIDgame.io - Play Cursor-Based Games</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            overflow-x: hidden;
+        }
+        
+        /* Custom cursor */
+        body {
+            cursor: none;
+        }
+        
+        .custom-cursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #00ffff;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transition: transform 0.1s ease;
+            mix-blend-mode: difference;
+        }
+        
+        .cursor-dot {
+            position: fixed;
+            width: 4px;
+            height: 4px;
+            background: #00ffff;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+        }
+        
+        /* Header */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+        }
+        
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, #00ffff, #0080ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+        
+        .nav-links a {
+            color: #fff;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .nav-links a:hover {
+            color: #00ffff;
+        }
+        
+        .auth-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .btn {
+            padding: 0.5rem 1.5rem;
+            border: none;
+            border-radius: 25px;
+            cursor: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #00ffff, #0080ff);
+            color: #000;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 255, 255, 0.4);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .btn-secondary:hover {
+            border-color: #00ffff;
+            color: #00ffff;
+        }
+        
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at center, rgba(0, 255, 255, 0.1) 0%, transparent 70%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero-content {
+            text-align: center;
+            z-index: 2;
+            max-width: 800px;
+            padding: 2rem;
+        }
+        
+        .hero h1 {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #fff, #00ffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: glow 2s ease-in-out infinite;
+        }
+        
+        @keyframes glow {
+            0%, 100% { filter: drop-shadow(0 0 20px rgba(0, 255, 255, 0.5)); }
+            50% { filter: drop-shadow(0 0 40px rgba(0, 255, 255, 0.8)); }
+        }
+        
+        .hero p {
+            font-size: 1.5rem;
+            color: #aaa;
+            margin-bottom: 2rem;
+        }
+        
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .floating-elements {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        .floating {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #00ffff;
+            border-radius: 50%;
+            opacity: 0.5;
+            animation: float 20s infinite linear;
+        }
+        
+        @keyframes float {
+            from {
+                transform: translateY(100vh) rotate(0deg);
+            }
+            to {
+                transform: translateY(-100vh) rotate(360deg);
+            }
+        }
+        
+        /* Games Grid */
+        .games-section {
+            padding: 4rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+        }
+        
+        .section-title {
+            font-size: 2.5rem;
+            background: linear-gradient(45deg, #fff, #00ffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .filter-tabs {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .tab {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            color: #aaa;
+            cursor: none;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            background: rgba(0, 255, 255, 0.1);
+            border-color: #00ffff;
+            color: #00ffff;
+        }
+        
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        
+        .game-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            overflow: hidden;
+            transition: all 0.3s;
+            cursor: none;
+        }
+        
+        .game-card:hover {
+            transform: translateY(-5px);
+            border-color: #00ffff;
+            box-shadow: 0 10px 30px rgba(0, 255, 255, 0.3);
+        }
+        
+        .game-thumbnail {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(45deg, #111, #222);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .game-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .game-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 0.25rem 0.75rem;
+            background: rgba(0, 255, 255, 0.9);
+            color: #000;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .game-info {
+            padding: 1.5rem;
+        }
+        
+        .game-title {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .game-stats {
+            display: flex;
+            gap: 1rem;
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+        
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .play-button {
+            width: 100%;
+            padding: 0.75rem;
+            background: linear-gradient(45deg, #00ffff, #0080ff);
+            border: none;
+            border-radius: 10px;
+            color: #000;
+            font-weight: bold;
+            cursor: none;
+            transition: all 0.3s;
+        }
+        
+        .play-button:hover {
+            transform: scale(1.05);
+        }
+        
+        /* Leaderboard Section */
+        .leaderboard-section {
+            padding: 4rem 2rem;
+            background: rgba(0, 255, 255, 0.05);
+        }
+        
+        .leaderboard-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .leaderboard-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .leaderboard-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .leaderboard-list {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            transition: background 0.3s;
+        }
+        
+        .leaderboard-item:hover {
+            background: rgba(0, 255, 255, 0.1);
+        }
+        
+        .rank {
+            font-size: 1.5rem;
+            font-weight: bold;
+            width: 50px;
+            color: #00ffff;
+        }
+        
+        .rank.gold { color: #FFD700; }
+        .rank.silver { color: #C0C0C0; }
+        .rank.bronze { color: #CD7F32; }
+        
+        .player-info {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .player-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #00ffff, #0080ff);
+        }
+        
+        .player-name {
+            font-weight: 600;
+        }
+        
+        .player-score {
+            font-size: 1.25rem;
+            color: #00ffff;
+        }
+        
+        /* Profile Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: #111;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .close-button {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: none;
+        }
+        
+        /* Footer */
+        footer {
+            padding: 3rem 2rem;
+            background: #000;
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .social-link {
+            color: #aaa;
+            font-size: 1.5rem;
+            transition: color 0.3s;
+        }
+        
+        .social-link:hover {
+            color: #00ffff;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .games-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Custom Cursor -->
+    <div class="custom-cursor"></div>
+    <div class="cursor-dot"></div>
+    
+    <!-- Header -->
+    <header>
+        <nav>
+            <a href="/" class="logo">aVOIDgame.io</a>
+            <div class="nav-links">
+                <a href="#games">Games</a>
+                <a href="#leaderboard">Leaderboard</a>
+                <a href="#upload">Upload Game</a>
+                <a href="#about">About</a>
+            </div>
+            <div class="auth-buttons">
+                <button class="btn btn-secondary" onclick="showLoginModal()">Sign In</button>
+                <button class="btn btn-primary" onclick="showSignupModal()">Sign Up</button>
+            </div>
+        </nav>
+    </header>
+    
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="floating-elements">
+            <div class="floating" style="left: 10%; animation-delay: 0s;"></div>
+            <div class="floating" style="left: 20%; animation-delay: 2s;"></div>
+            <div class="floating" style="left: 30%; animation-delay: 4s;"></div>
+            <div class="floating" style="left: 40%; animation-delay: 6s;"></div>
+            <div class="floating" style="left: 50%; animation-delay: 8s;"></div>
+            <div class="floating" style="left: 60%; animation-delay: 10s;"></div>
+            <div class="floating" style="left: 70%; animation-delay: 12s;"></div>
+            <div class="floating" style="left: 80%; animation-delay: 14s;"></div>
+            <div class="floating" style="left: 90%; animation-delay: 16s;"></div>
+        </div>
+        <div class="hero-content">
+            <h1>Your Cursor is the Hero</h1>
+            <p>Play innovative cursor-based games. No keyboard needed.</p>
+            <div class="hero-buttons">
+                <a href="#games" class="btn btn-primary">Play Now</a>
+                <a href="#upload" class="btn btn-secondary">Upload Your Game</a>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Games Section -->
+    <section id="games" class="games-section">
+        <div class="section-header">
+            <h2 class="section-title">Featured Games</h2>
+            <div class="filter-tabs">
+                <button class="tab active">All</button>
+                <button class="tab">Popular</button>
+                <button class="tab">New</button>
+                <button class="tab">Top Rated</button>
+            </div>
+        </div>
+        
+        <div class="games-grid">
+            <!-- WreckaVOID -->
+            <div class="game-card">
+                <div class="game-thumbnail">
+                    <img src="/api/placeholder/300/200" alt="WreckaVOID">
+                    <span class="game-badge">Featured</span>
+                </div>
+                <div class="game-info">
+                    <h3 class="game-title">WreckaVOID</h3>
+                    <div class="game-stats">
+                        <span class="stat">👥 15.2k players</span>
+                        <span class="stat">⭐ 4.8</span>
+                    </div>
+                    <button class="play-button">Play Now</button>
+                </div>
+            </div>
+            
+            <!-- TankaVOID -->
+            <div class="game-card">
+                <div class="game-thumbnail">
+                    <img src="/api/placeholder/300/200" alt="TankaVOID">
+                    <span class="game-badge">Popular</span>
+                </div>
+                <div class="game-info">
+                    <h3 class="game-title">TankaVOID</h3>
+                    <div class="game-stats">
+                        <span class="stat">👥 12.8k players</span>
+                        <span class="stat">⭐ 4.7</span>
+                    </div>
+                    <button class="play-button">Play Now</button>
+                </div>
+            </div>
+            
+            <!-- VoidaVOID -->
+            <div class="game-card">
+                <div class="game-thumbnail">
+                    <img src="/api/placeholder/300/200" alt="VoidaVOID">
+                </div>
+                <div class="game-info">
+                    <h3 class="game-title">VoidaVOID</h3>
+                    <div class="game-stats">
+                        <span class="stat">👥 8.5k players</span>
+                        <span class="stat">⭐ 4.6</span>
+                    </div>
+                    <button class="play-button">Play Now</button>
+                </div>
+            </div>
+            
+            <!-- CursorVivors -->
+            <div class="game-card">
+                <div class="game-thumbnail">
+                    <img src="/api/placeholder/300/200" alt="CursorVivors">
+                    <span class="game-badge">New</span>
+                </div>
+                <div class="game-info">
+                    <h3 class="game-title">CursorVivors</h3>
+                    <div class="game-stats">
+                        <span class="stat">👥 2.1k players</span>
+                        <span class="stat">⭐ 4.9</span>
+                    </div>
+                    <button class="play-button">Play Now</button>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Global Leaderboard -->
+    <section id="leaderboard" class="leaderboard-section">
+        <div class="leaderboard-container">
+            <div class="leaderboard-header">
+                <h2 class="section-title">Global Leaderboard</h2>
+                <p>Top players across all aVOID games</p>
+            </div>
+            
+            <div class="leaderboard-tabs">
+                <button class="tab active">All Time</button>
+                <button class="tab">This Month</button>
+                <button class="tab">This Week</button>
+            </div>
+            
+            <div class="leaderboard-list">
+                <div class="leaderboard-item">
+                    <span class="rank gold">#1</span>
+                    <div class="player-info">
+                        <div class="player-avatar"></div>
+                        <span class="player-name">DestroyerKing</span>
+                    </div>
+                    <span class="player-score">2,847,500</span>
+                </div>
+                
+                <div class="leaderboard-item">
+                    <span class="rank silver">#2</span>
+                    <div class="player-info">
+                        <div class="player-avatar"></div>
+                        <span class="player-name">VoidMaster</span>
+                    </div>
+                    <span class="player-score">2,654,200</span>
+                </div>
+                
+                <div class="leaderboard-item">
+                    <span class="rank bronze">#3</span>
+                    <div class="player-info">
+                        <div class="player-avatar"></div>
+                        <span class="player-name">CursorNinja</span>
+                    </div>
+                    <span class="player-score">2,498,100</span>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="social-links">
+                <a href="#" class="social-link">Twitter</a>
+                <a href="#" class="social-link">Discord</a>
+                <a href="#" class="social-link">GitHub</a>
+                <a href="#" class="social-link">YouTube</a>
+            </div>
+            <p>&copy; 2025 aVOIDgame.io. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <!-- Login/Signup Modal -->
+    <div id="authModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Sign In</h2>
+                <button class="close-button" onclick="closeModal()">&times;</button>
+            </div>
+            <!-- Auth form content will go here -->
+        </div>
+    </div>
+    
+    <script>
+        // Custom cursor
+        const cursor = document.querySelector('.custom-cursor');
+        const cursorDot = document.querySelector('.cursor-dot');
+        
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX - 10 + 'px';
+            cursor.style.top = e.clientY - 10 + 'px';
+            cursorDot.style.left = e.clientX - 2 + 'px';
+            cursorDot.style.top = e.clientY - 2 + 'px';
+        });
+        
+        // Add hover effect to interactive elements
+        const interactiveElements = document.querySelectorAll('a, button, .game-card, .tab');
+        interactiveElements.forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                cursor.style.transform = 'scale(1.5)';
+            });
+            el.addEventListener('mouseleave', () => {
+                cursor.style.transform = 'scale(1)';
+            });
+        });
+        
+        // Modal functions
+        function showLoginModal() {
+            document.getElementById('authModal').style.display = 'flex';
+        }
+        
+        function showSignupModal() {
+            document.getElementById('authModal').style.display = 'flex';
+        }
+        
+        function closeModal() {
+            document.getElementById('authModal').style.display = 'none';
+        }
+        
+        // Tab switching
+        const tabs = document.querySelectorAll('.tab');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>

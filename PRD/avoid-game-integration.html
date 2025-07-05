@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My aVOID Game - Integration Example</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: #111;
+            color: #fff;
+            overflow: hidden;
+        }
+        
+        #gameCanvas {
+            display: block;
+            background: #000;
+        }
+        
+        /* aVOID UI Overlay */
+        .avoid-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            pointer-events: none;
+            z-index: 100;
+        }
+        
+        .avoid-overlay > * {
+            pointer-events: auto;
+        }
+        
+        .user-info {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #00ffff, #0080ff);
+        }
+        
+        .username {
+            font-weight: bold;
+            color: #00ffff;
+        }
+        
+        .score-display {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #00ffff;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        
+        .game-over-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+        
+        .game-over-content {
+            background: #111;
+            border: 2px solid #00ffff;
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            max-width: 400px;
+        }
+        
+        .game-over-title {
+            font-size: 2rem;
+            color: #00ffff;
+            margin-bottom: 1rem;
+        }
+        
+        .final-score {
+            font-size: 3rem;
+            margin: 1rem 0;
+        }
+        
+        .rank-info {
+            background: rgba(0, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 10px;
+            margin: 1rem 0;
+        }
+        
+        .rank-number {
+            font-size: 2rem;
+            color: #00ffff;
+        }
+        
+        .leaderboard-mini {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+            text-align: left;
+        }
+        
+        .leaderboard-entry {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .btn {
+            padding: 0.75rem 2rem;
+            margin: 0.5rem;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #00ffff, #0080ff);
+            color: #000;
+        }
+        
+        .btn-primary:hover {
+            transform: scale(1.05);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: #fff;
+            border: 1px solid #00ffff;
+        }
+        
+        .login-prompt {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #111;
+            border: 2px solid #00ffff;
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            display: none;
+            z-index: 300;
+        }
+    </style>
+</head>
+<body>
+    <!-- Game Canvas -->
+    <canvas id="gameCanvas"></canvas>
+    
+    <!-- aVOID UI Overlay -->
+    <div class="avoid-overlay">
+        <div class="user-info" id="userInfo" style="display: none;">
+            <div class="avatar" id="userAvatar"></div>
+            <div>
+                <div class="username" id="username">Guest</div>
+                <div id="globalRank" style="font-size: 0.8rem; color: #aaa;">Rank #-</div>
+            </div>
+        </div>
+        <div class="score-display" id="scoreDisplay">0</div>
+    </div>
+    
+    <!-- Game Over Screen -->
+    <div class="game-over-screen" id="gameOverScreen">
+        <div class="game-over-content">
+            <h2 class="game-over-title">Game Over!</h2>
+            <div class="final-score" id="finalScore">0</div>
+            <div class="rank-info">
+                <div>Your Rank</div>
+                <div class="rank-number" id="rankNumber">#-</div>
+                <div id="percentile">Top --%</div>
+            </div>
+            
+            <div class="leaderboard-mini">
+                <h3>Top Scores</h3>
+                <div id="topScores"></div>
+            </div>
+            
+            <button class="btn btn-primary" onclick="restartGame()">Play Again</button>
+            <button class="btn btn-secondary" onclick="viewFullLeaderboard()">Full Leaderboard</button>
+        </div>
+    </div>
+    
+    <!-- Login Prompt -->
+    <div class="login-prompt" id="loginPrompt">
+        <h2>Sign in to Save Your Score!</h2>
+        <p>Join aVOIDgame.io to compete on global leaderboards</p>
+        <button class="btn btn-primary" onclick="signIn()">Sign In</button>
+        <button class="btn btn-secondary" onclick="playAsGuest()">Play as Guest</button>
+    </div>
+    
+    <script>
+        // Initialize aVOID SDK
+        class AvoidGameIntegration {
+            constructor() {
+                // Initialize Supabase client
+                this.supabase = supabase.createClient(
+                    'YOUR_SUPABASE_URL',
+                    'YOUR_SUPABASE_ANON_KEY'
+                );
+                
+                this.gameKey = 'your-game-key'; // Replace with your game's key
+                this.currentUser = null;
+                this.gameId = null;
+                this.score = 0;
+                this.gameStartTime = null;
+                
+                this.init();
+            }
+            
+            async init() {
+                // Check for existing session
+                const { data: { user } } = await this.supabase.auth.getUser();
+                if (user) {
+                    await this.loadUserProfile(user.id);
+                } else {
+                    this.showLoginPrompt();
+                }
+                
+                // Get game ID
+                const { data: game } = await this.supabase
+                    .from('games')
+                    .select('id')
+                    .eq('game_key', this.gameKey)
+                    .single();
+                
+                if (game) {
+                    this.gameId = game.id;
+                }
+                
+                // Listen for auth changes
+                this.supabase.auth.onAuthStateChange(async (event, session) => {
+                    if (session?.user) {
+                        await this.loadUserProfile(session.user.id);
+                    } else {
+                        this.currentUser = null;
+                        this.updateUI();
+                    }
+                });
+                
+                // Subscribe to real-time leaderboard updates
+                this.subscribeToLeaderboard();
+            }
+            
+            async loadUserProfile(userId) {
+                const { data: profile } = await this.supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', userId)
+                    .single();
+                
+                if (profile) {
+                    this.currentUser = profile;
+                    this.updateUI();
+                    
+                    // Get global rank
+                    const { data: globalRank } = await this.supabase
+                        .from('global_leaderboard')
+                        .select('global_rank')
+                        .eq('user_id', userId)
+                        .single();
+                    
+                    if (globalRank) {
+                        document.getElementById('globalRank').textContent = `Rank #${globalRank.global_rank}`;
+                    }
+                }
+            }
+            
+            updateUI() {
+                const userInfo = document.getElementById('userInfo');
+                const username = document.getElementById('username');
+                
+                if (this.currentUser) {
+                    userInfo.style.display = 'flex';
+                    username.textContent = this.currentUser.display_name || this.currentUser.username;
+                    
+                    // Update avatar if available
+                    if (this.currentUser.avatar_url) {
+                        document.getElementById('userAvatar').style.backgroundImage = `url(${this.currentUser.avatar_url})`;
+                    }
+                    
+                    document.getElementById('loginPrompt').style.display = 'none';
+                } else {
+                    userInfo.style.display = 'none';
+                }
+            }
+            
+            showLoginPrompt() {
+                if (!this.currentUser) {
+                    document.getElementById('loginPrompt').style.display = 'block';
+                }
+            }
+            
+            async signIn() {
+                // Redirect to main site for auth
+                window.location.href = 'https://avoidgame.io/login?redirect=' + encodeURIComponent(window.location.href);
+            }
+            
+            playAsGuest() {
+                document.getElementById('loginPrompt').style.display = 'none';
+                this.startGame();
+            }
+            
+            startGame() {
+                this.score = 0;
+                this.gameStartTime = Date.now();
+                this.updateScore(0);
+                
+                // Start your game logic here
+                this.gameLoop();
+            }
+            
+            updateScore(points) {
+                this.score += points;
+                document.getElementById('scoreDisplay').textContent = this.score.toLocaleString();
+            }
+            
+            async submitScore(metadata = {}) {
+                if (!this.currentUser || !this.gameId) {
+                    console.log('User not authenticated or game not found');
+                    this.showGameOver(null);
+                    return;
+                }
+                
+                // Get default leaderboard
+                const { data: leaderboard } = await this.supabase
+                    .from('leaderboards')
+                    .select('id')
+                    .eq('game_id', this.gameId)
+                    .eq('leaderboard_key', 'high_score')
+                    .single();
+                
+                if (!leaderboard) {
+                    console.error('Leaderboard not found');
+                    return;
+                }
+                
+                // Submit score
+                const { data: scoreData, error } = await this.supabase
+                    .from('scores')
+                    .insert({
+                        user_id: this.currentUser.id,
+                        game_id: this.gameId,
+                        leaderboard_id: leaderboard.id,
+                        score: this.score,
+                        metadata: {
+                            ...metadata,
+                            time_played: Math.floor((Date.now() - this.gameStartTime) / 1000),
+                            version: '1.0.0'
+                        }
+                    })
+                    .select()
+                    .single();
+                
+                if (error) {
+                    console.error('Error submitting score:', error);
+                    this.showGameOver(null);
+                    return;
+                }
+                
+                // Get rank
+                const { count } = await this.supabase
+                    .from('scores')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('leaderboard_id', leaderboard.id)
+                    .gt('score', this.score);
+                
+                const rank = (count || 0) + 1;
+                
+                // Get total players for percentile
+                const { count: totalPlayers } = await this.supabase
+                    .from('scores')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('leaderboard_id', leaderboard.id);
+                
+                const percentile = Math.round(((totalPlayers - rank) / totalPlayers) * 100);
+                
+                this.showGameOver({ rank, percentile });
+                
+                // Record ad impression if user sees ads
+                if (this.currentUser.show_ads) {
+                    await this.recordAdImpression('interstitial');
+                }
+            }
+            
+            async showGameOver(rankData) {
+                document.getElementById('gameOverScreen').style.display = 'flex';
+                document.getElementById('finalScore').textContent = this.score.toLocaleString();
+                
+                if (rankData) {
+                    document.getElementById('rankNumber').textContent = `#${rankData.rank}`;
+                    document.getElementById('percentile').textContent = `Top ${rankData.percentile}%`;
+                } else if (!this.currentUser) {
+                    document.getElementById('rankNumber').textContent = 'Sign in to save!';
+                    document.getElementById('percentile').textContent = '';
+                }
+                
+                // Load top scores
+                await this.loadTopScores();
+            }
+            
+            async loadTopScores() {
+                if (!this.gameId) return;
+                
+                const { data: leaderboard } = await this.supabase
+                    .from('leaderboards')
+                    .select('id')
+                    .eq('game_id', this.gameId)
+                    .eq('leaderboard_key', 'high_score')
+                    .single();
+                
+                if (!leaderboard) return;
+                
+                const { data: scores } = await this.supabase
+                    .from('scores')
+                    .select(`
+                        score,
+                        user:profiles!user_id (
+                            username,
+                            display_name
+                        )
+                    `)
+                    .eq('leaderboard_id', leaderboard.id)
+                    .order('score', { ascending: false })
+                    .limit(5);
+                
+                const topScoresDiv = document.getElementById('topScores');
+                topScoresDiv.innerHTML = '';
+                
+                scores?.forEach((entry, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'leaderboard-entry';
+                    div.innerHTML = `
+                        <span>#${index + 1} ${entry.user.display_name || entry.user.username}</span>
+                        <span>${entry.score.toLocaleString()}</span>
+                    `;
+                    topScoresDiv.appendChild(div);
+                });
+            }
+            
+            subscribeToLeaderboard() {
+                if (!this.gameId) return;
+                
+                this.supabase
+                    .channel(`leaderboard:${this.gameId}`)
+                    .on(
+                        'postgres_changes',
+                        {
+                            event: 'INSERT',
+                            schema: 'public',
+                            table: 'scores',
+                            filter: `game_id=eq.${this.gameId}`,
+                        },
+                        (payload) => {
+                            // Handle real-time leaderboard updates
+                            console.log('New high score!', payload);
+                            // Could show a notification here
+                        }
+                    )
+                    .subscribe();
+            }
+            
+            async recordAdImpression(adType) {
+                if (!this.gameId) return;
+                
+                await this.supabase
+                    .from('ad_impressions')
+                    .insert({
+                        user_id: this.currentUser?.id,
+                        game_id: this.gameId,
+                        ad_type: adType,
+                    });
+            }
+            
+            // Example game loop
+            gameLoop() {
+                const canvas = document.getElementById('gameCanvas');
+                const ctx = canvas.getContext('2d');
+                
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                
+                // Simple example game - collect squares with cursor
+                const targets = [];
+                let lastSpawn = 0;
+                
+                const player = {
+                    x: canvas.width / 2,
+                    y: canvas.height / 2,
+                };
+                
+                // Track mouse position
+                canvas.addEventListener('mousemove', (e) => {
+                    player.x = e.clientX;
+                    player.y = e.clientY;
+                });
+                
+                const animate = () => {
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Spawn targets
+                    if (Date.now() - lastSpawn > 1000) {
+                        targets.push({
+                            x: Math.random() * canvas.width,
+                            y: Math.random() * canvas.height,
+                            size: 20,
+                            color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+                        });
+                        lastSpawn = Date.now();
+                    }
+                    
+                    // Draw player
+                    ctx.fillStyle = '#00ffff';
+                    ctx.shadowBlur = 20;
+                    ctx.shadowColor = '#00ffff';
+                    ctx.beginPath();
+                    ctx.arc(player.x, player.y, 10, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                    
+                    // Update and draw targets
+                    for (let i = targets.length - 1; i >= 0; i--) {
+                        const target = targets[i];
+                        
+                        // Draw target
+                        ctx.fillStyle = target.color;
+                        ctx.fillRect(target.x - target.size/2, target.y - target.size/2, target.size, target.size);
+                        
+                        // Check collision
+                        const dx = player.x - target.x;
+                        const dy = player.y - target.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < target.size) {
+                            // Collected!
+                            targets.splice(i, 1);
+                            this.updateScore(100);
+                        }
+                    }
+                    
+                    // Simple game over condition (example)
+                    if (targets.length > 20) {
+                        this.endGame();
+                        return;
+                    }
+                    
+                    requestAnimationFrame(animate);
+                };
+                
+                animate();
+            }
+            
+            async endGame() {
+                // Submit score with metadata
+                await this.submitScore({
+                    level: 1,
+                    targets_collected: Math.floor(this.score / 100),
+                });
+            }
+        }
+        
+        // Global functions for buttons
+        let gameIntegration;
+        
+        window.onload = () => {
+            gameIntegration = new AvoidGameIntegration();
+        };
+        
+        function restartGame() {
+            document.getElementById('gameOverScreen').style.display = 'none';
+            gameIntegration.startGame();
+        }
+        
+        function viewFullLeaderboard() {
+            window.open(`https://avoidgame.io/games/${gameIntegration.gameKey}/leaderboard`, '_blank');
+        }
+        
+        function signIn() {
+            gameIntegration.signIn();
+        }
+        
+        function playAsGuest() {
+            gameIntegration.playAsGuest();
+        }
+    </script>
+</body>
+</html>

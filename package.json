@@ -1,0 +1,36 @@
+{
+  "name": "@avoid/monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "aVOID Games Monorepo - Unified development environment for all aVOID game projects",
+  "workspaces": [
+    "packages/*",
+    "apps/*",
+    "games/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "dev": "npm run dev --workspaces",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "clean": "npm run clean --workspaces --if-present",
+    "setup": "npm install && npm run build",
+    "workspace:void": "npm run dev --workspace=@avoid/void-main",
+    "workspace:hub": "npm run dev --workspace=@avoid/game-hub",
+    "workspace:tanka": "npm run dev --workspace=@avoid/tanka-void",
+    "workspace:wrecka": "npm run dev --workspace=@avoid/wrecka-void",
+    "workspace:word": "npm run dev --workspace=@avoid/word-avoid"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "eslint": "^8.0.0",
+    "prettier": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "author": "Shane Spencer",
+  "license": "MIT"
+}

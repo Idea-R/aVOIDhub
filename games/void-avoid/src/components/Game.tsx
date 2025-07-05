@@ -1,0 +1,315 @@
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import GameEngine from '../game/core/GameEngine';
+import HUD from './HUD';
+import GameOverScreen from './GameOverScreen';
+import GameIntro from './GameIntro';
+import { ScoreBreakdown, ComboInfo } from '../game/systems/ScoreSystem';
+import BoltBadge from './BoltBadge';
+import MusicControls from './MusicControls';
+import { RenderProfiler } from '../react-performance-monitor';
+import { CursorSystem } from '../game/systems/CursorSystem';
+
+interface GameSettings {
+  volume: number;
+  soundEnabled: boolean;
+  showUI: boolean;
+  showFPS: boolean;
+  showPerformanceStats: boolean;
+  showTrails: boolean;
+  performanceMode: boolean;
+  cursorColor: string;
+}
+
+interface GameProps {
+  autoStart?: boolean;
+}
+
+export default function Game({ autoStart = false }: GameProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const cursorCanvasRef = useRef<HTMLCanvasElement>(null);
+  const engineRef = useRef<GameEngine | null>(null);
+  const cursorSystemRef = useRef<CursorSystem | null>(null);
+  const [showIntro, setShowIntro] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [engineInitialized, setEngineInitialized] = useState(false);
+  const [gameState, setGameState] = useState({ 
+    score: 0, 
+    scoreBreakdown: { survival: 0, meteors: 0, combos: 0, total: 0 } as ScoreBreakdown,
+    comboInfo: { count: 0, isActive: false, lastKnockbackTime: 0, highestCombo: 0 } as ComboInfo,
+    powerUpCharges: 0,
+    maxPowerUpCharges: 3,
+    time: 0, 
+    isGameOver: false, 
+    fps: 0,
+    meteors: 0,
+    particles: 0,
+    poolSizes: { meteors: 0, particles: 0 },
+    autoScaling: { enabled: true, shadowsEnabled: true, maxParticles: 300, adaptiveTrailsActive: true },
+    performance: { averageFrameTime: 0, memoryUsage: 0, lastScalingEvent: 'none' },
+    settings: {
+      volume: 0.5,
+      soundEnabled: true,
+      showUI: true,
+      showFPS: true,
+      showPerformanceStats: true,
+      showTrails: true,
+      performanceMode: false,
+      cursorColor: '#06b6d4'
+    } as GameSettings
+  });
+
+  // SIMPLIFIED HUD State Management - Remove Complex Cache System
+  const hudUpdateCountRef = useRef(0);
+  const CRITICAL_UPDATE_INTERVAL = 16; // 60fps threshold
+
+  const handleStateUpdate = useCallback((state: any) => {
+    hudUpdateCountRef.current++;
+    
+    // Direct state update without throttling overhead
+    setGameState(state);
+    
+    // Only throttle during high-frequency updates (>60fps)
+    if (hudUpdateCountRef.current % 4 === 0) {
+      hudUpdateCountRef.current = 0; // Reset counter
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    
+    console.log('[GAME] Initializing game engine...');
+    const engine = new GameEngine(canvasRef.current);
+    engineRef.current = engine;
+    setEngineInitialized(true);
+    console.log('[GAME] Game engine initialized');
+    
+    // Initialize unified cursor system
+    if (cursorCanvasRef.current) {
+      const cursorSystem = new CursorSystem(cursorCanvasRef.current);
+      cursorSystemRef.current = cursorSystem;
+      
+      // Update cursor color based on initial settings
+      cursorSystem.updateConfig({
+        cursorColor: gameState.settings.cursorColor || '#06b6d4'
+      });
+    }
+    
+    // Direct core access - eliminates wrapper function overhead
+    engine.getCore().onStateUpdate = handleStateUpdate;
+    
+    // Reduce pause state polling frequency
+    const checkPauseState = () => {
+      if (engine) {
+        const isPausedNow = engine.isPausedState();
+        setIsPaused(prevPaused => {
+          // Only update if state actually changed
+          return prevPaused !== isPausedNow ? isPausedNow : prevPaused;
+        });
+      }
+    };
+    
+    // Poll pause state less frequently (500ms instead of 100ms)
+    const pauseInterval = setInterval(checkPauseState, 500);
+    
+    // Listen for engine initialization trigger during countdown
+    const handleEngineInit = () => {
+      if (engineRef.current && !engineRef.current.isStarted()) {
+        console.log('🚀 Pre-initializing game engine during countdown');
+        // Pre-warm the engine without starting the game loop
+        engineRef.current.preWarm();
+      }
+    };
+
+    window.addEventListener('startEngineInit', handleEngineInit);
+
+    // Listen for auto-performance mode activation
+    const handleAutoPerformanceMode = (event: CustomEvent) => {
+      console.log('Auto Performance Mode activated:', event.detail);
+      
+      // Enable performance mode through engine - let engine handle state updates via throttling
+      if (engineRef.current) {
+        engineRef.current.setPerformanceMode(true);
+        // Removed direct setGameState() call - engine will handle via throttled updates
+        // Removed manual gameSettingsChanged dispatch - engine handles internally
+      }
+    };
+
+    // Listen for settings changes and validate engine sync
+    const handleSettingsChange = (event: CustomEvent) => {
+      if (engineRef.current && event.detail.performanceMode !== undefined) {
+        // Ensure engine state matches UI settings
+        const currentEngineState = engineRef.current.getSettings().performanceMode;
+        if (currentEngineState !== event.detail.performanceMode) {
+          console.log(`🔧 [Game] Syncing engine performance mode: ${event.detail.performanceMode}`);
+          engineRef.current.setPerformanceMode(event.detail.performanceMode);
+        }
+      }
+      
+      // Update cursor color when settings change
+      if (cursorSystemRef.current && event.detail.cursorColor) {
+        cursorSystemRef.current.updateConfig({
+          cursorColor: event.detail.cursorColor
+        });
+      }
+    };
+
+    window.addEventListener('autoPerformanceModeActivated', handleAutoPerformanceMode as EventListener);
+    window.addEventListener('gameSettingsChanged', handleSettingsChange as EventListener);
+
+    return () => {
+      console.log('Cleaning up game engine...');
+      window.removeEventListener('startEngineInit', handleEngineInit);
+      window.removeEventListener('autoPerformanceModeActivated', handleAutoPerformanceMode as EventListener);
+      window.removeEventListener('gameSettingsChanged', handleSettingsChange as EventListener);
+      clearInterval(pauseInterval);
+      engine.stop();
+      
+      // Clean up cursor system
+      if (cursorSystemRef.current) {
+        cursorSystemRef.current.destroy();
+      }
+    };
+  }, [handleStateUpdate]);
+
+  useEffect(() => {
+    if (autoStart && engineRef.current && !engineRef.current.isStarted()) {
+      engineRef.current.start();
+    }
+  }, [autoStart]);
+
+  const handlePlayAgain = useCallback(() => {
+    console.log('Play again clicked');
+    if (engineRef.current) {
+      engineRef.current.resetGame();
+      setGameState(prev => ({ ...prev, isGameOver: false, score: 0, time: 0 }));
+      setShowIntro(false); // Skip intro on replay
+    }
+  }, []);
+
+  const handleIntroComplete = useCallback(() => {
+    console.log('Intro completed, hiding intro and starting engine');
+    setShowIntro(false);
+    if (engineRef.current && engineInitialized && !engineRef.current.isStarted()) {
+      console.log('Starting engine after intro');
+      engineRef.current.start();
+    }
+  }, [engineInitialized]);
+
+  const handleCanvasClick = useCallback(() => {
+    if (isPaused && engineRef.current) {
+      engineRef.current.resume();
+    }
+  }, [isPaused]);
+
+  // Memoize audio manager to prevent unnecessary re-creation
+  const audioManager = useMemo(() => {
+    return engineRef.current?.getAudioManager();
+  }, [engineInitialized]);
+
+  // OPTIMIZED HUD Props - Remove Complex Caching
+  const hudProps = useMemo(() => ({
+    score: gameState.score,
+    comboInfo: gameState.comboInfo,
+    powerUpCharges: gameState.powerUpCharges,
+    maxPowerUpCharges: gameState.maxPowerUpCharges,
+    time: gameState.time,
+    fps: gameState.settings.showFPS ? gameState.fps : 0,
+    meteors: gameState.settings.showPerformanceStats ? gameState.meteors : 0,
+    particles: gameState.settings.showPerformanceStats ? gameState.particles : 0,
+    poolSizes: gameState.settings.showPerformanceStats ? gameState.poolSizes : undefined,
+    autoScaling: gameState.autoScaling,
+    performance: gameState.performance,
+    settings: gameState.settings,
+    isGameOver: gameState.isGameOver,
+    showIntro: showIntro,
+    isPaused: isPaused,
+    audioManager: audioManager
+  }), [
+    gameState.score,
+    gameState.powerUpCharges, 
+    gameState.isGameOver,
+    gameState.time,
+    Math.floor(gameState.fps / 5), // Group by 5fps increments
+    gameState.comboInfo,
+    gameState.settings?.showFPS,
+    gameState.settings?.showPerformanceStats,
+    showIntro,
+    isPaused,
+    audioManager
+  ]);
+
+  // Memoize GameOverScreen props to prevent unnecessary re-renders
+  const gameOverProps = useMemo(() => ({
+    score: gameState.score,
+    scoreBreakdown: gameState.scoreBreakdown,
+    comboInfo: gameState.comboInfo,
+    onPlayAgain: handlePlayAgain,
+    audioManager: audioManager
+  }), [
+    gameState.score,
+    gameState.scoreBreakdown,
+    gameState.comboInfo,
+    handlePlayAgain,
+    audioManager
+  ]);
+
+  console.log('Rendering Game component, isGameOver:', gameState.isGameOver);
+
+  return (
+    <div className="relative w-full h-full overflow-hidden bg-black">
+      {/* Game Canvas - Base Layer - Always hide system cursor */}
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 w-full h-full game-canvas"
+        style={{ 
+          touchAction: 'none', 
+          zIndex: 0,
+          cursor: 'none'  // Always hidden - unified cursor renders instead
+        }}
+      />
+
+      {/* Dedicated Cursor Canvas - Highest Layer - Single source of truth */}
+      <canvas
+        ref={cursorCanvasRef}
+        className="absolute inset-0 w-full h-full pointer-events-none"
+        style={{ 
+          zIndex: 400,  // Above all UI elements
+          cursor: 'none'
+        }}
+      />
+      
+      {/* Game UI Layer - Enable pointer events for modals but hide system cursor */}
+      <div className="absolute inset-0 game-ui" style={{ zIndex: 10, cursor: 'none' }}>
+        {/* HUD - No pointer events during normal gameplay */}
+        <div className={gameState.isGameOver || isPaused ? 'pointer-events-auto' : 'pointer-events-none'}>
+          <RenderProfiler id="HUD">
+            <HUD {...hudProps} />
+          </RenderProfiler>
+        </div>
+
+        {/* Game Intro - Interactive */}
+        {showIntro && !gameState.isGameOver && !isPaused && (
+          <div className="pointer-events-auto" style={{ cursor: 'none' }}>
+            <GameIntro onComplete={handleIntroComplete} />
+          </div>
+        )}
+
+        {/* GameOver Screen - Interactive with no system cursor */}
+        {gameState.isGameOver && (
+          <div className="pointer-events-auto" style={{ cursor: 'none' }}>
+            <GameOverScreen {...gameOverProps} />
+          </div>
+        )}
+      </div>
+
+      {/* Bolt.new Badge - Top Layer - Always Interactive, no system cursor */}
+      <div className="absolute inset-0 pointer-events-none game-bolt-badge" style={{ zIndex: 200, cursor: 'none' }}>
+        <div className="pointer-events-auto" style={{ cursor: 'none' }}>
+          <RenderProfiler id="BoltBadge">
+            <BoltBadge />
+          </RenderProfiler>
+        </div>
+      </div>
+    </div>
+  );
+}

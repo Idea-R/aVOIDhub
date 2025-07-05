@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/VOIDaVOID/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>aVOID</title>
+    
+    <!-- Prevent zoom and enable proper mobile interactions -->
+    <style>
+      /* CSS Custom Properties for safe areas */
+      :root {
+        --safe-area-inset-top: env(safe-area-inset-top, 0px);
+        --safe-area-inset-right: env(safe-area-inset-right, 0px);
+        --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+        --safe-area-inset-left: env(safe-area-inset-left, 0px);
+        --vh: 1vh; /* Dynamic viewport height */
+      }
+      
+      /* Prevent all selection and interaction except game-specific */
+      * {
+        -webkit-user-select: none !important;
+        -moz-user-select: none !important;
+        -ms-user-select: none !important;
+        user-select: none !important;
+        -webkit-touch-callout: none !important;
+        -webkit-tap-highlight-color: transparent !important;
+        -webkit-user-drag: none !important;
+        -khtml-user-drag: none !important;
+        -moz-user-drag: none !important;
+        -o-user-drag: none !important;
+        user-drag: none !important;
+      }
+      
+      /* Game-specific styling to prevent zoom artifacts */
+      canvas {
+        image-rendering: -moz-crisp-edges !important;
+        image-rendering: -webkit-crisp-edges !important;
+        image-rendering: pixelated !important;
+        image-rendering: crisp-edges !important;
+        -ms-interpolation-mode: nearest-neighbor !important;
+        touch-action: none !important;
+      }
+      
+      /* Mobile-safe root container */
+      #root {
+        width: 100vw !important;
+        height: calc(var(--vh, 1vh) * 100) !important;
+        height: 100dvh !important; /* Dynamic viewport height for modern browsers */
+        overflow: hidden !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        touch-action: none !important;
+        padding-top: var(--safe-area-inset-top) !important;
+        padding-right: var(--safe-area-inset-right) !important;
+        padding-bottom: var(--safe-area-inset-bottom) !important;
+        padding-left: var(--safe-area-inset-left) !important;
+      }
+      
+      /* Prevent iOS Safari bounce scrolling and pull-to-refresh */
+      html, body {
+        height: 100% !important;
+        height: 100dvh !important;
+        overflow: hidden !important;
+        position: fixed !important;
+        width: 100% !important;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: none !important;
+        overscroll-behavior-y: contain !important;
+        touch-action: none !important;
+      }
+      
+      /* Mobile UI elements need pointer events */
+      .mobile-ui-safe {
+        pointer-events: auto !important;
+        touch-action: manipulation !important;
+      }
+      
+      /* Z-index management for mobile */
+      .game-canvas { z-index: 0 !important; }
+      .game-ui { z-index: 10 !important; }
+      .game-modals { z-index: 100 !important; }
+      .game-bolt-badge { z-index: 200 !important; }
+      
+      /* Global cursor management - only in-game cursor visible */
+      * {
+        cursor: none !important;
+      }
+      
+      /* Ensure interactive elements don't override cursor hiding */
+      button, a, input, select, textarea {
+        cursor: none !important;
+      }
+    </style>
+    
+    <script>
+      // Dynamic viewport height fix for mobile browsers
+      function setVH() {
+        const vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+      }
+      
+      // Set on load and resize
+      window.addEventListener('load', setVH);
+      window.addEventListener('resize', setVH);
+      window.addEventListener('orientationchange', () => {
+        setTimeout(setVH, 100); // Delay for orientation change completion
+      });
+      
+      // Prevent zoom gestures
+      document.addEventListener('gesturestart', function(e) {
+        e.preventDefault();
+      });
+      
+      document.addEventListener('gesturechange', function(e) {
+        e.preventDefault();
+      });
+      
+      document.addEventListener('gestureend', function(e) {
+        e.preventDefault();
+      });
+      
+      // Prevent double-tap zoom but allow touch interactions
+      let lastTouchEnd = 0;
+      document.addEventListener('touchend', function(e) {
+        const now = Date.now();
+        if (now - lastTouchEnd <= 300) {
+          // Only prevent if not on UI elements
+          if (!e.target.closest('.mobile-ui-safe')) {
+            e.preventDefault();
+          }
+        }
+        lastTouchEnd = now;
+      }, false);
+      
+      // Prevent scroll but allow UI interactions
+      document.addEventListener('touchmove', function(e) {
+        if (!e.target.closest('.mobile-ui-safe')) {
+          e.preventDefault();
+        }
+      }, { passive: false });
+      
+      // Initialize on DOM load
+      setVH();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
