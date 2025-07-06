@@ -1,15 +1,15 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { Menu, X, User, LogOut, Trophy, Gamepad2 } from 'lucide-react'
+import { Menu, X, User, LogOut, Trophy, Gamepad2, Crown } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
-import { signOut } from '../lib/supabase'
+import { unifiedAuth } from '../services/UnifiedAuthService'
 import MusicController from './MusicController'
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const location = useLocation()
-  const { user, setShowAuthModal } = useAuth()
+  const { user, setShowAuthModal, setShowProModal } = useAuth()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -21,7 +21,7 @@ const Navbar = () => {
   }, [])
 
   const handleSignOut = async () => {
-    await signOut()
+    await unifiedAuth.signOut()
     setIsMenuOpen(false)
   }
 
@@ -82,12 +82,24 @@ const Navbar = () => {
           <div className="hidden md:flex items-center space-x-4">
             {user ? (
               <div className="flex items-center space-x-4">
+                {!user.is_pro_member && (
+                  <button
+                    onClick={() => setShowProModal(true)}
+                    className="btn-primary bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-gray-900 flex items-center space-x-2"
+                  >
+                    <Crown size={16} />
+                    <span>Go Pro</span>
+                  </button>
+                )}
                 <Link
                   to="/profile"
                   className="flex items-center space-x-2 nav-link"
                 >
                   <User size={18} />
                   <span>{user.username || user.email}</span>
+                  {user.is_pro_member && (
+                    <Crown className="w-4 h-4 text-yellow-500" />
+                  )}
                 </Link>
                 <button
                   onClick={handleSignOut}

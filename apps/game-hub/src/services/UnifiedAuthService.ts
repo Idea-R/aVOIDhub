@@ -4,9 +4,25 @@ export interface UnifiedUser {
   id: string
   email: string | null
   username: string | null
+  display_name: string | null
   avatar_url: string | null
+  country_code: string | null
   created_at: string
   last_sign_in_at: string | null
+  // Pro member features
+  is_pro_member: boolean
+  stripe_customer_id?: string | null
+  subscription_status: string
+  subscription_expires_at?: string | null
+  // Social media links (pro member feature)
+  social_links: {
+    twitter?: string
+    instagram?: string
+    youtube?: string
+    twitch?: string
+    github?: string
+    website?: string
+  }
   // Game-specific preferences
   voidavoid_best_score?: number
   wreckavoid_best_score?: number
@@ -126,8 +142,13 @@ export class UnifiedAuthService {
           id: user.id,
           email: user.email,
           username: user.user_metadata?.username || user.email?.split('@')[0] || 'Player',
+          display_name: user.user_metadata?.full_name || user.user_metadata?.username || user.email?.split('@')[0] || 'Player',
           avatar_url: user.user_metadata?.avatar_url || null,
+          country_code: null,
           created_at: new Date().toISOString(),
+          is_pro_member: false,
+          subscription_status: 'free',
+          social_links: {},
           total_games_played: 0,
           total_time_played: 0,
           achievements: []
@@ -160,9 +181,14 @@ export class UnifiedAuthService {
         id: user.id,
         email: user.email ?? null,
         username: user.user_metadata?.username || user.email?.split('@')[0] || 'Player',
+        display_name: user.user_metadata?.full_name || user.user_metadata?.username || user.email?.split('@')[0] || 'Player',
         avatar_url: user.user_metadata?.avatar_url ?? null,
+        country_code: null,
         created_at: user.created_at,
         last_sign_in_at: user.last_sign_in_at ?? null,
+        is_pro_member: false,
+        subscription_status: 'free',
+        social_links: {},
         total_games_played: 0,
         total_time_played: 0,
         achievements: []
@@ -315,22 +341,13 @@ export class UnifiedAuthService {
     }
   }
 
-  public async saveLeaderboardScore(game: string, score: number) {
+  public async saveLeaderboardScore(game: string, score: number, metadata?: any) {
     if (!this.currentSession?.user) return { success: false, error: 'Not authenticated' }
 
     try {
-      const { error } = await this.supabase
-        .from('leaderboard_scores')
-        .insert([{
-          user_id: this.currentSession.user.id,
-          game_key: game,
-          score,
-          username: this.currentSession.user.username,
-          achieved_at: new Date().toISOString()
-        }])
-
-      if (error) throw error
-      return { success: true }
+      // Import here to avoid circular dependency
+      const { enhancedLeaderboardService } = await import('./EnhancedLeaderboardService')
+      return await enhancedLeaderboardService.submitScore(game, score, metadata)
     } catch (error) {
       console.error('Error saving leaderboard score:', error)
       return { success: false, error: (error as Error).message }
@@ -339,15 +356,21 @@ export class UnifiedAuthService {
 
   public async getLeaderboard(game: string, limit: number = 10) {
     try {
-      const { data, error } = await this.supabase
-        .from('leaderboard_scores')
-        .select('*')
-        .eq('game_key', game)
-        .order('score', { ascending: false })
-        .limit(limit)
-
-      if (error) throw error
-      return { success: true, data: data as LeaderboardEntry[] }
+      // Import here to avoid circular dependency
+      const { enhancedLeaderboardService } = await import('./EnhancedLeaderboardService')
+      const result = await enhancedLeaderboardService.getGameLeaderboard(game, limit, 0)
+      
+      // Convert to legacy format for backward compatibility
+      const legacyData = result.data.map(entry => ({
+        id: `${entry.user_id}-${game}`,
+        user_id: entry.user_id,
+        game_key: game,
+        score: entry.score,
+        username: entry.username,
+        achieved_at: entry.last_played
+      }))
+      
+      return { success: result.success, error: result.error, data: legacyData }
     } catch (error) {
       console.error('Error fetching leaderboard:', error)
       return { success: false, error: (error as Error).message, data: [] }
@@ -382,6 +405,84 @@ export class UnifiedAuthService {
 
     // Notify listeners
     this.authListeners.forEach(listener => listener(this.currentSession))
+  }
+
+  // Pro Member Management
+  public async upgradeToPro(stripeCustomerId: string) {
+    if (!this.currentSession?.user) return { success: false, error: 'Not authenticated' }
+
+    try {
+      const { error } = await this.supabase
+        .from('user_profiles')
+        .update({
+          is_pro_member: true,
+          stripe_customer_id: stripeCustomerId,
+          subscription_status: 'active',
+          subscription_expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() // 1 year
+        })
+        .eq('id', this.currentSession.user.id)
+
+      if (error) throw error
+
+      // Update local session
+      this.currentSession.user.is_pro_member = true
+      this.currentSession.user.stripe_customer_id = stripeCustomerId
+      this.currentSession.user.subscription_status = 'active'
+      this.storeSessionData(this.currentSession)
+      
+      // Notify listeners
+      this.authListeners.forEach(listener => listener(this.currentSession))
+
+      return { success: true }
+    } catch (error) {
+      console.error('Error upgrading to pro:', error)
+      return { success: false, error: (error as Error).message }
+    }
+  }
+
+  public async updateSocialLinks(socialLinks: UnifiedUser['social_links']) {
+    if (!this.currentSession?.user) return { success: false, error: 'Not authenticated' }
+    if (!this.currentSession.user.is_pro_member) return { success: false, error: 'Pro membership required' }
+
+    try {
+      const { error } = await this.supabase
+        .from('user_profiles')
+        .update({ social_links: socialLinks })
+        .eq('id', this.currentSession.user.id)
+
+      if (error) throw error
+
+      // Update local session
+      this.currentSession.user.social_links = socialLinks
+      this.storeSessionData(this.currentSession)
+      
+      // Notify listeners
+      this.authListeners.forEach(listener => listener(this.currentSession))
+
+      return { success: true }
+    } catch (error) {
+      console.error('Error updating social links:', error)
+      return { success: false, error: (error as Error).message }
+    }
+  }
+
+  public async getGlobalLeaderboard(proOnly: boolean = false, limit: number = 50) {
+    try {
+      // Import here to avoid circular dependency
+      const { enhancedLeaderboardService } = await import('./EnhancedLeaderboardService')
+      return await enhancedLeaderboardService.getGlobalLeaderboard(proOnly, limit, 0)
+    } catch (error) {
+      console.error('Error fetching global leaderboard:', error)
+      return { success: false, error: (error as Error).message, data: [] }
+    }
+  }
+
+  public canAccessGlobalLeaderboard(): boolean {
+    return this.currentSession?.user?.is_pro_member || false
+  }
+
+  public canEditSocialLinks(): boolean {
+    return this.currentSession?.user?.is_pro_member || false
   }
 }
 

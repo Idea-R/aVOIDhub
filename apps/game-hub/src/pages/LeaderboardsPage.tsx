@@ -1,82 +1,80 @@
+import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { Trophy, Star, TrendingUp, Users } from 'lucide-react'
-import UnifiedLeaderboard from '../components/UnifiedLeaderboard'
-import { unifiedLeaderboard } from '@avoid/shared'
-import { useEffect, useState } from 'react'
+import { Trophy, TrendingUp, Users, Crown, Medal, Award, Gamepad2, ChevronRight } from "lucide-react"
+import LeaderboardDashboard from "../components/LeaderboardDashboard"
+import { getGames } from '../lib/supabase'
 
 const LeaderboardsPage = () => {
   const { gameKey } = useParams<{ gameKey?: string }>()
-  const [gameConfigs, setGameConfigs] = useState<any[]>([])
+  const [games, setGames] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Initialize leaderboard system with Supabase client
-    // This would typically be done in a higher-level component or context
-    // unifiedLeaderboard.setSupabaseClient(supabase)
-    
-    // Load game configurations
-    const configs = unifiedLeaderboard.getAllGameConfigs()
-    setGameConfigs(configs)
+    const loadGames = async () => {
+      const { data, error } = await getGames()
+      if (data) {
+        setGames(data)
+      }
+      setLoading(false)
+    }
+    loadGames()
   }, [])
 
   return (
-    <div className="min-h-screen p-8">
-      <div className="max-w-6xl mx-auto">
-        
-        {/* Header */}
+    <div className="min-h-screen bg-space pt-8 pb-16">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Page Header */}
         <div className="text-center mb-12">
-          <h1 className="text-6xl font-game font-bold glow-text mb-4">Leaderboards</h1>
-          <p className="text-xl text-white/60">See who's dominating the aVOID universe</p>
-          
-          {/* Stats Row */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-            <div className="stats-card text-center">
-              <div className="flex items-center justify-center mb-2">
-                <Trophy className="text-yellow-400 mr-2" size={24} />
-                <span className="text-2xl font-bold glow-text">{gameConfigs.length}</span>
-              </div>
-              <div className="text-white/60">Active Leaderboards</div>
-            </div>
-            
-            <div className="stats-card text-center">
-              <div className="flex items-center justify-center mb-2">
-                <Users className="text-blue-400 mr-2" size={24} />
-                <span className="text-2xl font-bold glow-text">1.2k+</span>
-              </div>
-              <div className="text-white/60">Competing Players</div>
-            </div>
-            
-            <div className="stats-card text-center">
-              <div className="flex items-center justify-center mb-2">
-                <TrendingUp className="text-green-400 mr-2" size={24} />
-                <span className="text-2xl font-bold glow-text">50k+</span>
-              </div>
-              <div className="text-white/60">Scores Recorded</div>
-            </div>
+          <div className="inline-flex items-center justify-center p-3 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-2xl mb-6">
+            <Trophy className="w-8 h-8 text-yellow-500" />
           </div>
+          <h1 className="text-4xl md:text-5xl font-bold glow-text mb-4">
+            {gameKey ? `${gameKey.toUpperCase()} Leaderboard` : 'Global Leaderboards'}
+          </h1>
+          <p className="text-xl text-white/60 max-w-2xl mx-auto">
+            {gameKey 
+              ? `Top players in ${gameKey.toUpperCase()}` 
+              : 'Champions across all aVOID games'
+            }
+          </p>
         </div>
 
-        {/* Game Selection Info */}
-        {gameKey && (
-          <div className="bg-purple-600/10 border border-purple-500/20 rounded-lg p-4 mb-8 text-center">
-            <div className="text-purple-300 font-medium">
-              Viewing leaderboard for {gameConfigs.find(c => c.gameKey === gameKey)?.displayName || gameKey}
-            </div>
-            <div className="text-white/60 text-sm mt-1">
-              Switch to global view to see cross-game rankings
+        {/* Game Navigation */}
+        {!gameKey && (
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold text-white mb-4">Choose a Game</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {games.map((game) => (
+                <a
+                  key={game.id}
+                  href={`/leaderboards/${game.game_key}`}
+                  className="group bg-white/5 border border-white/10 rounded-lg p-4 hover:bg-white/10 hover:border-purple-500/30 transition-all"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold text-white group-hover:text-purple-300">
+                        {game.name}
+                      </h3>
+                      <p className="text-sm text-white/60 mt-1">
+                        View rankings
+                      </p>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-white/40 group-hover:text-purple-400" />
+                  </div>
+                </a>
+              ))}
             </div>
           </div>
         )}
 
-        {/* Unified Leaderboard Component */}
-        <UnifiedLeaderboard 
+        {/* Enhanced Leaderboard Dashboard */}
+        <LeaderboardDashboard
           gameKey={gameKey}
-          showGlobal={!gameKey}
-          limit={100}
-          className="w-full"
+          showUserStats={true}
         />
       </div>
     </div>
   )
 }
 
-export default LeaderboardsPage 
+export default LeaderboardsPage

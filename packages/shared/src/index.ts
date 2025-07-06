@@ -1,7 +1,7 @@
 // Main exports for shared package
-export * from './config';
-export * from './services';
-export * from './game';
+// export * from './config';
+// export * from './services';
+// export * from './game';
 
 // Audio System
 export * from './audio';

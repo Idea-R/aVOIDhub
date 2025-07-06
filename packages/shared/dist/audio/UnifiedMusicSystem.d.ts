@@ -1,0 +1,84 @@
+export interface Track {
+    id: string;
+    title: string;
+    artist: string;
+    album?: string;
+    url: string;
+    duration?: number;
+    tags?: string[];
+    bpm?: number;
+    mood?: string;
+    energy_level?: number;
+    is_loop?: boolean;
+    game?: string;
+    file_path?: string;
+    file_size?: number;
+}
+export interface GameMusicConfig {
+    gameKey: string;
+    defaultTrack: string;
+    trackIds: string[];
+}
+export declare class UnifiedMusicSystem {
+    private static instance;
+    private audioContext;
+    private currentTrack;
+    private tracks;
+    private playlists;
+    private gameMusicConfigs;
+    private isPlaying;
+    private volume;
+    private isMuted;
+    private currentTrackId;
+    private playlist;
+    private currentPlaylistIndex;
+    private listeners;
+    private supabase;
+    private supabaseStorageUrl;
+    private tracksLoaded;
+    private constructor();
+    static getInstance(): UnifiedMusicSystem;
+    setSupabaseClient(supabase: any): void;
+    private initializeAudioContext;
+    private loadTracksFromDatabase;
+    private loadPlaylistsFromDatabase;
+    private getTrackUrl;
+    private setupGameConfigsFromDatabase;
+    private loadTracks;
+    private setupGameConfigs;
+    initializeForGame(gameKey: string): void;
+    playTrack(trackId: string): Promise<boolean>;
+    private onTrackEnded;
+    playNext(): void;
+    playPrevious(): void;
+    pause(): void;
+    resume(): void;
+    stop(): void;
+    setVolume(volume: number): void;
+    toggleMute(): void;
+    getAvailableTracks(): Track[];
+    getCurrentTrack(): Track | null;
+    getPlaylist(): Track[];
+    shufflePlaylist(): void;
+    setPlaylist(trackIds: string[]): void;
+    getGameConfig(gameKey: string): GameMusicConfig | null;
+    getTracksByGame(gameKey: string): Track[];
+    getTracksByMood(mood: string): Track[];
+    getTracksByTags(tags: string[]): Track[];
+    getPlaylistNames(): string[];
+    loadPlaylist(playlistName: string): boolean;
+    createPlaylist(name: string, trackIds: string[]): void;
+    on(event: string, callback: Function): void;
+    off(event: string, callback: Function): void;
+    private emit;
+    getState(): {
+        isPlaying: boolean;
+        isMuted: boolean;
+        volume: number;
+        currentTrack: Track | null;
+        playlist: Track[];
+        currentPlaylistIndex: number;
+    };
+}
+export declare const unifiedMusic: UnifiedMusicSystem;
+export default unifiedMusic;

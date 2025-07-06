@@ -1,2 +1,2 @@
 // Config exports
-export * from './supabaseAssets';
+// export * from './supabaseAssets';

@@ -281,7 +281,7 @@ export class UnifiedMusicSystem {
       // Add event listeners
       this.currentTrack.addEventListener('ended', this.onTrackEnded.bind(this))
       this.currentTrack.addEventListener('error', (e) => {
-        console.error('Error playing track:', track.name, e)
+        console.error('Error playing track:', track.title, e)
         this.emit('track-error', { track, error: e })
       })
 

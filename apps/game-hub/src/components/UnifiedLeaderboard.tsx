@@ -12,7 +12,7 @@ import {
   ArrowUpDown,
   ChevronDown
 } from 'lucide-react'
-import { unifiedLeaderboard, type GameScore, type GlobalScore, type LeaderboardConfig } from '@avoid/shared'
+import { unifiedLeaderboard, type GameScore, type GlobalScore, type LeaderboardConfig } from '../lib/unifiedLeaderboard'
 import { useAuth } from '../contexts/AuthContext'
 
 interface UnifiedLeaderboardProps {
@@ -252,7 +252,7 @@ const UnifiedLeaderboard: React.FC<UnifiedLeaderboardProps> = ({
           globalScores.length > 0 ? (
             globalScores.map((entry, index) => (
               <div
-                key={entry.userId}
+                key={`global-${entry.userId}-${index}`}
                 className={`leaderboard-entry p-4 rounded-lg transition-all hover:bg-white/5 ${
                   user?.id === entry.userId ? 'ring-2 ring-purple-500/50 bg-purple-600/10' : 'bg-gray-800/50'
                 }`}
@@ -302,10 +302,10 @@ const UnifiedLeaderboard: React.FC<UnifiedLeaderboardProps> = ({
                 {/* Game Breakdown */}
                 <div className="mt-3 pt-3 border-t border-white/10">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                    {Object.entries(entry.gameScores).map(([gameKey, score]) => {
+                    {Object.entries(entry.gameScores).map(([gameKey, score], scoreIndex) => {
                       const config = gameConfigs.find(c => c.gameKey === gameKey)
                       return (
-                        <div key={gameKey} className="text-center">
+                        <div key={`breakdown-${entry.userId}-${gameKey}-${scoreIndex}`} className="text-center">
                           <div className="text-white/60 text-xs">{config?.displayName || gameKey}</div>
                           <div className="text-white font-medium">
                             {formatScore(score as number, gameKey)}
@@ -327,7 +327,7 @@ const UnifiedLeaderboard: React.FC<UnifiedLeaderboardProps> = ({
           gameScores.length > 0 ? (
             gameScores.map((entry, index) => (
               <div
-                key={entry.id}
+                key={`game-${entry.id || `anonymous-${index}`}`}
                 className={`leaderboard-entry p-4 rounded-lg transition-all hover:bg-white/5 ${
                   user?.id === entry.userId ? 'ring-2 ring-purple-500/50 bg-purple-600/10' : 'bg-gray-800/50'
                 }`}

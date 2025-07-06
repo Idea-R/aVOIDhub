@@ -7,9 +7,14 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "dev:all": "powershell -ExecutionPolicy Bypass -File ../../dev-all.ps1",
+    "dev:check-ports": "netstat -an | findstr \"5173 5174 5175 5176 5177\""
   },
   "dependencies": {
+    "@avoid/shared": "file:../../packages/shared",
+    "@stripe/react-stripe-js": "^3.7.0",
+    "@stripe/stripe-js": "^7.4.0",
     "@supabase/supabase-js": "^2.50.3",
     "@types/react-router-dom": "^5.3.3",
     "autoprefixer": "^10.4.21",

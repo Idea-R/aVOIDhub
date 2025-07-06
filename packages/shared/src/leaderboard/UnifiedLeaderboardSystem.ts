@@ -421,7 +421,7 @@ export class UnifiedLeaderboardSystem {
       const batchSize = 100
       for (let i = 0; i < entries.length; i += batchSize) {
         const batch = entries.slice(i, i + batchSize)
-        const updates = batch.map((entry, batchIndex) => ({
+        const updates = batch.map((entry: any, batchIndex: number) => ({
           user_id: entry.user_id,
           rank: i + batchIndex + 1
         }))

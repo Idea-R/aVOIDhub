@@ -1,12 +1,16 @@
 import { createContext, useContext } from 'react'
 import type { ReactNode } from 'react'
-import type { User } from '../lib/supabase'
+import type { UnifiedUser, GameSession } from '../services/UnifiedAuthService'
 
 interface AuthContextType {
-  user: User | null
-  setUser: (user: User | null) => void
+  user: UnifiedUser | null
+  setUser: (user: UnifiedUser | null) => void
   showAuthModal: boolean
   setShowAuthModal: (show: boolean) => void
+  showProModal: boolean
+  setShowProModal: (show: boolean) => void
+  gameSession: GameSession | null
+  isAuthenticated: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)

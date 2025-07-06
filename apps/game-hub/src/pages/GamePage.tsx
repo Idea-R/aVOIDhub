@@ -1,51 +1,88 @@
-import { useParams } from 'react-router-dom'
-import { ArrowLeft, ExternalLink } from 'lucide-react'
+import { useParams, useLocation } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { ArrowLeft, ExternalLink, Loader, CheckCircle, XCircle } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { gameAssets, fallbackAssets } from '../config/supabaseAssets'
 
 const GamePage = () => {
-  const { gameKey } = useParams<{ gameKey: string }>()
+  const { gameKey: routeGameKey } = useParams<{ gameKey: string }>()
+  const location = useLocation()
+  const [serverStatus, setServerStatus] = useState<'checking' | 'online' | 'offline'>('checking')
+  
+  // Extract gameKey from route params or path
+  const gameKey = routeGameKey || (() => {
+    const path = location.pathname.replace('/', '')
+    if (['voidavoid', 'tankavoid', 'wreckavoid', 'wordavoid'].includes(path)) {
+      return path
+    }
+    return 'voidavoid' // default fallback
+  })()
 
   const gameDetails: Record<string, any> = {
     voidavoid: {
       name: 'VOIDaVOID',
       description: 'Navigate through space avoiding obstacles in this fast-paced cursor game',
-      url: '/VOIDaVOID',
-      status: 'Available',
+      url: 'http://localhost:5174', // void-avoid dev server
+      status: 'Development',
       logo: gameAssets.logos.voidavoid,
       fallbackLogo: fallbackAssets.logos.voidavoid,
-      videoUrl: null // Will be updated when video is ready: gameVideos.previews.voidavoid
+      videoUrl: null,
+      instructions: 'Run: npm run dev in games/void-avoid directory'
     },
     tankavoid: {
       name: 'TankaVOID',
       description: 'Tank warfare meets cursor precision in this strategic action game',
-      url: '/TankaVOID',
-      status: 'Available',
+      url: 'http://localhost:5175', // tanka-void dev server
+      status: 'Development',
       logo: gameAssets.logos.tankavoid,
       fallbackLogo: fallbackAssets.logos.tankavoid,
-      videoUrl: null // Will be updated when video is ready: gameVideos.previews.tankavoid
+      videoUrl: null,
+      instructions: 'Run: npm run dev in games/tanka-void directory'
     },
     wreckavoid: {
       name: 'WreckaVOID',
       description: 'Demolition chaos with cursor control - destroy everything in sight!',
-      url: '/WreckaVOID',
-      status: 'Available',
+      url: 'http://localhost:5178', // wrecka-void dev server
+      status: 'Development',
       logo: gameAssets.logos.wreckavoid,
       fallbackLogo: fallbackAssets.logos.wreckavoid,
-      videoUrl: null // Will be updated when video is ready: gameVideos.previews.wreckavoid
+      videoUrl: null,
+      instructions: 'Run: npm run dev in games/wrecka-void directory'
     },
     wordavoid: {
       name: 'WORDaVOID',
       description: 'Test your typing speed while avoiding falling words in this fast-paced typing game',
-      url: '/WORDaVOID',
-      status: 'Available',
+      url: 'http://localhost:5177', // word-avoid dev server
+      status: 'Development',
       logo: gameAssets.logos.wordavoid,
       fallbackLogo: fallbackAssets.logos.wordavoid,
-      videoUrl: null // Will be updated when video is ready: gameVideos.previews.wordavoid
+      videoUrl: null,
+      instructions: 'Run: npm run dev in games/word-avoid directory'
     }
   }
 
-  const game = gameDetails[gameKey || 'voidavoid']
+  const game = gameDetails[gameKey]
+
+  // Check if the game server is running
+  const checkServerStatus = async (url: string) => {
+    try {
+      const response = await fetch(url, { 
+        method: 'HEAD', 
+        mode: 'no-cors',
+        cache: 'no-cache'
+      })
+      // In no-cors mode, we can't read the response, but if no error is thrown, server is likely up
+      setServerStatus('online')
+    } catch (error) {
+      setServerStatus('offline')
+    }
+  }
+
+  useEffect(() => {
+    if (game && game.status === 'Development') {
+      checkServerStatus(game.url)
+    }
+  }, [game])
 
   if (!game) {
     return (
@@ -73,9 +110,73 @@ const GamePage = () => {
           <h1 className="text-6xl font-game font-bold glow-text mb-4">{game.name}</h1>
           <p className="text-xl text-white/60 mb-8">{game.description}</p>
           
-          {game.status === 'Available' ? (
+          {game.status === 'Development' ? (
+            <div className="space-y-4">
+              <div className="bg-yellow-900/30 border border-yellow-600/50 rounded-lg p-4 mb-4">
+                <h3 className="text-yellow-400 font-semibold mb-2">🚧 Development Mode</h3>
+                <p className="text-yellow-200 text-sm mb-2">{game.instructions}</p>
+                <p className="text-yellow-300 text-xs mb-3">Expected at: {game.url}</p>
+                
+                {/* Server Status */}
+                <div className="flex items-center space-x-2 text-sm">
+                  {serverStatus === 'checking' && (
+                    <>
+                      <Loader className="animate-spin text-blue-400" size={16} />
+                      <span className="text-blue-400">Checking server status...</span>
+                    </>
+                  )}
+                  {serverStatus === 'online' && (
+                    <>
+                      <CheckCircle className="text-green-400" size={16} />
+                      <span className="text-green-400">Server is running!</span>
+                    </>
+                  )}
+                  {serverStatus === 'offline' && (
+                    <>
+                      <XCircle className="text-red-400" size={16} />
+                      <span className="text-red-400">Server not running</span>
+                    </>
+                  )}
+                </div>
+              </div>
+              
+              {serverStatus === 'online' ? (
+                <a 
+                  href={game.url} 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-primary inline-flex items-center space-x-2"
+                >
+                  <ExternalLink size={20} />
+                  <span>Launch {game.name}</span>
+                </a>
+              ) : (
+                <div className="space-y-3">
+                  <button 
+                    onClick={() => checkServerStatus(game.url)}
+                    disabled={serverStatus === 'checking'}
+                    className="btn-secondary inline-flex items-center space-x-2"
+                  >
+                    <Loader className={`${serverStatus === 'checking' ? 'animate-spin' : ''}`} size={18} />
+                    <span>Check Server Status</span>
+                  </button>
+                  
+                  {serverStatus === 'offline' && (
+                    <div className="bg-red-900/30 border border-red-600/50 rounded-lg p-3">
+                      <p className="text-red-200 text-sm mb-2">🔧 To start the server:</p>
+                      <code className="bg-black/30 px-2 py-1 rounded text-xs text-green-400">
+                        cd C:\dev\aVOID\games\{gameKey.replace('avoid', '-avoid')} && npm run dev
+                      </code>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ) : game.status === 'Available' ? (
             <a 
               href={game.url} 
+              target="_blank"
+              rel="noopener noreferrer"
               className="btn-primary inline-flex items-center space-x-2"
             >
               <ExternalLink size={20} />

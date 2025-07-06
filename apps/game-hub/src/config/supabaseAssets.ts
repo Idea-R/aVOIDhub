@@ -69,7 +69,7 @@ export const fallbackAssets = {
     voidavoid: '/VOIDaVOIDmain.png',
     tankavoid: '/Tank aVOID Logo Design.png',
     wreckavoid: '/WreckAVOID.png',
-    wordavoid: '/wordavoid-logo.png',
+    wordavoid: '/WORDaVOID log.png',
   },
   heroes: {
     main: '/AVOIDhero.png',

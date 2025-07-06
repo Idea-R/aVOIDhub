@@ -398,15 +398,16 @@
   </style>
 </head>
 <body>
+  <div id="root"></div>
   <div class="game-container">
     <!-- Start Screen -->
     <div class="start-screen" id="startScreen">
       <h1 class="game-title">TankaVOID</h1>
       <p class="game-subtitle">Survive the Endless Chaos</p>
       
-      <button class="menu-button" onclick="game.startGame()">START GAME</button>
-      <button class="menu-button" onclick="game.showLeaderboard()">LEADERBOARD</button>
-      <button class="menu-button" onclick="game.showControls()">CONTROLS</button>
+      <button class="menu-button" onclick="window.game && window.game.startGame()">START GAME</button>
+      <button class="menu-button" onclick="window.game && window.game.showLeaderboard()">LEADERBOARD</button>
+      <button class="menu-button" onclick="window.game && window.game.showControls()">CONTROLS</button>
       
       <div class="leaderboard" id="leaderboardDisplay" style="display: none;">
         <h3>🏆 Top Survivors</h3>
@@ -479,8 +480,8 @@
       <div>Final Score: <span id="finalScore">0</span></div>
       <div>Wave Reached: <span id="finalWave">1</span></div>
       <div>Survival Time: <span id="finalTime">00:00</span></div>
-      <button class="restart-button" onclick="game.restart()">RESTART</button>
-      <button class="return-menu-button" onclick="game.returnToMenu()">MAIN MENU</button>
+      <button class="restart-button" onclick="window.game && window.game.restart()">RESTART</button>
+      <button class="return-menu-button" onclick="window.game && window.game.returnToMenu()">MAIN MENU</button>
     </div>
   </div>
 

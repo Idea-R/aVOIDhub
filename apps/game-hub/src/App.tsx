@@ -1,11 +1,12 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { supabase, getCurrentUser, type User } from './lib/supabase'
+import { unifiedAuth, type GameSession } from './services/UnifiedAuthService'
 
 // Components
 import Navbar from './components/Navbar'
 import CustomCursor from './components/CustomCursor'
 import AuthModal from './components/AuthModal'
+import ProUpgradeModal from './components/auth/ProUpgradeModal'
 import ErrorBoundary from './components/ErrorBoundary'
 import ErrorDashboard from './components/ErrorDashboard'
 
@@ -16,52 +17,37 @@ import GamesLibrary from './pages/GamesLibrary'
 import LeaderboardsPage from './pages/LeaderboardsPage'
 import ProfilePage from './pages/ProfilePage'
 import NotFoundPage from './pages/NotFoundPage'
+import AuthCallbackPage from './pages/AuthCallbackPage'
 
 // Context
 import { AuthProvider } from './contexts/AuthContext'
 
 function App() {
-  const [user, setUser] = useState<User | null>(null)
+  const [gameSession, setGameSession] = useState<GameSession | null>(null)
   const [loading, setLoading] = useState(true)
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [showProModal, setShowProModal] = useState(false)
 
   useEffect(() => {
     // Check initial session
-    const checkUser = async () => {
-      try {
-        const currentUser = await getCurrentUser()
-        setUser(currentUser)
-      } catch (error) {
-        console.error('Error checking user:', error)
-      } finally {
-        setLoading(false)
-      }
+    const currentSession = unifiedAuth.getCurrentSession()
+    if (currentSession) {
+      setGameSession(currentSession)
     }
+    setLoading(false)
 
-    checkUser()
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        if (session?.user) {
-          // Fetch the complete user profile when user signs in
-          try {
-            const userProfile = await getCurrentUser()
-            setUser(userProfile)
-            setShowAuthModal(false)
-          } catch (error) {
-            console.error('Error fetching user profile:', error)
-            setUser(null)
-          }
-        } else {
-          setUser(null)
-        }
-        setLoading(false)
+    // Listen for auth state changes
+    const unsubscribe = unifiedAuth.onAuthStateChange((session) => {
+      console.log('🔐 Auth state changed in App:', session?.user?.username || 'No user')
+      setGameSession(session)
+      if (session) {
+        setShowAuthModal(false)
       }
-    )
+      setLoading(false)
+    })
 
     return () => {
-      subscription.unsubscribe()
+      unsubscribe()
     }
   }, [])
 
@@ -75,7 +61,20 @@ function App() {
   }
 
   return (
-    <AuthProvider value={{ user, setUser, showAuthModal, setShowAuthModal }}>
+    <AuthProvider value={{ 
+      user: gameSession?.user || null, 
+      setUser: (user) => {
+        if (gameSession && user) {
+          setGameSession({ ...gameSession, user })
+        }
+      }, 
+      showAuthModal, 
+      setShowAuthModal,
+      showProModal,
+      setShowProModal,
+      gameSession,
+      isAuthenticated: unifiedAuth.isAuthenticated()
+    }}>
       <Router>
         <div className="min-h-screen bg-space">
           <CustomCursor />
@@ -91,11 +90,13 @@ function App() {
                 <Route path="/leaderboards/:gameKey" element={<LeaderboardsPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/profile/:userId" element={<ProfilePage />} />
+                <Route path="/auth/callback" element={<AuthCallbackPage />} />
                 
-                {/* Game Routes */}
+                {/* Game Routes - Redirect to parameterized routes */}
                 <Route path="/voidavoid" element={<GamePage />} />
                 <Route path="/tankavoid" element={<GamePage />} />
                 <Route path="/wreckavoid" element={<GamePage />} />
+                <Route path="/wordavoid" element={<GamePage />} />
                 
                 {/* Catch-all */}
                 <Route path="*" element={<NotFoundPage />} />
@@ -107,6 +108,13 @@ function App() {
             <AuthModal 
               isOpen={showAuthModal} 
               onClose={() => setShowAuthModal(false)} 
+            />
+          )}
+
+          {showProModal && (
+            <ProUpgradeModal 
+              isOpen={showProModal} 
+              onClose={() => setShowProModal(false)} 
             />
           )}
 
