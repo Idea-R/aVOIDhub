@@ -18,12 +18,15 @@ const GamePage = () => {
     return 'voidavoid' // default fallback
   })()
 
+  // Detect if we're in development or production
+  const isDevelopment = import.meta.env.DEV || window.location.hostname === 'localhost'
+  
   const gameDetails: Record<string, any> = {
     voidavoid: {
       name: 'VOIDaVOID',
       description: 'Navigate through space avoiding obstacles in this fast-paced cursor game',
-      url: 'http://localhost:5174', // void-avoid dev server
-      status: 'Development',
+      url: isDevelopment ? 'http://localhost:5174' : '/VOIDaVOID/',
+      status: isDevelopment ? 'Development' : 'Available',
       logo: gameAssets.logos.voidavoid,
       fallbackLogo: fallbackAssets.logos.voidavoid,
       videoUrl: null,
@@ -32,28 +35,28 @@ const GamePage = () => {
     tankavoid: {
       name: 'TankaVOID',
       description: 'Tank warfare meets cursor precision in this strategic action game',
-      url: 'http://localhost:5175', // tanka-void dev server
-      status: 'Development',
+      url: isDevelopment ? 'http://localhost:5175' : '/TankaVOID/',
+      status: isDevelopment ? 'Development' : 'Available',
       logo: gameAssets.logos.tankavoid,
       fallbackLogo: fallbackAssets.logos.tankavoid,
       videoUrl: null,
-      instructions: 'Run: npm run dev in games/tanka-void directory'
+      instructions: 'Run: npm run dev in games/tank-avoid directory'
     },
     wreckavoid: {
       name: 'WreckaVOID',
       description: 'Demolition chaos with cursor control - destroy everything in sight!',
-      url: 'http://localhost:5178', // wrecka-void dev server
-      status: 'Development',
+      url: isDevelopment ? 'http://localhost:5178' : '/WreckaVOID/',
+      status: isDevelopment ? 'Development' : 'Available',
       logo: gameAssets.logos.wreckavoid,
       fallbackLogo: fallbackAssets.logos.wreckavoid,
       videoUrl: null,
-      instructions: 'Run: npm run dev in games/wrecka-void directory'
+      instructions: 'Run: npm run dev in games/wreck-avoid directory'
     },
     wordavoid: {
       name: 'WORDaVOID',
       description: 'Test your typing speed while avoiding falling words in this fast-paced typing game',
-      url: 'http://localhost:5177', // word-avoid dev server
-      status: 'Development',
+      url: isDevelopment ? 'http://localhost:5177' : '/WORDaVOID/',
+      status: isDevelopment ? 'Development' : 'Available',
       logo: gameAssets.logos.wordavoid,
       fallbackLogo: fallbackAssets.logos.wordavoid,
       videoUrl: null,
@@ -143,8 +146,8 @@ const GamePage = () => {
               {serverStatus === 'online' ? (
                 <a 
                   href={game.url} 
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  target={isDevelopment ? "_blank" : "_self"}
+                  rel={isDevelopment ? "noopener noreferrer" : undefined}
                   className="btn-primary inline-flex items-center space-x-2"
                 >
                   <ExternalLink size={20} />
@@ -175,8 +178,8 @@ const GamePage = () => {
           ) : game.status === 'Available' ? (
             <a 
               href={game.url} 
-              target="_blank"
-              rel="noopener noreferrer"
+              target={isDevelopment ? "_blank" : "_self"}
+              rel={isDevelopment ? "noopener noreferrer" : undefined}
               className="btn-primary inline-flex items-center space-x-2"
             >
               <ExternalLink size={20} />

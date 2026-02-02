@@ -5,6 +5,9 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   base: '/VOIDaVOID/',
   plugins: [react()],
+  build: {
+    outDir: '../../dist/VOIDaVOID'
+  },
   server: {
     port: 5174,
     host: true,

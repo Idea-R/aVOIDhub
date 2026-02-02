@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Trophy, Crown, Star, ExternalLink, Lock } from 'lucide-react'
+import { Trophy, Crown, ExternalLink, Lock } from 'lucide-react'
 import { unifiedAuth } from '../services/UnifiedAuthService'
 import { enhancedLeaderboardService, type GlobalUserStats, type EnhancedLeaderboardEntry } from '../services/EnhancedLeaderboardService'
 import { useAuth } from '../contexts/AuthContext'

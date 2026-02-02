@@ -11,7 +11,7 @@ interface UserProfileProps {
 
 const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
   const { user: currentUser } = useAuth()
-  const [user, setUser] = useState(currentUser)
+  const [user] = useState(currentUser)
   const [isEditing, setIsEditing] = useState(false)
   const [showProModal, setShowProModal] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -39,9 +39,9 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
     if (user) {
       setEditForm({
         display_name: user.display_name || '',
-        bio: user.bio || '',
+        bio: '',
         country_code: user.country_code || '',
-        cursor_color: user.cursor_color || '#06b6d4',
+        cursor_color: '#06b6d4',
         social_links: {
           twitter: user.social_links?.twitter || '',
           instagram: user.social_links?.instagram || '',
@@ -60,14 +60,12 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
     setLoading(true)
     setError('')
 
-    try {
-      // Update basic profile info (available to all users)
-      const basicUpdates = {
-        display_name: editForm.display_name,
-        bio: editForm.bio,
-        country_code: editForm.country_code,
-        cursor_color: editForm.cursor_color
-      }
+          try {
+        // Update basic profile info (available to all users)
+        const basicUpdates = {
+          display_name: editForm.display_name,
+          country_code: editForm.country_code
+        }
 
       // Update social links (pro members only)
       if (user.is_pro_member) {
@@ -151,7 +149,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                   {user.display_name || user.username}
                 </h1>
                 {user.is_pro_member && (
-                  <Crown className="w-8 h-8 text-yellow-500" title="Pro Member" />
+                  <Crown className="w-8 h-8 text-yellow-500" />
                 )}
               </div>
               
@@ -164,9 +162,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                 )}
               </p>
 
-              {user.bio && (
-                <p className="text-white/80 mb-4">{user.bio}</p>
-              )}
+              {/* Bio section would go here when bio property is added to UnifiedUser */}
 
               {/* Social Links */}
               {user.is_pro_member && user.social_links && (
@@ -370,7 +366,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
             <div className="flex items-center justify-between mb-4">
               <Trophy className="w-8 h-8 text-blue-400" />
               <span className="text-2xl font-bold text-blue-400">
-                {user.best_score?.toLocaleString() || 0}
+                {Math.max(user.voidavoid_best_score || 0, user.wreckavoid_best_score || 0, user.tankavoid_best_score || 0).toLocaleString()}
               </span>
             </div>
             <h3 className="font-semibold text-white mb-1">Best Score</h3>
@@ -393,7 +389,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
               <TrendingUp className="w-8 h-8 text-green-400" />
               <span className="text-2xl font-bold text-green-400">
                 {user.total_games_played > 0 
-                  ? Math.round((user.best_score || 0) / user.total_games_played)
+                  ? Math.round(Math.max(user.voidavoid_best_score || 0, user.wreckavoid_best_score || 0, user.tankavoid_best_score || 0) / user.total_games_played)
                   : 0
                 }
               </span>

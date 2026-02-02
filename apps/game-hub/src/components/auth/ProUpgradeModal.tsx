@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { X, Crown, Check, Zap, Trophy, Star, Shield, Rocket } from 'lucide-react'
+import { X, Crown, Zap, Trophy, Star, Shield, Rocket } from 'lucide-react'
 import { STRIPE_CONFIG, createCheckoutSession } from '../../lib/stripe'
 import { useAuth } from '../../contexts/AuthContext'
 
