@@ -62,7 +62,7 @@ CVS
 *.DS_Store
 
 # Files with hardcoded credentials (keep local only)
-apps/game-hub/src/lib/supabase.ts
+# Note: supabase.ts uses env vars, not hardcoded credentials - safe to commit
 scripts/upload-assets.js
 
 # Built assets may contain embedded credentials
