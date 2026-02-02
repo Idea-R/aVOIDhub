@@ -1,8 +1,9 @@
 [build]
-  # Netlify uses packagePath: apps/game-hub, so we need to go up to repo root
-  publish = "../../dist"
+  # Build outputs to apps/game-hub/dist (Netlify requires publish inside package path)
+  publish = "dist"
   # Build only working workspaces (excludes broken tanka-void)
-  command = "cd ../.. && npm run build --workspace=@avoid/shared --workspace=@avoid/game-hub --workspace=@avoid/void-main --workspace=@avoid/word-avoid --workspace=@avoid/wreck-avoid --workspace=@avoid/wrecka-void"
+  # Note: game-hub's vite.config outputs to ../../dist, so we copy it after build
+  command = "cd ../.. && npm run build --workspace=@avoid/shared --workspace=@avoid/game-hub --workspace=@avoid/void-main --workspace=@avoid/word-avoid --workspace=@avoid/wreck-avoid --workspace=@avoid/wrecka-void && mkdir -p apps/game-hub/dist && cp -r dist/* apps/game-hub/dist/"
 
 [build.environment]
   NODE_VERSION = "18"
