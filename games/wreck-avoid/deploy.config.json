@@ -1,0 +1,40 @@
+{
+  "name": "WreckAVOID",
+  "slug": "wreckavoid",
+  "version": "1.0.0",
+  "description": "Physics-based wrecking ball survival game",
+  "author": "aVOIDgame.io",
+  "repository": "https://github.com/Idea-R/wreckAVOID",
+  "homepage": "https://aVOIDgame.io/wreckavoid",
+  "deployment": {
+    "domain": "aVOIDgame.io",
+    "path": "/wreckavoid",
+    "buildCommand": "npm run build:prod",
+    "outputDirectory": "dist",
+    "environmentVariables": {
+      "NODE_ENV": "production",
+      "VITE_SUPABASE_URL": "https://zekgkhpzgerhnpvirprn.supabase.co",
+      "VITE_PRODUCTION_URL": "https://aVOIDgame.io/wreckavoid"
+    }
+  },
+  "features": {
+    "authentication": true,
+    "leaderboards": true,
+    "userProfiles": true,
+    "socialIntegration": true,
+    "realtimeUpdates": false
+  },
+  "gameInfo": {
+    "category": "Action/Survival",
+    "genre": "Physics-based",
+    "players": "Single-player",
+    "difficulty": "Progressive",
+    "controlScheme": "Mouse + Keyboard"
+  },
+  "integration": {
+    "hubCompatible": true,
+    "sharedAuthentication": true,
+    "crossGameLeaderboards": false,
+    "unifiedProfiles": true
+  }
+} 

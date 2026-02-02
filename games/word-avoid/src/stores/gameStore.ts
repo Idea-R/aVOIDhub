@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { GameState, GameMode, Difficulty, Word, Player, GameStats, GameSettings, SkillWordType, DifficultyLevel, DigitAssaultChar } from '../types/game';
 import { getRandomWord, getRandomSkillWord, getRandomDigitChar, getDifficultyLevelByWPM, difficultyConfigs, getRandomGeometricPattern } from '../data/words';
 import { supabase } from '../main';
+import { LeaderboardAPI } from '../api/leaderboard';
 
 interface GameStore extends GameState {
   // Actions
@@ -918,23 +919,41 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   savePlayerStats: async () => {
     try {
-      const { stats } = get();
-      
+      const state = get();
+      const { stats, player, mode, level, wordsTyped } = state;
+
       // Save to localStorage as fallback
       localStorage.setItem('wordavoid-stats', JSON.stringify(stats));
-      
-      // TODO: Implement Supabase saving when authentication is set up
-      // const { error } = await supabase
-      //   .from('player_stats')
-      //   .upsert({
-      //     user_id: 'placeholder-user-id',
-      //     ...stats,
-      //     updated_at: new Date().toISOString()
-      //   });
-      
-      // if (error) {
-      //   console.error('Failed to save to Supabase:', error);
-      // }
+
+      // Submit score to leaderboard if score > 0
+      if (player.score > 0) {
+        const metadata = {
+          wpm: player.wpm,
+          accuracy: player.accuracy,
+          words_typed: wordsTyped,
+          mode: mode,
+          level: level
+        };
+
+        // Check if user is authenticated
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (user) {
+          // Get user profile for player name
+          const { data: profile } = await supabase
+            .from('user_profiles')
+            .select('username, display_name')
+            .eq('id', user.id)
+            .single();
+
+          const playerName = profile?.display_name || profile?.username || 'Player';
+          await LeaderboardAPI.submitVerifiedScore(playerName, player.score, user.id, metadata);
+        } else {
+          // Submit as guest score (unverified)
+          const guestName = localStorage.getItem('wordavoid-guest-name') || 'Guest';
+          await LeaderboardAPI.submitGuestScore(guestName, player.score, metadata);
+        }
+      }
     } catch (error) {
       console.error('Failed to save player stats:', error);
     }

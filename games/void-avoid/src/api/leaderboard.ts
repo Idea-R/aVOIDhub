@@ -1,10 +1,13 @@
 import { supabase, LeaderboardScore } from '../lib/supabase';
 
+const GAME_KEY = 'voidavoid';
+
 export class LeaderboardAPI {
   static async getTopScores(limit: number = 10): Promise<LeaderboardScore[]> {
     // Use the new function to get unique top scores (one per user)
     const { data, error } = await supabase.rpc('get_top_unique_verified_scores', {
-      limit_count: limit
+      limit_count: limit,
+      p_game_key: GAME_KEY
     });
 
     if (error) {
@@ -21,6 +24,7 @@ export class LeaderboardAPI {
     const { data, error } = await supabase
       .from('leaderboard_scores')
       .select('*')
+      .eq('game_key', GAME_KEY)
       .eq('is_verified', true)
       .order('score', { ascending: false })
       .limit(limit);
@@ -38,6 +42,7 @@ export class LeaderboardAPI {
     const { count, error } = await supabase
       .from('leaderboard_scores')
       .select('*', { count: 'exact', head: true })
+      .eq('game_key', GAME_KEY)
       .gt('score', score);
 
     if (error) {
@@ -53,6 +58,7 @@ export class LeaderboardAPI {
     const { count, error } = await supabase
       .from('leaderboard_scores')
       .select('*', { count: 'exact', head: true })
+      .eq('game_key', GAME_KEY)
       .eq('is_verified', true)
       .gt('score', score);
 
@@ -66,14 +72,15 @@ export class LeaderboardAPI {
 
   static async submitGuestScore(playerName: string, score: number): Promise<{ success: boolean; data?: any }> {
     const gameSessionId = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
     console.log('Submitting guest score:', { playerName, score, gameSessionId });
-    
+
     const { data, error } = await supabase
       .from('leaderboard_scores')
       .insert({
         player_name: playerName,
         score,
+        game_key: GAME_KEY,
         is_verified: false,
         user_id: null,
         game_session_id: gameSessionId
@@ -91,12 +98,13 @@ export class LeaderboardAPI {
 
   static async submitVerifiedScore(playerName: string, score: number, userId: string): Promise<boolean> {
     const gameSessionId = `verified_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
     const { error } = await supabase
       .from('leaderboard_scores')
       .insert({
         player_name: playerName,
         score,
+        game_key: GAME_KEY,
         is_verified: true,
         user_id: userId,
         game_session_id: gameSessionId
@@ -115,6 +123,7 @@ export class LeaderboardAPI {
       .from('leaderboard_scores')
       .select('score')
       .eq('user_id', userId)
+      .eq('game_key', GAME_KEY)
       .eq('is_verified', true)
       .order('score', { ascending: false })
       .limit(1)
@@ -158,6 +167,7 @@ export class LeaderboardAPI {
     const { data, error } = await supabase
       .from('leaderboard_scores')
       .select('score')
+      .eq('game_key', GAME_KEY)
       .eq('is_verified', false)
       .order('score', { ascending: false });
 
@@ -174,12 +184,12 @@ export class LeaderboardAPI {
 
   static subscribeToLeaderboard(callback: (scores: LeaderboardScore[]) => void) {
     let debounceTimer: NodeJS.Timeout | null = null;
-    
+
     const debouncedCallback = async () => {
       if (debounceTimer) {
         clearTimeout(debounceTimer);
       }
-      
+
       debounceTimer = setTimeout(async () => {
         const scores = await this.getTopScores();
         callback(scores);
@@ -187,14 +197,14 @@ export class LeaderboardAPI {
     };
 
     const subscription = supabase
-      .channel('leaderboard_changes')
+      .channel(`leaderboard_changes:${GAME_KEY}`)
       .on(
         'postgres_changes',
         {
           event: 'INSERT', // Only listen for new scores, not all changes
           schema: 'public',
           table: 'leaderboard_scores',
-          filter: 'is_verified=eq.true' // Only verified scores affect leaderboard
+          filter: `game_key=eq.${GAME_KEY}` // Only listen to this game's scores
         },
         debouncedCallback
       )

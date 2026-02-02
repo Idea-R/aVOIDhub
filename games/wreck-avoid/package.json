@@ -1,0 +1,16 @@
+{
+  "name": "@avoid/wreck-avoid",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:prod": "NODE_ENV=production vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "deploy": "npm run build:prod"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
