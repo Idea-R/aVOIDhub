@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Play, Trophy, Users, Star, ArrowRight, LogIn, UserPlus } from 'lucide-react'
-import { getGames, getLeaderboard } from '../lib/supabase'
-import type { Game, LeaderboardScore } from '../lib/supabase'
+import { getGames, getLeaderboard, getPlatformStats } from '../lib/supabase'
+import type { Game, LeaderboardScore, PlatformStats } from '../lib/supabase'
 import { gameAssets, gameVideos, fallbackAssets } from '../config/supabaseAssets'
 import Footer from '../components/Footer'
 import AuthModal from '../components/auth/AuthModal'
@@ -12,6 +12,7 @@ import { unifiedAuth, GameSession } from '../services/UnifiedAuthService'
 const HomePage = () => {
   const [games, setGames] = useState<Game[]>([])
   const [recentScores, setRecentScores] = useState<LeaderboardScore[]>([])
+  const [platformStats, setPlatformStats] = useState<PlatformStats>({ activePlayers: 0, gamesAvailable: 4, highScores: 0 })
   const [loading, setLoading] = useState(true)
   const [session, setSession] = useState<GameSession | null>(null)
   const [authModalOpen, setAuthModalOpen] = useState(false)
@@ -31,6 +32,10 @@ const HomePage = () => {
         if (scoresData) {
           setRecentScores(scoresData)
         }
+
+        // Load platform stats
+        const stats = await getPlatformStats()
+        setPlatformStats(stats)
       } catch (error) {
         console.error('Error loading homepage data:', error)
       } finally {
@@ -163,15 +168,15 @@ const HomePage = () => {
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="stats-card text-center">
-              <div className="text-4xl font-bold glow-text mb-2">{recentScores.length > 0 ? '1.2k+' : '0'}</div>
+              <div className="text-4xl font-bold glow-text mb-2">{platformStats.activePlayers}</div>
               <div className="text-white/60">Active Players</div>
             </div>
             <div className="stats-card text-center">
-              <div className="text-4xl font-bold glow-text mb-2">{games.length}</div>
+              <div className="text-4xl font-bold glow-text mb-2">{platformStats.gamesAvailable}</div>
               <div className="text-white/60">Games Available</div>
             </div>
             <div className="stats-card text-center">
-              <div className="text-4xl font-bold glow-text mb-2">{recentScores.length > 0 ? '50k+' : '0'}</div>
+              <div className="text-4xl font-bold glow-text mb-2">{platformStats.highScores}</div>
               <div className="text-white/60">High Scores</div>
             </div>
           </div>
@@ -238,13 +243,7 @@ const HomePage = () => {
                         <span>Learn More</span>
                       </Link>
                       <a 
-                        href={
-                          game.key === 'voidavoid' ? '/VOIDaVOID' :
-                          game.key === 'tankavoid' ? '/TankaVOID' :
-                          game.key === 'wreckavoid' ? '/WreckaVOID' :
-                          game.key === 'wordavoid' ? '/WORDaVOID' : 
-                          `/${game.key}`
-                        }
+                        href={`/${game.key}`}
                         className="w-full btn-primary flex items-center justify-center space-x-2"
                       >
                         <Play size={18} />

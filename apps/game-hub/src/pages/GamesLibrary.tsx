@@ -22,7 +22,7 @@ const GamesLibrary: React.FC = () => {
       players: 'Single Player',
       rating: 4.8,
       playCount: 1200,
-      gameUrl: '/VOIDaVOID',
+      gameUrl: '/voidavoid',
       gamePageUrl: '/games/voidavoid'
     },
     {
@@ -37,7 +37,7 @@ const GamesLibrary: React.FC = () => {
       players: 'Single Player',
       rating: 4.6,
       playCount: 850,
-      gameUrl: '/TankaVOID',
+      gameUrl: '/tankavoid',
       gamePageUrl: '/games/tankavoid'
     },
     {
@@ -52,7 +52,7 @@ const GamesLibrary: React.FC = () => {
       players: 'Single Player',
       rating: 4.7,
       playCount: 950,
-      gameUrl: '/WreckaVOID',
+      gameUrl: '/wreckavoid',
       gamePageUrl: '/games/wreckavoid'
     },
     {
@@ -67,7 +67,7 @@ const GamesLibrary: React.FC = () => {
       players: 'Single Player',
       rating: 4.9,
       playCount: 750,
-      gameUrl: '/WORDaVOID',
+      gameUrl: '/wordavoid',
       gamePageUrl: '/games/wordavoid'
     }
   ]
