@@ -1,6 +1,7 @@
 [build]
   publish = "dist"
-  command = "npm run build"
+  # Build only working workspaces (excludes broken tanka-void)
+  command = "npm run build --workspace=@avoid/shared --workspace=@avoid/game-hub --workspace=@avoid/void-main --workspace=@avoid/word-avoid --workspace=@avoid/wreck-avoid --workspace=@avoid/wrecka-void"
 
 [build.environment]
   NODE_VERSION = "18"
