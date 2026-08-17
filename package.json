@@ -19,6 +19,10 @@
     "workspace:hub": "npm run dev --workspace=@avoid/game-hub",
     "workspace:platform": "npm run dev --workspace=@avoid/platform",
     "build:platform": "npm run build --workspace=@avoid/platform",
+    "build:platform:games": "npm run build --workspace=@avoid/void-main && npm run build --workspace=@avoid/wrecka-void && npm run build --workspace=@avoid/word-avoid",
+    "prepare:platform:games": "node apps/platform/scripts/prepare-games.mjs",
+    "build:platform:netlify": "npm run build:platform:games && npm run prepare:platform:games && npm run build:platform",
+    "build:platform:preview": "npm run build:platform:games && npm run prepare:platform:games && npm run build:preview --workspace=@avoid/platform",
     "workspace:tanka": "npm run dev --workspace=@avoid/tanka-void",
     "workspace:wrecka": "npm run dev --workspace=@avoid/wrecka-void",
     "workspace:word": "npm run dev --workspace=@avoid/word-avoid"
@@ -30,8 +34,8 @@
     "prettier": "^3.0.0"
   },
   "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=9.0.0"
+    "node": ">=20.19.0",
+    "npm": ">=10.0.0"
   },
   "author": "Shane Spencer",
   "license": "MIT"

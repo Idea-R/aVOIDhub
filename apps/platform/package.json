@@ -5,20 +5,23 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:preview": "cross-env AVOID_STATIC_EXPORT=1 next build",
+    "build:netlify": "npm run build:platform:netlify --prefix ../..",
     "start": "next start",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "framer-motion": "^12.23.24",
     "lucide-react": "^0.468.0",
-    "next": "16.0.10",
-    "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "next": "^16.3.1",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
   },
   "devDependencies": {
     "@types/node": "^22.16.0",
     "@types/react": "^19.2.3",
     "@types/react-dom": "^19.2.3",
+    "cross-env": "^10.1.0",
     "typescript": "^5.9.3"
   }
 }
