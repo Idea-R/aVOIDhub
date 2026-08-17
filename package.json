@@ -17,6 +17,8 @@
     "setup": "npm install && npm run build",
     "workspace:void": "npm run dev --workspace=@avoid/void-main",
     "workspace:hub": "npm run dev --workspace=@avoid/game-hub",
+    "workspace:platform": "npm run dev --workspace=@avoid/platform",
+    "build:platform": "npm run build --workspace=@avoid/platform",
     "workspace:tanka": "npm run dev --workspace=@avoid/tanka-void",
     "workspace:wrecka": "npm run dev --workspace=@avoid/wrecka-void",
     "workspace:word": "npm run dev --workspace=@avoid/word-avoid"
