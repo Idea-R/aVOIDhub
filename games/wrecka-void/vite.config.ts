@@ -12,12 +12,17 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
     sourcemap: false,
-    rollupOptions: {
+    rolldownOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          supabase: ['@supabase/supabase-js'],
-          game: ['lucide-react']
+        codeSplitting: {
+          groups: [{
+            name(moduleId) {
+              if (moduleId.includes('/node_modules/@supabase/')) return 'supabase';
+              if (moduleId.includes('/node_modules/lucide-react/')) return 'game';
+              if (/\/node_modules\/(react|react-dom)\//.test(moduleId)) return 'vendor';
+              return null;
+            }
+          }]
         }
       }
     }

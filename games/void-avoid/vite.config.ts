@@ -6,7 +6,17 @@ export default defineConfig({
   base: '/VOIDaVOID/',
   plugins: [react()],
   build: {
-    outDir: '../../dist/VOIDaVOID'
+    outDir: '../../dist/VOIDaVOID',
+    rolldownOptions: {
+      output: {
+        minify: {
+          compress: {
+            dropConsole: process.env.NODE_ENV === 'production',
+            dropDebugger: process.env.NODE_ENV === 'production'
+          }
+        }
+      }
+    }
   },
   server: {
     port: 5174,
@@ -15,8 +25,5 @@ export default defineConfig({
   },
   optimizeDeps: {
     exclude: ['lucide-react'],
-  },
-  esbuild: {
-    drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
   },
 });
