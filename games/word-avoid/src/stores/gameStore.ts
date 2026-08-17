@@ -1,8 +1,6 @@
 import { create } from 'zustand';
 import type { GameState, GameMode, Difficulty, Word, Player, GameStats, GameSettings, SkillWordType, DifficultyLevel, DigitAssaultChar } from '../types/game';
 import { getRandomWord, getRandomSkillWord, getRandomDigitChar, getDifficultyLevelByWPM, difficultyConfigs, getRandomGeometricPattern } from '../data/words';
-import { supabase } from '../lib/supabase';
-import { LeaderboardAPI } from '../api/leaderboard';
 
 interface GameStore extends GameState {
   // Actions
@@ -926,6 +924,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
       // Submit score to leaderboard if score > 0
       if (player.score > 0) {
+        const [{ supabase }, { LeaderboardAPI }] = await Promise.all([
+          import('../lib/supabase'),
+          import('../api/leaderboard'),
+        ]);
+
         const metadata = {
           wpm: player.wpm,
           accuracy: player.accuracy,

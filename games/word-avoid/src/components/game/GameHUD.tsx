@@ -91,6 +91,8 @@ export const GameHUD: React.FC<GameHUDProps> = ({ className = '' }) => {
         <div className="flex items-center space-x-2">
           {/* Audio Toggle */}
           <motion.button
+            type="button"
+            aria-label={masterVolume > 0 ? 'Mute audio' : 'Enable audio'}
             className="glass-panel p-3 rounded-lg hover:bg-white/10 transition-colors border-2 border-white/20"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -106,6 +108,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({ className = '' }) => {
           <NeonButton
             size="sm"
             variant="primary"
+            ariaLabel={isPaused ? 'Resume game' : 'Pause game'}
             onClick={handlePauseToggle}
           >
             {isPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
@@ -115,6 +118,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({ className = '' }) => {
           <NeonButton
             size="sm"
             variant="danger"
+            ariaLabel="End game"
             onClick={endGame}
           >
             <Square className="w-4 h-4" />

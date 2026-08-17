@@ -60,6 +60,8 @@
 - Verified the final Git-driven Linux deploy preview `6a83220801143400082cd2b0` at commit `1f38533c218d637db5d4cff523a74c9f89e19712`: the Next runtime completed successfully, deployed its server handler, processed all redirects and headers, and reported zero secret-scan findings.
 - Reverified the Linux preview shell and routes over HTTP, then confirmed VOIDaVOID renders two canvases, WreckaVOID renders its five-button start experience, and WORDaVOID renders its 16-button mode selector. Production remains on the restored February deploy.
 - Added a generated SVG application icon, install manifest, canonical metadata, Ideas Realized structured data, and sitemap entries for all three same-origin playable routes; no unverified Instagram account was invented.
+- Moved WORDaVOID's Tone audio engine behind the first real user gesture and its Supabase leaderboard client behind score submission, reducing initial JavaScript from 1,004.08 KB / 259.32 KB gzip to 547.68 KB / 140.86 KB gzip (45.5% raw and 45.7% gzip) while preserving both deferred features.
+- Browser-tested the optimized WORDaVOID menu, game launch, deferred Tone load, and audio initialization; added accessible names to its audio, pause/resume, and end-game HUD controls.
 
 ### Evidence
 
@@ -76,6 +78,7 @@
 - Public Lighthouse mobile and desktop audits against deploy `6a831c7d3c4ff63feb510e5c`
 - Git-driven Netlify Linux deploy preview `6a83220801143400082cd2b0`
 - Generated `/icon.svg`, `/manifest.webmanifest`, and four-entry `/sitemap.xml` in the static release build
+- WORDaVOID optimized build output plus live menu/game/audio browser verification
 - `docs/platform-rebuild.md`
 
 ### Current gate

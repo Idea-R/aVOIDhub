@@ -9,6 +9,7 @@ interface NeonButtonProps {
   disabled?: boolean;
   className?: string;
   glowIntensity?: 'low' | 'medium' | 'high';
+  ariaLabel?: string;
 }
 
 export const NeonButton: React.FC<NeonButtonProps> = ({
@@ -18,7 +19,8 @@ export const NeonButton: React.FC<NeonButtonProps> = ({
   size = 'md',
   disabled = false,
   className = '',
-  glowIntensity = 'medium'
+  glowIntensity = 'medium',
+  ariaLabel
 }) => {
   const variants = {
     primary: 'bg-gradient-to-r from-avoid-primary to-avoid-accent text-bg-primary',
@@ -41,6 +43,8 @@ export const NeonButton: React.FC<NeonButtonProps> = ({
 
   return (
     <motion.button
+      type="button"
+      aria-label={ariaLabel}
       className={`
         neon-button
         ${variants[variant]}

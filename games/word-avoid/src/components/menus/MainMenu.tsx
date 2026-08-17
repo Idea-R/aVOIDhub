@@ -23,14 +23,11 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   className = ''
 }) => {
   const { stats, loadPlayerStats, capsMode, shiftMode, toggleCapsMode } = useGameStore();
-  const { initializeAudio, isInitialized } = useAudioStore();
+  const isInitialized = useAudioStore((state) => state.isInitialized);
 
   useEffect(() => {
-    if (!isInitialized) {
-      initializeAudio();
-    }
     loadPlayerStats();
-  }, [initializeAudio, isInitialized, loadPlayerStats]);
+  }, [loadPlayerStats]);
 
   const gameModes = [
     {
@@ -308,11 +305,11 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                   <div className={`text-sm font-game-ui ${
                     isInitialized ? 'text-health-high' : 'text-medium'
                   }`}>
-                    Audio System: {isInitialized ? 'Ready' : 'Initializing...'}
+                    Audio System: {isInitialized ? 'Ready' : 'Ready on input'}
                   </div>
                   {!isInitialized && (
                     <div className="text-xs text-text-muted mt-1">
-                      Click anywhere to enable audio
+                      Click or press any key to enable audio
                     </div>
                   )}
                 </div>

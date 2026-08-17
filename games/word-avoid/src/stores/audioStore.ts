@@ -1,5 +1,7 @@
 import { create } from 'zustand';
-import * as Tone from 'tone';
+import type { Gain, NoiseSynth, Player, PolySynth, Synth } from 'tone';
+
+let audioInitialization: Promise<void> | null = null;
 
 interface AudioState {
   isInitialized: boolean;
@@ -9,19 +11,19 @@ interface AudioState {
   sfxVolume: number;
   
   // Audio nodes
-  masterGain: Tone.Gain | null;
-  musicGain: Tone.Gain | null;
-  sfxGain: Tone.Gain | null;
+  masterGain: Gain | null;
+  musicGain: Gain | null;
+  sfxGain: Gain | null;
   
   // Instruments
-  keyPressSynth: Tone.Synth | null;
-  wordCompleteSynth: Tone.PolySynth | null;
-  wordMissSynth: Tone.NoiseSynth | null;
+  keyPressSynth: Synth | null;
+  wordCompleteSynth: PolySynth | null;
+  wordMissSynth: NoiseSynth | null;
   
   // Music layers
-  ambientLayer: Tone.Player | null;
-  tensionLayer: Tone.Player | null;
-  actionLayer: Tone.Player | null;
+  ambientLayer: Player | null;
+  tensionLayer: Player | null;
+  actionLayer: Player | null;
   
   // Actions
   initializeAudio: () => Promise<void>;
@@ -55,55 +57,71 @@ export const useAudioStore = create<AudioState>((set, get) => ({
   tensionLayer: null,
   actionLayer: null,
 
-  initializeAudio: async () => {
-    try {
-      // Start Tone.js audio context
-      await Tone.start();
-      
-      // Create master gain nodes
-      const masterGain = new Tone.Gain(0).toDestination();
-      const musicGain = new Tone.Gain(0).connect(masterGain);
-      const sfxGain = new Tone.Gain(0).connect(masterGain);
-      
-      // Create synthesizers for sound effects
-      const keyPressSynth = new Tone.Synth({
-        oscillator: { type: 'triangle' },
-        envelope: { attack: 0.01, decay: 0.1, sustain: 0, release: 0.1 }
-      }).connect(sfxGain);
-      
-      const wordCompleteSynth = new Tone.PolySynth(Tone.Synth, {
-        oscillator: { type: 'sine' },
-        envelope: { attack: 0.02, decay: 0.3, sustain: 0.1, release: 0.5 }
-      }).connect(sfxGain);
-      
-      const wordMissSynth = new Tone.NoiseSynth({
-        noise: { type: 'white' },
-        envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.1 }
-      }).connect(sfxGain);
-      
-      // Create music layers (using simple oscillators for now)
-      // Disable oscillators for now to prevent buzzing
-      const ambientLayer = null;
-      const tensionLayer = null;
-      const actionLayer = null;
-      
-      set({
-        isInitialized: true,
-        masterGain,
-        musicGain,
-        sfxGain,
-        keyPressSynth,
-        wordCompleteSynth,
-        wordMissSynth,
-        ambientLayer,
-        tensionLayer,
-        actionLayer
-      });
-      
-      console.log('Audio system initialized successfully');
-    } catch (error) {
-      console.error('Failed to initialize audio:', error);
+  initializeAudio: () => {
+    if (get().isInitialized) {
+      return Promise.resolve();
     }
+
+    if (audioInitialization) {
+      return audioInitialization;
+    }
+
+    audioInitialization = (async () => {
+      try {
+        const Tone = await import('tone');
+
+        // Start Tone.js audio context
+        await Tone.start();
+      
+        // Create master gain nodes
+        const masterGain = new Tone.Gain(0).toDestination();
+        const musicGain = new Tone.Gain(0).connect(masterGain);
+        const sfxGain = new Tone.Gain(0).connect(masterGain);
+      
+        // Create synthesizers for sound effects
+        const keyPressSynth = new Tone.Synth({
+          oscillator: { type: 'triangle' },
+          envelope: { attack: 0.01, decay: 0.1, sustain: 0, release: 0.1 }
+        }).connect(sfxGain);
+      
+        const wordCompleteSynth = new Tone.PolySynth(Tone.Synth, {
+          oscillator: { type: 'sine' },
+          envelope: { attack: 0.02, decay: 0.3, sustain: 0.1, release: 0.5 }
+        }).connect(sfxGain);
+      
+        const wordMissSynth = new Tone.NoiseSynth({
+          noise: { type: 'white' },
+          envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.1 }
+        }).connect(sfxGain);
+      
+        // Create music layers (using simple oscillators for now)
+        // Disable oscillators for now to prevent buzzing
+        const ambientLayer = null;
+        const tensionLayer = null;
+        const actionLayer = null;
+      
+        set({
+          isInitialized: true,
+          masterGain,
+          musicGain,
+          sfxGain,
+          keyPressSynth,
+          wordCompleteSynth,
+          wordMissSynth,
+          ambientLayer,
+          tensionLayer,
+          actionLayer
+        });
+      
+        console.log('Audio system initialized successfully');
+      } catch (error) {
+        console.error('Failed to initialize audio:', error);
+      } finally {
+        audioInitialization = null;
+      }
+    })();
+
+    return audioInitialization;
   },
 
   setMasterVolume: (volume: number) => {
