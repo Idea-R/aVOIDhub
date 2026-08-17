@@ -65,11 +65,6 @@ function App() {
     startMusic();
   };
 
-  const handleRestartGame = () => {
-    resetGame();
-    setAppState('menu');
-  };
-
   const handleMainMenu = () => {
     resetGame();
     setAppState('menu');

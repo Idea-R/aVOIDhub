@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { GameState, GameMode, Difficulty, Word, Player, GameStats, GameSettings, SkillWordType, DifficultyLevel, DigitAssaultChar } from '../types/game';
+import type { GameState, GameMode, Difficulty, Word, Player, GameStats, GameSettings, DifficultyLevel, DigitAssaultChar } from '../types/game';
 import { getRandomWord, getRandomSkillWord, getRandomDigitChar, getDifficultyLevelByWPM, difficultyConfigs, getRandomGeometricPattern } from '../data/words';
 
 interface GameStore extends GameState {
@@ -300,10 +300,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const centerX = window.innerWidth / 2;
     const centerY = window.innerHeight / 2;
     
-    const difficultyConfig = difficultyConfigs[state.difficultyLevel];
-    const baseSpeed = 20; // Slower for geometric challenges
-    const speed = baseSpeed * difficultyConfig.speedMultiplier + (state.level * 1);
-    
     const newChallenge: GeometricChallenge = {
       id: `geometric-${Date.now()}-${Math.random()}`,
       pattern,
@@ -346,8 +342,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
       if (!word.isActive) return word;
 
       const newDistance = word.distance - (word.speed * deltaTime / 1000);
-      const progress = 1 - (newDistance / word.maxDistance);
-      
       return {
         ...word,
         distance: newDistance,
@@ -581,11 +575,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const score = Math.round(baseScore * difficultyConfig.scoreMultiplier);
       
       // Create explosion effect
-      if (typeof window !== 'undefined' && (window as any).createExplosion) {
+      if (typeof window !== 'undefined' && window.createExplosion) {
         const color = targetChar.type === 'symbol' ? '#ff0066' :
                      targetChar.type === 'capital' ? '#8b5cf6' :
                      targetChar.type === 'number' ? '#facc15' : '#00ff88';
-        (window as any).createExplosion(
+        window.createExplosion(
           targetChar.position.x, 
           targetChar.position.y, 
           1,
@@ -642,7 +636,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         const totalScore = Math.round((baseScore + timeBonus) * difficultyConfig.scoreMultiplier);
         
         // Create explosion effect
-        if (typeof window !== 'undefined' && (window as any).createExplosion) {
+        if (typeof window !== 'undefined' && window.createExplosion) {
           const color = {
             easy: '#4ade80',
             medium: '#facc15',
@@ -651,7 +645,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
             boss: '#8b5cf6'
           }[targetChallenge.pattern.difficulty];
           
-          (window as any).createExplosion(
+          window.createExplosion(
             targetChallenge.position.x, 
             targetChallenge.position.y, 
             targetChallenge.pattern.keys.length,
@@ -693,8 +687,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!word) return;
     
     // Create explosion effect
-    if (typeof window !== 'undefined' && (window as any).createExplosion) {
-      (window as any).createExplosion(
+    if (typeof window !== 'undefined' && window.createExplosion) {
+      window.createExplosion(
         word.position.x, 
         word.position.y, 
         word.text.length,
@@ -846,8 +840,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const state = get();
     const currentTime = Date.now();
     const gameTime = (currentTime - state.startTime) / 1000; // seconds
-    const totalChars = state.wordsTyped * 5; // Approximate characters
-    
     // Calculate WPM (words per minute)
     const wpm = gameTime > 0 ? Math.round((state.wordsTyped / gameTime) * 60) : 0;
     

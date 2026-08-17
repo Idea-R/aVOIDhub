@@ -188,7 +188,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
     wordMissSynth.triggerAttackRelease('8n');
   },
 
-  updateMusicIntensity: (intensity: number) => {
+  updateMusicIntensity: () => {
     // Disabled for now to prevent buzzing
     return;
   },

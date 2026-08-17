@@ -2055,7 +2055,7 @@ export const digitAssaultChars = {
 };
 
 export const getRandomDigitChar = (capsMode: boolean = false) => {
-  let charSets = [digitAssaultChars.letters, digitAssaultChars.numbers];
+  const charSets = [digitAssaultChars.letters, digitAssaultChars.numbers];
   
   if (capsMode) {
     charSets.push(digitAssaultChars.capitals);

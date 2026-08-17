@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Pause, Play, Square, Settings, Volume2, VolumeX } from 'lucide-react';
+import { Pause, Play, Square, Volume2, VolumeX } from 'lucide-react';
 import { GameTimer } from './GameTimer';
 import { DifficultyTracker } from './DifficultyTracker';
 import { HealthBar } from '../ui/HealthBar';
@@ -20,7 +20,6 @@ export const GameHUD: React.FC<GameHUDProps> = ({ className = '' }) => {
     isPlaying,
     isPaused,
     timeRemaining,
-    level,
     currentWord,
     capsMode,
     shiftMode,

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { RotateCcw, Home, Trophy, Share2 } from 'lucide-react';
+import { RotateCcw, Home, Share2 } from 'lucide-react';
 import { GlassPanel } from '../ui/GlassPanel';
 import { NeonButton } from '../ui/NeonButton';
 import { useGameStore } from '../../stores/gameStore';

@@ -62,6 +62,7 @@
 - Added a generated SVG application icon, install manifest, canonical metadata, Ideas Realized structured data, and sitemap entries for all three same-origin playable routes; no unverified Instagram account was invented.
 - Moved WORDaVOID's Tone audio engine behind the first real user gesture and its Supabase leaderboard client behind score submission, reducing initial JavaScript from 1,004.08 KB / 259.32 KB gzip to 547.68 KB / 140.86 KB gzip (45.5% raw and 45.7% gzip) while preserving both deferred features.
 - Browser-tested the optimized WORDaVOID menu, game launch, deferred Tone load, and audio initialization; added accessible names to its audio, pause/resume, and end-game HUD controls.
+- Cleared WORDaVOID's 31 legacy lint errors and five hook warnings with behavior-preserving typing and dead-code cleanup; lint, type-check, tests, production build, and live gameplay verification now all pass.
 
 ### Evidence
 
@@ -79,6 +80,7 @@
 - Git-driven Netlify Linux deploy preview `6a83220801143400082cd2b0`
 - Generated `/icon.svg`, `/manifest.webmanifest`, and four-entry `/sitemap.xml` in the static release build
 - WORDaVOID optimized build output plus live menu/game/audio browser verification
+- `npm run lint --workspace=@avoid/word-avoid`
 - `docs/platform-rebuild.md`
 
 ### Current gate

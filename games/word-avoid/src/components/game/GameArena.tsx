@@ -35,6 +35,8 @@ export const GameArena: React.FC<GameArenaProps> = ({ className = '' }) => {
   const lastSpawnTime = useRef(0);
   const animationFrame = useRef<number>();
   const lastTime = useRef(Date.now());
+  const wordCount = words?.length || 0;
+  const playerHealth = player?.health || 0;
 
   // Game loop
   useEffect(() => {
@@ -68,7 +70,7 @@ export const GameArena: React.FC<GameArenaProps> = ({ className = '' }) => {
       }
 
       // Update music intensity based on game state
-      const intensity = Math.min(1, (words?.length || 0) / 10 + (100 - (player?.health || 100)) / 100);
+      const intensity = Math.min(1, wordCount / 10 + (100 - playerHealth) / 100);
       updateMusicIntensity(intensity);
 
       animationFrame.current = requestAnimationFrame(gameLoop);
@@ -83,7 +85,7 @@ export const GameArena: React.FC<GameArenaProps> = ({ className = '' }) => {
         cancelAnimationFrame(animationFrame.current);
       }
     };
-  }, [isPlaying, isPaused, updateWords, updateDigitChars, updateGeometricChallenges, spawnWord, spawnDigitChar, spawnGeometricChallenge, spawnRate, words?.length || 0, digitChars?.length || 0, geometricChallenges?.length || 0, player?.health || 0, updateMusicIntensity, mode]);
+  }, [isPlaying, isPaused, updateWords, updateDigitChars, updateGeometricChallenges, spawnWord, spawnDigitChar, spawnGeometricChallenge, spawnRate, wordCount, playerHealth, updateMusicIntensity, mode]);
 
   // Calculate arena center
   const arenaCenter = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
