@@ -32,6 +32,7 @@
 - Reverified HTTP 200 for the shell, four catalog artworks, three bundled games, robots, sitemap, and all four external game domains.
 - Added immutable one-year caching for hashed Next and game-build assets, plus one-day caching with one-week stale revalidation for mutable catalog artwork.
 - Deployed caching-verified draft `6a83109532cefed8bede8fe4`; live response headers match the intended policies.
+- Pushed `codex/feature-next-platform-shell` to `Idea-R/aVOIDhub` and opened draft PR `#1`; `main` and production remain untouched.
 
 ### Evidence
 

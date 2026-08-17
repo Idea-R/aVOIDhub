@@ -37,6 +37,7 @@ Ship a production-ready rebuild of aVOIDgame.io that presents the verified catal
 
 - Repository worktree: `C:\dev\aVOID-next`
 - Branch: `codex/feature-next-platform-shell`
+- Draft PR: `https://github.com/Idea-R/aVOIDhub/pull/1`
 - Platform app: `apps/platform`
 - Production site: `https://avoidgame.io`
 
