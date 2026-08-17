@@ -69,4 +69,4 @@ Combine the editorial hierarchy of direction 01, the physical launch-control lan
 - Date: 2026-08-17
 - Status: accepted
 
-Move the active Vite workspaces to Vite 8 and the matching React plugin, remove unused vulnerable runtime dependencies, and keep the complete dependency audit clean. Preserve TankaVOID's source for a later rebuild, but do not stage or link it: its recovered prototype currently has incompatible gameplay APIs and does not pass TypeScript compilation.
+Move the buildable workspaces to the newest toolchain that passes both compilation and browser runtime checks, remove unused vulnerable runtime dependencies, and keep the complete dependency audit clean. Use Vite 8 for the hub, VOIDaVOID, and WreckaVOID. Keep WORDaVOID on Vite 7.3.6 with React plugin 4.7 because newer plugin generations compile but leave its current application blank at runtime. Preserve TankaVOID's source for a later rebuild, but do not stage or link it: its recovered prototype currently has incompatible gameplay APIs and does not pass TypeScript compilation.

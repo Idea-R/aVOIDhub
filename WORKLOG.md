@@ -39,13 +39,15 @@
 - Reverified the public shell, three bundled game routes, robots, sitemap, four catalog artworks, and all four external game domains; every request returned HTTP 200.
 - Confirmed the live browser supports the native view-timeline reveal, the scrolled reveal resolves to full opacity with no transform, and the hero artwork is loaded.
 - Audited the full monorepo dependency graph and found high-severity advisories in unused VOIDaVOID blob code and WreckaVOID router code, plus stale development bundlers.
-- Removed the unused `@vercel/blob` and WreckaVOID router dependencies, updated the retired hub's used router, and moved all five web workspaces to Vite 8.2.1 with the matching React plugin.
+- Removed the unused `@vercel/blob` and WreckaVOID router dependencies, updated the retired hub's used router, and moved the hub, VOIDaVOID, and WreckaVOID to Vite 8.2.1 with the matching React plugin.
 - Reconstructed VOIDaVOID's incomplete package manifest so its React, Supabase, icon, TypeScript, lint, and Vite imports are declared by the workspace that uses them.
 - Updated WORDaVOID to Vitest 4.1.10, separated its Supabase client from the browser entrypoint, removed the duplicate player reset key, and added a passing regression test for reset state.
-- Migrated WreckaVOID and WORDaVOID from removed object-style `manualChunks` behavior to Vite 8/Rolldown code-splitting groups.
-- Reduced VOIDaVOID's production JavaScript from 544.20 KB / 142.68 KB gzip to 425.60 KB / 112.28 KB gzip and split WORDaVOID's former 1.10 MB monolith into cacheable chunks no larger than 345.26 KB.
+- Migrated WreckaVOID from removed object-style `manualChunks` behavior to Vite 8/Rolldown code-splitting groups.
+- Reduced VOIDaVOID's production JavaScript from 544.20 KB / 142.68 KB gzip to 425.60 KB / 112.28 KB gzip.
 - Refreshed Browserslist compatibility data without changing target browsers; the complete production and development npm audit now reports zero vulnerabilities.
 - Confirmed TankaVOID is still a non-buildable prototype with incompatible gameplay APIs; it remains deliberately unlinked and excluded from the staged platform games.
+- Caught a blank WORDaVOID page in the live browser after the first Vite 8 preview despite successful builds and HTTP checks; isolated the incompatibility to React plugin 5/6 and pinned that workspace to Vite 7.3.6 with plugin 4.7.0.
+- Rebuilt and deployed corrected draft `6a83193487024b29b1019126`; browser runtime checks confirm the platform shell, VOIDaVOID canvases, WreckaVOID start screen, and WORDaVOID mode selector all render.
 
 ### Evidence
 
@@ -58,7 +60,7 @@
 - `npm audit`
 - `npm run type-check --workspace=@avoid/word-avoid`
 - `npm test --workspace=@avoid/word-avoid -- --run`
-- Independent Vite 8 builds for the hub, VOIDaVOID, WreckaVOID, and WORDaVOID
+- Independent supported-toolchain builds for the hub, VOIDaVOID, WreckaVOID, and WORDaVOID
 - `docs/platform-rebuild.md`
 
 ### Current blocker
