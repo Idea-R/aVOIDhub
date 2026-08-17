@@ -48,7 +48,7 @@ export default function HomePage() {
           <div className="orbit orbitTwo" />
           <div className="heroImageWrap">
             <Image
-              src="/avoid-hero.png"
+              src="/avoid-hero.webp"
               alt=""
               fill
               priority

@@ -13,14 +13,14 @@ export const metadata: Metadata = {
     description: 'Play the aVOID originals and discover other games by Ideas Realized.',
     url: 'https://avoidgame.io',
     siteName: 'aVOIDgame.io',
-    images: [{ url: '/avoid-hero.png', width: 1024, height: 1024 }],
+    images: [{ url: '/avoid-hero.webp', width: 900, height: 900 }],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'aVOIDgame.io — Small games. Sharp ideas.',
     description: 'Play the aVOID originals and discover other games by Ideas Realized.',
-    images: ['/avoid-hero.png'],
+    images: ['/avoid-hero.webp'],
   },
 }
 
