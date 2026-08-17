@@ -59,6 +59,7 @@
 - A legacy Netlify build API call ignored its requested branch and rebuilt the existing `main` commit as production. It never published the candidate; the exact prior production deploy `6980919035d9cae6748f9f58` was immediately restored and the normalized live HTML was verified against its immutable permalink.
 - Verified the final Git-driven Linux deploy preview `6a83220801143400082cd2b0` at commit `1f38533c218d637db5d4cff523a74c9f89e19712`: the Next runtime completed successfully, deployed its server handler, processed all redirects and headers, and reported zero secret-scan findings.
 - Reverified the Linux preview shell and routes over HTTP, then confirmed VOIDaVOID renders two canvases, WreckaVOID renders its five-button start experience, and WORDaVOID renders its 16-button mode selector. Production remains on the restored February deploy.
+- Added a generated SVG application icon, install manifest, canonical metadata, Ideas Realized structured data, and sitemap entries for all three same-origin playable routes; no unverified Instagram account was invented.
 
 ### Evidence
 
@@ -74,6 +75,7 @@
 - Independent supported-toolchain builds for the hub, VOIDaVOID, WreckaVOID, and WORDaVOID
 - Public Lighthouse mobile and desktop audits against deploy `6a831c7d3c4ff63feb510e5c`
 - Git-driven Netlify Linux deploy preview `6a83220801143400082cd2b0`
+- Generated `/icon.svg`, `/manifest.webmanifest`, and four-entry `/sitemap.xml` in the static release build
 - `docs/platform-rebuild.md`
 
 ### Current gate

@@ -1,13 +1,36 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import './globals.css'
+
+const websiteSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'aVOIDgame.io',
+  url: 'https://avoidgame.io/',
+  description: 'Independent browser games from Ideas Realized.',
+  creator: {
+    '@type': 'Organization',
+    name: 'Ideas Realized',
+    url: 'https://ideas-realized.com/',
+    sameAs: [
+      'https://www.linkedin.com/company/ideas-realized',
+      'https://www.facebook.com/ideasrealizedai',
+      'https://twitter.com/Xentrilo',
+    ],
+  },
+}
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://avoidgame.io'),
+  applicationName: 'aVOIDgame.io',
   title: {
     default: 'aVOIDgame.io — Small games. Sharp ideas.',
     template: '%s | aVOIDgame.io',
   },
   description: 'Play the aVOID originals and discover other games by Ideas Realized.',
+  alternates: {
+    canonical: '/',
+  },
+  manifest: '/manifest.webmanifest',
   openGraph: {
     title: 'aVOIDgame.io — Small games. Sharp ideas.',
     description: 'Play the aVOID originals and discover other games by Ideas Realized.',
@@ -24,10 +47,20 @@ export const metadata: Metadata = {
   },
 }
 
+export const viewport: Viewport = {
+  themeColor: '#f4f0e8',
+}
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+        />
+        {children}
+      </body>
     </html>
   )
 }
