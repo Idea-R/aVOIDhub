@@ -1,4 +1,5 @@
-import { ArrowDown, ArrowRight, BadgeCheck, Crown, Gamepad2, Heart, Library, Trophy, UserRound } from 'lucide-react'
+import Image from 'next/image'
+import { ArrowDown, ArrowRight, BadgeCheck, Crown, Gamepad2, Heart, Trophy, UserRound } from 'lucide-react'
 import { GameCard } from '@/components/GameCard'
 import { Reveal } from '@/components/Reveal'
 import { SiteHeader } from '@/components/SiteHeader'
@@ -15,9 +16,18 @@ export default function HomePage() {
     <main id="top">
       <SiteHeader />
 
+      <aside className="signalRail sectionFrame" aria-label="Platform status">
+        <span className="signalLive"><span className="signalDot" aria-hidden="true" /> Directory online</span>
+        <span>Hosted <strong>04</strong></span>
+        <span>Elsewhere <strong>03</strong></span>
+        <span>Queued <strong>01</strong></span>
+        <span className="signalCode">AVD / ONLINE</span>
+      </aside>
+
       <section className="hero sectionFrame" aria-labelledby="hero-title">
         <div className="heroCopy">
-          <p className="kicker"><span /> Independent arcade · Ideas Realized</p>
+          <p className="kicker"><span /> Game directory · Ideas Realized</p>
+          <p className="heroCommand" aria-hidden="true"><span>///</span> play what&apos;s live</p>
           <h1 id="hero-title">Small games.<br /><em>Sharp ideas.</em></h1>
           <p className="heroLead">Play the aVOID originals, find the side projects, and watch this odd little arcade grow into a home for independent web games.</p>
           <div className="heroActions">
@@ -32,12 +42,21 @@ export default function HomePage() {
         </div>
 
         <div className="heroStage" aria-label="aVOID Games artwork">
+          <span className="stageCoordinate stageCoordinateTop" aria-hidden="true">ORBIT / 04</span>
+          <span className="stageCoordinate stageCoordinateBottom" aria-hidden="true">SIGNAL STABLE</span>
           <div className="orbit orbitOne" />
           <div className="orbit orbitTwo" />
           <div className="heroImageWrap">
-            {/* Deliberately a CSS background: it remains decorative and crops cleanly on narrow screens. */}
+            <Image
+              src="/avoid-hero.png"
+              alt=""
+              fill
+              priority
+              sizes="(max-width: 760px) 88vw, 470px"
+              className="heroImage"
+            />
           </div>
-          <div className="heroTicket heroTicketTop"><span className="liveDot" /> No fake player counts</div>
+          <div className="heroTicket heroTicketTop"><span className="liveDot" /> Directory verified</div>
           <div className="heroTicket heroTicketBottom"><strong>PLAY WHAT&apos;S LIVE</strong><span>Everything else says so.</span></div>
         </div>
       </section>
@@ -51,6 +70,12 @@ export default function HomePage() {
               <p>Fast browser games with direct controls, strange rules, and no download ceremony.</p>
             </div>
           </Reveal>
+          <div className="catalogTelemetry" aria-label="Original game catalog status">
+            <span><i aria-hidden="true" /> Hosted collection</span>
+            <span>04 live</span>
+            <span>01 queued</span>
+            <span className="telemetryRule" aria-hidden="true" />
+          </div>
           <div className="originalGrid">
             {originalGames.map((game, index) => <GameCard key={game.id} game={game} index={index} />)}
           </div>
@@ -109,7 +134,7 @@ export default function HomePage() {
 
       <footer className="siteFooter">
         <div className="sectionFrame footerGrid">
-          <div><span className="brand footerBrand"><span className="brandMark">aV</span><span>aVOIDgame.io</span></span><p>Independent browser games from Ideas Realized.</p></div>
+          <div><span className="brand footerBrand"><span className="brandMark"><span>a</span>V</span><span className="brandWord"><span className="brandA">a</span><span className="brandVoid">VOID</span>game.io</span></span><p>Independent browser games from Ideas Realized.</p></div>
           <div className="footerLinks"><span>Explore</span><a href="#games">Games</a><a href="#creators">Creators</a><a href="https://ideas-realized.com/" target="_blank" rel="noreferrer">Ideas Realized ↗</a></div>
           <div className="footerLinks"><span>Social</span><a href="https://www.linkedin.com/company/ideas-realized" target="_blank" rel="noreferrer">LinkedIn ↗</a><a href="https://www.facebook.com/ideasrealizedai" target="_blank" rel="noreferrer">Facebook ↗</a><a href="https://twitter.com/Xentrilo" target="_blank" rel="noreferrer">X ↗</a></div>
           <div className="footerNote"><Gamepad2 size={18} /><span>Built for keyboards, mice, touchscreens, and the occasional terrible decision.</span></div>

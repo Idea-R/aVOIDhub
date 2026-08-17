@@ -1,5 +1,5 @@
 import Image from 'next/image'
-import { ArrowUpRight, Clock3, Play } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, Clock3, Play } from 'lucide-react'
 import type { Game } from '@/data/games'
 
 type GameCardProps = {
@@ -11,7 +11,7 @@ type GameCardProps = {
 export function GameCard({ game, index, compact = false }: GameCardProps) {
   const content = (
     <>
-      <div className="gameCardVisual" style={{ '--accent': game.accent } as React.CSSProperties}>
+      <div className="gameCardVisual" data-status={game.status} style={{ '--accent': game.accent } as React.CSSProperties}>
         {game.image ? (
           <Image
             src={game.image}
@@ -28,11 +28,18 @@ export function GameCard({ game, index, compact = false }: GameCardProps) {
           {game.status === 'soon' ? <Clock3 size={13} /> : game.status === 'external' ? <ArrowUpRight size={13} /> : <Play size={12} fill="currentColor" />}
           {game.meta}
         </span>
+        <span className="gameLaunchKey" aria-hidden="true">
+          {game.status === 'soon' ? <Clock3 /> : game.status === 'external' ? <ArrowUpRight /> : <Play fill="currentColor" />}
+        </span>
       </div>
       <div className="gameCardCopy">
         <p>{game.eyebrow}</p>
         <h3>{game.title}</h3>
-        <span>{game.description}</span>
+        <span className="gameDescription">{game.description}</span>
+        <span className="gameAction" aria-hidden="true">
+          {game.status === 'soon' ? 'Hold position' : game.status === 'external' ? 'Visit game' : 'Launch game'}
+          {game.status === 'soon' ? <Clock3 /> : <ArrowRight />}
+        </span>
       </div>
     </>
   )

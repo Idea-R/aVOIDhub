@@ -52,6 +52,7 @@ export const originalGames: Game[] = [
     eyebrow: 'Arena stunt driving',
     description: 'Flip the car, land the line, and turn a tiny arena into a very bad idea.',
     href: 'https://flipside.avoidgame.io/',
+    image: '/games/flipside.png',
     status: 'playable',
     accent: '#9dff50',
     meta: 'Play on aVOID',

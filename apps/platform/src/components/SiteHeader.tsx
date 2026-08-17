@@ -26,8 +26,8 @@ export function SiteHeader() {
   return (
     <header className="siteHeader">
       <a className="brand" href="#top" aria-label="aVOIDgame.io home">
-        <span className="brandMark">aV</span>
-        <span>aVOIDgame.io</span>
+        <span className="brandMark"><span>a</span>V</span>
+        <span className="brandWord"><span className="brandA">a</span><span className="brandVoid">VOID</span>game.io</span>
       </a>
 
       <nav className="desktopNav" aria-label="Primary navigation">
