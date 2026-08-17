@@ -63,3 +63,10 @@ Move the platform to Next.js 16.3.1 and React 19.2.8 to clear known production a
 - Status: accepted as working direction pending user review
 
 Combine the editorial hierarchy of direction 01, the physical launch-control language of direction 05, and the restrained telemetry and grid linework of direction 06. Avoid fake leaderboards, fake profile activity, and decorative controls that imply unavailable functionality.
+
+## D-010 — Modernize the buildable games without presenting TankaVOID as finished
+
+- Date: 2026-08-17
+- Status: accepted
+
+Move the active Vite workspaces to Vite 8 and the matching React plugin, remove unused vulnerable runtime dependencies, and keep the complete dependency audit clean. Preserve TankaVOID's source for a later rebuild, but do not stage or link it: its recovered prototype currently has incompatible gameplay APIs and does not pass TypeScript compilation.
