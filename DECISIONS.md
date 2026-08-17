@@ -70,3 +70,10 @@ Combine the editorial hierarchy of direction 01, the physical launch-control lan
 - Status: accepted
 
 Move the buildable workspaces to the newest toolchain that passes both compilation and browser runtime checks, remove unused vulnerable runtime dependencies, and keep the complete dependency audit clean. Use Vite 8 for the hub, VOIDaVOID, and WreckaVOID. Keep WORDaVOID on Vite 7.3.6 with React plugin 4.7 because newer plugin generations compile but leave its current application blank at runtime. Preserve TankaVOID's source for a later rebuild, but do not stage or link it: its recovered prototype currently has incompatible gameplay APIs and does not pass TypeScript compilation.
+
+## D-011 — Ship display-sized WebP artwork in addition to source PNGs
+
+- Date: 2026-08-17
+- Status: accepted
+
+Use pre-compressed WebP assets for the platform hero and catalog cards so the Windows static-review build does not depend on Next's runtime image optimizer. Keep the original PNG source assets available for future art direction and regeneration. The release candidate reduces the six requested images from 7.92 MB to 560 KB while the normal Netlify Next runtime remains free to optimize them further.

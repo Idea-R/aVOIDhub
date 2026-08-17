@@ -53,9 +53,9 @@ Ship a production-ready rebuild of aVOIDgame.io that presents the verified catal
 2. **Visual direction — complete.** Researched six reference sites and generated six distinct desktop/mobile concept boards.
 3. **Dependency modernization — complete.** Updated the platform to Next 16.3.1 and React 19.2.8; moved compatible workspaces to Vite 8.2.1 while retaining WORDaVOID on its verified Vite 7/plugin 4 line; removed unused vulnerable dependencies; reconstructed VOIDaVOID's manifest; and cleared the complete npm audit.
 4. **Netlify preview — complete.** Linked the existing site, preserved the three bundled game routes, and deployed a Windows-safe draft export.
-5. **Preview verification — active.** The refined shell, bundled games, local artwork, related domains, metadata routes, responsive layout, semantic structure, Tanka state, cache policy, and native-motion performance pass are verified; the final Core Web Vitals trace remains.
+5. **Preview verification — complete.** The refined shell, bundled games, local artwork, related domains, metadata routes, responsive layout, semantic structure, Tanka state, cache policy, native motion, accessibility, and Lighthouse performance are verified.
 6. **Production decision — gated.** Review the chosen visual direction and verified preview before switching production.
 
 ## Current next action
 
-Review the refined live draft and choose an approved trace path for final Core Web Vitals evidence before production approval.
+Review the verified release-candidate draft and approve or request changes before production rollout.

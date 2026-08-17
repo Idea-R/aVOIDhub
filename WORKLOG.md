@@ -48,6 +48,12 @@
 - Confirmed TankaVOID is still a non-buildable prototype with incompatible gameplay APIs; it remains deliberately unlinked and excluded from the staged platform games.
 - Caught a blank WORDaVOID page in the live browser after the first Vite 8 preview despite successful builds and HTTP checks; isolated the incompatibility to React plugin 5/6 and pinned that workspace to Vite 7.3.6 with plugin 4.7.0.
 - Rebuilt and deployed corrected draft `6a83193487024b29b1019126`; browser runtime checks confirm the platform shell, VOIDaVOID canvases, WreckaVOID start screen, and WORDaVOID mode selector all render.
+- Replaced opacity-based scroll reveals with transform-only motion and corrected the remaining muted label colors to WCAG AA contrast.
+- Made the animated Play/Publish split control expose a real background on its active half so automated and assistive tooling can resolve the intended contrast.
+- Converted the six platform hero/catalog images from 7.92 MB of PNG sources to 560 KB of display-sized WebP assets, a 92.9% transfer reduction while retaining the PNG originals in repository history.
+- Deployed release-candidate draft `6a831c7d3c4ff63feb510e5c` and verified the optimized shell in a live browser.
+- Refreshed the draft configuration as deploy `6a831d22a694d2419845f423`; the stable preview alias now serves the WebP hero with the intended one-day cache and one-week stale revalidation policy.
+- Captured public Lighthouse 13.4.1 evidence: mobile 96 performance / 100 accessibility / 100 best practices / 100 SEO, with 1.6 s FCP, 2.2 s LCP, 30 ms TBT, and 0 CLS; desktop 99 / 100 / 100 / 100, with 0.3 s FCP, 0.6 s LCP, 20 ms TBT, and 0 CLS.
 
 ### Evidence
 
@@ -61,12 +67,13 @@
 - `npm run type-check --workspace=@avoid/word-avoid`
 - `npm test --workspace=@avoid/word-avoid -- --run`
 - Independent supported-toolchain builds for the hub, VOIDaVOID, WreckaVOID, and WORDaVOID
+- Public Lighthouse mobile and desktop audits against deploy `6a831c7d3c4ff63feb510e5c`
 - `docs/platform-rebuild.md`
 
-### Current blocker
+### Current gate
 
-The required Chrome DevTools performance-trace MCP is disabled, so Core Web Vitals evidence is still pending. A paid PageSpeed fallback was found but not invoked because paid resources require explicit approval. Production remains intentionally unchanged until performance evidence and rollout approval are complete.
+The production deploy and merge remain intentionally unchanged until the user reviews the release candidate and explicitly approves rollout.
 
 ### Next action
 
-Review the refined draft, capture the final Core Web Vitals trace when an approved trace path is available, resolve any material findings, then request production approval.
+Review the refined draft, then approve or request changes before the production deploy and merge.
