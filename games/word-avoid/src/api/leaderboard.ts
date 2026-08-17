@@ -1,4 +1,4 @@
-import { supabase } from '../main';
+import { supabase } from '../lib/supabase';
 
 const GAME_KEY = 'wordavoid';
 

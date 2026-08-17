@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { GameState, GameMode, Difficulty, Word, Player, GameStats, GameSettings, SkillWordType, DifficultyLevel, DigitAssaultChar } from '../types/game';
 import { getRandomWord, getRandomSkillWord, getRandomDigitChar, getDifficultyLevelByWPM, difficultyConfigs, getRandomGeometricPattern } from '../data/words';
-import { supabase } from '../main';
+import { supabase } from '../lib/supabase';
 import { LeaderboardAPI } from '../api/leaderboard';
 
 interface GameStore extends GameState {
@@ -164,7 +164,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
     wordsTyped: 0,
     wordsSpawned: 0,
     words: [],
-    player: { ...initialPlayer },
     level: 1,
     waveNumber: 1,
     currentWord: '',
