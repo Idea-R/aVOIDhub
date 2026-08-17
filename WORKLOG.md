@@ -33,6 +33,11 @@
 - Added immutable one-year caching for hashed Next and game-build assets, plus one-day caching with one-week stale revalidation for mutable catalog artwork.
 - Deployed caching-verified draft `6a83109532cefed8bede8fe4`; live response headers match the intended policies.
 - Pushed `codex/feature-next-platform-shell` to `Idea-R/aVOIDhub` and opened draft PR `#1`; `main` and production remain untouched.
+- Removed the single-use Framer Motion runtime from the platform shell and replaced it with a progressive native CSS reveal that preserves reduced-motion behavior.
+- Reduced initial review-build CSS/JS from 708.6 KB raw / 219.5 KB gzip to 592.2 KB raw / 181.9 KB gzip, saving 116.4 KB raw and 37.6 KB gzip (about 17.1%).
+- Deployed the native-motion revision as draft `6a83129b27906932b1a037d2` at the stable review alias.
+- Reverified the public shell, three bundled game routes, robots, sitemap, four catalog artworks, and all four external game domains; every request returned HTTP 200.
+- Confirmed the live browser supports the native view-timeline reveal, the scrolled reveal resolves to full opacity with no transform, and the hero artwork is loaded.
 
 ### Evidence
 
@@ -41,6 +46,7 @@
 - `npm run build:platform:netlify`
 - `npm run build:platform:preview`
 - `npm audit --omit=dev --workspace=@avoid/platform`
+- Public HTTP route and cache-header verification against deploy `6a83129b27906932b1a037d2`
 - `docs/platform-rebuild.md`
 
 ### Current blocker
@@ -49,4 +55,4 @@ The required Chrome DevTools performance-trace MCP is disabled, so Core Web Vita
 
 ### Next action
 
-Capture the final Core Web Vitals trace, resolve any material findings, then request production approval.
+Review the refined draft, capture the final Core Web Vitals trace when an approved trace path is available, resolve any material findings, then request production approval.
