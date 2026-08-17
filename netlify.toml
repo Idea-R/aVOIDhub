@@ -1,17 +1,16 @@
 [build]
-  base = "apps/platform"
-  command = "npm run build:netlify"
-  publish = ".next"
+  command = "npm run build:platform:netlify"
+  publish = "apps/platform/.next"
 
 [build.environment]
   NODE_VERSION = "22"
   NPM_VERSION = "10"
 
 [context.deploy-preview]
-  command = "npm run build:netlify"
+  command = "npm run build:platform:netlify"
 
 [context.branch-deploy]
-  command = "npm run build:netlify"
+  command = "npm run build:platform:netlify"
 
 # Preserve the verified public game URLs while their Vite bundles remain
 # independent from the Next.js platform shell. Specific rules must precede
