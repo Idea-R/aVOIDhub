@@ -12,6 +12,9 @@
 [context.branch-deploy]
   command = "npm run build:platform:netlify"
 
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
 # Preserve the verified public game URLs while their Vite bundles remain
 # independent from the Next.js platform shell. Specific rules must precede
 # the Next runtime's generated catch-all routes.
