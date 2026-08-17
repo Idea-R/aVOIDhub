@@ -22,6 +22,14 @@
 - Added an explicit static-export review mode for local Windows draft deployments while retaining the normal Next runtime configuration for Netlify's Linux production builds and future server features.
 - Deployed and verified draft `6a830b9207ce5828543731a7` at `https://avoid-platform-preview--coruscating-squirrel-a47ad9.netlify.app`.
 - Confirmed HTTP 200 for the shell, all three bundled games, robots, sitemap, FLIPSIDE, Bloomfall, Acrolis Crawlers, and ttt3d.app.
+- Folded the recommended visual blend into the production candidate: editorial hierarchy, tactile launch controls, darker terminal-grid catalog surfaces, live directory telemetry, and a higher-contrast two-color wordmark.
+- Replaced the CSS hero background with a priority `next/image` asset so the normal Netlify runtime can optimize the production LCP image.
+- Found and fixed static-review artwork failures by disabling Next image optimization only when `AVOID_STATIC_EXPORT=1`; direct artwork URLs now return HTTP 200.
+- Recovered FLIPSIDE's public social artwork from its verified domain and added it to the hosted catalog.
+- Verified the refined 390 × 844 mobile composition using an isolated iframe viewport and checked the complete semantic tree at that width.
+- Raised small-action contrast to measured ratios of 6.27:1 for primary controls, 5.12:1 and 4.52:1 for the brand colors, and 7.48:1 for external-card actions.
+- Deployed refined draft `6a830fc14c35c43909a37982` at `https://avoid-platform-preview--coruscating-squirrel-a47ad9.netlify.app`.
+- Reverified HTTP 200 for the shell, four catalog artworks, three bundled games, robots, sitemap, and all four external game domains.
 
 ### Evidence
 
@@ -34,8 +42,8 @@
 
 ### Current blocker
 
-No implementation blocker. Production remains intentionally unchanged until the draft design and rollback path are approved.
+The required Chrome DevTools performance-trace MCP is disabled, so Core Web Vitals evidence is still pending. A paid PageSpeed fallback was found but not invoked because paid resources require explicit approval. Production remains intentionally unchanged until performance evidence and rollout approval are complete.
 
 ### Next action
 
-Review the draft and mockup directions, implement the selected refinement, and complete performance QA before requesting production approval.
+Capture the final Core Web Vitals trace, resolve any material findings, then request production approval.

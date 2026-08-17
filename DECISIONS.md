@@ -56,3 +56,10 @@ Netlify Next Runtime 5.15.13 generated invalid Lambda import paths when the mono
 - Status: accepted
 
 Move the platform to Next.js 16.3.1 and React 19.2.8 to clear known production advisories. Hold TypeScript 7, Framer Motion 13, Lucide 1.x, and Node type 26 migrations until each can be isolated and verified on its own merits.
+
+## D-009 — Build the production candidate from directions 01, 05, and 06
+
+- Date: 2026-08-17
+- Status: accepted as working direction pending user review
+
+Combine the editorial hierarchy of direction 01, the physical launch-control language of direction 05, and the restrained telemetry and grid linework of direction 06. Avoid fake leaderboards, fake profile activity, and decorative controls that imply unavailable functionality.
