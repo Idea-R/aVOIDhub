@@ -38,6 +38,7 @@ Ship a production-ready rebuild of aVOIDgame.io that presents the verified catal
 - Repository worktree: `C:\dev\aVOID-next`
 - Branch: `codex/feature-next-platform-shell`
 - Draft PR: `https://github.com/Idea-R/aVOIDhub/pull/1`
+- Git-driven preview: `https://deploy-preview-1--coruscating-squirrel-a47ad9.netlify.app`
 - Platform app: `apps/platform`
 - Production site: `https://avoidgame.io`
 
@@ -53,7 +54,7 @@ Ship a production-ready rebuild of aVOIDgame.io that presents the verified catal
 2. **Visual direction — complete.** Researched six reference sites and generated six distinct desktop/mobile concept boards.
 3. **Dependency modernization — complete.** Updated the platform to Next 16.3.1 and React 19.2.8; moved compatible workspaces to Vite 8.2.1 while retaining WORDaVOID on its verified Vite 7/plugin 4 line; removed unused vulnerable dependencies; reconstructed VOIDaVOID's manifest; and cleared the complete npm audit.
 4. **Netlify preview — complete.** Linked the existing site, preserved the three bundled game routes, and deployed a Windows-safe draft export.
-5. **Preview verification — complete.** The refined shell, bundled games, local artwork, related domains, metadata routes, responsive layout, semantic structure, Tanka state, cache policy, native motion, accessibility, and Lighthouse performance are verified.
+5. **Preview verification — complete.** The refined shell, bundled games, local artwork, related domains, metadata routes, responsive layout, semantic structure, Tanka state, cache policy, native motion, accessibility, Lighthouse performance, and Git-driven Netlify Linux build are verified.
 6. **Production decision — gated.** Review the chosen visual direction and verified preview before switching production.
 
 ## Current next action

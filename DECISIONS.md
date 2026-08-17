@@ -77,3 +77,10 @@ Move the buildable workspaces to the newest toolchain that passes both compilati
 - Status: accepted
 
 Use pre-compressed WebP assets for the platform hero and catalog cards so the Windows static-review build does not depend on Next's runtime image optimizer. Keep the original PNG source assets available for future art direction and regeneration. The release candidate reduces the six requested images from 7.92 MB to 560 KB while the normal Netlify Next runtime remains free to optimize them further.
+
+## D-012 — Build the Netlify site from the monorepo root
+
+- Date: 2026-08-17
+- Status: accepted
+
+Install dependencies and run the platform/game build orchestration from the repository root so every npm workspace receives its declared tools. Keep `apps/platform` as Netlify's package directory, publish `apps/platform/.next`, and declare the bundled Next runtime explicitly because this pre-existing site's framework detector otherwise treats the root workspace as an unknown framework. This arrangement is verified by the Git-driven Linux deploy preview at commit `1f38533`.

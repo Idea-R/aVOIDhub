@@ -54,6 +54,11 @@
 - Deployed release-candidate draft `6a831c7d3c4ff63feb510e5c` and verified the optimized shell in a live browser.
 - Refreshed the draft configuration as deploy `6a831d22a694d2419845f423`; the stable preview alias now serves the WebP hero with the intended one-day cache and one-week stale revalidation policy.
 - Captured public Lighthouse 13.4.1 evidence: mobile 96 performance / 100 accessibility / 100 best practices / 100 SEO, with 1.6 s FCP, 2.2 s LCP, 30 ms TBT, and 0 CLS; desktop 99 / 100 / 100 / 100, with 0.3 s FCP, 0.6 s LCP, 20 ms TBT, and 0 CLS.
+- Inspected the Git-connected Netlify deploy path and found that PR deploy `6a831d8c3a2383000810412a` failed because the former `apps/platform` base directory installed only that workspace before trying to build sibling Vite games.
+- Moved the Netlify build command and dependency installation to the monorepo root, retained `apps/platform` as the package directory, and made the bundled Next runtime explicit so Netlify processes `.next` instead of uploading it as an ordinary directory.
+- A legacy Netlify build API call ignored its requested branch and rebuilt the existing `main` commit as production. It never published the candidate; the exact prior production deploy `6980919035d9cae6748f9f58` was immediately restored and the normalized live HTML was verified against its immutable permalink.
+- Verified the final Git-driven Linux deploy preview `6a83220801143400082cd2b0` at commit `1f38533c218d637db5d4cff523a74c9f89e19712`: the Next runtime completed successfully, deployed its server handler, processed all redirects and headers, and reported zero secret-scan findings.
+- Reverified the Linux preview shell and routes over HTTP, then confirmed VOIDaVOID renders two canvases, WreckaVOID renders its five-button start experience, and WORDaVOID renders its 16-button mode selector. Production remains on the restored February deploy.
 
 ### Evidence
 
@@ -68,6 +73,7 @@
 - `npm test --workspace=@avoid/word-avoid -- --run`
 - Independent supported-toolchain builds for the hub, VOIDaVOID, WreckaVOID, and WORDaVOID
 - Public Lighthouse mobile and desktop audits against deploy `6a831c7d3c4ff63feb510e5c`
+- Git-driven Netlify Linux deploy preview `6a83220801143400082cd2b0`
 - `docs/platform-rebuild.md`
 
 ### Current gate
