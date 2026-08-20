@@ -5,7 +5,7 @@
 - **Repository:** `C:\dev\aVOID-next` / `Idea-R/aVOIDhub`
 - **Production baseline:** `https://avoidgame.io` at merge commit `7cd9788`
 - **Program branch:** `codex/docs-v1-completion-program`
-- **Current execution branch:** `security/platform-foundation-v1`
+- **Current execution branch:** `codex/fix-wreckavoid-v1-baseline` (stacked on `security/platform-foundation-v1`)
 - **Related records:** [`ROADMAP.md`](../ROADMAP.md), [`WORKLOG.md`](../WORKLOG.md), [`DECISIONS.md`](../DECISIONS.md)
 
 ## 1. Why this document exists
@@ -49,6 +49,8 @@ It is intentionally stricter than “the page loads.” Every V1 definition incl
 - `supabase/tests/database/platform_foundation.sql` contains 50 database assertions, and `npm run test:foundation` verifies the required migration shape locally.
 - Executable SQL, role, run-replay, signup, and advisor testing is still pending on the approval-gated Supabase development branch. Local preparation is not P1 completion.
 - The exact branch procedure and exit evidence are in `docs/sprint-1-foundation-test-plan.md`.
+- P3 is source-complete in draft PR #5: all eight catalog slugs have responsive platform detail routes and honest first-party/external launch boundaries without pretending the dormant leaderboard backend is live.
+- WreckaVOID W0/W1 local gates are complete. Standalone typecheck, lint, 14 focused tests, production build, and desktop/mobile browser play pass after repairing the pusher crash, duplicate enemy updates, lifecycle ownership, terminal finish gate, pointer scaling, and narrow HUD controls. Forty deterministic terminal/restart cycles held one RAF owner, one input owner, zero deferred timers, one finish per run, and no positive measured heap trend; evidence is in `docs/sprint-wreckavoid-w0-w1.md`.
 
 ### What is unsafe or misleading if activated today
 
@@ -288,17 +290,17 @@ The game lives in [`games/wrecka-void`](../games/wrecka-void). [`src/App.tsx`](.
 
 Historically, WreckaVOID wrote to a separate empty `game_scores` table. The intended game-over submission was skipped because state changed before the next guarded loop could submit. The current source branch contains a one-shot ordering correction and a platform run adapter, but production cannot complete that path until the platform auth/run backend is active.
 
-### Confirmed release blockers
+### Baseline blockers and current repair status
 
-- [`src/game/CollisionDetection.ts`](../games/wrecka-void/src/game/CollisionDetection.ts) uses a pusher collision’s `damage` value before that value is declared, creating a real temporal-dead-zone crash when the path runs.
-- The game loop publishes React state every frame, and the animation callback/effect depend on that changing state. This can repeatedly cancel and recreate the RAF loop rather than keeping one stable simulation owner.
-- Delta time is capped rather than processed through a fixed-step accumulator, so slow devices can change simulation and scoring behavior.
-- [`src/game/InputManager.ts`](../games/wrecka-void/src/game/InputManager.ts) handles mouse/keyboard only. Canvas size is based on `window.innerHeight` rather than dynamic viewport/safe-area ownership.
+- The pusher temporal-dead-zone crash is repaired and covered by focused damage/destruction tests on the active W0/W1 branch.
+- The changing-state RAF loop is replaced by one stable owner reading current dependencies through refs. A deterministic 20-restart browser/memory proof is still required before W1 closes.
+- Variable capped delta time is replaced by a bounded fixed-step accumulator with 30/60/120 Hz equivalence tests.
+- Input now uses scaled Pointer Events, pointer capture, and `touch-action: none`; the mobile HUD has named pause/help actions. Orientation, safe-area, and browser-chrome resize coverage remain W2 work.
 - Google auth redirects to `/game`, but the application has no matching routed page and production is mounted under the WreckaVOID path.
 - Score finish failure collapses to an apparent success state; players cannot tell saved, rejected, expired, guest, offline, or unavailable apart.
 - `games/wreck-avoid` and `games/wrecka-void` contain near-duplicate source trees. Only the latter is staged into production.
 - There is no game audio system and essentially no ARIA/focus behavior.
-- Vite build passes, but standalone type-check fails with real engine/type defects; lint currently reports 29 errors and three warnings; there are no tests.
+- The canonical game now passes Vite build, standalone TypeScript, ESLint with zero warnings, and 14 focused tests. Full browser death/restart, retained boss/projectile/second-chain paths, and long-run performance coverage remain open.
 - A roughly 1.5 MB logo is shipped in the current build and should not block first play.
 
 ### WreckaVOID V1 experience
@@ -372,7 +374,7 @@ A guest opens the platform WreckaVOID page, understands the controls, launches q
 - [ ] Share uses a canonical result URL.
 - [ ] Build, lint, focused tests, browser smoke, performance, accessibility, and deployed-route checks pass.
 - [ ] The pusher, boss, projectile, second-chain, and every retained power-up path run without console exceptions.
-- [ ] Twenty restarts do not increase RAF loop or event-listener counts.
+- [x] Twenty restarts do not increase RAF loop or event-listener counts. (W0/W1 local evidence: 40 cycles.)
 
 ### Explicitly later
 

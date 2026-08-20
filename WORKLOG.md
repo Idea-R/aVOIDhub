@@ -2,6 +2,16 @@
 
 ## 2026-08-20
 
+- Started the first hosted-game repair slice on isolated branch `codex/fix-wreckavoid-v1-baseline`, stacked on the dormant platform foundation rather than editing the dirty main checkout.
+- Reproduced WreckaVOID’s misleading baseline: Vite built while standalone TypeScript and lint failed, no tests existed, pusher collisions could crash, enemy movement was applied twice, RAF ownership followed React state churn, lethal score submission was skipped, and mobile controls/HUD were not viable.
+- Added a bounded fixed-step clock, stable single RAF owner, one-finish-per-run gate, same-step terminal handling, canonical enemy-physics ownership, corrected retained enemy types, and the pusher collision fix.
+- Replaced mouse-only input with scaled Pointer Events and pointer capture, centered initial mobile input, prevented canvas gestures, and added responsive touch pause/help controls with a compact 390 px HUD.
+- Passed WreckaVOID standalone typecheck, lint with zero warnings, 14 focused Vitest checks, Vite production build, and locked dependency audit with zero vulnerabilities.
+- Browser-verified desktop Play/input/scoring/pause and 390 × 844 Play/touch/pause/help with exact viewport canvas sizing and no horizontal overflow. No gameplay exception was observed; missing local Supabase configuration remains expected and scoring activation remains dormant.
+- Added a development-only `?smoke=1` terminal-state seam that production compilation removes, then completed 40 browser-driven Force game over → Play Again cycles. RAF owners remained one, input owners remained one, deferred timers remained zero, and finishes/restarts advanced one-for-one to 41 including calibration.
+- Measured the final 20-cycle sample with Chrome Performance metrics: used JS heap moved from 25,379,668 to 23,870,636 bytes, a 1,509,032-byte decrease rather than an accumulation trend. W0 and W1 local exit gates are complete; W2 is next.
+- Rebuilt and staged all three hosted games with the repaired Wreck bundle, then passed the normal Next.js runtime production build. The legacy Windows static-export review build still rejects the foundation branch’s dynamic finish API; this pre-existing review-mode incompatibility is recorded rather than bypassed.
+- Recorded the repair, device matrix, commands, evidence, remaining W0/W1 exit work, and later-sprint boundaries in `docs/sprint-wreckavoid-w0-w1.md`.
 - Corrected the pending platform-foundation migration against the frozen production baseline; the migration remains unapplied to Supabase.
 - Replaced the inherited all-table browser grants with a deny-by-default Data API surface. Browser roles retain public catalog/leaderboard reads, owner-scoped profile presentation updates, entitlement/application reads, and owner-scoped favorites only.
 - Removed all browser score writes on both canonical and legacy score tables, blocked browser access to manual backup, billing, webhook, run, and submission tables, and reserved run finalization and aggregate updates for `service_role`.
@@ -46,7 +56,7 @@
 
 ### Next action
 
-Review the Sprint 1 migration and `docs/sprint-1-foundation-test-plan.md`, then approve or decline the 72-hour Supabase development branch at the last verified `$0.01344/hour` (about `$0.97`). Do not apply the score-locking migration separately from the platform and staged game deploy.
+Begin WreckaVOID W2 safe-area/dynamic viewport, orientation/focus-loss, onboarding, reduced-motion, and audio work. The separate foundation approval remains open: approve or decline the 72-hour Supabase development branch at the last verified `$0.01344/hour` (about `$0.97`). Do not apply the score-locking migration separately from the platform and staged game deploy.
 
 ## 2026-08-19
 

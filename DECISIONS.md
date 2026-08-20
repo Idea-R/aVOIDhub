@@ -196,3 +196,10 @@ Revoke inherited table and function privileges from `anon` and `authenticated`, 
 - Status: accepted for the Sprint 1 foundation
 
 Every new run session and score submission records a bounded ruleset version. The atomic finishing transaction copies game, mode, user, and ruleset identity from the locked server-created run rather than accepting those values from the finishing client. A leaderboard may compare results only within a compatibility rule defined by the game; a future balance or scoring change cannot silently share a ranking with an incompatible ruleset.
+
+## D-029 — Stabilize WreckaVOID before replacing its feel
+
+- Date: 2026-08-20
+- Status: accepted for W0/W1
+
+Keep `games/wrecka-void` as the canonical WreckaVOID runtime. Preserve its recognizable chain-and-ball play while replacing unsafe lifecycle ownership: one fixed-step simulation clock, one RAF owner, one enemy-physics owner, and one terminal finish transition per run. Pointer/touch support and a readable narrow HUD are baseline playability, not a later visual redesign. Do not call W1 complete until a deterministic browser harness proves 20 restart cycles without accumulating RAF callbacks, listeners, timers, or memory.

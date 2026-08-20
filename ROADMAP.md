@@ -43,6 +43,9 @@ Move the live aVOIDgame.io rebuild through the phased V1 completion program: sec
 - Active Sprint 0 branch: `security/sprint-0-recoverability`
 - Active Sprint 1 branch: `security/platform-foundation-v1`
 - Active Sprint 1 draft PR: `https://github.com/Idea-R/aVOIDhub/pull/4`
+- Active game-repair branch: `codex/fix-wreckavoid-v1-baseline`
+- Active game-repair issue: `https://github.com/Idea-R/aVOIDhub/issues/6`
+- WreckaVOID W0/W1 evidence: `docs/sprint-wreckavoid-w0-w1.md`
 - Program source of truth: `docs/V1-COMPLETION-PROGRAM.md`
 - Sprint 0 evidence: `docs/sprint-0-recoverability.md`
 - Merged shell PR: `https://github.com/Idea-R/aVOIDhub/pull/1`
@@ -73,7 +76,9 @@ Move the live aVOIDgame.io rebuild through the phased V1 completion program: sec
 13. **V1 completion program — documentation complete and under review.** The detailed per-platform and per-title program, sprint sequence, effort ranges, dependencies, and acceptance gates live in `docs/V1-COMPLETION-PROGRAM.md` and draft PR #2.
 14. **Sprint 0 recoverability packet — complete; branch approval pending.** The live schema, grants, policies, functions, advisors, migration drift, auth/score consumers, environment ownership, rollback targets, branch cost, and legacy-data mapping are frozen in `docs/sprint-0-recoverability.md`. No production state changed.
 15. **Sprint 1 isolated foundation repair — local gate complete; paid branch pending.** The forward migration now denies browser writes by default, makes profile publication explicit, preserves legacy scores without trusting their old verified flag, removes browser-era score triggers, adds ruleset/FK integrity, and ships 50 pgTAP assertions plus a static verifier. Create the 72-hour Supabase development branch only after cost approval, then run the documented data/API/advisor matrix against synthetic fixtures.
+16. **P3 game details — source complete; review pending.** Eight static `/games/[slug]/` detail pages, honest internal/external Play boundaries, and responsive staged leaderboard states are published in draft PR #5 without activating dormant platform data.
+17. **WreckaVOID W0/W1 repair — local gates complete.** The canonical game now passes standalone typecheck, lint, 14 focused tests, and production build. The collision crash, doubled enemy movement, unstable variable-step loop, skipped terminal finish, desktop-only input, mobile pointer start, and narrow HUD controls are repaired. Forty deterministic terminal/restart browser cycles held one RAF owner, one input owner, zero deferred timers, and one finish per run; the measured final 20-cycle heap sample decreased by about 1.5 MB.
 
 ## Current next action
 
-Review `docs/sprint-1-foundation-test-plan.md` and approve or decline the proposed 72-hour Supabase development branch at the currently reported `$0.01344/hour` (about `$0.97` for 72 hours). The local migration and test harness are ready; production data, secrets, Stripe, AdSense, DNS, and the production deploy remain untouched.
+Begin WreckaVOID W2: safe-area/dynamic viewport ownership, orientation and focus-loss coverage, first-minute onboarding, and reduced-motion/audio decisions. In parallel, the optional foundation path remains approval-gated: review `docs/sprint-1-foundation-test-plan.md` and approve or decline the proposed 72-hour Supabase development branch at the currently reported `$0.01344/hour` (about `$0.97` for 72 hours). Production data, secrets, Stripe, AdSense, DNS, and production deploys remain untouched.
