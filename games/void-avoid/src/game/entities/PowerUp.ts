@@ -39,22 +39,30 @@ export interface PowerUp {
 
 export class PowerUpManager {
   private powerUps: PowerUp[] = [];
-  private lastSpawnTime: number = 0;
+  private nextSpawnTime: number = 0;
   private playerCharges: number = 0;
   private maxCharges: number = 3;
   private readonly MAX_POWERUPS_ON_SCREEN = 2;
-  private canvasWidth: number = window.innerWidth;
-  private canvasHeight: number = window.innerHeight;
+  private canvasWidth: number;
+  private canvasHeight: number;
   
   // Performance optimization properties
   private performanceMode: boolean = false;
   private isMobile: boolean = false;
 
-  constructor() {
+  constructor(
+    canvasWidth: number,
+    canvasHeight: number,
+    private readonly gameplayRandom: () => number,
+    private readonly visualRandom: () => number = Math.random,
+  ) {
+    this.canvasWidth = canvasWidth;
+    this.canvasHeight = canvasHeight;
     // Detect mobile device for performance optimizations
     this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
                     window.innerWidth < 768;
     this.performanceMode = this.isMobile; // Default to performance mode on mobile
+    this.scheduleNextSpawn(0, 0);
     
     console.log('🔋 PowerUpManager initialized:', {
       isMobile: this.isMobile,
@@ -68,20 +76,12 @@ export class PowerUpManager {
   }
 
   update(gameTime: number, deltaTime: number) {
-    // Update canvas dimensions for boundary detection
-    this.canvasWidth = window.innerWidth;
-    this.canvasHeight = window.innerHeight;
-
-    // Dynamic spawn rate based on game time
-    const progressiveSpawnRate = this.getProgressiveSpawnRate(gameTime);
-    
-    // Spawn power-up based on dynamic interval
-    if (gameTime * 1000 - this.lastSpawnTime >= progressiveSpawnRate) {
+    if (gameTime * 1000 >= this.nextSpawnTime) {
       // Only spawn if we haven't reached the screen limit
       if (this.getActivePowerUps().length < this.MAX_POWERUPS_ON_SCREEN) {
         this.spawnPowerUp();
-        this.lastSpawnTime = gameTime * 1000;
       }
+      this.scheduleNextSpawn(gameTime * 1000, gameTime);
     }
 
     // Update existing power-ups
@@ -137,11 +137,11 @@ export class PowerUpManager {
     
     // Change drift direction periodically (every 3-6 seconds)
     if (powerUp.driftChangeTimer <= 0) {
-      const angle = Math.random() * Math.PI * 2;
+      const angle = this.gameplayRandom() * Math.PI * 2;
       powerUp.driftDirection.x = Math.cos(angle);
       powerUp.driftDirection.y = Math.sin(angle);
-      powerUp.driftSpeed = 0.3 + Math.random() * 0.4; // Speed between 0.3-0.7
-      powerUp.driftChangeTimer = 3000 + Math.random() * 3000; // 3-6 seconds
+      powerUp.driftSpeed = 0.3 + this.gameplayRandom() * 0.4; // Speed between 0.3-0.7
+      powerUp.driftChangeTimer = 3000 + this.gameplayRandom() * 3000; // 3-6 seconds
     }
 
     // Apply drift movement
@@ -209,11 +209,11 @@ export class PowerUpManager {
     });
 
     // Spawn new energy waves periodically (reduced frequency for performance)
-    if (Math.random() < 0.001 * deltaTime) { // Reduced from 0.002 to 0.001
+    if (this.visualRandom() < 0.001 * deltaTime) { // Reduced from 0.002 to 0.001
       powerUp.energyWaves.push({
         radius: powerUp.radius * 1.2,
         alpha: 0.6,
-        growthRate: 0.8 + Math.random() * 0.4
+        growthRate: 0.8 + this.visualRandom() * 0.4
       });
     }
   }
@@ -221,49 +221,53 @@ export class PowerUpManager {
   private getProgressiveSpawnRate(gameTime: number): number {
     // After 60 seconds, reduce spawn interval from 5-20s to 3-12s
     if (gameTime >= 60) {
-      return Math.random() * 9000 + 3000; // 3-12 seconds
+      return this.gameplayRandom() * 9000 + 3000; // 3-12 seconds
     } else {
-      return Math.random() * 15000 + 5000; // 5-20 seconds
+      return this.gameplayRandom() * 15000 + 5000; // 5-20 seconds
     }
+  }
+
+  private scheduleNextSpawn(currentTime: number, gameTime: number): void {
+    this.nextSpawnTime = currentTime + this.getProgressiveSpawnRate(gameTime);
   }
 
   private spawnPowerUp() {
     // Spawn away from edges to ensure visibility
-    const margin = 100;
-    const x = margin + Math.random() * (window.innerWidth - margin * 2);
-    const y = margin + Math.random() * (window.innerHeight - margin * 2);
+    const margin = Math.min(100, this.canvasWidth / 4, this.canvasHeight / 4);
+    const x = margin + this.gameplayRandom() * Math.max(1, this.canvasWidth - margin * 2);
+    const y = margin + this.gameplayRandom() * Math.max(1, this.canvasHeight - margin * 2);
 
     // Create orbiting particles (3-4 cyan particles)
-    const particleCount = 3 + Math.floor(Math.random() * 2); // 3 or 4 particles
+    const particleCount = 3 + Math.floor(this.visualRandom() * 2); // 3 or 4 particles
     const orbitingParticles = [];
     
     for (let i = 0; i < particleCount; i++) {
       orbitingParticles.push({
         angle: (Math.PI * 2 * i) / particleCount,
-        distance: 35 + Math.random() * 10, // Vary distance slightly
-        speed: 0.8 + Math.random() * 0.4 // Vary speed slightly
+        distance: 35 + this.visualRandom() * 10, // Vary distance slightly
+        speed: 0.8 + this.visualRandom() * 0.4 // Vary speed slightly
       });
     }
 
     // Initialize drift movement
-    const driftAngle = Math.random() * Math.PI * 2;
+    const driftAngle = this.gameplayRandom() * Math.PI * 2;
     const driftDirection = {
       x: Math.cos(driftAngle),
       y: Math.sin(driftAngle)
     };
 
     // Create floating sparkles around the power-up
-    const sparkleCount = 8 + Math.floor(Math.random() * 4); // 8-12 sparkles
+    const sparkleCount = 8 + Math.floor(this.visualRandom() * 4); // 8-12 sparkles
     const floatingSparkles = [];
     for (let i = 0; i < sparkleCount; i++) {
       floatingSparkles.push({
         x: x,
         y: y,
-        angle: (Math.PI * 2 * i) / sparkleCount + Math.random() * 0.5,
-        distance: 50 + Math.random() * 30, // 50-80px from center
-        alpha: 0.5 + Math.random() * 0.3,
-        size: 1 + Math.random() * 2,
-        rotationSpeed: 0.2 + Math.random() * 0.6 // Varying rotation speeds
+        angle: (Math.PI * 2 * i) / sparkleCount + this.visualRandom() * 0.5,
+        distance: 50 + this.visualRandom() * 30, // 50-80px from center
+        alpha: 0.5 + this.visualRandom() * 0.3,
+        size: 1 + this.visualRandom() * 2,
+        rotationSpeed: 0.2 + this.visualRandom() * 0.6 // Varying rotation speeds
       });
     }
 
@@ -284,8 +288,8 @@ export class PowerUpManager {
       breathingScale: 1,
       collectionTrail: [],
       driftDirection,
-      driftSpeed: 0.3 + Math.random() * 0.4,
-      driftChangeTimer: 3000 + Math.random() * 3000, // 3-6 seconds
+      driftSpeed: 0.3 + this.gameplayRandom() * 0.4,
+      driftChangeTimer: 3000 + this.gameplayRandom() * 3000, // 3-6 seconds
       floatingSparkles,
       energyWaves: []
     });
@@ -368,9 +372,14 @@ export class PowerUpManager {
     return this.powerUps.filter(p => !p.collected);
   }
 
+  updateCanvasSize(width: number, height: number): void {
+    this.canvasWidth = width;
+    this.canvasHeight = height;
+  }
+
   reset() {
     this.powerUps = [];
-    this.lastSpawnTime = 0;
+    this.scheduleNextSpawn(0, 0);
     this.playerCharges = 0;
   }
 }

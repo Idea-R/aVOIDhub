@@ -1,7 +1,8 @@
 import type { ScoreBreakdown, ComboInfo } from '../systems/ScoreSystem';
 import type { GameSettings } from '../GameLogic';
+import type { RunEvidenceSummary } from '../run/runEvidence';
 
-/** Session-local state relay. Platform identity and score trust are separate V2 work. */
+/** Session-local state relay. Platform identity and score trust remain V3 work. */
 export class GameState {
   private onStateUpdate: (state: GameStateData) => void = () => {};
   private onGameOver: () => void = () => {};
@@ -34,4 +35,5 @@ export interface GameStateData {
   autoScaling: { enabled: boolean; shadowsEnabled: boolean; maxParticles: number; adaptiveTrailsActive: boolean };
   performance: { averageFrameTime: number; memoryUsage: number; lastScalingEvent: string };
   settings: GameSettings;
+  run: RunEvidenceSummary;
 }

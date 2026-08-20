@@ -10,9 +10,9 @@ export class DefenseSystem {
   private defenseEffects: DefenseEffects;
   private defenseRenderer: DefenseRenderer;
 
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(canvas: HTMLCanvasElement, gameplayRandom: () => number) {
     // Initialize the three defense modules
-    this.defenseCore = new DefenseCore(canvas);
+    this.defenseCore = new DefenseCore(canvas, gameplayRandom);
     this.defenseEffects = new DefenseEffects();
     this.defenseRenderer = new DefenseRenderer(canvas);
     
@@ -37,6 +37,7 @@ export class DefenseSystem {
    * Update all defense systems
    */
   public update(deltaTime: number): void {
+    this.defenseCore.update(deltaTime);
     this.defenseEffects.update(deltaTime);
     this.defenseCore.cleanupOldTrackers();
   }

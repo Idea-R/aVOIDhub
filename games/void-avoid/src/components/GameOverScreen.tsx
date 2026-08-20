@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ComboInfo, ScoreBreakdown } from '../game/systems/ScoreSystem';
+import type { RunEvidenceSummary } from '../game/run/runEvidence';
 
 interface GameOverScreenProps {
   score: number;
   localBest: number;
   scoreBreakdown: ScoreBreakdown;
   comboInfo: ComboInfo;
+  run: RunEvidenceSummary;
   onPlayAgain: () => void;
   onExit: () => void;
 }
@@ -15,6 +17,7 @@ export default function GameOverScreen({
   localBest,
   scoreBreakdown,
   comboInfo,
+  run,
   onPlayAgain,
   onExit,
 }: GameOverScreenProps) {
@@ -26,7 +29,7 @@ export default function GameOverScreen({
   }, []);
 
   const copyResult = async () => {
-    const result = `I scored ${score.toLocaleString()} in VOIDaVOID.`;
+    const result = `I scored ${score.toLocaleString()} in VOIDaVOID. Local run ${run.code}.`;
     try {
       await navigator.clipboard.writeText(`${result} ${window.location.href}`);
       setCopyStatus('Result copied.');
@@ -65,7 +68,11 @@ export default function GameOverScreen({
           </div>
         </dl>
 
-        <p className="void-result__truth">Saved on this device. No platform placement was claimed.</p>
+        <p className="void-result__truth" data-run-status={run.status}>
+          {run.status === 'replayable-local'
+            ? <>Local run <strong>{run.code}</strong> replayed its score evidence cleanly. It is still unranked.</>
+            : <>Local run evidence did not pass its replay check. No placement was claimed.</>}
+        </p>
 
         <div className="void-result__actions">
           <button ref={playAgainRef} type="button" className="void-launch" onClick={onPlayAgain}>

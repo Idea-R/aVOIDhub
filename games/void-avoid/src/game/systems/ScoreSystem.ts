@@ -17,6 +17,11 @@ export interface ComboInfo {
   consecutiveKnockbacks: number;
 }
 
+export type ScoreEvidenceEvent =
+  | { type: 'meteor'; isSuper: boolean; source: 'defense' | 'knockback' }
+  | { type: 'chain-fragment' }
+  | { type: 'chain-detonation'; meteorsDestroyed: number };
+
 export function calculateSurvivalScore(seconds: number): number {
   return Math.floor(Math.max(0, seconds) * 5);
 }
@@ -77,7 +82,10 @@ export class ScoreSystem {
   
   private readonly COMBO_TIMEOUT = 3000; // Increased to 3 seconds for more forgiving combo timing
 
-  constructor(private readonly random: () => number = Math.random) {
+  constructor(
+    private readonly random: () => number,
+    private readonly onEvidenceEvent: (event: ScoreEvidenceEvent) => void = () => {},
+  ) {
     this.scoreTextPool = new ObjectPool(createScoreText, resetScoreText, 5, this.maxScoreTexts);
   }
 
@@ -111,7 +119,12 @@ export class ScoreSystem {
   }
 
   // Meteor destruction scoring
-  addMeteorScore(x: number, y: number, isSuper: boolean): number {
+  addMeteorScore(
+    x: number,
+    y: number,
+    isSuper: boolean,
+    source: 'defense' | 'knockback' = 'defense',
+  ): number {
     const points = calculateMeteorScore(isSuper, this.random());
     
     this.meteorScore += points;
@@ -120,6 +133,7 @@ export class ScoreSystem {
     const color = isSuper ? '#ffd700' : '#06b6d4'; // Gold for super, cyan for regular
     const fontSize = isSuper ? 20 : 16;
     this.createScoreText(x, y, `+${points}`, color, fontSize, isSuper ? 'super' : 'regular');
+    this.onEvidenceEvent({ type: 'meteor', isSuper, source });
     
     return points;
   }
@@ -133,7 +147,7 @@ export class ScoreSystem {
     
     // Calculate individual meteor scores
     for (const meteor of destroyedMeteors) {
-      const points = this.addMeteorScore(meteor.x, meteor.y, meteor.isSuper);
+      const points = this.addMeteorScore(meteor.x, meteor.y, meteor.isSuper, 'knockback');
       meteorPoints += points;
     }
     
@@ -316,6 +330,7 @@ export class ScoreSystem {
     
     // Create floating score text
     this.createScoreText(x, y, `+${points}`, '#9d4edd', 16, 'regular');
+    this.onEvidenceEvent({ type: 'chain-fragment' });
     
     return points;
   }
@@ -355,6 +370,7 @@ export class ScoreSystem {
     
     // Add to meteor score category
     this.meteorScore += totalPoints;
+    this.onEvidenceEvent({ type: 'chain-detonation', meteorsDestroyed });
     
     // Create dramatic score display
     this.createScoreText(centerX, centerY - 40, `CHAIN DETONATION!`, '#9d4edd', 32, 'combo');

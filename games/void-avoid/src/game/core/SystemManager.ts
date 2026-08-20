@@ -14,12 +14,7 @@ export class SystemManager {
   }
 
   update(deltaTime: number): void {
-    const performance = this.engineCore.getPerformanceSettings();
-    this.engineCore.getGameLogic().update(
-      deltaTime,
-      performance.adaptiveTrailsActive,
-      performance.performanceModeActive,
-    );
+    this.engineCore.update(deltaTime);
   }
 
   render(): void {
@@ -51,7 +46,7 @@ export class SystemManager {
     }
   }
 
-  reset(): void { this.engineCore.resetSystems(); }
+  beginRun(seed: number): void { this.engineCore.beginRun(seed); }
   cleanup(): void { this.engineCore.cleanup(); }
   getEngineCore(): EngineCore { return this.engineCore; }
 }

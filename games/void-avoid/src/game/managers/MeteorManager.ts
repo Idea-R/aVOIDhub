@@ -3,6 +3,51 @@ import { ObjectPool } from '../utils/ObjectPool';
 import { SpatialGrid } from '../utils/SpatialGrid';
 import { InputHandler } from '../InputHandler';
 
+export interface MeteorSpawnSpec {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  radius: number;
+  isSuper: boolean;
+}
+
+export function createMeteorSpawnSpec(
+  width: number,
+  height: number,
+  target: { x: number; y: number },
+  gameTime: number,
+  random: () => number,
+): MeteorSpawnSpec {
+  const side = Math.floor(random() * 4);
+  let x: number;
+  let y: number;
+
+  switch (side) {
+    case 0: x = random() * width; y = -20; break;
+    case 1: x = width + 20; y = random() * height; break;
+    case 2: x = random() * width; y = height + 20; break;
+    default: x = -20; y = random() * height; break;
+  }
+
+  const angle = Math.atan2(target.y - y, target.x - x);
+  const isSuper = random() < 0.15;
+  const speedIncrease = Math.min(gameTime / 90, 2);
+  let speed = (0.8 + speedIncrease) * (0.8 + random() * 0.4);
+  if (isSuper) speed *= 2;
+
+  const baseRadius = isSuper ? 12 : 6;
+  const radiusVariation = isSuper ? 4 : 6;
+  return {
+    x,
+    y,
+    vx: Math.cos(angle) * speed,
+    vy: Math.sin(angle) * speed,
+    radius: baseRadius + random() * radiusVariation,
+    isSuper,
+  };
+}
+
 export class MeteorManager {
   private canvas: HTMLCanvasElement;
   private inputHandler: InputHandler;
@@ -10,8 +55,15 @@ export class MeteorManager {
   private activeMeteors: Meteor[] = [];
   private spatialGrid: SpatialGrid;
   private readonly MAX_METEORS = 50;
+  private spawnSequence = 0;
 
-  constructor(canvas: HTMLCanvasElement, inputHandler: InputHandler, spatialGrid: SpatialGrid) {
+  constructor(
+    canvas: HTMLCanvasElement,
+    inputHandler: InputHandler,
+    spatialGrid: SpatialGrid,
+    private readonly gameplayRandom: () => number,
+    private readonly visualRandom: () => number = Math.random,
+  ) {
     this.canvas = canvas;
     this.inputHandler = inputHandler;
     this.spatialGrid = spatialGrid;
@@ -25,42 +77,30 @@ export class MeteorManager {
   spawnMeteor(gameTime: number): void {
     if (this.activeMeteors.length >= this.MAX_METEORS) return;
 
-    const side = Math.floor(Math.random() * 4);
-    let x, y;
-    
-    switch(side) {
-      case 0: x = Math.random() * this.canvas.width; y = -20; break;
-      case 1: x = this.canvas.width + 20; y = Math.random() * this.canvas.height; break;
-      case 2: x = Math.random() * this.canvas.width; y = this.canvas.height + 20; break;
-      default: x = -20; y = Math.random() * this.canvas.height; break;
-    }
-
     const mousePos = this.inputHandler.getMousePosition();
-    const angle = Math.atan2(mousePos.y - y, mousePos.x - x);
-    const isSuper = Math.random() < 0.15;
-    
-    const baseSpeed = 0.8;
-    const speedIncrease = Math.min(gameTime / 90, 2.0);
-    let speed = baseSpeed + speedIncrease;
-    speed *= 0.8 + Math.random() * 0.4;
-    if (isSuper) speed *= 2;
-
-    const color = isSuper ? '#ff4040' : this.getRandomColor();
-    const baseRadius = isSuper ? 12 : 6;
-    const radiusVariation = isSuper ? 4 : 6;
+    const spawn = createMeteorSpawnSpec(
+      this.canvas.width,
+      this.canvas.height,
+      mousePos,
+      gameTime,
+      this.gameplayRandom,
+    );
+    const color = spawn.isSuper ? '#ff4040' : this.getRandomColor();
     
     const meteor = this.meteorPool.get();
     initializeMeteor(
       meteor,
-      x,
-      y,
-      Math.cos(angle) * speed,
-      Math.sin(angle) * speed,
-      baseRadius + Math.random() * radiusVariation,
+      `meteor-${this.spawnSequence}`,
+      spawn.x,
+      spawn.y,
+      spawn.vx,
+      spawn.vy,
+      spawn.radius,
       color,
-      isSuper
+      spawn.isSuper,
     );
 
+    this.spawnSequence += 1;
     this.activeMeteors.push(meteor);
   }
 
@@ -126,13 +166,14 @@ export class MeteorManager {
   }
 
   private getRandomColor(): string {
-    const hue = Math.random() * 360;
+    const hue = this.visualRandom() * 360;
     return `hsla(${hue}, 100%, 60%, 1)`;
   }
 
   reset(): void {
     this.activeMeteors.forEach(meteor => this.meteorPool.release(meteor));
     this.activeMeteors.length = 0;
+    this.spawnSequence = 0;
   }
 
   updateSpatialGrid(spatialGrid: SpatialGrid): void {
@@ -148,10 +189,14 @@ export class MeteorManager {
     return this.activeMeteors.length;
   }
 
+  getPoolSize(): number {
+    return this.meteorPool.getPoolSize();
+  }
+
   shouldSpawnMeteor(gameTime: number): boolean {
     const baseSpawnChance = 0.003;
     const maxSpawnChance = 0.02;
     const spawnIncrease = Math.min(gameTime / 150, maxSpawnChance - baseSpawnChance);
-    return Math.random() < baseSpawnChance + spawnIncrease;
+    return this.gameplayRandom() < baseSpawnChance + spawnIncrease;
   }
 }

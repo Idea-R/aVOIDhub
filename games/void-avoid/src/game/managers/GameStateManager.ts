@@ -7,10 +7,10 @@ export interface ScreenShake {
 
 export class GameStateManager {
   private gameTime: number = 0;
+  private simulationTicks: number = 0;
   private isGameOver: boolean = false;
   private gracePeriodActive: boolean = false;
   private gracePeriodDuration: number = 3000; // 3 seconds
-  private gracePeriodStartTime: number = 0;
   private knockbackCooldown: number = 0;
   private playerRingPhase: number = 0;
   private screenShake: ScreenShake = { x: 0, y: 0, intensity: 0, duration: 0 };
@@ -21,15 +21,15 @@ export class GameStateManager {
     this.onGameOver = callback;
   }
 
-  updateGameTime(deltaTime: number): void {
+  updateGameTime(): void {
     if (this.isGameOver) return;
-    this.gameTime += deltaTime / 1000;
+    this.simulationTicks += 1;
+    this.gameTime = this.simulationTicks / 60;
   }
 
   updateGracePeriod(): boolean {
     if (this.gracePeriodActive) {
-      const currentTime = performance.now();
-      if (currentTime - this.gracePeriodStartTime >= this.gracePeriodDuration) {
+      if (this.gameTime * 1000 >= this.gracePeriodDuration) {
         this.gracePeriodActive = false;
         console.log('🎮 Grace period ended - meteors will now spawn');
         return false;
@@ -80,8 +80,8 @@ export class GameStateManager {
   reset(): void {
     this.isGameOver = false;
     this.gameTime = 0;
+    this.simulationTicks = 0;
     this.gracePeriodActive = true;
-    this.gracePeriodStartTime = performance.now();
     this.knockbackCooldown = 0;
     this.playerRingPhase = 0;
     this.screenShake = { x: 0, y: 0, intensity: 0, duration: 0 };

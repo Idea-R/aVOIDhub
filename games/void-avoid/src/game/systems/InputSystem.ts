@@ -1,8 +1,7 @@
 // Extracted from Engine.ts on January 7, 2025
 // Original Engine.ts: 887 lines -> Refactored into modular architecture
 
-import { Meteor, initializeMeteor } from '../entities/Meteor';
-import { ObjectPool } from '../utils/ObjectPool';
+import { Meteor } from '../entities/Meteor';
 import { CollisionSystem } from './CollisionSystem';
 import { ParticleSystem } from './ParticleSystem';
 import { PowerUpManager } from '../entities/PowerUp';
@@ -14,7 +13,6 @@ import { InputHandler } from '../InputHandler';
  * Extracted from Engine.ts to maintain separation of concerns and stay under 500-line limit.
  */
 export class InputSystem {
-  private canvas: HTMLCanvasElement;
   private inputHandler: InputHandler;
   
   // System references
@@ -22,24 +20,19 @@ export class InputSystem {
   private particleSystem: ParticleSystem;
   private powerUpManager: PowerUpManager;
   private gameLogic: GameLogic;
-  private meteorPool: ObjectPool<Meteor>;
-  
+
   constructor(
-    canvas: HTMLCanvasElement,
     inputHandler: InputHandler,
     collisionSystem: CollisionSystem,
     particleSystem: ParticleSystem,
     powerUpManager: PowerUpManager,
     gameLogic: GameLogic,
-    meteorPool: ObjectPool<Meteor>
   ) {
-    this.canvas = canvas;
     this.inputHandler = inputHandler;
     this.collisionSystem = collisionSystem;
     this.particleSystem = particleSystem;
     this.powerUpManager = powerUpManager;
     this.gameLogic = gameLogic;
-    this.meteorPool = meteorPool;
     
     console.log('[INPUT] InputSystem initialized');
   }
@@ -121,80 +114,6 @@ export class InputSystem {
         meteor.vy += Math.sin(angle) * force;
       }
     }
-  }
-  
-  /**
-   * Spawn a new meteor at random position targeting player
-   */
-  spawnMeteor(): void {
-    const activeMeteors = this.gameLogic.getActiveMeteors();
-    if (activeMeteors.length >= 50) return; // MAX_METEORS constant
-
-    const side = Math.floor(Math.random() * 4);
-    let x, y;
-    
-    // Determine spawn position based on side
-    switch(side) {
-      case 0: // Top
-        x = Math.random() * this.canvas.width; 
-        y = -20; 
-        break;
-      case 1: // Right
-        x = this.canvas.width + 20; 
-        y = Math.random() * this.canvas.height; 
-        break;
-      case 2: // Bottom
-        x = Math.random() * this.canvas.width; 
-        y = this.canvas.height + 20; 
-        break;
-      default: // Left
-        x = -20; 
-        y = Math.random() * this.canvas.height; 
-        break;
-    }
-
-    // Calculate trajectory toward player
-    const mousePos = this.inputHandler.getMousePosition();
-    const angle = Math.atan2(mousePos.y - y, mousePos.x - x);
-    
-    // Determine if this is a super meteor
-    const isSuper = Math.random() < 0.15;
-    
-    // Calculate speed with time-based scaling
-    const baseSpeed = 0.8;
-    const speedIncrease = Math.min(this.gameLogic.getGameTime() / 90, 2.0);
-    let speed = baseSpeed + speedIncrease;
-    speed *= 0.8 + Math.random() * 0.4; // Add speed variation
-    if (isSuper) speed *= 2; // Super meteors are faster
-
-    // Set visual properties
-    const color = isSuper ? '#ff4040' : this.getRandomColor();
-    const baseRadius = isSuper ? 12 : 6;
-    const radiusVariation = isSuper ? 4 : 6;
-    
-    // Get meteor from pool and initialize
-    const meteor = this.meteorPool.get();
-    initializeMeteor(
-      meteor,
-      x,
-      y,
-      Math.cos(angle) * speed,
-      Math.sin(angle) * speed,
-      baseRadius + Math.random() * radiusVariation,
-      color,
-      isSuper
-    );
-
-    // Add to active meteors
-    activeMeteors.push(meteor);
-  }
-  
-  /**
-   * Generate random color for meteors
-   */
-  private getRandomColor(): string {
-    const hue = Math.random() * 360;
-    return `hsla(${hue}, 100%, 60%, 1)`;
   }
   
   /**

@@ -5,6 +5,8 @@ import { InputSystem } from '../systems/InputSystem';
 import { GameState, type GameStateData } from '../state/GameState';
 import { CanvasManager } from './CanvasManager';
 import type { InputDiagnostics } from '../InputHandler';
+import { createRunSeed } from '../run/seededRandom';
+import type { RunEvidence, RunEvidenceSummary } from '../run/runEvidence';
 
 export interface GameEngineDiagnostics {
   loop: GameLoopDiagnostics;
@@ -14,6 +16,7 @@ export interface GameEngineDiagnostics {
   sessionsFinished: number;
   resets: number;
   cleanedUp: boolean;
+  run: RunEvidenceSummary;
 }
 
 export class GameEngineCore {
@@ -33,7 +36,10 @@ export class GameEngineCore {
   onStateUpdate: (state: GameStateData) => void = () => {};
   onPauseChange: (isPaused: boolean, reasons: PauseReason[]) => void = () => {};
 
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(
+    canvas: HTMLCanvasElement,
+    private readonly seedFactory: () => number = createRunSeed,
+  ) {
     this.canvasManager = new CanvasManager(canvas, {
       preventZoom: false,
       handleDevicePixelRatio: false,
@@ -47,13 +53,11 @@ export class GameEngineCore {
     this.systemManager = new SystemManager(canvas);
     const core = this.systemManager.getEngineCore();
     this.inputSystem = new InputSystem(
-      canvas,
       core.getInputHandler(),
       core.getCollisionSystem(),
       core.getParticleSystem(),
       core.getPowerUpManager(),
       core.getGameLogic(),
-      core.getMeteorPool(),
     );
     core.getInputHandler().setCanvasManager(this.canvasManager);
     core.setKnockbackCallback(() => this.inputSystem.handleKnockbackActivation());
@@ -122,7 +126,7 @@ export class GameEngineCore {
       meteors: logic.getMeteorCount(),
       particles: core.getParticleSystem().getParticleCount(),
       poolSizes: {
-        meteors: core.getMeteorPool().getPoolSize(),
+        meteors: logic.getMeteorPoolSize(),
         particles: core.getParticleSystem().getPoolSize(),
       },
       autoScaling: {
@@ -137,6 +141,7 @@ export class GameEngineCore {
         lastScalingEvent: performance.lastScalingEvent,
       },
       settings: core.getSettings(),
+      run: core.getRunSummary(),
     });
   }
 
@@ -145,12 +150,13 @@ export class GameEngineCore {
     this.gameOverPublished = true;
     this.sessionsFinished += 1;
     this.gameLoop.pause('terminal');
+    this.systemManager.getEngineCore().finishRunEvidence();
     this.publishState(true);
   }
 
   start(): void {
     if (this.cleanedUp || this.gameLoop.isStarted()) return;
-    this.systemManager.reset();
+    this.systemManager.beginRun(this.seedFactory());
     this.gameState.reset();
     this.performanceManager.reset();
     this.gameOverPublished = false;
@@ -172,7 +178,7 @@ export class GameEngineCore {
     if (this.cleanedUp || !this.gameLoop.isStarted()) return;
     this.gameLoop.reset();
     this.performanceManager.reset();
-    this.systemManager.reset();
+    this.systemManager.beginRun(this.seedFactory());
     this.gameState.reset();
     this.gameOverPublished = false;
     this.resets += 1;
@@ -204,6 +210,11 @@ export class GameEngineCore {
       sessionsFinished: this.sessionsFinished,
       resets: this.resets,
       cleanedUp: this.cleanedUp,
+      run: this.systemManager.getEngineCore().getRunSummary(),
     };
+  }
+
+  getRunEvidence(): RunEvidence | null {
+    return this.systemManager.getEngineCore().getRunEvidence();
   }
 }

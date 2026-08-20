@@ -4,6 +4,7 @@ import type { GameStateData } from '../game/state/GameState';
 import type { PauseReason } from '../game/core/GameLoop';
 import HUD from './HUD';
 import GameOverScreen from './GameOverScreen';
+import { VOIDAVOID_RULESET, type RunEvidenceSummary } from '../game/run/runEvidence';
 
 interface GameProps {
   autoStart?: boolean;
@@ -43,6 +44,13 @@ const initialGameState: GameStateData = {
     performanceMode: false,
     cursorColor: '#06b6d4',
   },
+  run: {
+    ruleset: VOIDAVOID_RULESET,
+    seed: '00000000',
+    code: 'PENDING',
+    eventCount: 0,
+    status: 'active',
+  } satisfies RunEvidenceSummary,
 };
 
 declare global {
@@ -50,6 +58,7 @@ declare global {
     __VOIDAVOID_SMOKE__?: {
       finish: () => void;
       diagnostics: () => ReturnType<GameEngine['getDiagnostics']>;
+      evidence: () => ReturnType<GameEngine['getRunEvidence']>;
     };
     __VOIDAVOID_LAST_DIAGNOSTICS__?: ReturnType<GameEngine['getDiagnostics']>;
   }
@@ -85,6 +94,7 @@ export default function Game({ autoStart = false, onExit }: GameProps) {
       window.__VOIDAVOID_SMOKE__ = {
         finish: () => engine.forceGameOverForTest(),
         diagnostics: () => engine.getDiagnostics(),
+        evidence: () => engine.getRunEvidence(),
       };
     }
 
@@ -141,7 +151,6 @@ export default function Game({ autoStart = false, onExit }: GameProps) {
   const playAgain = useCallback(() => {
     setShowHelp(false);
     engineRef.current?.resetGame();
-    setGameState(initialGameState);
   }, []);
 
   const exitGame = useCallback(() => {
@@ -204,6 +213,7 @@ export default function Game({ autoStart = false, onExit }: GameProps) {
           localBest={localBest}
           scoreBreakdown={gameState.scoreBreakdown}
           comboInfo={gameState.comboInfo}
+          run={gameState.run}
           onPlayAgain={playAgain}
           onExit={exitGame}
         />

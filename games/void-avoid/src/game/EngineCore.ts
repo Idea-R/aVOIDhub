@@ -8,9 +8,13 @@ import { ChainDetonationRenderer } from './systems/ChainDetonationRenderer';
 import { PowerUpManager } from './entities/PowerUp';
 import { InputHandler } from './InputHandler';
 import { GameLogic, type GameSystems, type GameSettings } from './GameLogic';
-import { ObjectPool } from './utils/ObjectPool';
 import { SpatialGrid } from './utils/SpatialGrid';
-import { type Meteor, createMeteor, resetMeteor } from './entities/Meteor';
+import { RunRandomStreams } from './run/seededRandom';
+import {
+  RunEvidenceRecorder,
+  type RunEvidence,
+  type RunEvidenceSummary,
+} from './run/runEvidence';
 
 export interface PerformanceSettings {
   autoScaleEnabled: boolean;
@@ -28,15 +32,16 @@ export class EngineCore {
   private readonly renderSystem: RenderSystem;
   private readonly particleSystem = new ParticleSystem();
   private readonly collisionSystem: CollisionSystem;
-  private readonly scoreSystem = new ScoreSystem();
+  private readonly scoreSystem: ScoreSystem;
   private defenseSystem: DefenseSystem;
   private readonly chainDetonationManager: ChainDetonationManager;
   private readonly chainDetonationRenderer: ChainDetonationRenderer;
   private readonly inputHandler: InputHandler;
-  private readonly powerUpManager = new PowerUpManager();
-  private readonly meteorPool = new ObjectPool<Meteor>(createMeteor, resetMeteor, 20, 50);
+  private readonly powerUpManager: PowerUpManager;
   private readonly spatialGrid: SpatialGrid;
   private readonly gameLogic: GameLogic;
+  private readonly runRandom = new RunRandomStreams();
+  private readonly evidenceRecorder = new RunEvidenceRecorder();
   private cleanedUp = false;
   private knockbackCallback: () => void = () => {};
 
@@ -63,16 +68,31 @@ export class EngineCore {
   };
 
   constructor(private readonly canvas: HTMLCanvasElement) {
+    const worldRandom = this.runRandom.getStream('world').next;
+    const powerUpRandom = this.runRandom.getStream('power-up').next;
+    const chainRandom = this.runRandom.getStream('chain').next;
+    const scoreRandom = this.runRandom.getStream('score').next;
+    const defenseRandom = this.runRandom.getStream('defense').next;
+
     this.renderSystem = new RenderSystem(canvas);
-    this.defenseSystem = new DefenseSystem(canvas);
-    this.chainDetonationManager = new ChainDetonationManager(canvas.width, canvas.height);
+    this.scoreSystem = new ScoreSystem(
+      scoreRandom,
+      (event) => this.evidenceRecorder.record(event),
+    );
+    this.powerUpManager = new PowerUpManager(canvas.width, canvas.height, powerUpRandom);
+    this.defenseSystem = new DefenseSystem(canvas, defenseRandom);
+    this.chainDetonationManager = new ChainDetonationManager(
+      canvas.width,
+      canvas.height,
+      chainRandom,
+    );
     this.chainDetonationRenderer = new ChainDetonationRenderer(canvas);
     this.spatialGrid = new SpatialGrid(canvas.width, canvas.height, 150);
     this.collisionSystem = new CollisionSystem(this.spatialGrid);
     this.inputHandler = new InputHandler(canvas, () => this.knockbackCallback());
 
     const systems: GameSystems = this.buildSystems();
-    this.gameLogic = new GameLogic(canvas, systems, this.gameSettings);
+    this.gameLogic = new GameLogic(canvas, systems, this.gameSettings, worldRandom);
   }
 
   private buildSystems(): GameSystems {
@@ -96,7 +116,27 @@ export class EngineCore {
     this.collisionSystem.updateSpatialGrid(this.spatialGrid);
     this.defenseSystem.updateCanvasSize(width, height);
     this.chainDetonationManager.updateCanvasSize(width, height);
+    this.powerUpManager.updateCanvasSize(width, height);
     this.gameLogic.updateSpatialGrid(width, height);
+  }
+
+  beginRun(seed: number): void {
+    this.runRandom.reset(seed);
+    this.evidenceRecorder.begin(seed, {
+      width: this.canvas.width,
+      height: this.canvas.height,
+      pixelRatio: 1,
+    });
+    this.resetSystems();
+  }
+
+  update(deltaTime: number): void {
+    this.evidenceRecorder.advanceTick();
+    this.gameLogic.update(
+      deltaTime,
+      this.performanceSettings.adaptiveTrailsActive,
+      this.performanceSettings.performanceModeActive,
+    );
   }
 
   applyPerformanceMode(enabled: boolean): void {
@@ -116,7 +156,10 @@ export class EngineCore {
     this.scoreSystem.reset();
     this.defenseSystem.clear();
     this.chainDetonationManager.reset();
-    this.defenseSystem = new DefenseSystem(this.canvas);
+    this.defenseSystem = new DefenseSystem(
+      this.canvas,
+      this.runRandom.getStream('defense').next,
+    );
     this.inputHandler.reset();
     this.gameLogic.updateSystems(this.buildSystems());
     this.gameLogic.resetGame();
@@ -130,7 +173,6 @@ export class EngineCore {
     this.cleanedUp = true;
     this.defenseSystem.clear();
     this.chainDetonationManager.reset();
-    this.meteorPool.clear();
     this.particleSystem.clear();
     this.scoreSystem.clear();
     this.inputHandler.cleanup();
@@ -147,9 +189,18 @@ export class EngineCore {
   getInputHandler(): InputHandler { return this.inputHandler; }
   getPowerUpManager(): PowerUpManager { return this.powerUpManager; }
   getGameLogic(): GameLogic { return this.gameLogic; }
-  getMeteorPool(): ObjectPool<Meteor> { return this.meteorPool; }
   getSettings(): GameSettings { return { ...this.gameSettings }; }
   getPerformanceSettings(): PerformanceSettings { return { ...this.performanceSettings }; }
   getAutoScalingEnabled(): boolean { return this.performanceSettings.autoScaleEnabled; }
   getAutoPerformanceModeEnabled(): boolean { return this.performanceSettings.autoPerformanceModeEnabled; }
+
+  finishRunEvidence(): RunEvidence {
+    return this.evidenceRecorder.finish(
+      this.scoreSystem.getScoreBreakdown(),
+      this.runRandom.getDrawCounts(),
+    );
+  }
+
+  getRunEvidence(): RunEvidence | null { return this.evidenceRecorder.getEvidence(); }
+  getRunSummary(): RunEvidenceSummary { return this.evidenceRecorder.getSummary(); }
 }

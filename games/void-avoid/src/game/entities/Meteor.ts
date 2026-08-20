@@ -44,6 +44,7 @@ export function resetMeteor(meteor: Meteor): void {
 
 export function initializeMeteor(
   meteor: Meteor,
+  id: string,
   x: number,
   y: number,
   vx: number,
@@ -52,7 +53,7 @@ export function initializeMeteor(
   color: string,
   isSuper: boolean
 ): void {
-  meteor.id = Math.random().toString(36).substr(2, 9);
+  meteor.id = id;
   meteor.x = x;
   meteor.y = y;
   meteor.vx = vx;
