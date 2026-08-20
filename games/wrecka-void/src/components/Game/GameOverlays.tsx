@@ -2,12 +2,15 @@ import { useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { Share2, Copy, CheckCircle } from "lucide-react";
 import { GameState } from "../../types/Game";
-import logoImage from "../../assets/ChatGPT Image Jun 28, 2025, 12_39_11 PM.png";
+import { ModalSurface } from "../ui/ModalSurface";
+import logoImage from "../../assets/wreckavoid-logo.webp";
 
 interface GameOverlaysProps {
   gameState: GameState;
   showHelp: boolean;
   user: User | null;
+  exitDialogOpen: boolean;
+  viewportSupported: boolean;
   onToggleHelp: () => void;
   onTogglePause: () => void;
   onRestartGame: () => void;
@@ -17,6 +20,8 @@ export function GameOverlays({
   gameState,
   showHelp,
   user,
+  exitDialogOpen,
+  viewportSupported,
   onToggleHelp,
   onTogglePause,
   onRestartGame,
@@ -66,10 +71,23 @@ export function GameOverlays({
     <>
       {/* Help Modal */}
       {showHelp && (
-        <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-gray-900 p-8 rounded-lg text-center max-w-md border border-gray-700">
-            <h2 className="text-2xl font-bold text-white mb-6">How to Play</h2>
-            <div className="space-y-3 text-gray-300 text-left">
+        <ModalSurface
+          labelledBy="wreckavoid-help-title"
+          describedBy="wreckavoid-help-description"
+          onEscape={onToggleHelp}
+          overlayClassName="absolute inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+          dialogClassName="max-h-full w-full max-w-md overflow-y-auto rounded-2xl border border-gray-600 bg-gray-900 p-6 text-center shadow-2xl sm:p-8"
+        >
+            <h2
+              id="wreckavoid-help-title"
+              className="mb-6 text-2xl font-bold text-white"
+            >
+              How to Play
+            </h2>
+            <div
+              id="wreckavoid-help-description"
+              className="space-y-3 text-left text-gray-200"
+            >
               <div>
                 <strong>Mouse or touch:</strong> Control character
               </div>
@@ -93,41 +111,72 @@ export function GameOverlays({
             </div>
             <button
               onClick={onToggleHelp}
-              className="mt-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
+              data-autofocus
+              className="mt-6 rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white transition-colors hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-300"
             >
               Close
             </button>
-          </div>
-        </div>
+        </ModalSurface>
       )}
 
       {/* Pause overlay */}
-      {gameState.isPaused && !gameState.isGameOver && (
-        <div className="absolute inset-0 bg-black/80 flex items-center justify-center backdrop-blur-sm z-40">
-          <div className="bg-gray-900 p-8 rounded-lg text-center border border-gray-700">
+      {gameState.isPaused &&
+        !gameState.isGameOver &&
+        !showHelp &&
+        !exitDialogOpen &&
+        viewportSupported && (
+        <ModalSurface
+          labelledBy="wreckavoid-pause-title"
+          onEscape={onTogglePause}
+          overlayClassName="absolute inset-0 z-40 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+          dialogClassName="w-full max-w-sm rounded-2xl border border-gray-600 bg-gray-900 p-6 text-center shadow-2xl sm:p-8"
+        >
             <div className="flex justify-center mb-6">
-              <img src={logoImage} alt="WreckaVOID" className="w-40 h-40" />
+              <img
+                src={logoImage}
+                alt=""
+                aria-hidden="true"
+                width="160"
+                height="160"
+                decoding="async"
+                className="h-32 w-32 sm:h-40 sm:w-40"
+              />
             </div>
-            <h2 className="text-3xl font-bold text-white mb-6">Game Paused</h2>
+            <h2
+              id="wreckavoid-pause-title"
+              className="mb-6 text-3xl font-bold text-white"
+            >
+              Game Paused
+            </h2>
             <button
               onClick={onTogglePause}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors"
+              data-autofocus
+              className="rounded-lg bg-blue-600 px-8 py-3 font-semibold text-white transition-colors hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-300"
             >
               Resume Game
             </button>
-          </div>
-        </div>
+        </ModalSurface>
       )}
 
       {/* Game over overlay */}
       {gameState.isGameOver && (
-        <div className="absolute inset-0 z-40 flex items-center justify-center overflow-y-auto bg-black/90 p-3 backdrop-blur-sm sm:p-6">
-          <div className="my-auto w-full max-w-md rounded-lg border border-gray-700 bg-gray-900 p-4 text-center sm:p-8">
-            <h2 className="mb-3 text-3xl font-bold text-red-400 sm:mb-6 sm:text-4xl">
+        <ModalSurface
+          labelledBy="wreckavoid-result-title"
+          describedBy="wreckavoid-result-summary"
+          overlayClassName="absolute inset-0 z-40 flex items-center justify-center overflow-y-auto bg-black/90 p-3 backdrop-blur-sm sm:p-6"
+          dialogClassName="my-auto max-h-full w-full max-w-md overflow-y-auto rounded-2xl border border-gray-600 bg-gray-900 p-4 text-center shadow-2xl sm:p-8"
+        >
+            <h2
+              id="wreckavoid-result-title"
+              className="mb-3 text-3xl font-bold text-red-300 sm:mb-6 sm:text-4xl"
+            >
               Game Over!
             </h2>
-            <div className="mb-4 space-y-2 text-gray-300 sm:mb-8 sm:space-y-3">
-              <div className="text-xl font-bold text-yellow-400 sm:text-2xl">
+            <div
+              id="wreckavoid-result-summary"
+              className="mb-4 space-y-2 text-gray-200 sm:mb-8 sm:space-y-3"
+            >
+              <div className="text-xl font-bold text-yellow-300 sm:text-2xl">
                 Final Score: {gameState.score.toLocaleString()}
               </div>
               <div>Wave Reached: {gameState.wave}</div>
@@ -153,7 +202,7 @@ export function GameOverlays({
                   <div className="flex space-x-2">
                     <button
                       onClick={handleCopyShare}
-                      className="flex-1 flex items-center justify-center space-x-2 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-3 rounded-lg transition-colors text-sm"
+                      className="flex flex-1 items-center justify-center space-x-2 rounded-lg bg-gray-700 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
                     >
                       {shareStatus === "copied" ? (
                         <>
@@ -169,7 +218,7 @@ export function GameOverlays({
                     </button>
                     <button
                       onClick={handleTwitterShare}
-                      className="flex-1 flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 rounded-lg transition-colors text-sm"
+                      className="flex flex-1 items-center justify-center space-x-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
                     >
                       {shareStatus === "shared" ? (
                         <>
@@ -192,21 +241,28 @@ export function GameOverlays({
 
               <button
                 onClick={onRestartGame}
-                className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+                data-autofocus
+                className="w-full rounded-lg bg-red-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-300"
               >
                 Play Again
               </button>
               {!user && (
                 <button
                   onClick={() => (window.location.href = "/")}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors text-sm"
+                  className="w-full rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
                 >
                   Sign In to Save Scores
                 </button>
               )}
             </div>
-          </div>
-        </div>
+            <p className="sr-only" aria-live="polite" aria-atomic="true">
+              {shareStatus === "copied"
+                ? "Score copied to clipboard."
+                : shareStatus === "shared"
+                  ? "Share window opened."
+                  : ""}
+            </p>
+        </ModalSurface>
       )}
     </>
   );

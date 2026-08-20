@@ -1,10 +1,35 @@
-import { Particle, Vector2 } from '../types/Game';
+import { Particle, Vector2 } from "../types/Game";
+
+const STANDARD_PARTICLE_LIMIT = 480;
+const REDUCED_MOTION_PARTICLE_LIMIT = 96;
 
 export class ParticleSystem {
   private particles: Particle[] = [];
   private nextParticleId = 0;
+  private reducedMotion = false;
 
-  addParticle(pos: Vector2, velocity: Vector2, color: string, life: number = 30): void {
+  setReducedMotion(reducedMotion: boolean): void {
+    this.reducedMotion = reducedMotion;
+    this.trimToLimit();
+  }
+
+  private get limit(): number {
+    return this.reducedMotion
+      ? REDUCED_MOTION_PARTICLE_LIMIT
+      : STANDARD_PARTICLE_LIMIT;
+  }
+
+  private trimToLimit(): void {
+    const overflow = this.particles.length - this.limit;
+    if (overflow > 0) this.particles.splice(0, overflow);
+  }
+
+  addParticle(
+    pos: Vector2,
+    velocity: Vector2,
+    color: string,
+    life: number = 30,
+  ): void {
     this.particles.push({
       id: this.nextParticleId++,
       pos: { ...pos },
@@ -14,11 +39,13 @@ export class ParticleSystem {
       color,
       size: Math.random() * 4 + 2,
     });
+    this.trimToLimit();
   }
 
   createExplosion(pos: Vector2, color: string): void {
-    for (let i = 0; i < 12; i++) {
-      const angle = (i / 12) * Math.PI * 2;
+    const count = this.reducedMotion ? 4 : 12;
+    for (let i = 0; i < count; i++) {
+      const angle = (i / count) * Math.PI * 2;
       const speed = Math.random() * 150 + 75;
       this.addParticle(
         pos,
@@ -27,14 +54,14 @@ export class ParticleSystem {
           y: Math.sin(angle) * speed,
         },
         color,
-        80
+        this.reducedMotion ? 30 : 80,
       );
     }
   }
 
   createLightningBolt(start: Vector2, end: Vector2): void {
     // Create multiple particles along the lightning path
-    const segments = 8;
+    const segments = this.reducedMotion ? 3 : 8;
     for (let i = 0; i <= segments; i++) {
       const t = i / segments;
       // Add some randomness to make it look like lightning
@@ -47,17 +74,18 @@ export class ParticleSystem {
       this.addParticle(
         pos,
         { x: (Math.random() - 0.5) * 50, y: (Math.random() - 0.5) * 50 },
-        '#ffff00',
-        30
+        "#ffff00",
+        30,
       );
     }
     
     // Add bright flash at both ends
-    this.addParticle(start, { x: 0, y: 0 }, '#ffffff', 20);
-    this.addParticle(end, { x: 0, y: 0 }, '#ffffff', 20);
+    this.addParticle(start, { x: 0, y: 0 }, "#ffffff", 20);
+    this.addParticle(end, { x: 0, y: 0 }, "#ffffff", 20);
   }
 
   createElectricSparks(pos: Vector2): void {
+    if (this.reducedMotion) return;
     // Create electric sparks around the electrified ball
     for (let i = 0; i < 6; i++) {
       const angle = Math.random() * Math.PI * 2;
@@ -70,8 +98,8 @@ export class ParticleSystem {
       this.addParticle(
         sparkPos,
         { x: (Math.random() - 0.5) * 100, y: (Math.random() - 0.5) * 100 },
-        '#ffff88',
-        25
+        "#ffff88",
+        25,
       );
     }
   }
@@ -79,7 +107,7 @@ export class ParticleSystem {
   update(deltaTime: number): void {
     const dt = deltaTime / 1000;
     
-    this.particles.forEach(particle => {
+    this.particles.forEach((particle) => {
       particle.pos.x += particle.velocity.x * dt;
       particle.pos.y += particle.velocity.y * dt;
       particle.velocity.x *= 0.98;
@@ -87,13 +115,17 @@ export class ParticleSystem {
       particle.life--;
     });
 
-    this.particles = this.particles.filter(particle => particle.life > 0);
+    this.particles = this.particles.filter((particle) => particle.life > 0);
   }
 
   render(ctx: CanvasRenderingContext2D): void {
-    this.particles.forEach(particle => {
+    this.particles.forEach((particle) => {
       const alpha = particle.life / particle.maxLife;
-      ctx.fillStyle = particle.color + Math.floor(alpha * 255).toString(16).padStart(2, '0');
+      ctx.fillStyle =
+        particle.color +
+        Math.floor(alpha * 255)
+          .toString(16)
+          .padStart(2, "0");
       ctx.beginPath();
       ctx.arc(particle.pos.x, particle.pos.y, particle.size * alpha, 0, Math.PI * 2);
       ctx.fill();

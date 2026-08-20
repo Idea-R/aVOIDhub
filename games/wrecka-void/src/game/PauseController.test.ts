@@ -26,6 +26,26 @@ describe("PauseController", () => {
     expect(pause.set("focus", false)).toBe(false);
   });
 
+  it("keeps another pause reason when exit confirmation closes", () => {
+    const pause = new PauseController();
+
+    pause.set("manual", true);
+    pause.set("exit", true);
+
+    expect(pause.set("exit", false)).toBe(true);
+    expect(pause.activeReasons()).toEqual(["manual"]);
+  });
+
+  it("resumes only the viewport pause after the playfield becomes usable", () => {
+    const pause = new PauseController();
+
+    pause.set("focus", true);
+    pause.set("viewport", true);
+
+    expect(pause.set("viewport", false)).toBe(true);
+    expect(pause.activeReasons()).toEqual(["focus"]);
+  });
+
   it("resets every pause reason for a fresh run", () => {
     const pause = new PauseController();
     pause.set("manual", true);

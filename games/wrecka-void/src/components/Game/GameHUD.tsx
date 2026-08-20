@@ -3,6 +3,7 @@ import type { User } from "@supabase/supabase-js";
 import { ArrowLeft, HelpCircle, Pause, Volume2, VolumeX } from "lucide-react";
 import { GameState } from "../../types/Game";
 import { ActiveEffects, PlayerUpgrades } from "../../types/PowerUps";
+import { ModalSurface } from "../ui/ModalSurface";
 
 interface GameHUDProps {
   gameState: GameState;
@@ -14,6 +15,7 @@ interface GameHUDProps {
   onTogglePause: () => void;
   audioEnabled: boolean;
   onToggleAudio: () => void;
+  onExitDialogChange: (open: boolean) => void;
 }
 
 export function GameHUD({
@@ -26,6 +28,7 @@ export function GameHUD({
   onTogglePause,
   audioEnabled,
   onToggleAudio,
+  onExitDialogChange,
 }: GameHUDProps) {
   const [hoveredUpgrade, setHoveredUpgrade] = useState<string | null>(null);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
@@ -45,6 +48,7 @@ export function GameHUD({
 
   const handleBackClick = () => {
     setShowExitConfirm(true);
+    onExitDialogChange(true);
   };
 
   const confirmExit = () => {
@@ -53,6 +57,7 @@ export function GameHUD({
 
   const cancelExit = () => {
     setShowExitConfirm(false);
+    onExitDialogChange(false);
   };
 
   const getPermanentUpgradeIcons = () => {
@@ -204,9 +209,13 @@ export function GameHUD({
               {getPermanentUpgradeIcons().map((upgrade, index) => (
                 <div
                   key={index}
-                  className="flex items-center bg-gray-800/40 rounded-sm px-1 py-0.5 relative cursor-help"
+                  className="relative flex items-center rounded-sm bg-gray-800/40 px-1 py-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
+                  tabIndex={0}
+                  aria-label={`${upgrade.name} level ${upgrade.count}`}
                   onMouseEnter={() => setHoveredUpgrade(upgrade.name)}
                   onMouseLeave={() => setHoveredUpgrade(null)}
+                  onFocus={() => setHoveredUpgrade(upgrade.name)}
+                  onBlur={() => setHoveredUpgrade(null)}
                 >
                   <span className="text-xs" style={{ color: upgrade.color }}>
                     {upgrade.icon}
@@ -271,30 +280,41 @@ export function GameHUD({
 
       {/* Exit Confirmation Modal */}
       {showExitConfirm && (
-        <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-gray-900 p-6 rounded-lg text-center max-w-sm border border-gray-700">
-            <h3 className="text-xl font-bold text-white mb-4">
+        <ModalSurface
+          labelledBy="wreckavoid-exit-title"
+          describedBy="wreckavoid-exit-description"
+          onEscape={cancelExit}
+          overlayClassName="absolute inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+          dialogClassName="w-full max-w-sm rounded-2xl border border-gray-600 bg-gray-900 p-6 text-center shadow-2xl"
+        >
+            <h3
+              id="wreckavoid-exit-title"
+              className="mb-4 text-xl font-bold text-white"
+            >
               Return to Title Screen?
             </h3>
-            <p className="text-gray-300 mb-6">
+            <p
+              id="wreckavoid-exit-description"
+              className="mb-6 text-gray-200"
+            >
               Your current game progress will be lost.
             </p>
             <div className="flex space-x-3">
               <button
                 onClick={confirmExit}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+                className="flex-1 rounded-lg bg-red-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-300"
               >
                 Yes, Exit
               </button>
               <button
                 onClick={cancelExit}
-                className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+                data-autofocus
+                className="flex-1 rounded-lg bg-gray-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-gray-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
               >
                 Cancel
               </button>
             </div>
-          </div>
-        </div>
+        </ModalSurface>
       )}
     </>
   );

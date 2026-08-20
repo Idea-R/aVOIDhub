@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { clampCanvasPoint, mapClientPointToCanvas } from "./InputManager";
+import {
+  clampCanvasPoint,
+  isInteractiveKeyboardTarget,
+  mapClientPointToCanvas,
+} from "./InputManager";
 
 describe("mapClientPointToCanvas", () => {
   it("preserves coordinates when the CSS and bitmap sizes match", () => {
@@ -31,5 +35,20 @@ describe("mapClientPointToCanvas", () => {
       x: 390,
       y: 0,
     });
+  });
+
+  it("leaves keyboard activation on interactive controls alone", () => {
+    expect(isInteractiveKeyboardTarget({ tagName: "BUTTON" } as never)).toBe(
+      true,
+    );
+    expect(isInteractiveKeyboardTarget({ tagName: "INPUT" } as never)).toBe(
+      true,
+    );
+    expect(
+      isInteractiveKeyboardTarget({ isContentEditable: true } as never),
+    ).toBe(true);
+    expect(isInteractiveKeyboardTarget({ tagName: "CANVAS" } as never)).toBe(
+      false,
+    );
   });
 });

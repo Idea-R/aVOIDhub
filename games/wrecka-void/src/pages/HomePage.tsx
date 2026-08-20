@@ -16,7 +16,7 @@ import {
 import { useAuth } from "../hooks/useAuth";
 import { AuthModal } from "../components/Auth/AuthModal";
 import { SupportModal } from "../components/Support/SupportModal";
-import logoImage from "../assets/ChatGPT Image Jun 28, 2025, 12_39_11 PM.png";
+import logoImage from "../assets/wreckavoid-logo.webp";
 
 interface HomePageProps {
   onNavigate: (page: string) => void;
@@ -39,8 +39,15 @@ export function HomePage({ onNavigate }: HomePageProps) {
       <div className="relative z-10 container mx-auto px-4 py-8">
         {/* Header */}
         <header className="flex justify-between items-center mb-16">
-          <div className="flex items-center">
-            <img src={logoImage} alt="WreckaVOID" className="w-48 h-48" />
+          <div className="flex shrink-0 items-center">
+            <img
+              src={logoImage}
+              alt="WreckaVOID"
+              width="192"
+              height="192"
+              decoding="async"
+              className="h-28 w-28 shrink-0 sm:h-48 sm:w-48"
+            />
           </div>
 
           <nav className="flex items-center space-x-4">

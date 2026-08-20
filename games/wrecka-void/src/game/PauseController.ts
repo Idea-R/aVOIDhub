@@ -1,4 +1,4 @@
-export type PauseReason = "manual" | "focus" | "help";
+export type PauseReason = "manual" | "focus" | "help" | "exit" | "viewport";
 
 export class PauseController {
   private reasons = new Set<PauseReason>();

@@ -20,6 +20,7 @@ import { FixedStepClock } from "../../game/FixedStepClock";
 import { RunCompletionGate } from "../../game/RunCompletionGate";
 import { PauseController } from "../../game/PauseController";
 import { SoundManager } from "../../game/SoundManager";
+import { FrameMonitor } from "../../game/FrameMonitor";
 import { GameHUD } from "./GameHUD";
 import { GameOverlays } from "./GameOverlays";
 import { beginPlatformRun } from "../../api/platformRuns";
@@ -48,6 +49,7 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
   // Game state
   const [gameState, setGameState] = useState(gameStateRef.current.getState());
   const [showHelp, setShowHelp] = useState(false);
+  const [exitDialogOpen, setExitDialogOpenState] = useState(false);
   const showHelpRef = useRef(showHelp);
   const [audioEnabled, setAudioEnabled] = useState(
     () => window.localStorage.getItem("wreckavoid:audio") !== "muted",
@@ -82,6 +84,7 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
   // Timing
   const pauseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const clockRef = useRef(new FixedStepClock());
+  const frameMonitorRef = useRef(new FrameMonitor());
   const runCompletionRef = useRef(new RunCompletionGate());
   const pauseControllerRef = useRef(new PauseController());
   const toggleManualPauseRef = useRef<() => void>(() => undefined);
@@ -142,8 +145,10 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
     const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
     const handleChange = (event: MediaQueryListEvent) => {
       reducedMotionRef.current = event.matches;
+      particleSystemRef.current.setReducedMotion(event.matches);
       setReducedMotion(event.matches);
     };
+    particleSystemRef.current.setReducedMotion(preference.matches);
     preference.addEventListener("change", handleChange);
     return () => preference.removeEventListener("change", handleChange);
   }, []);
@@ -771,6 +776,7 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
     lifecycleCounters.rafOwners += 1;
     const gameLoop = (currentTime: number) => {
       if (!running) return;
+      frameMonitorRef.current.observe(currentTime);
 
       const state = gameStateRef.current.getState();
       clockRef.current.advance(
@@ -809,6 +815,7 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
     runCompletionRef.current.reset();
     pauseControllerRef.current.reset();
     clockRef.current.reset();
+    frameMonitorRef.current.reset();
     gameStateRef.current.reset();
     showHelpRef.current = false;
     setShowHelp(false);
@@ -863,6 +870,13 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
     void soundManagerRef.current.setEnabled(nextEnabled);
   };
 
+  const setExitDialogOpen = (open: boolean) => {
+    setExitDialogOpenState(open);
+    gameStateRef.current.setState({
+      isPaused: pauseControllerRef.current.set("exit", open),
+    });
+  };
+
   const forceGameOverForSmoke = () => {
     const state = gameStateRef.current.getState();
     gameStateRef.current.updateHealth(state.health);
@@ -876,9 +890,31 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
     });
   };
 
+  const setReducedMotionForSmoke = (active: boolean) => {
+    reducedMotionRef.current = active;
+    particleSystemRef.current.setReducedMotion(active);
+    setReducedMotion(active);
+  };
+
   const lifecycle = lifecycleCountersRef.current;
+  const frameSample = frameMonitorRef.current.sample();
+  const heapUsage = (
+    window.performance as Performance & {
+      memory?: { usedJSHeapSize: number };
+    }
+  ).memory?.usedJSHeapSize;
   const viewportReady = canvasSize.width > 1 && canvasSize.height > 1;
   const viewportSupported = canvasSize.width >= 320 && canvasSize.height >= 320;
+
+  useEffect(() => {
+    if (!viewportReady) return;
+    gameStateRef.current.setState({
+      isPaused: pauseControllerRef.current.set(
+        "viewport",
+        !viewportSupported,
+      ),
+    });
+  }, [viewportReady, viewportSupported]);
 
   return (
     <div className="relative flex h-screen h-[100dvh] w-full flex-col overflow-hidden bg-gray-900 pb-[env(safe-area-inset-bottom)]">
@@ -892,19 +928,33 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
         onTogglePause={toggleManualPause}
         audioEnabled={audioEnabled}
         onToggleAudio={toggleAudio}
+        onExitDialogChange={setExitDialogOpen}
       />
+
+      <p id="wreckavoid-playfield-instructions" className="sr-only">
+        Move with the pointer or touch. Hold to retract the chain. Press Space
+        to pause and H for help.
+      </p>
 
       <canvas
         ref={canvasRef}
         width={canvasSize.width}
         height={canvasSize.height}
+        tabIndex={0}
+        aria-label="WreckaVOID playfield"
+        aria-describedby="wreckavoid-playfield-instructions"
         className="block min-h-0 w-full flex-1 touch-none bg-gray-800"
-      />
+      >
+        WreckaVOID is a physics survival game. Use a modern browser with canvas
+        support to play.
+      </canvas>
 
       <GameOverlays
         gameState={gameState}
         showHelp={showHelp}
         user={user}
+        exitDialogOpen={exitDialogOpen}
+        viewportSupported={viewportSupported}
         onToggleHelp={toggleHelp}
         onTogglePause={toggleManualPause}
         onRestartGame={restartGame}
@@ -981,6 +1031,13 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
           >
             Simulate focus return
           </button>
+          <button
+            type="button"
+            onClick={() => setReducedMotionForSmoke(!reducedMotionRef.current)}
+            className="pointer-events-auto ml-1 rounded bg-gray-700 px-2 py-1 font-semibold text-white"
+          >
+            Toggle reduced motion
+          </button>
           <output className="ml-2" aria-label="Lifecycle owners">
             RAF {lifecycle.rafOwners} · input {lifecycle.inputOwners} · timers{" "}
             {deferredSetupRef.current.size} · finishes{" "}
@@ -989,6 +1046,17 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
             {pauseControllerRef.current.activeReasons().join("+") || "none"}
             {" · motion "}
             {reducedMotion ? "reduced" : "standard"}
+            {" · frame avg/p95/max "}
+            {frameSample.averageMs.toFixed(1)}/
+            {frameSample.p95Ms.toFixed(1)}/{frameSample.maxMs.toFixed(1)}ms
+            {" · long "}
+            {frameSample.longFrames}
+            {heapUsage !== undefined && (
+              <>
+                {" · heap "}
+                {(heapUsage / 1024 / 1024).toFixed(2)}MB
+              </>
+            )}
           </output>
         </aside>
       )}

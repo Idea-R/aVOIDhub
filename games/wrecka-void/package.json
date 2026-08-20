@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "check:budget": "node tools/check-build-budget.mjs",
+    "verify:release": "npm run typecheck && npm run lint && npm run test && npm run build && npm run check:budget",
     "build:prod": "NODE_ENV=production vite build",
     "lint": "eslint .",
     "test": "vitest run",

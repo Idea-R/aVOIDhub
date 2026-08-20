@@ -7,6 +7,25 @@ interface CanvasRect {
   height: number;
 }
 
+export function isInteractiveKeyboardTarget(target: EventTarget | null): boolean {
+  if (!target || typeof target !== "object") return false;
+  const element = target as {
+    tagName?: string;
+    isContentEditable?: boolean;
+    closest?: (selector: string) => unknown;
+  };
+
+  if (element.isContentEditable) return true;
+  if (
+    ["BUTTON", "INPUT", "SELECT", "TEXTAREA", "A"].includes(
+      element.tagName ?? "",
+    )
+  ) {
+    return true;
+  }
+  return Boolean(element.closest?.("[role='button'], [role='link']"));
+}
+
 export function mapClientPointToCanvas(
   clientX: number,
   clientY: number,
@@ -55,6 +74,7 @@ export class InputManager {
 
   private setupEventListeners(): void {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (isInteractiveKeyboardTarget(e.target)) return;
       this.keys.add(e.code);
       this.listeners.onKeyDown?.(e.code);
 
@@ -64,6 +84,7 @@ export class InputManager {
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
+      if (isInteractiveKeyboardTarget(e.target)) return;
       this.keys.delete(e.code);
       this.listeners.onKeyUp?.(e.code);
     };

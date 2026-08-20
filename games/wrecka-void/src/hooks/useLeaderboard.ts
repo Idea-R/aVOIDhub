@@ -1,12 +1,21 @@
-import { useState, useEffect } from 'react';
-import { supabase, GameScore } from '../lib/supabase';
-import { finishPlatformRun } from '../api/platformRuns';
+import { useState, useEffect } from "react";
+import {
+  supabase,
+  supabaseConfigured,
+  GameScore,
+} from "../lib/supabase";
+import { finishPlatformRun } from "../api/platformRuns";
 
 export function useLeaderboard() {
   const [scores, setScores] = useState<GameScore[]>([]);
   const [loading, setLoading] = useState(false);
 
   const fetchLeaderboard = async () => {
+    if (!supabaseConfigured) {
+      setScores([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -37,7 +46,9 @@ export function useLeaderboard() {
         };
       }));
     } catch (error) {
-      console.error('Error fetching leaderboard:', error);
+      if (import.meta.env.DEV) {
+        console.error("Error fetching leaderboard:", error);
+      }
     } finally {
       setLoading(false);
     }

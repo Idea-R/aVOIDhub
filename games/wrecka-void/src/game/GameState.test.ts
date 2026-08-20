@@ -38,4 +38,18 @@ describe("GameStateManager", () => {
       isPaused: false,
     });
   });
+
+  it("presents the clock at a bounded rate without slowing simulation time", () => {
+    const state = new GameStateManager();
+    const listener = vi.fn();
+    state.subscribe(listener);
+
+    for (let frame = 0; frame < 60; frame += 1) {
+      state.updateGameTime(1000 / 60);
+    }
+
+    expect(state.getState().gameTime).toBeCloseTo(1, 5);
+    expect(listener.mock.calls.length).toBeGreaterThanOrEqual(8);
+    expect(listener.mock.calls.length).toBeLessThanOrEqual(10);
+  });
 });
