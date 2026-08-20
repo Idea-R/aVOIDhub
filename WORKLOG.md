@@ -320,7 +320,8 @@ Review draft PR `#27`, then build T3 as a complete encounter loop: intentional a
 - Found and repaired a phone result defect where button focus could scroll the title above a 320×568 viewport; the bounded dialog now focuses its heading surface without moving it.
 - Completed ten actual pointer-driven browser encounters at six hits from six shots each. The tenth retained 10 starts / 10 finishes / 9 restarts, eight listeners, one observer, zero terminal projectiles/frame, four cover pieces, 16/56 draw-items, 0 particles, and a 17 ms largest accepted frame delta.
 - Kept touch, audio, extra enemies, waves, progression, scores, accounts, platform staging, Supabase, Stripe, AdSense, DNS, and production deployment outside T3.
+- Published the implementation and evidence as two commits in stacked draft PR `#29` above the exact T2 head; no merge or deployment occurred.
 
 ### Next action
 
-Publish T3 for review, then make T4 an honest device/control sprint: prototype intentional touch driving, finish HUD/onboarding/audio/accessibility work, and validate the supported control claim on target hardware. TankaVOID remains Coming Soon.
+Review draft PR `#29`, then make T4 an honest device/control sprint: prototype intentional touch driving, finish HUD/onboarding/audio/accessibility work, and validate the supported control claim on target hardware. TankaVOID remains Coming Soon.

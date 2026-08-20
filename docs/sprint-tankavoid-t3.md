@@ -3,6 +3,7 @@
 - Date: 2026-08-20
 - Issue: [#28](https://github.com/Idea-R/aVOIDhub/issues/28)
 - Branch: `codex/tankavoid-t3-encounter-loop`
+- Draft PR: [#29](https://github.com/Idea-R/aVOIDhub/pull/29)
 - Base: TankaVOID T2 commit `e75c8a1`
 
 ## Intended outcome
