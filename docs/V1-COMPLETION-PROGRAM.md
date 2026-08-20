@@ -5,7 +5,7 @@
 - **Repository:** `C:\dev\aVOID-next` / `Idea-R/aVOIDhub`
 - **Production baseline:** `https://avoidgame.io` at merge commit `7cd9788`
 - **Program branch:** `codex/docs-v1-completion-program`
-- **Current execution branch:** `codex/fix-voidavoid-v0-v1-baseline` (stacked on WORDaVOID WD3 and the completed WreckaVOID slices)
+- **Current execution branch:** `codex/fix-voidavoid-v2-evidence` (stacked on VOIDaVOID V0/V1, WORDaVOID WD3, and the completed WreckaVOID slices)
 - **Related records:** [`ROADMAP.md`](../ROADMAP.md), [`WORKLOG.md`](../WORKLOG.md), [`DECISIONS.md`](../DECISIONS.md)
 
 ## 1. Why this document exists
@@ -56,7 +56,8 @@ It is intentionally stricter than “the page loads.” Every V1 definition incl
 - WORDaVOID WD0 local gates are complete. Classic Survival and two-minute Time Attack are now the only playable V1 modes; six duplicate/partial experiments are listed as unranked without Start controls. The draft score/stat contract is pure and tested, the 60% accuracy floor and terminal-current-streak result are repaired, stale out-of-root build artifacts are removed, and the four-viewport menu matrix passes without horizontal overflow. Evidence is in `docs/sprint-wordavoid-wd0.md`.
 - WORDaVOID WD1 is source-complete. A shared package freezes the 1,770-entry dictionary/hash, ruleset, normalization, deterministic prompt generator, scoring, and bounded event validator. The game emits replayable evidence; the platform reconstructs the manifest from stored server metadata and ignores client aggregates; and the prepared service transaction returns the original receipt on a valid retry. Automated checks, full assembly, and desktop/mobile browser smoke pass. Executable SQL/concurrency/read-back remains gated on the isolated Supabase branch, and accepted storage stays `provisional`; evidence is in `docs/sprint-wordavoid-wd1.md`.
 - WORDaVOID WD3 is source- and local-browser-complete. An owned typing surface replaces global character capture; focus/manual pauses compose; the rendered arena owns resize/orientation; reduced motion and audio failure are truthful; local progress is versioned and recoverable; abandon, share, and repeat-run transitions are explicit. Typecheck, zero-warning lint, 33 tests, standalone/full-platform builds, desktop/narrow/landscape browser checks, and a 20-cycle restart soak pass. Physical iOS/Android sign-off and production deploy remain release gates; evidence is in `docs/sprint-wordavoid-wd3.md`.
-- VOIDaVOID V0 and the local V1 runtime gate are complete. The 51-file canonical graph now has one fixed-step loop, one Pointer Events owner, one resize owner, reason-aware pause, explicit start/results/replay, local-only score truth, and no active game-local auth/profile/leaderboard/audio path. Nine focused tests, zero-warning lint, standalone/full-platform builds, desktop/portrait/landscape QA, and a 30-cycle finish/restart soak pass. Seeded evidence, platform runs/detail data, local audio, physical devices, and deployment remain V2–V4; evidence is in `docs/voidavoid-v0-v1-contract.md` and `docs/sprint-voidavoid-v0-v1.md`.
+- VOIDaVOID V0 and the local V1 runtime gate are complete. The 51-file canonical graph established one fixed-step loop, one Pointer Events owner, one resize owner, reason-aware pause, explicit start/results/replay, local-only score truth, and no active game-local auth/profile/leaderboard/audio path. Nine focused tests, zero-warning lint, standalone/full-platform builds, desktop/portrait/landscape QA, and a 30-cycle finish/restart soak passed that gate; evidence is in `docs/voidavoid-v0-v1-contract.md` and `docs/sprint-voidavoid-v0-v1.md`.
+- VOIDaVOID V2 is local-source and browser complete. Named streams now seed every score-affecting meteor, power-up, chain, score-roll, and defense fallback decision; gameplay timers use the 60 Hz simulation clock; and a bounded tick-ordered envelope independently recomputes each final score. Twenty-two tests, standalone/full-platform builds, three responsive browser sizes, and a 20-cycle evidence soak pass. The result is honestly labeled `replayable-local`, not server validated; evidence is in `docs/voidavoid-v2-evidence-contract.md` and `docs/sprint-voidavoid-v2.md`.
 
 ### What is unsafe or misleading if activated today
 
@@ -506,10 +507,10 @@ Score generation includes client-side randomness, so identical inputs cannot cur
 
 V0/V1 repair update: the shipping graph is now explicitly rooted at `src/main.tsx`; historical alternate apps and engines are excluded from canonical compilation. The active shell is guest-first and local-score only. It has one fixed-step loop, one canvas Pointer Events handler, one resize manager, composed pause reasons, exact teardown, and an honest result surface. The full frozen behavior and scoring contract is in [`voidavoid-v0-v1-contract.md`](voidavoid-v0-v1-contract.md).
 
-### Confirmed V2–V4 release blockers
+### Confirmed V3–V4 release blockers
 
-- Random world and score decisions are still unseeded, so a server cannot replay the run.
-- The ruleset is documented as `voidavoid-local-v1`, but it is not yet shared with a platform validator.
+- World and score decisions are seeded and score arithmetic is locally replayable, but pointer/collision legitimacy is not yet server-replayable.
+- Ruleset `voidavoid-v2` is canonical in the game, but it is not yet shared with a platform validator or issued by a server run ticket.
 - No one-use platform run adapter, accepted receipt, personal-best query, or data-backed detail-page board exists.
 - Historical alternate source remains in the repository outside the canonical graph and still needs an archive/removal decision.
 - Audio is intentionally dormant until a local, consent-aware, teardown-safe V4 implementation exists.
@@ -574,13 +575,13 @@ A player launches the original meteor-avoidance game, immediately understands cu
 | V3     | Platform session, run adapter, detail page, personal best, receipt share |    L | No direct writes; guest/signed-in/failure paths; `/games/voidavoid/` pass    |
 | V4     | Visual/audio/accessibility/performance and release hardening             |    L | Browser/device matrix, frame/memory report, CI and deployed smoke            |
 
-V0 and the local V1 runtime gate completed on 2026-08-20. V2–V4 remain separate review and release gates.
+V0, the local V1 runtime gate, and V2 deterministic score evidence completed on 2026-08-20. V3–V4 remain separate review and release gates.
 
 **Expected VOIDaVOID effort after the shared platform foundation:** **20–35 focused engineering/QA days**. The largest uncertainty is whether the active engine can be isolated and made deterministic without changing the game’s feel.
 
 ### VOIDaVOID V1 acceptance checklist
 
-- [x] The scoring, difficulty, randomness, and terminal-state contracts are written and versioned for local ruleset `voidavoid-local-v1`.
+- [x] The scoring, difficulty, randomness, and terminal-state contracts are written and versioned for ruleset `voidavoid-v2`; score evidence independently recomputes local totals.
 - [x] Thirty repeated finish/restart cycles held one frame owner, five input listeners, and one-for-one start/finish/reset counts; audio is outside the active graph.
 - [ ] Pointer and claimed touch behavior pass target devices and orientations.
 - [x] No game-specific login/profile flow remains in the canonical play path.

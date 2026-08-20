@@ -252,3 +252,10 @@ Competitive letters belong only to a focusable typing surface; global keyboard o
 - Status: accepted for V0/V1
 
 Keep the recognizable meteor, defense, pulse, fragment, and chain-detonation game, but define one canonical runtime graph before adding platform features. The local V1 build uses one fixed 60 Hz loop, one canvas Pointer Events owner, one resize owner, composed pause reasons, an explicit guest start, and local-only result truth. Historical auth, profile, leaderboard, audio, alternate engine, and performance experiments may remain in repository history but cannot compile into the release path. Use DPR 1 until every active system shares one logical-pixel model. Do not rank the current random score stream; seeded evidence and platform run receipts are later gates.
+
+## D-037 — Separate deterministic score evidence from client trust
+
+- Date: 2026-08-20
+- Status: accepted for V2
+
+Derive named world, power-up, chain, score, and defense streams from one recorded unsigned run seed. Cosmetic randomness stays outside those streams so performance and visual settings cannot change an outcome. Use the 60 Hz simulation tick for every gameplay timer and record bounded score events in tick order. A local verifier may call matching arithmetic `replayable-local`, but an unsigned browser envelope remains unranked and provisional. Only a server-issued ticket plus bounded input or authoritative simulation evidence can justify stronger trust in V3.

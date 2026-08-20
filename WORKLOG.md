@@ -2,6 +2,16 @@
 
 ## 2026-08-20
 
+- Started VOIDaVOID V2 on isolated stacked branch `codex/fix-voidavoid-v2-evidence` with issue #20, leaving V0/V1 PR #19 and production untouched.
+- Traced every active `Math.random`, `performance.now`, and `Date.now` call and classified outcome-changing versus visual-only use.
+- Added unsigned run seeds and independent `world`, `power-up`, `chain`, `score`, and `defense` Mulberry32 streams. Meteor IDs are now per-run sequence IDs; visual particles, shake, color, arcs, and render jitter cannot consume gameplay draws.
+- Moved grace-period, chain, combo, and defense timing onto the fixed 60 Hz simulation clock. Power-up intervals are sampled once per scheduled attempt instead of once per frame.
+- Added a bounded V1 evidence envelope for ruleset `voidavoid-v2`: ordered tick events, viewport, draw counts, final breakdown, local FNV-1a mutation check, compact run code, and fail-closed `replayable-local` / `invalid-local` status.
+- Added deterministic tests for seed reset, stream isolation, meteor physics, power-up schedule/drift, chain composition/positions including compact canvases, defense fallback, score replay, ordering, draw-count, score, shape, and integrity tampering. Final suite: 7 files / 22 tests; 57 active files, 0 lint errors, 0 warnings.
+- Passed standalone Vite and full 21-route Next.js production builds. Browser QA passed at 1440×900, 390×844, and 844×390 with no overflow or console errors.
+- Completed 20 consecutive result/replay cycles: 20 distinct codes, every result `replayable-local`, 21 starts/finishes total, 20 resets, one loop owner, five input listeners, and no pending terminal frame.
+- Recorded the intentional boundary: V2 proves seeded world generation and score arithmetic, not legitimate client input or server trust. No database, Netlify, Stripe, AdSense, DNS, merge, or production state changed.
+
 - Started VOIDaVOID V0/V1 on isolated stacked branch `codex/fix-voidavoid-v0-v1-baseline` with issue #18, leaving the dirty main checkout and production untouched.
 - Traced the shipping graph and reproduced the misleading baseline: roughly 100 TypeScript errors, 173 lint errors, 10 warnings, no tests, duplicate input/resize/lifecycle owners, false verified-placement copy, game-local auth, external audio, and a 1.57 MB result image.
 - Froze the actual survival, meteor, combo, perfect-knockback, chain, meteor-speed/spawn, collision, grace-period, power-up, and terminal rules as local ruleset `voidavoid-local-v1`.
