@@ -339,6 +339,7 @@ Review draft PR `#29`, then make T4 an honest device/control sprint: prototype i
 - Proved one aim release creates one shot, then completed five touch-path victories at six shots, six hits, and 120 damage each. Terminal runs retained 12 listeners, one observer, one audio context, zero voices, zero projectiles, and zero frame owner.
 - Verified pause focus, muted silence, one-context unmute, app-root reduced motion, desktop keyboard/pointer mode without touch controls, and an empty warning/error log.
 - Kept physical iOS/Android certification, content expansion, platform integration, scores, production staging, Supabase, Stripe, AdSense, DNS, and deployment outside T4. TankaVOID remains Coming Soon.
+- Published the two-commit T4 boundary as stacked draft PR `#31` above the exact T3 head; no merge or deployment occurred.
 
 ### Next action
 

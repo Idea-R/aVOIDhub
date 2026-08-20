@@ -3,6 +3,7 @@
 - Date: 2026-08-20
 - Issue: [#30](https://github.com/Idea-R/aVOIDhub/issues/30)
 - Branch: `codex/tankavoid-t4-controls-feedback`
+- Draft PR: [#31](https://github.com/Idea-R/aVOIDhub/pull/31)
 - Base: exact T3 commit `04129a3`
 - Public state: Coming Soon; no platform staging or deployment
 
