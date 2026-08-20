@@ -18,6 +18,7 @@ function App() {
   const { 
     isPlaying, 
     isGameOver, 
+    mode,
     screenShakeTrigger,
     settings,
     startGame, 
@@ -165,7 +166,7 @@ function App() {
       <AnimatePresence>
         {appState === 'gameOver' && (
           <GameOverScreen
-            onRestart={handleStartGame.bind(null, 'classic')}
+            onRestart={handleStartGame.bind(null, mode)}
             onMainMenu={handleMainMenu}
           />
         )}

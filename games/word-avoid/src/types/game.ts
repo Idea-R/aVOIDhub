@@ -59,6 +59,9 @@ export interface Player {
   shield: number;
   score: number;
   streak: number;
+  maxStreak: number;
+  charactersAttempted: number;
+  charactersCorrect: number;
   accuracy: number;
   wpm: number;
   position: {

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { GameState, GameMode, Difficulty, Word, Player, GameStats, GameSettings, DifficultyLevel, DigitAssaultChar } from '../types/game';
 import { getRandomWord, getRandomSkillWord, getRandomDigitChar, getDifficultyLevelByWPM, difficultyConfigs, getRandomGeometricPattern } from '../data/words';
 import { beginPlatformRun, finishPlatformRun } from '../api/platformRuns';
+import { calculateAccuracy, calculateWordScore, calculateWpm, TIME_ATTACK_DURATION_MS } from '../contracts/v1';
 
 interface GameStore extends GameState {
   // Actions
@@ -54,6 +55,9 @@ const initialPlayer: Player = {
   shield: 0,
   score: 0,
   streak: 0,
+  maxStreak: 0,
+  charactersAttempted: 0,
+  charactersCorrect: 0,
   accuracy: 100,
   wpm: 0,
   position: { x: 0, y: 0 } // Will be set dynamically to screen center
@@ -143,7 +147,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       capsMode: false,
       shiftMode: false,
       geometricChallenges: [],
-      timeRemaining: mode === 'timeAttack' ? 120000 : undefined // 2 minutes for time attack
+      timeRemaining: mode === 'timeAttack' ? TIME_ATTACK_DURATION_MS : undefined
     });
   },
 
@@ -504,9 +508,25 @@ export const useGameStore = create<GameStore>((set, get) => ({
       }
     }
 
+    const isCorrect = Boolean(
+      targetWord && targetWord.text[targetWord.typedChars]?.toLowerCase() === char.toLowerCase(),
+    );
+
+    set(currentState => {
+      const charactersAttempted = currentState.player.charactersAttempted + 1;
+      const charactersCorrect = currentState.player.charactersCorrect + (isCorrect ? 1 : 0);
+      return {
+        player: {
+          ...currentState.player,
+          charactersAttempted,
+          charactersCorrect,
+          accuracy: calculateAccuracy(charactersCorrect, charactersAttempted),
+        },
+      };
+    });
+
     // Check if the character matches the next expected character
-    if (targetWord && 
-        targetWord.text[targetWord.typedChars]?.toLowerCase() === char.toLowerCase()) {
+    if (isCorrect && targetWord) {
       
       const updatedWords = state.words.map(word => {
         if (word.id === targetWord!.id) {
@@ -542,6 +562,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
         currentWord: ''
       });
     }
+
+    get().updateStats();
   },
 
   typeDigitCharacter: (char: string) => {
@@ -552,6 +574,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const matchingChars = state.digitChars.filter(digitChar => 
       digitChar.isActive && digitChar.char === char
     );
+
+    set(currentState => {
+      const charactersAttempted = currentState.player.charactersAttempted + 1;
+      const charactersCorrect = currentState.player.charactersCorrect + (matchingChars.length > 0 ? 1 : 0);
+      return {
+        player: {
+          ...currentState.player,
+          charactersAttempted,
+          charactersCorrect,
+          accuracy: calculateAccuracy(charactersCorrect, charactersAttempted),
+        },
+      };
+    });
     
     if (matchingChars.length > 0) {
       // Choose the closest character
@@ -594,7 +629,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
         player: {
           ...state.player,
           score: state.player.score + score,
-          streak: state.player.streak + 1
+          streak: state.player.streak + 1,
+          maxStreak: Math.max(state.player.maxStreak, state.player.streak + 1),
         },
         wordsTyped: state.wordsTyped + 1
       }));
@@ -618,6 +654,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const targetChallenge = activeChallenges.find(challenge => 
       challenge.pattern.keys[challenge.currentStep]?.toLowerCase() === char.toLowerCase()
     );
+
+    set(currentState => {
+      const charactersAttempted = currentState.player.charactersAttempted + 1;
+      const charactersCorrect = currentState.player.charactersCorrect + (targetChallenge ? 1 : 0);
+      return {
+        player: {
+          ...currentState.player,
+          charactersAttempted,
+          charactersCorrect,
+          accuracy: calculateAccuracy(charactersCorrect, charactersAttempted),
+        },
+      };
+    });
     
     if (targetChallenge) {
       const newStep = targetChallenge.currentStep + 1;
@@ -664,7 +713,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
           player: {
             ...state.player,
             score: state.player.score + totalScore,
-            streak: state.player.streak + 1
+            streak: state.player.streak + 1,
+            maxStreak: Math.max(state.player.maxStreak, state.player.streak + 1),
           },
           wordsTyped: state.wordsTyped + 1
         }));
@@ -698,28 +748,21 @@ export const useGameStore = create<GameStore>((set, get) => ({
       );
     }
 
-    // Calculate score based on word difficulty and speed
-    const baseScore = word.text.length * 10;
-    const difficultyMultiplier = {
-      easy: 1,
-      medium: 1.5,
-      hard: 2,
-      extreme: 3,
-      boss: 5
-    }[word.difficulty];
-    
-    const timeBonus = Math.max(0, 100 - (Date.now() - word.spawnTime) / 100);
-    const streakBonus = state.player.streak * 5;
-    
-    const levelBonus = state.level * 10;
-    const totalScore = Math.round((baseScore + timeBonus + streakBonus + levelBonus) * difficultyMultiplier);
+    const totalScore = calculateWordScore({
+      length: word.text.length,
+      difficulty: word.difficulty,
+      responseMs: Date.now() - word.spawnTime,
+      currentStreak: state.player.streak,
+      level: state.level,
+    });
 
     // Remove the completed word and update state
     set(state => ({
       player: {
         ...state.player,
         score: state.player.score + totalScore,
-        streak: state.player.streak + 1
+        streak: state.player.streak + 1,
+        maxStreak: Math.max(state.player.maxStreak, state.player.streak + 1),
       },
       wordsTyped: state.wordsTyped + 1,
       words: state.words.filter(w => w.id !== wordId),
@@ -840,20 +883,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   updateStats: () => {
     const state = get();
-    const currentTime = Date.now();
-    const gameTime = (currentTime - state.startTime) / 1000; // seconds
-    // Calculate WPM (words per minute)
-    const wpm = gameTime > 0 ? Math.round((state.wordsTyped / gameTime) * 60) : 0;
-    
-    // Calculate accuracy (improved formula)
-    const totalAttempts = state.wordsTyped + Math.max(0, state.wordsSpawned - state.wordsTyped);
-    const accuracy = totalAttempts > 0 ? Math.round((state.wordsTyped / totalAttempts) * 100) : 100;
+    const activeDurationMs = Math.max(0, Date.now() - state.startTime);
+    const wpm = calculateWpm(state.player.charactersCorrect, activeDurationMs);
+    const accuracy = calculateAccuracy(state.player.charactersCorrect, state.player.charactersAttempted);
 
     set(state => ({
       player: {
         ...state.player,
         wpm,
-        accuracy: Math.max(accuracy, 60) // Minimum 60% to avoid discouragement
+        accuracy,
       }
     }));
   },
@@ -878,7 +916,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
         totalWordsTyped: prevState.stats.totalWordsTyped + state.wordsTyped,
         bestWPM: Math.max(prevState.stats.bestWPM, state.player.wpm),
         bestAccuracy: Math.max(prevState.stats.bestAccuracy, state.player.accuracy),
-        longestStreak: Math.max(prevState.stats.longestStreak, state.player.streak),
+        totalCharactersTyped: prevState.stats.totalCharactersTyped + state.player.charactersCorrect,
+        longestStreak: Math.max(prevState.stats.longestStreak, state.player.maxStreak),
         totalPlaytime: prevState.stats.totalPlaytime + gameTime
       }
     }));

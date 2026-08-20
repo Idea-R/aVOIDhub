@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Play, Trophy, Settings, Info, Zap, Clock, Target, Calendar, Waves, Dumbbell, Hash, Shapes } from 'lucide-react';
+import { Play, Trophy, Settings, Info, Zap, Clock, Hash } from 'lucide-react';
 import { ToggleLeft, ToggleRight } from 'lucide-react';
 import { GlassPanel } from '../ui/GlassPanel';
 import { NeonButton } from '../ui/NeonButton';
@@ -8,6 +8,7 @@ import { DifficultySelector } from '../game/DifficultySelector';
 import { useGameStore } from '../../stores/gameStore';
 import { useAudioStore } from '../../stores/audioStore';
 import type { GameMode } from '../../types/game';
+import { DEFERRED_MODE_CONTRACTS, V1_MODE_CONTRACTS } from '../../contracts/v1';
 
 interface MainMenuProps {
   onStartGame: (mode: GameMode) => void;
@@ -29,84 +30,27 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     loadPlayerStats();
   }, [loadPlayerStats]);
 
-  const gameModes = [
-    {
-      id: 'classic' as GameMode,
-      name: 'Classic Survival',
-      description: 'Endless typing defense with increasing difficulty',
-      icon: Zap,
-      color: 'text-avoid-primary',
-      bgColor: 'from-avoid-primary/20 to-avoid-accent/20'
-    },
-    {
-      id: 'timeAttack' as GameMode,
-      name: 'Time Attack',
-      description: 'Score as many points as possible in 2 minutes',
-      icon: Clock,
-      color: 'text-medium',
-      bgColor: 'from-medium/20 to-avoid-warning/20'
-    },
-    {
-      id: 'perfectRun' as GameMode,
-      name: 'Perfect Run',
-      description: 'One mistake ends the game - how far can you go?',
-      icon: Target,
-      color: 'text-extreme',
-      bgColor: 'from-extreme/20 to-avoid-secondary/20'
-    },
-    {
-      id: 'dailyChallenge' as GameMode,
-      name: 'Daily Challenge',
-      description: 'Special themed challenge that changes every day',
-      icon: Calendar,
-      color: 'text-boss',
-      bgColor: 'from-boss/20 to-avoid-accent/20'
-    },
-    {
-      id: 'waveDefense' as GameMode,
-      name: 'Wave Defense',
-      description: 'Survive waves of increasingly difficult words',
-      icon: Waves,
-      color: 'text-avoid-accent',
-      bgColor: 'from-avoid-accent/20 to-avoid-primary/20'
-    },
-    {
-      id: 'skillTraining' as GameMode,
-      name: 'Skill Training',
-      description: 'Focus on specific typing challenges and patterns',
-      icon: Dumbbell,
-      color: 'text-avoid-secondary',
-      bgColor: 'from-avoid-secondary/20 to-medium/20'
-    },
-    {
-      id: 'digitAssault' as GameMode,
-      name: 'Digit Assault',
-      description: 'Fast-paced individual letters, numbers, and symbols',
-      icon: Hash,
-      color: 'text-boss',
-      bgColor: 'from-boss/20 to-extreme/20'
-    },
-    {
-      id: 'geometricTyping' as GameMode,
-      name: 'Geometric Typing',
-      description: 'Type keyboard patterns and shapes for finger agility',
-      icon: Shapes,
-      color: 'text-avoid-accent',
-      bgColor: 'from-avoid-accent/20 to-avoid-primary/20'
-    }
-  ];
+  const gameModes = V1_MODE_CONTRACTS.map((mode) => ({
+    ...mode,
+    description: mode.summary,
+    icon: mode.id === 'classic' ? Zap : Clock,
+    color: mode.id === 'classic' ? 'text-avoid-primary' : 'text-medium',
+    bgColor: mode.id === 'classic'
+      ? 'from-avoid-primary/20 to-avoid-accent/20'
+      : 'from-medium/20 to-avoid-warning/20',
+  }));
 
   return (
-    <div className={`min-h-screen flex items-center justify-center p-8 ${className}`}>
+    <div className={`min-h-screen flex items-center justify-center px-4 py-8 sm:p-8 ${className}`}>
       <div className="w-full max-w-7xl">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: 'easeOut' }}
-          className="text-center mb-12"
+          className="text-center mb-8 sm:mb-12"
         >
-          <h1 className="text-6xl font-game-display font-black text-transparent bg-clip-text bg-gradient-to-r from-avoid-primary via-avoid-accent to-avoid-secondary mb-4">
+          <h1 className="text-4xl sm:text-6xl font-game-display font-black text-transparent bg-clip-text bg-gradient-to-r from-avoid-primary via-avoid-accent to-avoid-secondary mb-4">
             WORDaVOID
           </h1>
           <motion.div
@@ -141,13 +85,13 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="mb-6 flex items-center space-x-4"
+              className="mb-6 flex flex-col items-stretch gap-4 sm:flex-row sm:items-center"
             >
               <DifficultySelector className="flex-1" />
               
               {/* SHIFT Mode Toggle */}
               <motion.button
-                className={`glass-panel px-6 py-4 border-2 transition-all flex items-center space-x-3 ${
+                className={`glass-panel px-4 py-4 sm:px-6 border-2 transition-all flex items-center justify-center gap-3 ${
                   capsMode 
                     ? 'bg-boss/20 border-boss text-boss' 
                     : 'bg-white/10 border-white/30 text-text-secondary hover:border-boss/50'
@@ -187,7 +131,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.6 + index * 0.1 }}
                 >
-                  <GlassPanel className="p-6 h-full hover:border-avoid-primary/50 transition-all duration-300 cursor-pointer group">
+                  <GlassPanel className="p-4 sm:p-6 h-full hover:border-avoid-primary/50 transition-all duration-300 cursor-pointer group">
                     <div className="flex items-start space-x-4">
                       <div className={`p-3 rounded-lg bg-gradient-to-br ${mode.bgColor}`}>
                         <mode.icon className={`w-6 h-6 ${mode.color}`} />
@@ -215,6 +159,33 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 </motion.div>
               ))}
             </motion.div>
+
+            <GlassPanel className="mt-6 p-5 border-dashed border-white/20">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-xs font-game-display font-bold uppercase tracking-[0.2em] text-text-muted">
+                    Mode lab
+                  </p>
+                  <p className="mt-2 max-w-xl text-sm font-game-ui text-text-secondary">
+                    Six experiments are staying out of V1 until each has its own rules, balance, and honest score contract.
+                  </p>
+                </div>
+                <span className="shrink-0 text-xs font-game-display font-bold uppercase tracking-wider text-medium">
+                  Not ranked yet
+                </span>
+              </div>
+              <ul className="mt-4 flex flex-wrap gap-2" aria-label="Deferred WORDaVOID modes">
+                {DEFERRED_MODE_CONTRACTS.map((mode) => (
+                  <li
+                    key={mode.id}
+                    className="border border-white/15 bg-black/20 px-3 py-2 text-xs font-game-ui text-text-muted"
+                    title={mode.deferredReason}
+                  >
+                    {mode.name}
+                  </li>
+                ))}
+              </ul>
+            </GlassPanel>
           </div>
 
           {/* Sidebar */}

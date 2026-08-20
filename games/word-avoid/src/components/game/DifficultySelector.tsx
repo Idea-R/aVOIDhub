@@ -21,9 +21,9 @@ export const DifficultySelector: React.FC<DifficultySelectorProps> = ({ classNam
   };
 
   return (
-    <div className={`glass-panel px-6 py-4 border-2 border-avoid-secondary/30 ${className}`}>
-      <div className="flex items-center space-x-4">
-        <div className="flex items-center space-x-2">
+    <div className={`glass-panel px-4 py-4 sm:px-6 border-2 border-avoid-secondary/30 ${className}`}>
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-4">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
           <TrendingUp className="w-5 h-5 text-avoid-secondary" />
           <span className="text-sm font-game-ui text-text-secondary">Difficulty:</span>
         </div>
@@ -37,7 +37,7 @@ export const DifficultySelector: React.FC<DifficultySelectorProps> = ({ classNam
             return (
               <motion.button
                 key={level}
-                className={`px-4 py-2 rounded-lg border-2 font-game-display font-bold text-sm transition-all ${
+                className={`min-w-0 px-3 py-2 sm:px-4 rounded-lg border-2 font-game-display font-bold text-xs sm:text-sm transition-all ${
                   isSelected
                     ? 'border-current text-white shadow-lg'
                     : isDisabled

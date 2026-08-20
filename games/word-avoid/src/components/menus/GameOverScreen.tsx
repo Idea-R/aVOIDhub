@@ -33,13 +33,13 @@ export const GameOverScreen: React.FC<GameOverScreenProps> = ({
     { label: 'Words Typed', value: wordsTyped.toString(), color: 'text-text-primary' },
     { label: 'Accuracy', value: `${player.accuracy}%`, color: 'text-health-high' },
     { label: 'WPM', value: player.wpm.toString(), color: 'text-avoid-primary' },
-    { label: 'Best Streak', value: player.streak.toString(), color: 'text-medium' }
+    { label: 'Best Streak', value: player.maxStreak.toString(), color: 'text-medium' }
   ];
 
   const achievements = [
     player.wpm > stats.bestWPM && 'New WPM Record!',
     player.accuracy > stats.bestAccuracy && 'New Accuracy Record!',
-    player.streak > stats.longestStreak && 'New Streak Record!',
+    player.maxStreak > stats.longestStreak && 'New Streak Record!',
     player.score > 10000 && 'Score Master!',
     player.accuracy === 100 && 'Perfect Accuracy!'
   ].filter(Boolean);
