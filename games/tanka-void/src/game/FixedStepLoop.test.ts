@@ -46,6 +46,11 @@ describe("FixedStepLoop", () => {
     loop.pause();
     expect(scheduler.pending()).toBe(0);
     expect(loop.diagnostics().framePending).toBe(false);
+    expect(loop.diagnostics()).toMatchObject({
+      renderedFrames: 3,
+      longFrames: 0,
+      averageFrameDeltaMilliseconds: 17,
+    });
   });
 
   it("bounds catch-up work instead of simulating an unbounded frame", () => {
@@ -60,6 +65,9 @@ describe("FixedStepLoop", () => {
       droppedMilliseconds: expect.any(Number),
       maximumFrameDeltaMilliseconds: 250,
       maximumStepsPerFrame: 5,
+      renderedFrames: 2,
+      longFrames: 1,
+      averageFrameDeltaMilliseconds: 250,
     });
     expect(loop.diagnostics().droppedMilliseconds).toBeGreaterThan(0);
   });

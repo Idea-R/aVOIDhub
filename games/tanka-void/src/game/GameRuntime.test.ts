@@ -101,6 +101,9 @@ class FakeLoop implements LoopPort {
     return {
       framePending: this.pending,
       simulationSteps: this.steps,
+      renderedFrames: this.steps,
+      longFrames: 0,
+      averageFrameDeltaMilliseconds: 16.7,
       droppedMilliseconds: 0,
       maximumFrameDeltaMilliseconds: 16.7,
       maximumStepsPerFrame: 5,

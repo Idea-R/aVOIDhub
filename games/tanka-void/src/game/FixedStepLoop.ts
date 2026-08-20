@@ -8,6 +8,9 @@ export interface FrameScheduler {
 export interface LoopDiagnostics {
   framePending: boolean;
   simulationSteps: number;
+  renderedFrames: number;
+  longFrames: number;
+  averageFrameDeltaMilliseconds: number;
   droppedMilliseconds: number;
   maximumFrameDeltaMilliseconds: number;
   maximumStepsPerFrame: number;
@@ -24,6 +27,10 @@ export class FixedStepLoop {
   private previousTimestamp: number | null = null;
   private accumulator = 0;
   private simulationSteps = 0;
+  private renderedFrames = 0;
+  private measuredFrames = 0;
+  private longFrames = 0;
+  private totalFrameDeltaMilliseconds = 0;
   private droppedMilliseconds = 0;
   private maximumFrameDeltaMilliseconds = 0;
 
@@ -53,6 +60,10 @@ export class FixedStepLoop {
   stop(): void {
     this.pause();
     this.simulationSteps = 0;
+    this.renderedFrames = 0;
+    this.measuredFrames = 0;
+    this.longFrames = 0;
+    this.totalFrameDeltaMilliseconds = 0;
     this.droppedMilliseconds = 0;
     this.maximumFrameDeltaMilliseconds = 0;
   }
@@ -61,6 +72,12 @@ export class FixedStepLoop {
     return {
       framePending: this.running,
       simulationSteps: this.simulationSteps,
+      renderedFrames: this.renderedFrames,
+      longFrames: this.longFrames,
+      averageFrameDeltaMilliseconds:
+        this.measuredFrames === 0
+          ? 0
+          : this.totalFrameDeltaMilliseconds / this.measuredFrames,
       droppedMilliseconds: this.droppedMilliseconds,
       maximumFrameDeltaMilliseconds: this.maximumFrameDeltaMilliseconds,
       maximumStepsPerFrame: this.maximumStepsPerFrame,
@@ -71,6 +88,7 @@ export class FixedStepLoop {
     this.frameId = null;
     if (this.previousTimestamp === null) {
       this.previousTimestamp = timestamp;
+      this.renderedFrames += 1;
       this.render(0);
       if (this.running) this.frameId = this.scheduler.request(this.onFrame);
       return;
@@ -84,6 +102,10 @@ export class FixedStepLoop {
       this.maximumFrameDeltaMilliseconds,
       elapsed,
     );
+    this.renderedFrames += 1;
+    this.measuredFrames += 1;
+    this.totalFrameDeltaMilliseconds += elapsed;
+    if (elapsed > 34) this.longFrames += 1;
     this.previousTimestamp = timestamp;
     this.accumulator += elapsed;
 

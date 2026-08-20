@@ -40,8 +40,8 @@ const INITIAL_SNAPSHOT: RunSnapshot = {
     hullAngle: 0,
     turretAngle: 0,
     speed: 0,
-    health: 140,
-    maxHealth: 140,
+    health: 220,
+    maxHealth: 220,
     disabled: false,
   },
   enemies: [
@@ -84,6 +84,9 @@ const INITIAL_DIAGNOSTICS: RuntimeDiagnostics = {
   resizeObservers: 0,
   framePending: false,
   simulationSteps: 0,
+  renderedFrames: 0,
+  longFrames: 0,
+  averageFrameDeltaMilliseconds: 0,
   droppedMilliseconds: 0,
   maximumFrameDeltaMilliseconds: 0,
   maximumStepsPerFrame: 5,
@@ -243,7 +246,7 @@ function App() {
     });
     runtimeRef.current = runtime;
     if (import.meta.env.DEV) {
-      window.__TANKAVOID_T5__ = {
+      window.__TANKAVOID_RELEASE__ = {
         snapshot: () => runtime.snapshot(),
         diagnostics: () => runtime.diagnostics(),
         start: (seed = createRunSeed()) => runtime.start(seed),
@@ -254,7 +257,7 @@ function App() {
     return () => {
       runtime.destroy();
       runtimeRef.current = null;
-      if (import.meta.env.DEV) delete window.__TANKAVOID_T5__;
+      if (import.meta.env.DEV) delete window.__TANKAVOID_RELEASE__;
     };
   }, []);
 
@@ -410,7 +413,7 @@ function App() {
         <section className="tank-hud" aria-label="Run status">
           <div className="tank-hud__identity">
             <span>
-              T6 / WAVE {snapshot.wave} OF {snapshot.waveCount}
+              T7 RC / WAVE {snapshot.wave} OF {snapshot.waveCount}
             </span>
             <strong>{formatTime(snapshot.combatSeconds)}</strong>
           </div>
@@ -497,7 +500,7 @@ function App() {
       {snapshot.phase === "briefing" && (
         <section className="tank-briefing" aria-labelledby="tank-title">
           <div className="tank-briefing__copy">
-            <p className="tank-kicker">aVOID combat release candidate / T6</p>
+            <p className="tank-kicker">aVOID combat release candidate / T7</p>
             <h1 id="tank-title">
               Tanka<span>VOID</span>
             </h1>
@@ -642,7 +645,7 @@ function App() {
             aria-labelledby="complete-title"
             tabIndex={-1}
           >
-            <p className="tank-kicker">T6 five-wave result</p>
+            <p className="tank-kicker">T7 five-wave result</p>
             <h2 id="complete-title">{completionTitle(snapshot)}</h2>
             <div className="tank-result-grid">
               <span>
@@ -745,7 +748,10 @@ function App() {
           {diagnostics.activeEnemies}/{diagnostics.enemyCapacity} draw:
           {diagnostics.drawItems}/{diagnostics.drawItemCapacity} particles:
           {diagnostics.particleCount}/{diagnostics.particleCapacity} maxdt:
-          {Math.round(diagnostics.maximumFrameDeltaMilliseconds)}
+          {Math.round(diagnostics.maximumFrameDeltaMilliseconds)} avgdt:
+          {diagnostics.averageFrameDeltaMilliseconds.toFixed(1)} frames:
+          {diagnostics.renderedFrames} long:{diagnostics.longFrames} dropped:
+          {Math.round(diagnostics.droppedMilliseconds)}
           audio:{diagnostics.audioState} contexts:{diagnostics.audioContexts}
           voices:{diagnostics.activeAudioVoices}/
           {diagnostics.audioVoiceCapacity} muted:
@@ -766,7 +772,7 @@ function App() {
 
 declare global {
   interface Window {
-    __TANKAVOID_T5__?: {
+    __TANKAVOID_RELEASE__?: {
       snapshot(): RunSnapshot;
       diagnostics(): RuntimeDiagnostics;
       start(seed?: number): void;

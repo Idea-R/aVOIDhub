@@ -13,6 +13,7 @@
     "dev": "npm run dev --workspaces",
     "test": "npm run test --workspaces --if-present",
     "test:foundation": "node supabase/tests/verify-platform-foundation.mjs",
+    "verify:tankavoid:release": "node tools/verify-tankavoid-release.mjs",
     "lint": "npm run lint --workspaces --if-present",
     "clean": "npm run clean --workspaces --if-present",
     "setup": "npm install && npm run build",

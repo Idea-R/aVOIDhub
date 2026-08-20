@@ -136,6 +136,9 @@ export interface RuntimeDiagnostics {
   resizeObservers: number;
   framePending: boolean;
   simulationSteps: number;
+  renderedFrames: number;
+  longFrames: number;
+  averageFrameDeltaMilliseconds: number;
   droppedMilliseconds: number;
   maximumFrameDeltaMilliseconds: number;
   maximumStepsPerFrame: number;

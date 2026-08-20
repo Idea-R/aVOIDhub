@@ -34,6 +34,11 @@ function drawArena(context: CanvasRenderingContext2D): void {
   context.fillStyle = "#151711";
   context.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
 
+  context.fillStyle = "rgba(231, 255, 79, 0.025)";
+  context.fillRect(0, WORLD_HEIGHT * 0.375, WORLD_WIDTH, WORLD_HEIGHT * 0.25);
+  context.fillStyle = "rgba(255, 108, 74, 0.025)";
+  context.fillRect(WORLD_WIDTH * 0.42, 0, WORLD_WIDTH * 0.16, WORLD_HEIGHT);
+
   context.strokeStyle = "rgba(229, 234, 194, 0.075)";
   context.lineWidth = 1;
   for (let x = 0; x <= WORLD_WIDTH; x += 60) {
@@ -48,6 +53,34 @@ function drawArena(context: CanvasRenderingContext2D): void {
     context.lineTo(WORLD_WIDTH, y);
     context.stroke();
   }
+
+  context.save();
+  context.translate(WORLD_WIDTH / 2, WORLD_HEIGHT / 2 + 35);
+  context.rotate(-Math.PI / 36);
+  context.textAlign = "center";
+  context.fillStyle = "rgba(244, 241, 223, 0.035)";
+  context.font = "900 126px Impact, sans-serif";
+  context.fillText("TANKaVOID", 0, 0);
+  context.fillStyle = "rgba(231, 255, 79, 0.055)";
+  context.font = "700 14px ui-monospace, monospace";
+  context.letterSpacing = "9px";
+  context.fillText("ONE LINE / FIVE WAVES", 0, 38);
+  context.restore();
+
+  context.strokeStyle = "rgba(255, 108, 74, 0.22)";
+  context.lineWidth = 2;
+  context.setLineDash([14, 22]);
+  context.beginPath();
+  context.moveTo(0, WORLD_HEIGHT / 2);
+  context.lineTo(WORLD_WIDTH, WORLD_HEIGHT / 2);
+  context.stroke();
+  context.setLineDash([]);
+
+  context.fillStyle = "rgba(244, 241, 223, 0.22)";
+  context.font = "700 10px ui-monospace, monospace";
+  context.letterSpacing = "2px";
+  context.fillText("SECTOR 01", 42, 74);
+  context.fillText("SECTOR 02", WORLD_WIDTH - 114, 74);
 
   context.strokeStyle = "#e7ff4f";
   context.lineWidth = 5;
@@ -127,6 +160,16 @@ function drawTank(
       ? ENEMY_COLORS[enemyArchetype]
       : TEAM_COLORS[team];
   drawArmorGuide(context, tank);
+
+  context.save();
+  context.translate(tank.x + 11, tank.y + 13);
+  context.rotate(tank.hullAngle);
+  context.globalAlpha = tank.disabled ? 0.18 : 0.36;
+  context.fillStyle = "#000";
+  context.beginPath();
+  context.ellipse(0, 0, 48, 34, 0, 0, Math.PI * 2);
+  context.fill();
+  context.restore();
 
   context.save();
   context.translate(tank.x, tank.y);
