@@ -238,3 +238,10 @@ Classic Survival and two-minute Time Attack are the WORDaVOID V1 modes. Perfect 
 - Status: accepted for WD1 source gate
 
 Generate competitive prompts from a server-created seed and sequence, and use one versioned workspace package for dictionary identity, normalization, prompt generation, scoring, and evidence replay in both game and platform. The browser may report ordered events but may not author accepted aggregates. A recomputed result advertises `server_recomputed` capability while remaining `provisional` until the isolated database exercise and an explicit anti-abuse/trust policy justify promotion. Valid ticket retries return the original receipt under the same row lock; they do not create a second score.
+
+## D-035 — Give WORDaVOID one explicit typing and pause boundary
+
+- Date: 2026-08-20
+- Status: accepted for WD3
+
+Competitive letters belong only to a focusable typing surface; global keyboard ownership is limited to Escape. Browser shortcuts, controls, repeated keys, composition, paste, and characters outside the ASCII V1 contract cannot become evidence accidentally. Manual and focus-loss pauses are independent reasons, and one semantic dialog owns each blocking state. The rendered arena owns viewport dimensions, while system reduced motion is mandatory and may suppress decoration only. Browser-emulated mobile input is a release candidate, not physical-device certification.

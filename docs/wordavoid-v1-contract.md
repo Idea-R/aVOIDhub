@@ -2,9 +2,9 @@
 
 Date: 2026-08-20
 
-Status: WD1 release-candidate contract; deterministic source path complete, database execution and production activation pending
+Status: WD1 deterministic source path and WD3 play-experience source/browser path complete; database execution, physical-device sign-off, and production activation pending
 
-Issues: [#12](https://github.com/Idea-R/aVOIDhub/issues/12), [#14](https://github.com/Idea-R/aVOIDhub/issues/14)
+Issues: [#12](https://github.com/Idea-R/aVOIDhub/issues/12), [#14](https://github.com/Idea-R/aVOIDhub/issues/14), [#16](https://github.com/Idea-R/aVOIDhub/issues/16)
 
 Ruleset identifier: `wordavoid-v1.0.0-rc.1`
 
@@ -27,16 +27,16 @@ This is intentionally narrow. A validated leaderboard needs a small number of ex
 
 ## Mode inventory
 
-| Mode | Current implementation | V1 decision | Why |
-| --- | --- | --- | --- |
-| Classic Survival | Full common word loop; health ends the run | Include | Clear loop and terminal condition |
-| Time Attack | Common word loop plus a 120-second timer | Include | Clear duration and comparable session shape |
-| Perfect Run | Falls through to Classic | Defer as duplicate | A mistake does not end the run |
-| Daily Challenge | Falls through to Classic | Defer as duplicate | No date, seed, sequence, or daily rules exist |
-| Wave Defense | Wave-based word-pool changes | Defer as partial | No versioned wave completion, balance, or score contract |
-| Skill Training | Uses only the hard-coded `doubleLetter` list | Defer as partial | No selectable skill or training-session outcome |
-| Digit Assault | Bespoke characters/numbers/symbols | Defer as partial | Its unit of play and score are not comparable with words |
-| Geometric Typing | Bespoke keyboard patterns | Defer as partial | Pattern evidence, timing, and score are not versioned |
+| Mode             | Current implementation                       | V1 decision        | Why                                                      |
+| ---------------- | -------------------------------------------- | ------------------ | -------------------------------------------------------- |
+| Classic Survival | Full common word loop; health ends the run   | Include            | Clear loop and terminal condition                        |
+| Time Attack      | Common word loop plus a 120-second timer     | Include            | Clear duration and comparable session shape              |
+| Perfect Run      | Falls through to Classic                     | Defer as duplicate | A mistake does not end the run                           |
+| Daily Challenge  | Falls through to Classic                     | Defer as duplicate | No date, seed, sequence, or daily rules exist            |
+| Wave Defense     | Wave-based word-pool changes                 | Defer as partial   | No versioned wave completion, balance, or score contract |
+| Skill Training   | Uses only the hard-coded `doubleLetter` list | Defer as partial   | No selectable skill or training-session outcome          |
+| Digit Assault    | Bespoke characters/numbers/symbols           | Defer as partial   | Its unit of play and score are not comparable with words |
+| Geometric Typing | Bespoke keyboard patterns                    | Defer as partial   | Pattern evidence, timing, and score are not versioned    |
 
 Deferred modes must not appear on a competitive board, use the V1 ruleset identifier, or submit a platform result. Restoring a Start action requires a separate written ruleset and acceptance pass.
 
@@ -60,7 +60,7 @@ Deferred modes must not appear on a competitive board, use the V1 ruleset identi
 - A wrong character resets progress on the selected word and ends its active targeting state.
 - A completed word disappears, awards score, increments the completed-word count, increments the active streak, and updates the maximum streak.
 - A missed word damages the player, removes the word, and resets only the active streak. The maximum streak survives.
-- Pause time does not reduce the Time Attack clock or count toward response time, WPM, session time, or active duration. WD1 tests and browser smoke cover ordinary pauses; WD3 still owns long-background/tab-throttling and repeat-run hardening.
+- Pause time does not reduce the Time Attack clock or count toward response time, WPM, session time, or active duration. WD3 composes manual and focus-loss pause reasons and exercises ordinary background/resume plus repeat-run behavior locally.
 
 ### End
 
@@ -89,12 +89,12 @@ word score      = round(subtotal × word-difficulty multiplier)
 Word-difficulty multipliers:
 
 | Difficulty | Multiplier |
-| --- | ---: |
-| Easy | 1.0 |
-| Medium | 1.5 |
-| Hard | 2.0 |
-| Extreme | 3.0 |
-| Boss | 5.0 |
+| ---------- | ---------: |
+| Easy       |        1.0 |
+| Medium     |        1.5 |
+| Hard       |        2.0 |
+| Extreme    |        3.0 |
+| Boss       |        5.0 |
 
 The formula is implemented in `@avoid/wordavoid-contract`; the game compatibility module re-exports it. Competitive words, angles, level, and difficulty now come from the deterministic manifest. Event timing remains browser-observed evidence and is bounded/replayed, not proof of human input.
 
@@ -135,7 +135,7 @@ This replaces the old “completed words per minute” metric, which treated a t
 
 ### Persistent local statistics
 
-WD0 keeps the existing local-only totals. They are convenience history, not a ranked record. The persisted object is currently unversioned and needs a migration envelope in WD3. Platform personal bests and receipts belong to WD2 after the shared data foundation is exercised.
+WD3 stores local-only totals in the versioned `wordavoid-progress-v1` envelope, sanitizes corrupt/out-of-range fields, and migrates the legacy `wordavoid-stats` object without treating it as ranked truth. Platform personal bests and receipts belong to WD2 after the shared data foundation is exercised.
 
 ## WD1 deterministic evidence
 
@@ -165,20 +165,20 @@ The server recomputes score, correct/attempted characters, completed/missed word
 
 ## Input and browser baseline
 
-| Surface | WD0 observed contract | V1 position |
-| --- | --- | --- |
-| Desktop physical keyboard | Global `keydown` captures printable keys during play | Supported, but focus/shortcut exclusions remain WD3 |
-| Escape pause/resume | Global `keydown` toggles pause | Supported baseline; modal semantics remain WD3 |
-| Pointer | Starts modes and operates menus | Supported |
-| Mobile software keyboard | No focusable input bridge exists | Not supported in WD0; do not claim mobile typing support |
-| Resize/orientation | Runtime reads `window.innerWidth/innerHeight` without owning resize | Baseline defect; WD3 |
-| IME/composition | No composition handling | Not supported for ranked V1 until specified |
-| Backspace/correction | No explicit correction model | Not part of the WD0 competitive contract |
-| Reduced motion | Setting exists but does not govern all infinite motion or system preference | Baseline defect; WD3 |
-| Audio | Deferred Tone load exists; effective gain/music claims require verification | Baseline defect; WD3 |
-| Share | Native Web Share only, current page URL, no copy fallback or receipt | Local convenience only; WD2/WD3 |
+| Surface                   | WD0 observed contract                                                                   | V1 position                                                       |
+| ------------------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Desktop physical keyboard | Owned focusable typing surface; global listener handles Escape only                     | Supported; browser shortcuts and control focus do not leak input  |
+| Escape pause/resume       | Global Escape composes with manual/focus pause reasons                                  | Supported with one semantic dialog and focus restoration          |
+| Pointer                   | Starts modes and operates menus                                                         | Supported                                                         |
+| Mobile software keyboard  | Focusable input bridge and input-event parser pass browser-emulated QA                  | Candidate support; physical iOS/Android sign-off remains required |
+| Resize/orientation        | Rendered arena owns dimensions and recenters prompts on resize                          | Supported in local portrait/landscape browser matrix              |
+| IME/composition           | Composition/dead/multi-character input is rejected                                      | Deliberately outside ranked V1; no false support claim            |
+| Backspace/correction      | No explicit correction model                                                            | Not part of the WD0 competitive contract                          |
+| Reduced motion            | System preference is mandatory; saved setting can request more reduction                | Supported locally; decorative motion does not alter game rules    |
+| Audio                     | Deferred initialization has truthful lifecycle, saved gains, retry, and silent fallback | Supported locally; no music claim without a music layer           |
+| Share                     | Native Web Share with clipboard fallback and visible cancel/failure state               | Local result sharing complete; canonical receipt still WD2        |
 
-Mobile visitors should still receive a readable menu and honest “physical keyboard required” message until a real software-keyboard bridge passes viewport and composition tests.
+Mobile visitors now receive a readable, focusable candidate typing surface. Release copy must not claim certified mobile play until the physical iOS/Android keyboard, visual-viewport, orientation, pause, and result matrix passes.
 
 ## WD0/WD1 acceptance evidence
 
@@ -196,12 +196,12 @@ Mobile visitors should still receive a readable menu and honest “physical keyb
 - The prepared persistence transaction is single-write and idempotent by receipt in source.
 - Type-check, lint, tests, build, browser matrix, bundle baseline, and full platform assembly are required before WD0 closes.
 
-WD1 evidence is in [`sprint-wordavoid-wd1.md`](sprint-wordavoid-wd1.md). Its source gate is complete; PostgreSQL execution and production activation are not.
+WD1 evidence is in [`sprint-wordavoid-wd1.md`](sprint-wordavoid-wd1.md). WD3 evidence is in [`sprint-wordavoid-wd3.md`](sprint-wordavoid-wd3.md). Both source gates are complete; PostgreSQL execution, physical-device release evidence, and production activation are not.
 
 ## Explicitly deferred
 
 - Executable SQL concurrency, expiry, wrong-user, and retry read-back on the isolated Supabase branch.
 - Trust promotion beyond `provisional`; server recomputation alone does not establish human or bot-free play.
 - Platform session, personal best, boards, receipts, and canonical share: WD2.
-- Focusable typing bridge, software-keyboard decision, resize normalization, reduced motion, audio, share fallback, and repeat-run hardening: WD3.
+- Physical iOS/Android certification and any composition-language expansion beyond the ASCII competitive contract: WD4 release evidence.
 - Balance and production release/rollback: WD4.

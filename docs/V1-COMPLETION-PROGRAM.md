@@ -5,7 +5,7 @@
 - **Repository:** `C:\dev\aVOID-next` / `Idea-R/aVOIDhub`
 - **Production baseline:** `https://avoidgame.io` at merge commit `7cd9788`
 - **Program branch:** `codex/docs-v1-completion-program`
-- **Current execution branch:** `codex/fix-wordavoid-wd1-validation` (stacked on WORDaVOID WD0 and the completed WreckaVOID slices)
+- **Current execution branch:** `codex/fix-wordavoid-wd3-experience` (stacked on WORDaVOID WD1 and the completed WreckaVOID slices)
 - **Related records:** [`ROADMAP.md`](../ROADMAP.md), [`WORKLOG.md`](../WORKLOG.md), [`DECISIONS.md`](../DECISIONS.md)
 
 ## 1. Why this document exists
@@ -55,6 +55,7 @@ It is intentionally stricter than “the page loads.” Every V1 definition incl
 - WreckaVOID W5 local gates are complete. The active logo is 31.85 KB, the enforced initial-transfer budget passes at 168.4 KB, game-clock presentation and particles are bounded, no-env guest play is quiet, and one-owner modal/focus/viewport behavior passes 31 tests. Desktop/phone/landscape QA, 40 restart cycles, frame/heap samples, the full platform build, and mobile Lighthouse at 98/100/100/100 are recorded in `docs/sprint-wreckavoid-w5.md`. Production deploy and rollback proof remain release gates.
 - WORDaVOID WD0 local gates are complete. Classic Survival and two-minute Time Attack are now the only playable V1 modes; six duplicate/partial experiments are listed as unranked without Start controls. The draft score/stat contract is pure and tested, the 60% accuracy floor and terminal-current-streak result are repaired, stale out-of-root build artifacts are removed, and the four-viewport menu matrix passes without horizontal overflow. Evidence is in `docs/sprint-wordavoid-wd0.md`.
 - WORDaVOID WD1 is source-complete. A shared package freezes the 1,770-entry dictionary/hash, ruleset, normalization, deterministic prompt generator, scoring, and bounded event validator. The game emits replayable evidence; the platform reconstructs the manifest from stored server metadata and ignores client aggregates; and the prepared service transaction returns the original receipt on a valid retry. Automated checks, full assembly, and desktop/mobile browser smoke pass. Executable SQL/concurrency/read-back remains gated on the isolated Supabase branch, and accepted storage stays `provisional`; evidence is in `docs/sprint-wordavoid-wd1.md`.
+- WORDaVOID WD3 is source- and local-browser-complete. An owned typing surface replaces global character capture; focus/manual pauses compose; the rendered arena owns resize/orientation; reduced motion and audio failure are truthful; local progress is versioned and recoverable; abandon, share, and repeat-run transitions are explicit. Typecheck, zero-warning lint, 33 tests, standalone/full-platform builds, desktop/narrow/landscape browser checks, and a 20-cycle restart soak pass. Physical iOS/Android sign-off and production deploy remain release gates; evidence is in `docs/sprint-wordavoid-wd3.md`.
 
 ### What is unsafe or misleading if activated today
 
@@ -393,11 +394,13 @@ A guest opens the platform WreckaVOID page, understands the controls, launches q
 
 WORDaVOID lives in [`games/word-avoid`](../games/word-avoid) and is the strongest candidate for the platform’s first genuinely validated leaderboard. Its Zustand game store in [`src/stores/gameStore.ts`](../games/word-avoid/src/stores/gameStore.ts) owns the run lifecycle, typing statistics, and result dispatch. The game already has mode selection, result presentation, local statistics, audio, animations, and a native Web Share action.
 
-The application has more modern React/UI dependencies than the other originals, but it is sensitive to toolchain changes: newer React plugin generations compiled successfully and then rendered a blank application. The verified line remains Vite 7.3.6 with React plugin 4.7. Its Tone audio and Supabase leaderboard clients were deferred behind user action to reduce initial JavaScript. The legacy lint debt was cleared, but the current automated test coverage is still only a narrow store regression.
+The application has more modern React/UI dependencies than the other originals, but it is sensitive to toolchain changes: newer React plugin generations compiled successfully and then rendered a blank application. The verified line remains Vite 7.3.6 with React plugin 4.7. Its Tone audio and Supabase leaderboard clients remain deferred behind user action. WD3 expands the focused suite to 33 tests and verifies the runtime across desktop, narrow portrait, and short landscape layouts.
 
 Historical score payloads trusted browser-authored WPM, accuracy, words typed, mode, and level. The current source contains a platform run adapter, but a `validated` tier requires a server-issued word/ruleset seed and server recomputation rather than accepting those fields as facts.
 
-### Confirmed release blockers
+### Baseline blockers and current disposition
+
+The list below records the audited starting defects. WD0 resolved the first three mode/stat defects; WD3 resolved the input, resize, reduced-motion, audio-state, local-history, and repeat-run defects in source. Platform identity, executable score persistence, canonical receipts, physical-device sign-off, bundle work, and deployment remain open.
 
 - The menu advertises eight modes, but `perfectRun` and `dailyChallenge` have no distinct store behavior and currently fall through to Classic semantics.
 - Accuracy is derived from spawned words rather than character attempts/mistakes and is artificially floored at 60 percent. It is not a valid competitive accuracy metric.
@@ -470,11 +473,11 @@ A player chooses a clearly explained mode, begins with keyboard focus in the cor
 
 **Expected WORDaVOID effort after the shared platform foundation:** **12–20 focused engineering/QA days**. Allow **15–24 days** when the same lane owns the detail page, platform integration, statistics surface, and release support. It remains the strongest first `validated` title because its score can be recomputed.
 
-WD0/WD1 implementation evidence: [`wordavoid-v1-contract.md`](wordavoid-v1-contract.md), [`wordavoid-validation-contract.md`](wordavoid-validation-contract.md), [`sprint-wordavoid-wd0.md`](sprint-wordavoid-wd0.md), and [`sprint-wordavoid-wd1.md`](sprint-wordavoid-wd1.md). WD1's source gate is complete. SQL execution, concurrency/read-back, and production activation remain part of the approval-gated platform data exercise; `server_recomputed` capability does not promote a row beyond `provisional`.
+WD0/WD1/WD3 implementation evidence: [`wordavoid-v1-contract.md`](wordavoid-v1-contract.md), [`wordavoid-validation-contract.md`](wordavoid-validation-contract.md), [`sprint-wordavoid-wd0.md`](sprint-wordavoid-wd0.md), [`sprint-wordavoid-wd1.md`](sprint-wordavoid-wd1.md), and [`sprint-wordavoid-wd3.md`](sprint-wordavoid-wd3.md). WD1's source gate is complete. SQL execution, concurrency/read-back, and production activation remain part of the approval-gated platform data exercise; `server_recomputed` capability does not promote a row beyond `provisional`. WD3 passes local source/browser gates, with physical iOS/Android and deployed-route checks still reserved for release.
 
 ### WORDaVOID V1 acceptance checklist
 
-- [ ] Every included mode has a versioned scoring and word-generation contract.
+- [x] Every included mode has a versioned scoring and word-generation contract.
 - [ ] The server can reproduce every accepted aggregate from submitted evidence.
 - [ ] Tampered, expired, reused, or inconsistent runs are rejected without blocking play.
 - [ ] Keyboard focus, pause, restart, audio, reduced motion, and supported mobile-keyboard behavior pass.
@@ -482,8 +485,8 @@ WD0/WD1 implementation evidence: [`wordavoid-v1-contract.md`](wordavoid-v1-contr
 - [ ] The game page and mode-specific boards work across target viewports.
 - [ ] Share provides a canonical receipt and copy fallback.
 - [ ] Type-check, lint, unit/property/store tests, build, live-runtime, and deployed-route checks pass.
-- [ ] Accuracy can honestly fall below 60 percent and “best streak” is the true maximum.
-- [ ] Unsupported modes cannot masquerade as distinct finished modes.
+- [x] Accuracy can honestly fall below 60 percent and “best streak” is the true maximum.
+- [x] Unsupported modes cannot masquerade as distinct finished modes.
 
 ### Explicitly later
 

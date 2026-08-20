@@ -2,6 +2,15 @@
 
 ## 2026-08-20
 
+- Started WORDaVOID WD3 on isolated stacked branch `codex/fix-wordavoid-wd3-experience` with issue #16, leaving the dirty main checkout and production untouched.
+- Replaced global printable-key capture with an owned typing surface that supports physical and software-keyboard events, rejects shortcuts/repeats/composition/out-of-contract characters, and restores focus after arena clicks and pause.
+- Added composable manual/focus pause ownership, one semantic pause/result dialog, measured arena viewport ownership, live orientation recentering, dynamic-viewport/safe-area layout, and responsive HUD/menu/result surfaces.
+- Made reduced motion honor the operating system plus the saved preference, bounded transient particle/score timers, and made audio initialization, saved gains, failure, and retry states truthful.
+- Versioned and sanitized local progress with legacy migration, replaced the fake stats placeholder, separated local save from platform finish, stopped abandoned-run persistence/submission, and added explicit result/submission/share states.
+- Guarded asynchronous start/restart generations and stale finishes, removed delayed targeting work, and browser-proved 20 repeat-run cycles without duplicate dialogs, inputs, or restart transitions.
+- Passed WORDaVOID typecheck, zero-warning lint, 5 files / 33 tests, production build, full hosted-game/Next.js assembly, Git whitespace checks, desktop/narrow/landscape browser QA, live orientation change, focus isolation, reduced-motion persistence, and quiet application console.
+- Recorded the honest physical-device and production boundaries in `docs/sprint-wordavoid-wd3.md`; no database, Netlify, Stripe, AdSense, DNS, or production state changed.
+
 - Started WORDaVOID WD1 on isolated stacked branch `codex/fix-wordavoid-wd1-validation` with issue #14 after WD0 reached clean draft PR #13.
 - Added `@avoid/wordavoid-contract`, generated and hash-locked the 1,770-entry competitive dictionary, and froze ruleset `wordavoid-v1.0.0-rc.1` plus `ascii-lower-v1` normalization.
 - Replaced V1 prompt randomness with random-access seed/sequence generation for word, level, difficulty, and angle. Classic and Time Attack now emit spawn, attempt, miss, pause, resume, and competitive terminal evidence.
@@ -97,7 +106,7 @@
 
 ### Next action
 
-WreckaVOID W3 and data-backed W4 remain blocked on the coordinated platform auth/run environment. Approve or decline the 72-hour Supabase development branch at the last verified `$0.01344/hour` (about `$0.97`). Without approval, continue with the independent WORDaVOID WD0 canonicalization/baseline slice. Do not apply the score-locking migration separately from the platform and staged game deploy.
+Publish WORDaVOID WD3 for review. Then either execute the documented foundation/WD1 SQL and concurrency matrix after explicit approval of the short-lived Supabase branch, or start the independent VOIDaVOID V0/V1 baseline repair. Do not apply the score-locking migration separately from the platform and staged game deploy.
 
 ## 2026-08-19
 
