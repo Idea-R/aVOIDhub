@@ -1053,6 +1053,8 @@ The program may inspect, document, implement locally, run tests, create branches
 
 ### Sprint 0 — Recoverable foundation packet
 
+Implementation evidence: [`sprint-0-recoverability.md`](sprint-0-recoverability.md)
+
 **Outcome:** the program can begin database/auth work without risking the current 15 profiles, 69 leaderboard rows, live production site, or rollback.
 
 **Tasks:**
@@ -1068,12 +1070,12 @@ The program may inspect, document, implement locally, run tests, create branches
 
 **Sprint 0 acceptance:**
 
-- [ ] No production data or configuration was changed.
-- [ ] All existing rows have a documented destination or archival decision.
-- [ ] Every privileged function/policy warning has an owner and intended remediation.
-- [ ] Platform and game auth/score consumers are mapped.
-- [ ] The isolated database route and its cost/approval status are explicit.
-- [ ] P1 can start without rediscovering the system.
+- [x] No production data or configuration was changed.
+- [x] All existing rows have a documented destination or archival decision.
+- [x] Every privileged function/policy warning has an owner and intended remediation.
+- [x] Platform and game auth/score consumers are mapped.
+- [x] The isolated database route and its cost/approval status are explicit.
+- [x] P1 can start without rediscovering the system.
 
 ## 19. Program completion
 

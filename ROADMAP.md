@@ -40,7 +40,9 @@ Move the live aVOIDgame.io rebuild through the phased V1 completion program: sec
 
 - Repository worktree: `C:\dev\aVOID-next`
 - Active documentation branch: `codex/docs-v1-completion-program`
+- Active Sprint 0 branch: `security/sprint-0-recoverability`
 - Program source of truth: `docs/V1-COMPLETION-PROGRAM.md`
+- Sprint 0 evidence: `docs/sprint-0-recoverability.md`
 - Merged shell PR: `https://github.com/Idea-R/aVOIDhub/pull/1`
 - Git-driven preview: `https://deploy-preview-1--coruscating-squirrel-a47ad9.netlify.app`
 - Platform app: `apps/platform`
@@ -66,9 +68,10 @@ Move the live aVOIDgame.io rebuild through the phased V1 completion program: sec
 10. **Platform foundation — local implementation complete.** Added passwordless accounts, editable public profiles, creator intake, private game submissions, trust-labeled leaderboards, one-use run tickets, Stripe Checkout/Portal/webhooks, and entitlement state. Updated WORDaVOID and WreckaVOID to stop direct score inserts; VOIDaVOID score carryover now fails closed until its full adapter exists.
 11. **Security migration — review gated.** The incremental migration closes the public score-write hole and adds RLS-protected platform tables, but must be tested on a Supabase development branch and deployed in lockstep with the platform and game adapters.
 12. **Monetization activation — account gated.** Confirm Stripe products/prices and test webhook behavior; confirm the exact AdSense publisher ID, site status, CMP, and age treatment before any real charge or ad request.
-13. **V1 completion program — documentation sprint in progress.** The detailed per-platform and per-title program, sprint sequence, effort ranges, dependencies, and acceptance gates live in `docs/V1-COMPLETION-PROGRAM.md`.
-14. **Sprint 0 recoverability packet — next.** Inventory schema, grants, policies, functions, auth/score consumers, environment ownership, and the legacy-data mapping before an isolated migration is attempted.
+13. **V1 completion program — documentation complete and under review.** The detailed per-platform and per-title program, sprint sequence, effort ranges, dependencies, and acceptance gates live in `docs/V1-COMPLETION-PROGRAM.md` and draft PR #2.
+14. **Sprint 0 recoverability packet — complete; branch approval pending.** The live schema, grants, policies, functions, advisors, migration drift, auth/score consumers, environment ownership, rollback targets, branch cost, and legacy-data mapping are frozen in `docs/sprint-0-recoverability.md`. No production state changed.
+15. **Sprint 1 isolated foundation repair — next.** Correct the forward migration, create a 72-hour Supabase development branch after cost approval, and run the RLS/data/API test matrix against synthetic fixtures.
 
 ## Current next action
 
-Review and adopt `docs/V1-COMPLETION-PROGRAM.md`, then execute Sprint 0 without changing production. Present the Supabase branch cost before creating a hosted branch and leave production data, secrets, Stripe, and AdSense untouched.
+Review `docs/sprint-0-recoverability.md` and approve or decline the proposed 72-hour Supabase development branch at the currently reported `$0.01344/hour` (about `$0.97` for 72 hours). Production data, secrets, Stripe, AdSense, DNS, and the production deploy remain untouched.

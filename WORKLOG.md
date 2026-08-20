@@ -2,6 +2,15 @@
 
 ## 2026-08-20
 
+- Completed the sanitized Sprint 0 recoverability packet at `docs/sprint-0-recoverability.md` without changing production.
+- Captured the aVOID Supabase production baseline through read-only metadata and aggregate queries: six public tables, 29 live migrations, 17 public functions, three triggers, 22 security advisories, 17 performance advisories, 15 profiles, and 69 legacy scores.
+- Quantified migration drift: 22 live migration versions have no tracked SQL anywhere in the repository, while three tracked versions have not run in production.
+- Confirmed all six public tables grant all table privileges to `anon`, `authenticated`, and `service_role`; five anonymous-executable `SECURITY DEFINER` functions and the permissive score policy remain live.
+- Classified every existing score as `legacy`, the old `is_verified` field as untrusted, all 15 profiles as public-by-default legacy state, and the manual backup tables as duplicate subsets rather than independent restore points.
+- Recorded the exact application rollback commit/deploy, platform/database ownership, independent-domain boundaries, required environment variable names/scopes, and the active auth/score consumers.
+- Added `supabase/audit/production-readonly-inventory.sql`, a sanitized frozen JSON baseline, and `supabase/audit/verify-baseline.mjs` so the packet can be checked without exporting player or secret data.
+- Supabase reported a development-branch price of `$0.01344/hour` (about `$0.97` for 72 hours). No branch was created; cost confirmation remains approval-gated.
+- Exact scheduled-backup/PITR readback remains a production gate because the connector does not expose backup records and the available browser session was not signed in to the Supabase dashboard.
 - Started the sustained aVOID V1 completion goal with `docs/V1-COMPLETION-PROGRAM.md` as its source of truth.
 - Drafted separate V1 definitions, scope boundaries, sprint sequences, effort ranges, dependencies, and acceptance gates for the main platform, WreckaVOID, WORDaVOID, VOIDaVOID, FLIPSIDE, TankaVOID, and the independent Ideas Realized directory titles.
 - Defined a 5-day evidence-based sprint model, separate platform/full-catalog gates, three bounded workstream lanes, approval boundaries, and Sprint 0 as a recoverability packet with no production changes.

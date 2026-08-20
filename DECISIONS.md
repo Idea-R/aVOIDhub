@@ -154,3 +154,31 @@ Platform V1, full-catalog V1, and individual game V1 are separate milestones. Wr
 - Status: proposed for V1 program review
 
 Preserve the prototype in history, then build a clean fixed-step vertical slice around deliberate hull movement, turret aim, directional armor, impact angle, and readable damage. Do not make multiplayer, campaign progression, infantry, every pickup, or every prototype boss a V1 requirement.
+
+## D-023 — Treat every existing leaderboard row as legacy
+
+- Date: 2026-08-20
+- Status: accepted as the migration contract
+
+Preserve all 69 production score rows, but do not carry the client-era `is_verified` claim into V1 competition. The coordinated migration must set `verification_level = 'legacy'` and clear `is_verified` on every existing row. Legacy rows may appear only in surfaces that label them plainly and keep them separate from provisional, validated, and verified results.
+
+## D-024 — Make profile publication an explicit choice
+
+- Date: 2026-08-20
+- Status: proposed for production migration approval
+
+New profiles default to private. The 15 existing profiles are all public under a legacy default, which is not proof of an intentional privacy choice. The proposed migration preserves every profile but makes existing profiles private until their owners publish them. Grandfathering current visibility is the alternative and requires an explicit decision before production migration.
+
+## D-025 — Test the foundation on a short-lived paid database branch
+
+- Date: 2026-08-20
+- Status: proposed; cost approval required
+
+Use a Supabase development branch cloned from the production schema, synthetic data only, and a 72-hour initial lifetime. The current reported price is `$0.01344/hour`, or about `$0.97` for 72 hours. Do not create or extend the branch without confirming the current cost. Capture evidence and delete the branch after the test window unless an extension is approved.
+
+## D-026 — Record environment ownership without exporting secret values
+
+- Date: 2026-08-20
+- Status: accepted
+
+Project records may contain environment variable names, exposure class, context, and owning service. They must not contain secret values, tokens, private keys, webhook secrets, database passwords, or copied Netlify environment exports. Release verification checks presence and scope in the owning service without pasting values into Git or review logs.
