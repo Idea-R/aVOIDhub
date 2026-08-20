@@ -2,6 +2,18 @@
 
 ## 2026-08-20
 
+- Started WreckaVOID W5 on isolated stacked branch `codex/fix-wreckavoid-w5-hardening` with issue #10 while W3 remains gated on the isolated platform data environment.
+- Replaced the active 1,500,458-byte PNG with a 31,846-byte WebP, fixed the stale favicon, and added a release budget that passes at 168,404 bytes of compressed HTML/CSS/JavaScript plus WebP against a 204,800-byte limit.
+- Bounded React clock presentation to roughly 10 Hz without altering fixed-step simulation time; capped particles at 480 normally and 96 under reduced motion; added a rolling frame monitor for development evidence.
+- Added a semantic focus-trapping dialog surface and applied it to help, pause, exit, and results. Corrected a browser-caught double-dialog defect so exit confirmation alone owns focus and its pause reason.
+- Added viewport pause ownership: a sub-320 × 320 playfield now freezes behind the support message and restoring size clears only the viewport reason.
+- Added a described keyboard-focusable canvas, keyboard-accessible upgrade explanations, global-shortcut exclusion for interactive controls, visible focus treatment, and polite share-status announcements.
+- Removed fake no-env Supabase requests so an unconfigured guest build loads without repeated leaderboard errors; old auth and ranked-score activation remain W3/W4 work.
+- Added retained-mechanics coverage for boss/projectile, second chain, power-up, pusher, particle, pause, frame, clock, and keyboard paths. Final release verification passed 9 files / 31 tests, typecheck, zero-warning lint, production build, and build budget.
+- Browser-verified 1440 × 900, 360 × 640, 844 × 390, and 300 × 300 states; one-dialog focus ownership; narrow results; reduced motion; production smoke-control removal; and quiet no-env reload.
+- The 300-frame sample held 16.7 ms average / 16.8 ms p95 / 16.9 ms max with zero 50 ms frames. Forty finish/restart cycles held RAF 1, input 1, timers 0, and one-for-one 41 finishes/restarts; heap settled at 38.43 MB versus a 37.79 MB baseline after decreasing through the second 20-cycle batch.
+- Mobile Lighthouse against the production Vite preview scored 98 performance, 100 accessibility, 100 best practices, and 100 SEO, with 1.8 s FCP, 2.1 s LCP, 0 ms TBT, 0 CLS, and 168 KiB transfer.
+- Passed the complete hosted-game staging plus normal Next.js build after W5. No production deploy or external-service mutation occurred; detailed evidence is in `docs/sprint-wreckavoid-w5.md`.
 - Started WreckaVOID W2 on isolated stacked branch `codex/fix-wreckavoid-w2-responsive` with issue #8 after publishing the clean W0/W1 draft PR #7.
 - Replaced hard-coded window-height canvas math with rendered-canvas `ResizeObserver` ownership, dynamic viewport/flex layout, visual viewport/orientation synchronization, safe-area padding, pointer clamping, and a readable 320 × 320 minimum-playfield guard.
 - Added reason-aware `manual`, `help`, and `focus` pause ownership. Browser smoke proved help cannot resume a manually paused or focus-paused run and focus return clears only its own reason.
@@ -64,7 +76,7 @@
 
 ### Next action
 
-WreckaVOID W3 is blocked on the coordinated platform auth/run environment. Approve or decline the 72-hour Supabase development branch at the last verified `$0.01344/hour` (about `$0.97`), or continue the independent W5 asset/performance/accessibility slice. Do not apply the score-locking migration separately from the platform and staged game deploy.
+WreckaVOID W3 and data-backed W4 remain blocked on the coordinated platform auth/run environment. Approve or decline the 72-hour Supabase development branch at the last verified `$0.01344/hour` (about `$0.97`). Without approval, continue with the independent WORDaVOID WD0 canonicalization/baseline slice. Do not apply the score-locking migration separately from the platform and staged game deploy.
 
 ## 2026-08-19
 

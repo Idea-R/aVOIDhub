@@ -217,3 +217,10 @@ Size the gameplay bitmap from the rendered flex-owned canvas, not `window.innerH
 - Status: accepted for W2
 
 Manual pause, help, and focus loss are independent reasons; clearing one reason cannot clear another. W2 audio is a small local feedback layer with a persistent mute choice, no score effect, and no platform entitlement. Reduced-motion preference may suppress decorative particles and sparks, but must not silently alter physics, scoring, enemy timing, or leaderboard rules.
+
+## D-032 — Bound presentation work and give every blocking surface one owner
+
+- Date: 2026-08-20
+- Status: accepted for W5
+
+Keep WreckaVOID’s fixed-step simulation authoritative while presenting its clock to React at a bounded cadence. Cap particle collections and reduce decorative density under the operating-system motion preference. Help, pause, exit, game-over, and unsupported-viewport states must each have one semantic/focus owner; opening one surface cannot expose a second modal behind it or clear another pause reason. Enforce the shipping transfer ceiling in code rather than relying on a one-time report.
