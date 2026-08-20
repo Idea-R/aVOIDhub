@@ -63,6 +63,7 @@ It is intentionally stricter than “the page loads.” Every V1 definition incl
 - TankaVOID T2 is source- and local-browser-complete in draft PR #27. One player and one deterministic bruiser now exchange pooled swept shells through pure impact-point face selection and incidence-based penetration, glancing, or ricochet math. Twenty-one tests, a 57,331-byte transfer result, a live six-shot enemy disable, a natural player-disable path, responsive QA, pause focus, and a 20-cycle ownership soak pass. Touch, a complete arena/loop, content expansion, scoring, platform integration, and any public route remain T3–T7; evidence is in `docs/sprint-tankavoid-t2.md`.
 - TankaVOID T3 is source- and local-browser-complete in draft PR #29. Four fixed barricades, nearest swept tank/cover hits, tank separation, line-of-sight-aware bruiser routing, deterministic deployment/result holds, and explicit entity/render/frame ceilings pass 28 tests, a 59,208-byte transfer result, six responsive sizes, and ten pointer-driven six-hit wins. Evidence is in `docs/sprint-tankavoid-t3.md`.
 - TankaVOID T4 is source- and emulated-browser-complete in draft PR #31. One input owner now supports an intentional two-thumb candidate; one gesture-owned procedural audio context, persisted sound/motion choices, system reduced motion, first-run coaching, responsive settings, and exact pause/teardown pass 33 tests and a 62,857-byte transfer result. Five real Pointer Events touch-path wins and a six-size active matrix pass, but physical iOS/Android evidence is still absent, so mobile remains a release candidate rather than a support claim. Evidence is in `docs/sprint-tankavoid-t4.md`.
+- TankaVOID T5 is source- and local-browser-complete. Four fixed behavior profiles now form nine hostiles across five versioned waves, ending with a commander/scout/hunter pressure event. Tick-owned deployment, clear holds, field repair, result metrics, bounded multi-target collision, and a deliberate two-second fire-cadence balance gate pass 39 tests, the 64,753-byte transfer gate, full platform assembly, six active responsive sizes, pause/focus checks, and a quiet browser log. TankaVOID remains Coming Soon; T6 owns platform/session/result integration and T7 still owns physical devices, final tuning, deployed smoke, and rollback. Evidence is in `docs/sprint-tankavoid-t5.md`.
 
 ### What is unsafe or misleading if activated today
 
@@ -755,7 +756,7 @@ TankaVOID V1 is a focused top-down survival/arena game:
 
 **Expected TankaVOID effort:** **4–6 engineering weeks plus 1–2 weeks of feel, art, and QA iteration** for the narrow V1 above. A playable vertical slice should appear in the first week. Attempting to rehabilitate every prototype system or add multiplayer would move it beyond this range.
 
-T0–T4 implementation evidence: [`tankavoid-v1-contract.md`](tankavoid-v1-contract.md), [`sprint-tankavoid-t0-t1.md`](sprint-tankavoid-t0-t1.md), [`sprint-tankavoid-t2.md`](sprint-tankavoid-t2.md), [`sprint-tankavoid-t3.md`](sprint-tankavoid-t3.md), and [`sprint-tankavoid-t4.md`](sprint-tankavoid-t4.md). The package now has one clean simulation/lifecycle boundary, one repeatable encounter loop, a supported keyboard/pointer path, and a browser-tested touch release candidate. T5 content is next; physical touch evidence stays in T7.
+T0–T5 implementation evidence: [`tankavoid-v1-contract.md`](tankavoid-v1-contract.md), [`sprint-tankavoid-t0-t1.md`](sprint-tankavoid-t0-t1.md), [`sprint-tankavoid-t2.md`](sprint-tankavoid-t2.md), [`sprint-tankavoid-t3.md`](sprint-tankavoid-t3.md), [`sprint-tankavoid-t4.md`](sprint-tankavoid-t4.md), and [`sprint-tankavoid-t5.md`](sprint-tankavoid-t5.md). The package now has one clean simulation/lifecycle boundary, one five-wave content run, a supported keyboard/pointer path, and a browser-tested touch release candidate. T6 platform integration is next; physical touch evidence stays in T7.
 
 ### TankaVOID V1 acceptance checklist
 
@@ -764,11 +765,11 @@ T0–T4 implementation evidence: [`tankavoid-v1-contract.md`](tankavoid-v1-contr
 - [x] Shallow-angle hits consistently deflect or reduce penetration under the written rule set.
 - [x] Ten natural browser encounters complete without stale loops, owners, projectiles, frames, or viewport overflow.
 - [ ] The supported input/device claim is backed by actual device evidence.
-- [ ] The V1 enemy/content list is complete without reintroducing prototype sprawl.
+- [x] The V1 enemy/content list is complete without reintroducing prototype sprawl.
 - [ ] Score has a versioned contract and an honest trust tier.
 - [ ] Detail page, Play, personal best, board, and receipt work.
 - [ ] Performance, accessibility, browser/device, deployment, and rollback gates pass.
-- [ ] Five complete waves and the V1 boss/final pressure event are reachable without development tools.
+- [x] Five complete waves and the V1 boss/final pressure event are reachable without development tools.
 
 ## 13. Independent Ideas Realized games
 

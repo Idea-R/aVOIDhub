@@ -122,6 +122,43 @@ T2 implements that separation explicitly. Choosing a face from projectile travel
 - First-run coaching is short, device-aware, locally dismissible, and derived from existing encounter state. It cannot introduce timers or a second gameplay owner.
 - Browser emulation is acceptable for responsive and Pointer Events evidence, but it is not physical-device certification.
 
+## T5 five-wave content contract
+
+T5 turns the proving encounter into one bounded run. It keeps one arena, one player cannon, the existing armor rules, and no pickups or upgrade screen.
+
+| Wave | Name | Hostiles | Positioning problem |
+| ---: | --- | --- | --- |
+| 1 | Cut the angle | One scout | Fast lateral pressure exposes a side plate. |
+| 2 | Break the line | One bruiser | Slow frontal pressure tests cover and facing. |
+| 3 | Crossfire | One scout and one hunter | The scout closes while the hunter holds a long firing lane. |
+| 4 | No safe range | One bruiser and one hunter | Cover must answer two different preferred ranges. |
+| 5 | Last command | One commander, one scout, and one hunter | The commander closes while the two specialist behaviors remain active. |
+
+The behavior identities are fixed:
+
+- **Scout:** fastest hull and turn rate, lowest health and shell damage, and an orbiting flank preference.
+- **Bruiser:** slowest ordinary hull, highest ordinary health, and direct medium-range pressure.
+- **Hunter:** maintains the longest range, strafes when settled, and fires more often than a bruiser.
+- **Commander:** final-wave-only pressure tank with the largest health pool and a direct close; it is not a second boss system or a source of special weapons.
+
+The first wave deploys for 180 ticks. Later waves deploy for 90 ticks after a 120-tick clear hold. A clear repairs exactly 28 hull points before the next deployment, capped at maximum health. The final clear enters the existing 90-tick result hold. Combat, deployment, clear holds, repair, victory, and defeat all use simulation ticks; React owns no wave timer.
+
+All five wave definitions are static and versioned in source. The run seed may vary the small spawn offset and orbit direction, but cannot change wave membership, health, weapons, damage, or the number of hostiles. The same seed and input history must reproduce the same complete snapshot.
+
+T5 result metrics are local facts, not a score: waves cleared, enemies disabled, elapsed active simulation time, damage dealt/taken, armor repaired, hits, shots, and ricochets. The future `tankavoid-v1-rules-1` score remains a T6 platform boundary and is not silently calculated or accepted in T5.
+
+T5 raises only the ceilings required by the written roster:
+
+- three active enemies;
+- 32 active projectiles;
+- 12 retained tank impacts;
+- eight retained cover strikes;
+- zero particles;
+- 64 logical renderer draw-items;
+- one simulation, one frame owner, one resize owner, 12 input listeners, one audio context, and eight audio voices.
+
+Mines, infantry, barracks, pickups, alternate weapons, abilities, destructible cover, upgrade trees, progression currency, additional arenas, multiplayer, and platform scoring remain rejected for this sprint.
+
 ## V1 content and score boundary
 
 The intended run is five waves in one arena:
@@ -171,6 +208,8 @@ The draw-item ceiling counts bounded logical render entries rather than individu
 
 T4 changes the input ceiling from eight to 12 listeners by adding four delegated touch-surface listeners. It also adds hard ceilings of two owned touch pointers, one audio context, eight audio voices, zero downloaded media, and zero external runtime assets. The frame, observer, simulation, projectile, impact, cover, enemy, particle, and draw-item ceilings do not change.
 
+T5 raises only the content ceilings: three active enemies, 12 retained tank impacts, and 64 logical draw-items. Four cover pieces, 32 projectiles, eight cover strikes, zero particles, one simulation/frame/resize owner, 12 listeners, one audio context, and eight voices remain fixed. The 220-point player hull and low single-digit enemy shell damage are the T5 pre-tuning baseline; final balance is versioned again only if T7 evidence justifies a change.
+
 ## Public boundary
 
-TankaVOID stays **Coming Soon** and noninteractive in the aVOID catalog. T0–T4 do not add a platform Play route, stage the build into the platform, create a leaderboard, activate auth, or change production. T4 establishes a browser-tested touch release candidate but deliberately does not claim physical mobile support. V1 publication still requires T5 content, T6 platform integration, and T7 physical-device, deployed, and rollback evidence.
+TankaVOID stays **Coming Soon** and noninteractive in the aVOID catalog. T0–T5 do not add a platform Play route, stage the build into the platform, create a leaderboard, activate auth, or change production. T4 establishes a browser-tested touch release candidate but deliberately does not claim physical mobile support; T5 establishes the complete bounded content run without a score. V1 publication still requires T6 platform integration and T7 physical-device, deployed, and rollback evidence.

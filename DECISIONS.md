@@ -294,3 +294,10 @@ Use four indestructible barricades around a clear central lane. Tanks resolve as
 - Status: accepted for T4; physical certification pending
 
 Route keyboard, pointer, drive-thumb, and aim-thumb state through one `InputController`. The left thumb owns throttle and hull turn; the right thumb owns aim and queues exactly one cannon shot when released. React may present labelled, responsive pads but cannot become a second gameplay-input owner. Audio is one gesture-created procedural context with eight bounded voices and exact silence on pause/result/teardown. System reduced motion is mandatory and neither motion nor sound may change simulation truth. Browser Pointer Events and responsive emulation can establish a release candidate, but only physical iOS and Android evidence can establish a public touch-support claim.
+
+## D-043 — Make T5 escalation behavioral, not feature breadth
+
+- Date: 2026-08-20
+- Status: accepted for T5
+
+Build one static five-wave manifest from four readable tank profiles: scout, bruiser, hunter, and final-wave commander. Escalation comes from speed, range, approach, crossfire, health, and coordinated composition—not mines, infantry, pickups, alternate weapons, upgrades, new arenas, or boss-only machinery. Keep deployment, clear holds, field repair, and results on simulation ticks; keep the seed limited to small spawn/orbit variation; and preserve fixed entity/render/audio/input ceilings. A fast pilot and a deliberate one-shot-every-two-seconds pilot must each clear ten seeds, while an idle player must still lose. These local facts do not create a platform score or trust claim.

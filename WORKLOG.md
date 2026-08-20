@@ -344,3 +344,22 @@ Review draft PR `#29`, then make T4 an honest device/control sprint: prototype i
 ### Next action
 
 Review the T4 stacked draft, then build T5 as the narrow V1 content pass: scout, bruiser, hunter, five waves, and one final pressure event. Preserve the directional-armor identity and current ceilings; do not revive mines, infantry, broad progression, multiplayer, or the prototype feature pile.
+
+## 2026-08-20 — TankaVOID T5 five-wave content run
+
+- Opened issue `#32` and created isolated branch `codex/tankavoid-t5-content-run` from the exact T4 head `05c898a`.
+- Froze one source-defined five-wave manifest: scout; bruiser; scout + hunter; bruiser + hunter; commander + scout + hunter.
+- Added four distinct deterministic behavior profiles without adding a second weapon, pickup, mine, infantry, barracks, destructible cover, progression, arena, or multiplayer system.
+- Replaced the single-enemy simulation path with a stable multi-enemy collection, nearest swept target/cover collision, target-id impacts, deterministic tank-pair separation, bounded histories, and exact wave transitions.
+- Kept the first deploy at 180 ticks, later deploys at 90, clear holds at 120, field repair at 28, and final results at 90; React owns none of those clocks.
+- Added wave/hostile HUD state, distinct enemy palettes and labels, wave cues, a five-wave final treatment, and six local engineering result metrics without calculating or accepting a platform score.
+- Used real browser gesture timing to find an overly sharp first balance, then established a 220-point hull and low single-digit enemy shell baseline. Ten fast and ten deliberate one-shot-every-two-seconds seeded pilots now clear all five waves; an idle player still loses.
+- Passed zero-warning typecheck/lint, 10 test files / 39 tests, Vite build, full 21-route platform build, and the 64,753 / 122,880-byte initial-transfer gate with no downloaded media or external runtime assets.
+- Exercised six live forced-touch sizes plus the seven-size briefing matrix. The 320-pixel override exposed a 291-CSS-pixel layout width; removing the root 320-pixel minimum eliminated the 29-pixel document overflow while keeping the HUD and both touch pads in bounds.
+- Verified pause focus and exact frame stop/resume, six-metric internally scrollable results, fifth-wave reachability through real UI gestures, one context, 12 listeners, one resize owner, published entity ceilings, and an empty browser warning/error log.
+- Recorded that local-canvas screenshot capture was unavailable; evidence uses semantic snapshots, measured geometry, diagnostics, real UI gestures, and console logs instead of inventing visual proof.
+- Kept platform scoring/session work, physical mobile certification, deployment, Supabase, Stripe, AdSense, DNS, and production state outside T5. TankaVOID remains Coming Soon.
+
+### Next action
+
+Review the T5 stacked draft, then build T6 as the platform integration boundary: detail-page Play state, optional platform session, one-use run start/finish, accepted receipt, personal best, trust-labelled board, and quiet guest/service-failure behavior. T7 remains the physical-device, final balance/art/performance, deployed-smoke, and rollback gate.
