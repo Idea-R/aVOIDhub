@@ -71,51 +71,13 @@ export class LeaderboardAPI {
   }
 
   static async submitGuestScore(playerName: string, score: number): Promise<{ success: boolean; data?: any }> {
-    const gameSessionId = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-    console.log('Submitting guest score:', { playerName, score, gameSessionId });
-
-    const { data, error } = await supabase
-      .from('leaderboard_scores')
-      .insert({
-        player_name: playerName,
-        score,
-        game_key: GAME_KEY,
-        is_verified: false,
-        user_id: null,
-        game_session_id: gameSessionId
-      })
-      .select();
-
-    if (error) {
-      console.error('Error submitting guest score:', error);
-      return { success: false };
-    }
-
-    console.log('Guest score submitted successfully:', data);
-    return { success: true, data: data?.[0] };
+    console.info('Guest score kept local until the run-ticket adapter is active.', { playerName, score });
+    return { success: false };
   }
 
   static async submitVerifiedScore(playerName: string, score: number, userId: string): Promise<boolean> {
-    const gameSessionId = `verified_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-    const { error } = await supabase
-      .from('leaderboard_scores')
-      .insert({
-        player_name: playerName,
-        score,
-        game_key: GAME_KEY,
-        is_verified: true,
-        user_id: userId,
-        game_session_id: gameSessionId
-      });
-
-    if (error) {
-      console.error('Error submitting verified score:', error);
-      return false;
-    }
-
-    return true;
+    console.info('Score carryover skipped: VOIDaVOID still needs a full run-ticket lifecycle.', { playerName, score, userId });
+    return false;
   }
 
   static async getUserBestScore(userId: string): Promise<number> {
