@@ -44,6 +44,8 @@ export class EngineCore {
   private readonly evidenceRecorder = new RunEvidenceRecorder();
   private cleanedUp = false;
   private knockbackCallback: () => void = () => {};
+  private requestedPerformanceMode = false;
+  private reducedMotion = false;
 
   private performanceSettings: PerformanceSettings = {
     autoScaleEnabled: true,
@@ -140,14 +142,31 @@ export class EngineCore {
   }
 
   applyPerformanceMode(enabled: boolean): void {
-    this.performanceSettings.performanceModeActive = enabled;
-    this.performanceSettings.shadowsEnabled = !enabled;
-    this.performanceSettings.dynamicMaxParticles = enabled ? 150 : 300;
-    this.performanceSettings.adaptiveTrailsActive = !enabled;
-    this.performanceSettings.autoScaleEnabled = !enabled;
-    this.gameSettings.performanceMode = enabled;
+    this.requestedPerformanceMode = enabled;
+    this.applyPresentationSettings();
+  }
+
+  setReducedMotion(enabled: boolean): void {
+    if (this.reducedMotion === enabled) return;
+    this.reducedMotion = enabled;
+    this.gameLogic.setReducedMotion(enabled);
+    this.particleSystem.setReducedMotion(enabled);
+    this.defenseSystem.setReducedMotion(enabled);
+    this.applyPresentationSettings();
+  }
+
+  private applyPresentationSettings(): void {
+    const compactEffects = this.requestedPerformanceMode || this.reducedMotion;
+    this.performanceSettings.performanceModeActive = compactEffects;
+    this.performanceSettings.shadowsEnabled = !compactEffects;
+    this.performanceSettings.dynamicMaxParticles = this.reducedMotion ? 48 : compactEffects ? 150 : 300;
+    this.performanceSettings.adaptiveTrailsActive = !compactEffects;
+    this.performanceSettings.autoScaleEnabled = !compactEffects;
+    this.gameSettings.performanceMode = compactEffects;
     this.particleSystem.setMaxParticles(this.performanceSettings.dynamicMaxParticles);
     this.renderSystem.setShadowsEnabled(this.performanceSettings.shadowsEnabled);
+    this.powerUpManager.updatePerformanceMode(compactEffects);
+    this.chainDetonationRenderer.updatePerformanceMode(compactEffects);
   }
 
   resetSystems(): void {
@@ -160,6 +179,7 @@ export class EngineCore {
       this.canvas,
       this.runRandom.getStream('defense').next,
     );
+    this.defenseSystem.setReducedMotion(this.reducedMotion);
     this.inputHandler.reset();
     this.gameLogic.updateSystems(this.buildSystems());
     this.gameLogic.resetGame();
@@ -193,6 +213,7 @@ export class EngineCore {
   getPerformanceSettings(): PerformanceSettings { return { ...this.performanceSettings }; }
   getAutoScalingEnabled(): boolean { return this.performanceSettings.autoScaleEnabled; }
   getAutoPerformanceModeEnabled(): boolean { return this.performanceSettings.autoPerformanceModeEnabled; }
+  isReducedMotion(): boolean { return this.reducedMotion; }
 
   finishRunEvidence(): RunEvidence {
     return this.evidenceRecorder.finish(

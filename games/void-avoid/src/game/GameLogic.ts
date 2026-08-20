@@ -255,6 +255,10 @@ export class GameLogic {
     this.stateManager.setScreenShake(shake);
   }
 
+  setReducedMotion(enabled: boolean): void {
+    this.stateManager.setReducedMotion(enabled);
+  }
+
   getPlayerRingPhase(): number {
     return this.stateManager.getPlayerRingPhase();
   }

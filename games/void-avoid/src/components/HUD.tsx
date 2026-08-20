@@ -1,3 +1,5 @@
+import type { SoundStatus } from '../game/presentation/SoundManager';
+
 interface HUDProps {
   score: number;
   time: number;
@@ -7,6 +9,9 @@ interface HUDProps {
   onTogglePause: () => void;
   onShowHelp: () => void;
   onExit: () => void;
+  soundEnabled: boolean;
+  soundStatus: SoundStatus;
+  onToggleSound: () => void;
 }
 
 function formatTime(seconds: number): string {
@@ -24,10 +29,13 @@ export default function HUD({
   onTogglePause,
   onShowHelp,
   onExit,
+  soundEnabled,
+  soundStatus,
+  onToggleSound,
 }: HUDProps) {
   return (
     <div className="void-hud" aria-label="Game status and controls">
-      <div className="void-hud__score" aria-live="polite">
+      <div className="void-hud__score">
         <span>Score</span>
         <strong>{score.toLocaleString()}</strong>
       </div>
@@ -45,12 +53,15 @@ export default function HUD({
         </div>
       </div>
 
-      <div className="void-hud__controls">
+      <div className="void-hud__controls" role="group" aria-label="Game controls">
         <button type="button" onClick={onTogglePause} aria-label={isPaused ? 'Resume game' : 'Pause game'}>
           {isPaused ? 'Resume' : 'Pause'}
         </button>
         <button type="button" onClick={onShowHelp}>
           Controls
+        </button>
+        <button type="button" onClick={onToggleSound} aria-pressed={soundEnabled}>
+          {soundStatus === 'unavailable' ? 'Retry sound' : soundEnabled ? 'Sound on' : 'Sound off'}
         </button>
         <button type="button" onClick={onExit}>
           Exit

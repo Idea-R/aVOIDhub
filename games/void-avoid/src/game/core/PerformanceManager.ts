@@ -10,7 +10,8 @@ import { PerformanceSettings } from '../EngineCore';
 export class PerformanceManager {
   // FPS tracking
   private frameCount: number = 0;
-  private fpsLastTime: number = 0;
+  private fpsWindowStart: number = 0;
+  private lastFrameTimestamp: number = 0;
   private currentFPS: number = 0;
   private fpsUpdateInterval: number = 500;
   
@@ -51,19 +52,26 @@ export class PerformanceManager {
     particleCount: number,
     autoPerformanceModeEnabled: boolean
   ): void {
+    if (this.lastFrameTimestamp === 0) {
+      this.lastFrameTimestamp = timestamp;
+      this.fpsWindowStart = timestamp;
+      return;
+    }
+
     this.frameCount++;
     
     // Track frame times for average calculation
-    const frameTime = timestamp - this.fpsLastTime;
+    const frameTime = timestamp - this.lastFrameTimestamp;
+    this.lastFrameTimestamp = timestamp;
     this.frameTimes.push(frameTime);
     if (this.frameTimes.length > 60) { // Keep last 60 frames
       this.frameTimes.shift();
     }
     
-    if (timestamp - this.fpsLastTime >= this.fpsUpdateInterval) {
-      this.currentFPS = Math.round((this.frameCount * 1000) / (timestamp - this.fpsLastTime));
+    if (timestamp - this.fpsWindowStart >= this.fpsUpdateInterval) {
+      this.currentFPS = Math.round((this.frameCount * 1000) / (timestamp - this.fpsWindowStart));
       this.frameCount = 0;
-      this.fpsLastTime = timestamp;
+      this.fpsWindowStart = timestamp;
       
       // Calculate average frame time
       if (this.frameTimes.length > 0) {
@@ -154,7 +162,8 @@ export class PerformanceManager {
    * Adjust timing for pause/resume
    */
   adjustForPause(pauseDuration: number): void {
-    this.fpsLastTime += pauseDuration;
+    this.fpsWindowStart += pauseDuration;
+    this.lastFrameTimestamp += pauseDuration;
   }
   
   /**
@@ -162,6 +171,10 @@ export class PerformanceManager {
    */
   reset(): void {
     this.frameTimes.length = 0;
+    this.frameCount = 0;
+    this.currentFPS = 0;
+    this.fpsWindowStart = 0;
+    this.lastFrameTimestamp = 0;
     this.averageFrameTime = 0;
     this.memoryUsageEstimate = 0;
     this.lastScalingEvent = 'reset';

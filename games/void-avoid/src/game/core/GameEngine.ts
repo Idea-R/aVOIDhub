@@ -16,6 +16,7 @@ export default class GameEngine {
   resetGame(): void { this.core.resetGame(); }
   pause(reason: PauseReason = 'manual'): void { this.core.pause(reason); }
   resume(reason: PauseReason = 'manual'): void { this.core.resume(reason); }
+  setReducedMotion(enabled: boolean): void { this.core.setReducedMotion(enabled); }
   isStarted(): boolean { return this.core.isStarted(); }
   isPausedState(): boolean { return this.core.isPausedState(); }
 

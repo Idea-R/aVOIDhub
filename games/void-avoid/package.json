@@ -9,7 +9,8 @@
     "type-check": "tsc -p tsconfig.app.json --noEmit",
     "lint": "node lint-active.mjs",
     "test": "vitest",
-    "verify:release": "npm run type-check && npm run lint && npm run test -- --run && npm run build",
+    "check:budget": "node tools/check-build-budget.mjs",
+    "verify:release": "npm run type-check && npm run lint && npm run test -- --run && npm run build && npm run check:budget",
     "preview": "vite preview"
   },
   "dependencies": {

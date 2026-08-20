@@ -5,10 +5,21 @@ import type { PauseReason } from '../game/core/GameLoop';
 import HUD from './HUD';
 import GameOverScreen from './GameOverScreen';
 import { VOIDAVOID_RULESET, type RunEvidenceSummary } from '../game/run/runEvidence';
+import { type SoundManager, type SoundStatus } from '../game/presentation/SoundManager';
+import type { MotionPreference } from '../game/presentation/preferences';
+import GameDialog from './GameDialog';
 
 interface GameProps {
   autoStart?: boolean;
   onExit: () => void;
+  sound: SoundManager;
+  soundEnabled: boolean;
+  soundStatus: SoundStatus;
+  reducedMotion: boolean;
+  motionPreference: MotionPreference;
+  onToggleSound: () => void;
+  onToggleMotion: () => void;
+  onSoundStatusChange: (status: SoundStatus) => void;
 }
 
 const LOCAL_BEST_KEY = 'voidavoid-local-best-v1';
@@ -57,7 +68,9 @@ declare global {
   interface Window {
     __VOIDAVOID_SMOKE__?: {
       finish: () => void;
-      diagnostics: () => ReturnType<GameEngine['getDiagnostics']>;
+      diagnostics: () => ReturnType<GameEngine['getDiagnostics']> & {
+        audio: ReturnType<SoundManager['getDiagnostics']>;
+      };
       evidence: () => ReturnType<GameEngine['getRunEvidence']>;
     };
     __VOIDAVOID_LAST_DIAGNOSTICS__?: ReturnType<GameEngine['getDiagnostics']>;
@@ -73,13 +86,29 @@ function readLocalBest(): number {
   }
 }
 
-export default function Game({ autoStart = false, onExit }: GameProps) {
+export default function Game({
+  autoStart = false,
+  onExit,
+  sound,
+  soundEnabled,
+  soundStatus,
+  reducedMotion,
+  motionPreference,
+  onToggleSound,
+  onToggleMotion,
+  onSoundStatusChange,
+}: GameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<GameEngine | null>(null);
   const [gameState, setGameState] = useState(initialGameState);
   const [pauseReasons, setPauseReasons] = useState<PauseReason[]>([]);
   const [showHelp, setShowHelp] = useState(false);
   const [localBest, setLocalBest] = useState(readLocalBest);
+  const [qaRefresh, setQaRefresh] = useState(0);
+  const reducedMotionRef = useRef(reducedMotion);
+  const previousSoundStateRef = useRef({ score: 0, charges: 0, isGameOver: false });
+
+  reducedMotionRef.current = reducedMotion;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -87,13 +116,14 @@ export default function Game({ autoStart = false, onExit }: GameProps) {
 
     const engine = new GameEngine(canvas);
     engineRef.current = engine;
+    engine.setReducedMotion(reducedMotionRef.current);
     engine.setStateUpdateCallback(setGameState);
     engine.setPauseChangeCallback((_isPaused, reasons) => setPauseReasons(reasons));
 
     if (import.meta.env.DEV && window.location.search.includes('smoke=1')) {
       window.__VOIDAVOID_SMOKE__ = {
         finish: () => engine.forceGameOverForTest(),
-        diagnostics: () => engine.getDiagnostics(),
+        diagnostics: () => ({ ...engine.getDiagnostics(), audio: sound.getDiagnostics() }),
         evidence: () => engine.getRunEvidence(),
       };
     }
@@ -106,7 +136,28 @@ export default function Game({ autoStart = false, onExit }: GameProps) {
       window.__VOIDAVOID_LAST_DIAGNOSTICS__ = engine.getDiagnostics();
       engineRef.current = null;
     };
-  }, [autoStart]);
+  }, [autoStart, sound]);
+
+  useEffect(() => {
+    engineRef.current?.setReducedMotion(reducedMotion);
+  }, [reducedMotion]);
+
+  useEffect(() => {
+    const previous = previousSoundStateRef.current;
+    if (gameState.isGameOver && !previous.isGameOver) {
+      sound.play('game-over');
+    } else if (gameState.powerUpCharges > previous.charges) {
+      sound.play('charge');
+    } else if (gameState.score > previous.score) {
+      const delta = gameState.score - previous.score;
+      sound.play('impact', Math.min(1, delta / 100));
+    }
+    previousSoundStateRef.current = {
+      score: gameState.score,
+      charges: gameState.powerUpCharges,
+      isGameOver: gameState.isGameOver,
+    };
+  }, [gameState.isGameOver, gameState.powerUpCharges, gameState.score, sound]);
 
   useEffect(() => {
     if (!gameState.isGameOver) return;
@@ -122,9 +173,12 @@ export default function Game({ autoStart = false, onExit }: GameProps) {
   const toggleManualPause = useCallback(() => {
     const engine = engineRef.current;
     if (!engine || gameState.isGameOver) return;
-    if (pauseReasons.includes('manual')) engine.resume('manual');
-    else engine.pause('manual');
-  }, [gameState.isGameOver, pauseReasons]);
+    sound.play('pause');
+    if (pauseReasons.includes('manual')) {
+      engine.resume('manual');
+      requestAnimationFrame(() => canvasRef.current?.focus({ preventScroll: true }));
+    } else engine.pause('manual');
+  }, [gameState.isGameOver, pauseReasons, sound]);
 
   const showControls = useCallback(() => {
     if (gameState.isGameOver) return;
@@ -135,6 +189,7 @@ export default function Game({ autoStart = false, onExit }: GameProps) {
   const closeControls = useCallback(() => {
     setShowHelp(false);
     engineRef.current?.resume('help');
+    requestAnimationFrame(() => canvasRef.current?.focus({ preventScroll: true }));
   }, []);
 
   useEffect(() => {
@@ -150,8 +205,10 @@ export default function Game({ autoStart = false, onExit }: GameProps) {
 
   const playAgain = useCallback(() => {
     setShowHelp(false);
+    sound.play('start');
     engineRef.current?.resetGame();
-  }, []);
+    requestAnimationFrame(() => canvasRef.current?.focus({ preventScroll: true }));
+  }, [sound]);
 
   const exitGame = useCallback(() => {
     onExit();
@@ -159,9 +216,22 @@ export default function Game({ autoStart = false, onExit }: GameProps) {
 
   const isPaused = pauseReasons.length > 0;
 
+  const retrySound = useCallback(async () => {
+    onSoundStatusChange(await sound.activate());
+  }, [onSoundStatusChange, sound]);
+
   return (
     <div className="void-game" data-paused={isPaused ? 'true' : 'false'}>
-      <canvas ref={canvasRef} className="void-game__canvas" aria-label="VOIDaVOID meteor field" />
+      <canvas
+        ref={canvasRef}
+        className="void-game__canvas"
+        aria-label="VOIDaVOID meteor field"
+        aria-describedby="void-field-instructions"
+        tabIndex={0}
+      />
+      <p id="void-field-instructions" className="void-visually-hidden">
+        Move a pointer or drag one finger to steer. Double-click or double-tap to use a pulse. Press Escape to pause.
+      </p>
 
       {!gameState.isGameOver && !isPaused && (
         <HUD
@@ -173,38 +243,51 @@ export default function Game({ autoStart = false, onExit }: GameProps) {
           onTogglePause={toggleManualPause}
           onShowHelp={showControls}
           onExit={exitGame}
+          soundEnabled={soundEnabled}
+          soundStatus={soundStatus}
+          onToggleSound={onToggleSound}
         />
       )}
 
       {isPaused && !showHelp && !gameState.isGameOver && (
-        <div className="void-dialog-backdrop">
-          <section className="void-pause" role="dialog" aria-modal="true" aria-labelledby="void-pause-title">
+        <GameDialog labelledBy="void-pause-title" describedBy="void-pause-copy">
             <p className="void-kicker">Field suspended</p>
             <h2 id="void-pause-title">Take a breath.</h2>
-            <p>The storm is frozen. Your time and score are not moving.</p>
-            <button type="button" className="void-launch" onClick={toggleManualPause} autoFocus>
+            <p id="void-pause-copy">The storm is frozen. Your time and score are not moving.</p>
+            <button type="button" className="void-launch" onClick={toggleManualPause}>
               Resume
             </button>
-          </section>
-        </div>
+        </GameDialog>
       )}
 
       {showHelp && !gameState.isGameOver && (
-        <div className="void-dialog-backdrop">
-          <section className="void-pause" role="dialog" aria-modal="true" aria-labelledby="void-help-title">
+        <GameDialog labelledBy="void-help-title" describedBy="void-help-copy">
             <p className="void-kicker">Field controls</p>
             <h2 id="void-help-title">Move deliberately.</h2>
-            <ul>
+            <ul id="void-help-copy">
               <li>Move the pointer—or drag one finger—to steer the signal.</li>
               <li>Double-click or double-tap to spend a pulse charge and knock meteors away.</li>
               <li>Colorful fragments build a full-field chain detonation.</li>
               <li>Escape pauses. Leaving the tab pauses without clearing your manual pause.</li>
             </ul>
-            <button type="button" className="void-launch" onClick={closeControls} autoFocus>
+            <div className="void-dialog-settings" role="group" aria-label="Play preferences">
+              <button type="button" aria-pressed={soundEnabled} onClick={onToggleSound}>
+                Sound {soundEnabled ? 'on' : 'off'}
+              </button>
+              <button type="button" aria-pressed={motionPreference === 'reduced'} onClick={onToggleMotion}>
+                Motion {reducedMotion ? 'reduced' : 'system'}
+              </button>
+            </div>
+            {soundStatus === 'unavailable' && (
+              <p className="void-audio-notice" role="status">
+                Audio did not start. Play stays available.
+                <button type="button" onClick={retrySound}>Retry sound</button>
+              </p>
+            )}
+            <button type="button" className="void-launch" onClick={closeControls}>
               Back to the field
             </button>
-          </section>
-        </div>
+        </GameDialog>
       )}
 
       {gameState.isGameOver && (
@@ -228,9 +311,19 @@ export default function Game({ autoStart = false, onExit }: GameProps) {
             tabIndex={-1}
             onClick={() => engineRef.current?.forceGameOverForTest()}
           >QA</button>
+          <button
+            type="button"
+            data-testid="void-smoke-refresh"
+            aria-label="Refresh QA diagnostics"
+            tabIndex={-1}
+            onClick={() => setQaRefresh((count) => count + 1)}
+          >R</button>
           <output
             data-testid="void-smoke-diagnostics"
-            data-diagnostics={JSON.stringify(engineRef.current?.getDiagnostics() ?? null)}
+            data-refresh={qaRefresh}
+            data-diagnostics={JSON.stringify(engineRef.current
+              ? { ...engineRef.current.getDiagnostics(), audio: sound.getDiagnostics() }
+              : null)}
           />
         </div>
       )}

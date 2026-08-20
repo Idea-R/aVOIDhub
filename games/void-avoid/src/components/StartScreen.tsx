@@ -1,8 +1,25 @@
+import type { SoundStatus } from '../game/presentation/SoundManager';
+import type { MotionPreference } from '../game/presentation/preferences';
+
 interface StartScreenProps {
   onStart: () => void;
+  soundEnabled: boolean;
+  soundStatus: SoundStatus;
+  reducedMotion: boolean;
+  motionPreference: MotionPreference;
+  onToggleSound: () => void;
+  onToggleMotion: () => void;
 }
 
-export default function StartScreen({ onStart }: StartScreenProps) {
+export default function StartScreen({
+  onStart,
+  soundEnabled,
+  soundStatus,
+  reducedMotion,
+  motionPreference,
+  onToggleSound,
+  onToggleMotion,
+}: StartScreenProps) {
   return (
     <section className="void-start" aria-labelledby="void-title">
       <div className="void-start__orbit" aria-hidden="true" />
@@ -36,10 +53,26 @@ export default function StartScreen({ onStart }: StartScreenProps) {
           <span aria-hidden="true">↗</span>
         </button>
 
+        <div className="void-start__preferences" role="group" aria-label="Play preferences">
+          <button type="button" aria-pressed={soundEnabled} onClick={onToggleSound}>
+            <span>Sound</span>
+            <strong>{soundStatus === 'unavailable' ? 'Retry' : soundEnabled ? 'On' : 'Off'}</strong>
+          </button>
+          <button type="button" aria-pressed={motionPreference === 'reduced'} onClick={onToggleMotion}>
+            <span>Motion</span>
+            <strong>{reducedMotion ? 'Reduced' : 'System'}</strong>
+          </button>
+        </div>
+
         <p className="void-start__note">
-          Guest play is immediate. This repair build keeps results on this device and does not claim a
-          platform placement.
+          Guest play is immediate. Sound is made locally after you enter the field—there is no track to
+          download. Results stay on this device and do not claim a platform placement.
         </p>
+        {soundStatus === 'unavailable' && (
+          <p className="void-start__notice" role="status">
+            This browser did not start audio. The game still works; use Retry when you want another attempt.
+          </p>
+        )}
       </div>
     </section>
   );

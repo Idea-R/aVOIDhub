@@ -95,6 +95,10 @@ export class DefenseSystem {
     this.defenseEffects.clear();
   }
 
+  public setReducedMotion(enabled: boolean): void {
+    this.defenseEffects.setReducedMotion(enabled);
+  }
+
   /**
    * Get performance statistics
    */

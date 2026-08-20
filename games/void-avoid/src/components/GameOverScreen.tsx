@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ComboInfo, ScoreBreakdown } from '../game/systems/ScoreSystem';
 import type { RunEvidenceSummary } from '../game/run/runEvidence';
+import GameDialog from './GameDialog';
 
 interface GameOverScreenProps {
   score: number;
@@ -39,8 +40,7 @@ export default function GameOverScreen({
   };
 
   return (
-    <div className="void-dialog-backdrop">
-      <section className="void-result" role="dialog" aria-modal="true" aria-labelledby="void-result-title">
+    <GameDialog labelledBy="void-result-title" describedBy="void-result-truth" className="void-result">
         <p className="void-kicker">Signal lost</p>
         <h2 id="void-result-title">The field got you.</h2>
         <div className="void-result__total">
@@ -68,7 +68,7 @@ export default function GameOverScreen({
           </div>
         </dl>
 
-        <p className="void-result__truth" data-run-status={run.status}>
+        <p id="void-result-truth" className="void-result__truth" data-run-status={run.status}>
           {run.status === 'replayable-local'
             ? <>Local run <strong>{run.code}</strong> replayed its score evidence cleanly. It is still unranked.</>
             : <>Local run evidence did not pass its replay check. No placement was claimed.</>}
@@ -88,7 +88,6 @@ export default function GameOverScreen({
         <p className="void-result__copy" role="status">
           {copyStatus}
         </p>
-      </section>
-    </div>
+    </GameDialog>
   );
 }

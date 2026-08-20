@@ -16,6 +16,17 @@ export interface GameEngineDiagnostics {
   sessionsFinished: number;
   resets: number;
   cleanedUp: boolean;
+  presentation: {
+    reducedMotion: boolean;
+    activeParticles: number;
+    particleLimit: number;
+  };
+  performance: {
+    fps: number;
+    averageFrameTime: number;
+    objectEstimate: number;
+    lastScalingEvent: string;
+  };
   run: RunEvidenceSummary;
 }
 
@@ -188,6 +199,7 @@ export class GameEngineCore {
 
   pause(reason: PauseReason): void { this.gameLoop.pause(reason); }
   resume(reason: PauseReason): void { this.gameLoop.resume(reason); }
+  setReducedMotion(enabled: boolean): void { this.systemManager.getEngineCore().setReducedMotion(enabled); }
   isStarted(): boolean { return this.gameLoop.isStarted(); }
   isPausedState(): boolean { return this.gameLoop.isPausedState(); }
 
@@ -198,6 +210,8 @@ export class GameEngineCore {
 
   getDiagnostics(): GameEngineDiagnostics {
     const canvasState = this.canvasManager.getState();
+    const core = this.systemManager.getEngineCore();
+    const performance = this.performanceManager.getPerformanceStats(core.getPerformanceSettings());
     return {
       loop: this.gameLoop.getDiagnostics(),
       input: this.systemManager.getEngineCore().getInputHandler().getDiagnostics(),
@@ -210,7 +224,18 @@ export class GameEngineCore {
       sessionsFinished: this.sessionsFinished,
       resets: this.resets,
       cleanedUp: this.cleanedUp,
-      run: this.systemManager.getEngineCore().getRunSummary(),
+      presentation: {
+        reducedMotion: core.isReducedMotion(),
+        activeParticles: core.getParticleSystem().getParticleCount(),
+        particleLimit: core.getParticleSystem().getMaxParticles(),
+      },
+      performance: {
+        fps: performance.fps,
+        averageFrameTime: performance.averageFrameTime,
+        objectEstimate: performance.memoryUsage,
+        lastScalingEvent: performance.lastScalingEvent,
+      },
+      run: core.getRunSummary(),
     };
   }
 

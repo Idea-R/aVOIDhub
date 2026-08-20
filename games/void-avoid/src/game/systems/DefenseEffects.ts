@@ -51,6 +51,7 @@ export class DefenseEffects {
   private electricRings: ElectricRing[] = [];
   private staticElectricityTimer: number = 0;
   private scheduledEffects = new Set<ReturnType<typeof setTimeout>>();
+  private reducedMotion = false;
   
   // Performance optimization
   private maxLightningBolts: number = 5;
@@ -75,6 +76,7 @@ export class DefenseEffects {
     meteorY: number, 
     type: 'destroy' | 'deflect'
   ): void {
+    if (this.reducedMotion) return;
     this.staticElectricityTimer = 500; // 500ms of static electricity
     
     // Create lightning bolt from badge to meteor
@@ -97,6 +99,7 @@ export class DefenseEffects {
    * Create dramatic lightning effect when player is eliminated by defense system
    */
   public createPlayerEliminationEffect(badgeX: number, badgeY: number, playerX: number, playerY: number): void {
+    if (this.reducedMotion) return;
     // Create multiple intense lightning bolts
     for (let i = 0; i < 5; i++) {
       this.schedule(() => {
@@ -389,6 +392,11 @@ export class DefenseEffects {
     this.electricParticles.length = 0;
     this.electricRings.length = 0;
     this.staticElectricityTimer = 0;
+  }
+
+  public setReducedMotion(enabled: boolean): void {
+    this.reducedMotion = enabled;
+    if (enabled) this.clear();
   }
 
   private schedule(callback: () => void, delay: number): void {

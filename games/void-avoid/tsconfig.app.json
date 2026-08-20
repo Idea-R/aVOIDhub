@@ -24,11 +24,14 @@
   "files": [
     "src/main.tsx",
     "src/game/core/GameLoop.test.ts",
+    "src/game/core/PerformanceManager.test.ts",
     "src/game/InputHandler.test.ts",
     "src/game/systems/ScoreSystem.test.ts",
     "src/game/run/seededRandom.test.ts",
     "src/game/run/runEvidence.test.ts",
     "src/game/run/gameplayRandom.test.ts",
-    "src/game/managers/MeteorManager.test.ts"
+    "src/game/managers/MeteorManager.test.ts",
+    "src/game/presentation/preferences.test.ts",
+    "src/game/presentation/SoundManager.test.ts"
   ]
 }

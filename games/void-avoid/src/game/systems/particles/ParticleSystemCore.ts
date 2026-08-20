@@ -182,6 +182,10 @@ export class ParticleSystemCore {
   }
 
   addActiveParticle(particle: Particle): void {
+    if (this.activeParticles.length >= this.maxParticles) {
+      this.particlePool.release(particle);
+      return;
+    }
     this.activeParticles.push(particle);
   }
 
@@ -206,7 +210,7 @@ export class ParticleSystemCore {
   }
 
   getAvailableParticleSlots(): number {
-    return this.maxParticles - this.activeParticles.length;
+    return Math.max(0, this.maxParticles - this.activeParticles.length);
   }
 
   clear(): void {

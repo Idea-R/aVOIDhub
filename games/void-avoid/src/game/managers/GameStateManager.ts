@@ -14,6 +14,7 @@ export class GameStateManager {
   private knockbackCooldown: number = 0;
   private playerRingPhase: number = 0;
   private screenShake: ScreenShake = { x: 0, y: 0, intensity: 0, duration: 0 };
+  private reducedMotion = false;
 
   private onGameOver: () => void = () => {};
 
@@ -52,6 +53,10 @@ export class GameStateManager {
   }
 
   updateScreenShake(deltaTime: number): void {
+    if (this.reducedMotion) {
+      this.screenShake = { x: 0, y: 0, intensity: 0, duration: 0 };
+      return;
+    }
     if (this.screenShake.duration > 0) {
       this.screenShake.duration -= deltaTime;
       const intensity = (this.screenShake.duration / 500) * this.screenShake.intensity;
@@ -64,7 +69,14 @@ export class GameStateManager {
   }
 
   setScreenShake(shake: ScreenShake): void {
-    this.screenShake = shake;
+    this.screenShake = this.reducedMotion
+      ? { x: 0, y: 0, intensity: 0, duration: 0 }
+      : shake;
+  }
+
+  setReducedMotion(enabled: boolean): void {
+    this.reducedMotion = enabled;
+    if (enabled) this.screenShake = { x: 0, y: 0, intensity: 0, duration: 0 };
   }
 
   triggerGameOver(): void {
