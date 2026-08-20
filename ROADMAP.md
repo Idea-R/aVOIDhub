@@ -42,6 +42,7 @@ Move the live aVOIDgame.io rebuild through the phased V1 completion program: sec
 - Active documentation branch: `codex/docs-v1-completion-program`
 - Active Sprint 0 branch: `security/sprint-0-recoverability`
 - Active Sprint 1 branch: `security/platform-foundation-v1`
+- Active Sprint 1 draft PR: `https://github.com/Idea-R/aVOIDhub/pull/4`
 - Program source of truth: `docs/V1-COMPLETION-PROGRAM.md`
 - Sprint 0 evidence: `docs/sprint-0-recoverability.md`
 - Merged shell PR: `https://github.com/Idea-R/aVOIDhub/pull/1`
