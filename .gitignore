@@ -11,6 +11,7 @@ apps/platform/public/WreckaVOID/
 apps/platform/public/WORDaVOID/
 dist/VOIDaVOID/
 dist/WORDaVOID/
+dist/TankaVOID/
 
 # Logs
 logs
