@@ -3,6 +3,7 @@
 - Date: 2026-08-20
 - Issue: [#36](https://github.com/Idea-R/aVOIDhub/issues/36)
 - Branch: `codex/tankavoid-t7-release-hardening`
+- Draft PR: [#37](https://github.com/Idea-R/aVOIDhub/pull/37)
 - Base: exact T6 commit `0a81360`
 - Public state: Coming Soon; no friendly Play route or production deployment
 

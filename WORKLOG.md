@@ -404,6 +404,7 @@ Run the T6/WD1 shared data acceptance matrix on an approved short-lived Supabase
 - Attempted a Netlify draft deploy. The application build passed, but the local Windows Next adapter failed while resolving `@swc/helpers` above the repository root; no deploy was uploaded and no machine-wide workaround was introduced.
 - Reclassified the bounded five-wave candidate as the future Proving Grounds mode in product planning. The larger-world Expedition/survival idea is preserved as a separately scoped expansion rather than changing the frozen ranked ruleset.
 - Kept physical iOS/Android, coordinated Supabase execution, Git-driven preview smoke, rollback evidence, production Play, Stripe, AdSense, DNS, and production state outside the completed local gate.
+- Published commits `43252ca` and `c615e13` as stacked draft PR `#37` above the exact T6 head; no merge or production deployment occurred.
 
 ### Next action
 
