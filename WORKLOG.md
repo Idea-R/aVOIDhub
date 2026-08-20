@@ -284,7 +284,8 @@ Review stacked draft PR `#23` and keep physical-device/deployed checks as explic
 - Browser-checked six briefing and five running viewports, Escape/modal focus, quiet console, and a 20-cycle sample retaining one canvas, eight listeners, one observer, and no terminal frame.
 - Corrected the frame-owner diagnostic and narrow briefing overflow discovered during browser QA.
 - Kept TankaVOID out of platform staging and retained the public Coming Soon/noninteractive boundary.
+- Published the runtime and evidence as two commits in stacked draft PR `#25` above the reviewed VOIDaVOID V4 boundary; no merge or deployment occurred.
 
 ### Next action
 
-Publish T0/T1 for review, then implement T2 as an isolated deterministic combat slice: one cannon, one enemy, pure face/incidence/damage math, and readable ricochet/glancing/penetration outcomes. Do not reopen infantry, mines, progression, multiplayer, or fake leaderboard scope.
+Review draft PR `#25`, then implement T2 as an isolated deterministic combat slice: one cannon, one enemy, pure face/incidence/damage math, and readable ricochet/glancing/penetration outcomes. Do not reopen infantry, mines, progression, multiplayer, or fake leaderboard scope.

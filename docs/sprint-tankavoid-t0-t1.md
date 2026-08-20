@@ -3,7 +3,7 @@
 - Date: 2026-08-20
 - Issue: [#24](https://github.com/Idea-R/aVOIDhub/issues/24)
 - Branch: `codex/tankavoid-t0-t1-foundation`
-- Draft PR: pending
+- Draft PR: [#25](https://github.com/Idea-R/aVOIDhub/pull/25)
 - Base: VOIDaVOID V4 commit `932263a`
 
 ## Intended outcome
