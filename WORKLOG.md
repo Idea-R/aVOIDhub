@@ -188,3 +188,24 @@ Review the refined draft, then approve or request changes before the production 
 ### Next action
 
 Exercise test-mode Stripe subscription and cosmetic fulfillment plus executable database acceptance once the non-production resources are approved. AdSense activation remains a separate gated step.
+
+## 2026-08-20 — Role-aware platform workspaces
+
+- Opened issue `#40` and created isolated branch `codex/feature-platform-role-dashboards` from the membership/creator contract head.
+- Rebuilt `/login/` as a branded signal gate with a validated local return path and one passwordless identity across player, creator, and admin surfaces.
+- Rebuilt `/account/` as a player deck for owned profile, accepted-run and favorite counts, entitlements, membership, creator state, and profile editing.
+- Added `/creators/dashboard/` with an explicit application → review → membership → private-submission sequence and owned submission inventory.
+- Gated `/creators/submit/` at the page boundary as well as the API boundary; only approved creators with an active `creator.submit_game` entitlement can reach the live form.
+- Added `/admin/` with creator, game, score-integrity, and membership signals plus real review controls.
+- Added `/api/admin/review` with same-origin enforcement, authenticated user validation, server-controlled app-metadata authorization, whitelisted transitions, and an optimistic concurrency check.
+- Kept review approval separate from publication, deploys, payments, entitlements, ads, and deletion.
+- Reused the existing generated orbital depth field as the common control-room atmosphere. Built responsive tactile controls in HTML/CSS instead of generating fixed-size button images.
+- Updated shared platform-page hero composition and global navigation so login, accounts, creator pages, membership, leaderboards, policy pages, and the new operations surfaces share the same identity.
+- Added 12 focused role, return-path, and admin-transition tests; the platform suite now passes 19 tests.
+- Passed platform type-check and the 24-route Next production build.
+- Browser-reviewed every platform-owned route at 768 × 900 and 390 × 844 with no horizontal overflow or undersized visible buttons. Visually reviewed login, account, creator, and admin surfaces at desktop and phone widths; no console warning or error was present.
+- The static-export review command remains blocked by the existing dynamic run-finish API and is not the correct build shape for authenticated server routes. Production remains unchanged.
+
+### Next action
+
+Publish the branch as a draft PR and non-production Netlify runtime preview, then exercise authenticated player, creator, and admin paths against approved non-production Supabase fixtures before any production role assignment or migration.

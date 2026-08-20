@@ -20,6 +20,7 @@ Captured at a desktop browser viewport on 2026-08-19 and converted to WebP witho
 - Selected asset: `apps/platform/public/avoid-depth-field-v1.webp`
 - Original generated output: `C:\Users\palli\.codex\generated_images\01a00f3a-a9f2-72a0-816e-f2bfa0734e94\exec-e415d304-4ef7-4471-a15c-ca23eec903a5.png`
 - Usage: low-opacity background texture for the external-games section; it is not presented as game artwork.
+- Reused on 2026-08-20 as the atmospheric layer for the player, creator, and admin control surfaces. No additional generated dashboard image was necessary; buttons and status controls remain responsive HTML/CSS.
 - Known limitation: generated texture is intentionally abstract and carries no product information.
 
 Prompt summary: wide, text-free editorial arcade atmosphere using dimensional glass planes, teal and acid-lime orbital lines, one coral signal glow, halftone grain, and central negative space on a dark void field.

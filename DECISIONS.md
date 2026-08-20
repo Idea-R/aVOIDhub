@@ -205,3 +205,17 @@ Every new run session and score submission records a bounded ruleset version. Th
 Creator application is free. Human review establishes creator approval; Stripe establishes only subscription state. Private game submission and paid hosting capacity require both an approved application and an active Creator entitlement. Payment cannot create a creator profile, approve an application, publish a game, enable ads, or promise revenue sharing. Cancellation removes subscription-sourced capacity without deleting creator ownership, application, profile, submission, or review history.
 
 Free accounts retain core profiles, favorites, play, and eligible leaderboards. Founding Player and Creator plans may add ad-free eligible platform pages, noncompetitive identity/cosmetics, selected experiments, and reviewed creator capacity. No plan may change score, damage, armor, movement, ranked trust, or other competitive outcomes.
+
+## D-030 — Keep role selection out of the login surface
+
+- Date: 2026-08-20
+- Status: accepted
+
+Use one passwordless login for players, creators, and administrators. Player and creator status comes from owned platform records and entitlements. Administrator authority comes only from server-controlled Supabase Auth `app_metadata.platform_role`; never read `user_metadata`, a query parameter, a client-side switch, or a public profile field as admin authorization. Authenticated pages and every privileged route handler must verify the user independently.
+
+## D-031 — Make review approval operationally narrow
+
+- Date: 2026-08-20
+- Status: accepted
+
+The administrator control room may record bounded creator, game, and score-review transitions. A review approval does not publish a game, deploy code, create a Stripe charge, grant an entitlement, activate AdSense, or delete evidence. Those actions remain separate workflows with their own acceptance and production gates.

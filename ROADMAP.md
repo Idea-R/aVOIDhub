@@ -47,6 +47,9 @@ Move the live aVOIDgame.io rebuild through the phased V1 completion program: sec
 - Active membership/creator issue: `https://github.com/Idea-R/aVOIDhub/issues/38`
 - Active membership/creator draft PR: `https://github.com/Idea-R/aVOIDhub/pull/39`
 - Active membership/creator public review: `https://membership-review-39--coruscating-squirrel-a47ad9.netlify.app/membership/`
+- Active role-dashboard branch: `codex/feature-platform-role-dashboards`
+- Active role-dashboard issue: `https://github.com/Idea-R/aVOIDhub/issues/40`
+- Role-dashboard contract: `docs/platform-role-dashboards.md`
 - Membership/creator contract: `docs/membership-creator-v1.md`
 - Program source of truth: `docs/V1-COMPLETION-PROGRAM.md`
 - Sprint 0 evidence: `docs/sprint-0-recoverability.md`
@@ -79,6 +82,7 @@ Move the live aVOIDgame.io rebuild through the phased V1 completion program: sec
 14. **Sprint 0 recoverability packet — complete; branch approval pending.** The live schema, grants, policies, functions, advisors, migration drift, auth/score consumers, environment ownership, rollback targets, branch cost, and legacy-data mapping are frozen in `docs/sprint-0-recoverability.md`. No production state changed.
 15. **Sprint 1 isolated foundation repair — local gate complete; paid branch pending.** The forward migration now denies browser writes by default, makes profile publication explicit, preserves legacy scores without trusting their old verified flag, removes browser-era score triggers, adds ruleset/FK integrity, and ships 50 pgTAP assertions plus a static verifier. Create the 72-hour Supabase development branch only after cost approval, then run the documented data/API/advisor matrix against synthetic fixtures.
 16. **Player and Creator membership contract — draft PR #39 and public review ready.** Core profile, favorite, play, and eligible leaderboard access remain free. Founding Player adds eligible-page ad suppression, identity, supporter cosmetics as games implement them, and selected experiments. Creator application stays free; private paid submission capacity requires both an approved application and an active Creator subscription. Payment cannot approve or publish. Tests, type-check, foundation verification, production build, responsive browser QA, and the static public feedback build pass. Test-mode billing, cosmetic fulfillment, ad suppression, and creator moderation remain separate executable gates.
+17. **Role-aware platform workspaces — local implementation complete.** Added a branded passwordless signal gate, player deck, creator workflow, gated private build intake, and administrator control room. Admin authorization uses only server-controlled app metadata; review actions are whitelisted, same-origin, and do not publish, deploy, charge, grant, delete, or activate ads. Type-check, 19 tests, production build, and desktop/tablet/phone browser QA pass. Non-production runtime exercises, preview publication, and production activation remain pending.
 
 ## Current next action
 
