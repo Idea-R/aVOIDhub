@@ -3,6 +3,7 @@
 - Date: 2026-08-20
 - Issue: [#34](https://github.com/Idea-R/aVOIDhub/issues/34)
 - Branch: `codex/tankavoid-t6-platform-integration`
+- Draft PR: [#35](https://github.com/Idea-R/aVOIDhub/pull/35)
 - Base: exact T5 commit `0eea9a5`
 - Imported platform-detail baseline: `de7be47`
 - Public state: Coming Soon; no friendly Play route, production deployment, or database migration

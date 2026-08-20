@@ -385,6 +385,7 @@ Review the T5 stacked draft, then build T6 as the platform integration boundary:
 - Browser-checked desktop, 360 × 780 and 844 × 390 briefing/combat/detail/receipt states, pause/resume, guest fallback, non-overlapping touch controls, no horizontal overflow, and systems-check submission exclusion.
 - Confirmed in production-mode local HTTP that an unconfigured run start returns deliberate 503 `platform_unavailable`, while Tanka detail, leaderboard and unavailable receipt render 200.
 - Read-only production inspection confirmed the coordinated migration and run/score/favorite tables are absent. No migration, paid branch, production write, deploy, DNS, Stripe, AdSense, or secret state changed.
+- Published the feature and evidence commits as stacked draft PR `#35` above the exact T5 head; no merge or deployment occurred.
 
 ### Next action
 
