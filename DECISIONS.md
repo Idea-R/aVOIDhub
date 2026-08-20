@@ -245,3 +245,10 @@ Generate competitive prompts from a server-created seed and sequence, and use on
 - Status: accepted for WD3
 
 Competitive letters belong only to a focusable typing surface; global keyboard ownership is limited to Escape. Browser shortcuts, controls, repeated keys, composition, paste, and characters outside the ASCII V1 contract cannot become evidence accidentally. Manual and focus-loss pauses are independent reasons, and one semantic dialog owns each blocking state. The rendered arena owns viewport dimensions, while system reduced motion is mandatory and may suppress decoration only. Browser-emulated mobile input is a release candidate, not physical-device certification.
+
+## D-036 — Isolate VOIDaVOID before making it competitive
+
+- Date: 2026-08-20
+- Status: accepted for V0/V1
+
+Keep the recognizable meteor, defense, pulse, fragment, and chain-detonation game, but define one canonical runtime graph before adding platform features. The local V1 build uses one fixed 60 Hz loop, one canvas Pointer Events owner, one resize owner, composed pause reasons, an explicit guest start, and local-only result truth. Historical auth, profile, leaderboard, audio, alternate engine, and performance experiments may remain in repository history but cannot compile into the release path. Use DPR 1 until every active system shares one logical-pixel model. Do not rank the current random score stream; seeded evidence and platform run receipts are later gates.

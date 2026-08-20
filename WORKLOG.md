@@ -2,6 +2,19 @@
 
 ## 2026-08-20
 
+- Started VOIDaVOID V0/V1 on isolated stacked branch `codex/fix-voidavoid-v0-v1-baseline` with issue #18, leaving the dirty main checkout and production untouched.
+- Traced the shipping graph and reproduced the misleading baseline: roughly 100 TypeScript errors, 173 lint errors, 10 warnings, no tests, duplicate input/resize/lifecycle owners, false verified-placement copy, game-local auth, external audio, and a 1.57 MB result image.
+- Froze the actual survival, meteor, combo, perfect-knockback, chain, meteor-speed/spawn, collision, grace-period, power-up, and terminal rules as local ruleset `voidavoid-local-v1`.
+- Replaced the active shell with explicit guest start, compact HUD, single-owner pause/help, honest local result, replay, copy result, and main-menu transitions. Game-local auth/profile/leaderboard/audio/performance-monitor code is outside the canonical graph.
+- Added one fixed-step loop with reason-aware manual/help/focus/visibility/terminal pause, one pending RAF, bounded catch-up, one terminal transition, idempotent stop, and lifecycle diagnostics.
+- Replaced duplicate mouse/touch registration with five canvas Pointer Events listeners, pointer capture, bounded coordinate mapping, double-tap classification, and exact cleanup.
+- Made CanvasManager the only resize owner, restored browser zoom, selected an honest DPR-1 baseline, fixed equal-size initial state publication, removed duplicate renderer resize listeners, and tracked deferred defense timers.
+- Added active-graph type/lint gates and 9 focused tests for lifecycle/pause, double-tap, scoring bounds/formulas, and score reset. Final active graph: 51 files, 0 lint errors, 0 warnings.
+- Reduced the standalone build from about 425.15 KB JavaScript plus a 1.57 MB image to 255.65 KB JavaScript / 73.57 KB gzip and 9.14 KB CSS / 2.99 KB gzip.
+- Browser QA at 1440×900, 390×844, and 844×390 caught and fixed stale 0×0 canvas diagnostics, focusable HUD controls behind dialogs, and decorative short-landscape overflow. Console remained quiet.
+- Completed 30 deterministic finish/restart cycles with exactly +30 starts, +30 finishes, and +30 resets while holding one pending RAF, five input listeners, and stable canvas ownership.
+- Passed standalone release verification and the full Next.js platform production build. No database, Netlify, Stripe, AdSense, DNS, merge, or production state changed. Evidence is in `docs/voidavoid-v0-v1-contract.md` and `docs/sprint-voidavoid-v0-v1.md`.
+
 - Started WORDaVOID WD3 on isolated stacked branch `codex/fix-wordavoid-wd3-experience` with issue #16, leaving the dirty main checkout and production untouched.
 - Replaced global printable-key capture with an owned typing surface that supports physical and software-keyboard events, rejects shortcuts/repeats/composition/out-of-contract characters, and restores focus after arena clicks and pause.
 - Added composable manual/focus pause ownership, one semantic pause/result dialog, measured arena viewport ownership, live orientation recentering, dynamic-viewport/safe-area layout, and responsive HUD/menu/result surfaces.

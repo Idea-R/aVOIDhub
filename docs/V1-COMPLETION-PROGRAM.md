@@ -5,7 +5,7 @@
 - **Repository:** `C:\dev\aVOID-next` / `Idea-R/aVOIDhub`
 - **Production baseline:** `https://avoidgame.io` at merge commit `7cd9788`
 - **Program branch:** `codex/docs-v1-completion-program`
-- **Current execution branch:** `codex/fix-wordavoid-wd3-experience` (stacked on WORDaVOID WD1 and the completed WreckaVOID slices)
+- **Current execution branch:** `codex/fix-voidavoid-v0-v1-baseline` (stacked on WORDaVOID WD3 and the completed WreckaVOID slices)
 - **Related records:** [`ROADMAP.md`](../ROADMAP.md), [`WORKLOG.md`](../WORKLOG.md), [`DECISIONS.md`](../DECISIONS.md)
 
 ## 1. Why this document exists
@@ -56,6 +56,7 @@ It is intentionally stricter than “the page loads.” Every V1 definition incl
 - WORDaVOID WD0 local gates are complete. Classic Survival and two-minute Time Attack are now the only playable V1 modes; six duplicate/partial experiments are listed as unranked without Start controls. The draft score/stat contract is pure and tested, the 60% accuracy floor and terminal-current-streak result are repaired, stale out-of-root build artifacts are removed, and the four-viewport menu matrix passes without horizontal overflow. Evidence is in `docs/sprint-wordavoid-wd0.md`.
 - WORDaVOID WD1 is source-complete. A shared package freezes the 1,770-entry dictionary/hash, ruleset, normalization, deterministic prompt generator, scoring, and bounded event validator. The game emits replayable evidence; the platform reconstructs the manifest from stored server metadata and ignores client aggregates; and the prepared service transaction returns the original receipt on a valid retry. Automated checks, full assembly, and desktop/mobile browser smoke pass. Executable SQL/concurrency/read-back remains gated on the isolated Supabase branch, and accepted storage stays `provisional`; evidence is in `docs/sprint-wordavoid-wd1.md`.
 - WORDaVOID WD3 is source- and local-browser-complete. An owned typing surface replaces global character capture; focus/manual pauses compose; the rendered arena owns resize/orientation; reduced motion and audio failure are truthful; local progress is versioned and recoverable; abandon, share, and repeat-run transitions are explicit. Typecheck, zero-warning lint, 33 tests, standalone/full-platform builds, desktop/narrow/landscape browser checks, and a 20-cycle restart soak pass. Physical iOS/Android sign-off and production deploy remain release gates; evidence is in `docs/sprint-wordavoid-wd3.md`.
+- VOIDaVOID V0 and the local V1 runtime gate are complete. The 51-file canonical graph now has one fixed-step loop, one Pointer Events owner, one resize owner, reason-aware pause, explicit start/results/replay, local-only score truth, and no active game-local auth/profile/leaderboard/audio path. Nine focused tests, zero-warning lint, standalone/full-platform builds, desktop/portrait/landscape QA, and a 30-cycle finish/restart soak pass. Seeded evidence, platform runs/detail data, local audio, physical devices, and deployment remain V2–V4; evidence is in `docs/voidavoid-v0-v1-contract.md` and `docs/sprint-voidavoid-v0-v1.md`.
 
 ### What is unsafe or misleading if activated today
 
@@ -503,20 +504,18 @@ VOIDaVOID lives in [`games/void-avoid`](../games/void-avoid) and carries the ori
 
 Score generation includes client-side randomness, so identical inputs cannot currently reproduce a run. Normal signed-in game-over submission was also incomplete: much of the direct write behavior centered on carrying a guest score through sign-up rather than finishing every authenticated run consistently.
 
-### Confirmed release blockers
+V0/V1 repair update: the shipping graph is now explicitly rooted at `src/main.tsx`; historical alternate apps and engines are excluded from canonical compilation. The active shell is guest-first and local-score only. It has one fixed-step loop, one canvas Pointer Events handler, one resize manager, composed pause reasons, exact teardown, and an honest result surface. The full frozen behavior and scoring contract is in [`voidavoid-v0-v1-contract.md`](voidavoid-v0-v1-contract.md).
 
-- Multiple generations of engine, loop, input, resize, performance, and application code remain compiled together. The active React path uses `game/core/GameEngine`, while stale alternate engines and a duplicate app still fail type/lint gates.
-- Vite build passes, but standalone type-check fails across active and stale code; lint currently reports 173 errors and ten warnings; there are no tests.
-- Score submission is deliberately disabled and returns failure, while game-over/account copy still promises “verified leaderboard,” “Sign Up & Save Score,” and “Verified Player.”
-- Guest result UI calculates where an unsaved score might rank and presents it as “You placed,” which is not a recorded placement.
-- Email/password, mock/offline credentials, recovery, password change, and separate auth subscription logic remain inside the game. The auth-state subscription is not retained for cleanup.
-- Touch handlers are attached to both window and canvas, while cleanup removes only the window registrations. Gestures can double-fire and canvas listeners leak.
-- Game-loop blur/focus/visibility listeners have a cleanup method, but the active engine stop path does not call it.
-- Simulation consumes raw frame delta; competitive behavior is unproven across 30/60/120 Hz and throttled tabs.
-- Accessibility and reduced-motion support are absent, and the system cursor is hidden across UI layers where modal/button interaction still occurs.
-- Production music depends on external blob URLs while local fallback audio assets are effectively absent.
-- The root app initializes old auth and auto-starts play after roughly half a second, while an unused alternate app defines a different pre-game flow.
-- A roughly 1.57 MB art asset remains in the play build.
+### Confirmed V2–V4 release blockers
+
+- Random world and score decisions are still unseeded, so a server cannot replay the run.
+- The ruleset is documented as `voidavoid-local-v1`, but it is not yet shared with a platform validator.
+- No one-use platform run adapter, accepted receipt, personal-best query, or data-backed detail-page board exists.
+- Historical alternate source remains in the repository outside the canonical graph and still needs an archive/removal decision.
+- Audio is intentionally dormant until a local, consent-aware, teardown-safe V4 implementation exists.
+- DPR-2 rendering is not claimed until every system uses one logical-pixel coordinate model.
+- Browser-emulated pointer/phone checks are not physical iOS/Android certification.
+- Production deploy, rollback, frame/heap device evidence, and deployed accessibility/performance audits remain open.
 
 ### VOIDaVOID V1 experience
 
@@ -575,19 +574,21 @@ A player launches the original meteor-avoidance game, immediately understands cu
 | V3     | Platform session, run adapter, detail page, personal best, receipt share |    L | No direct writes; guest/signed-in/failure paths; `/games/voidavoid/` pass    |
 | V4     | Visual/audio/accessibility/performance and release hardening             |    L | Browser/device matrix, frame/memory report, CI and deployed smoke            |
 
+V0 and the local V1 runtime gate completed on 2026-08-20. V2–V4 remain separate review and release gates.
+
 **Expected VOIDaVOID effort after the shared platform foundation:** **20–35 focused engineering/QA days**. The largest uncertainty is whether the active engine can be isolated and made deterministic without changing the game’s feel.
 
 ### VOIDaVOID V1 acceptance checklist
 
-- [ ] The scoring, difficulty, randomness, and terminal-state contracts are written and versioned.
-- [ ] Repeated runs do not accumulate frames, listeners, audio, or stale state.
+- [x] The scoring, difficulty, randomness, and terminal-state contracts are written and versioned for local ruleset `voidavoid-local-v1`.
+- [x] Thirty repeated finish/restart cycles held one frame owner, five input listeners, and one-for-one start/finish/reset counts; audio is outside the active graph.
 - [ ] Pointer and claimed touch behavior pass target devices and orientations.
-- [ ] No game-specific login/profile flow remains in the play path.
-- [ ] No browser inserts or promotes leaderboard rows directly.
-- [ ] Score trust matches actual server evidence.
+- [x] No game-specific login/profile flow remains in the canonical play path.
+- [x] The canonical play path does not insert or promote leaderboard rows.
+- [x] Current score trust is labeled local and unranked; no platform placement is claimed.
 - [ ] The detail page, personal best, board, receipt share, and stable play route work.
 - [ ] Build, lint, focused tests, browser smoke, performance, accessibility, and deployment checks pass.
-- [ ] The source tree has exactly one active engine, loop, input owner, auth path, and score path.
+- [x] The canonical 51-file graph has one active engine boundary, loop, input owner, and local score path; historical alternates are excluded and documented.
 - [ ] Double tap triggers exactly one action and twenty route/replay cycles do not grow listeners, timers, audio, canvases, or RAF loops.
 
 ### Explicitly later
