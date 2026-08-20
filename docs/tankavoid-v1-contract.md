@@ -2,14 +2,14 @@
 
 - Date: 2026-08-20
 - Issue: [#24](https://github.com/Idea-R/aVOIDhub/issues/24)
-- Branch: `codex/tankavoid-t0-t1-foundation`
+- Current release-candidate branch: `codex/tankavoid-t7-release-hardening`
 - Ruleset target: `tankavoid-v1-rules-1`
 
 ## Product sentence
 
 TankaVOID is a short top-down survival game about exposing the right side of your tank at the right time. The hull is slow enough to make facing a decision; the turret can aim independently; front, side, and rear hits produce visibly different outcomes.
 
-V1 is not the old prototype with every idea repaired. It is one polished arena, five escalating waves, three ordinary enemy behaviors, and one final pressure event built around readable directional armor.
+The first releasable slice is not the old prototype with every idea repaired. It is one polished arena, five escalating waves, three ordinary enemy behaviors, and one final pressure event built around readable directional armor. This bounded mode is now called **Proving Grounds** in product planning: it can become the tutorial, daily challenge, browser demo, and ranked ruleset while a separately scoped Expedition mode recovers the old prototype's larger-world survival ambition.
 
 ## T0 source and recovery record
 
@@ -174,6 +174,20 @@ T6 connects the bounded five-wave run to the platform without changing its publi
 
 Mines, infantry, barracks, pickups, alternate weapons, abilities, destructible cover, upgrade trees, progression currency, additional arenas, multiplayer, and platform scoring remain rejected for this sprint.
 
+## T7 release-candidate contract
+
+T7 certifies the bounded Proving Grounds build without silently widening its public claim.
+
+- One root release command owns contract, game, platform, catalog, foundation, assembly, review-artifact, and no-public-route checks.
+- Pull requests affecting the Tanka release surface run the same command on Linux CI.
+- Frame diagnostics report rendered frames, average and maximum delta, long frames above 34 ms, and dropped simulation time.
+- Portrait, short landscape, desktop, pause/focus, reduced-motion, muted-audio, and repeated-reset behavior must stay inside the written ownership and capacity ceilings.
+- Browser viewport emulation does not establish physical iOS or Android support.
+- A local or deployed review artifact does not authorize a friendly route, catalog Play action, database activation, or production deployment.
+- The five-wave ruleset stays frozen even if a larger Expedition mode is approved later. Expedition receives its own mode, ruleset, progression, performance, and score contracts rather than mutating ranked Proving Grounds history.
+
+T7 source and browser evidence lives in [`sprint-tankavoid-t7.md`](sprint-tankavoid-t7.md).
+
 ## V1 content and score boundary
 
 The intended run is five waves in one arena:
@@ -223,8 +237,8 @@ The draw-item ceiling counts bounded logical render entries rather than individu
 
 T4 changes the input ceiling from eight to 12 listeners by adding four delegated touch-surface listeners. It also adds hard ceilings of two owned touch pointers, one audio context, eight audio voices, zero downloaded media, and zero external runtime assets. The frame, observer, simulation, projectile, impact, cover, enemy, particle, and draw-item ceilings do not change.
 
-T5 raises only the content ceilings: three active enemies, 12 retained tank impacts, and 64 logical draw-items. Four cover pieces, 32 projectiles, eight cover strikes, zero particles, one simulation/frame/resize owner, 12 listeners, one audio context, and eight voices remain fixed. The 220-point player hull and low single-digit enemy shell damage are the T5 pre-tuning baseline; final balance is versioned again only if T7 evidence justifies a change.
+T5 raises only the content ceilings: three active enemies, 12 retained tank impacts, and 64 logical draw-items. Four cover pieces, 32 projectiles, eight cover strikes, zero particles, one simulation/frame/resize owner, 12 listeners, one audio context, and eight voices remain fixed. The 220-point player hull and low single-digit enemy shell damage remain the Proving Grounds baseline. T7 adds cumulative frame-quality diagnostics but does not raise a content or runtime ceiling.
 
 ## Public boundary
 
-TankaVOID stays **Coming Soon** and noninteractive in the aVOID catalog. T0–T5 do not add a platform Play route, stage the build into the platform, create a leaderboard, activate auth, or change production. T4 establishes a browser-tested touch release candidate but deliberately does not claim physical mobile support; T5 establishes the complete bounded content run without a score. V1 publication still requires T6 platform integration and T7 physical-device, deployed, and rollback evidence.
+TankaVOID stays **Coming Soon** and noninteractive in the aVOID catalog. T6 stages the review build and implements the source-level provisional score boundary; T7 adds CI, diagnostics, presentation, responsive-browser, and lifecycle evidence. Neither sprint activates the pending database or adds a public friendly route. Publication still requires the short-lived database acceptance matrix, physical-device evidence, a successful Git-driven deploy-preview smoke, and verified rollback evidence.

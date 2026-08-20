@@ -5,7 +5,7 @@
 - **Repository:** `C:\dev\aVOID-next` / `Idea-R/aVOIDhub`
 - **Production baseline:** `https://avoidgame.io` at merge commit `7cd9788`
 - **Program branch:** `codex/docs-v1-completion-program`
-- **Current execution branch:** `codex/tankavoid-t4-controls-feedback` (stacked on the exact TankaVOID T3 head and published in draft PR #31)
+- **Current execution branch:** `codex/tankavoid-t7-release-hardening` (stacked on the exact TankaVOID T6 head; issue #36)
 - **Related records:** [`ROADMAP.md`](../ROADMAP.md), [`WORKLOG.md`](../WORKLOG.md), [`DECISIONS.md`](../DECISIONS.md)
 
 ## 1. Why this document exists
@@ -64,6 +64,8 @@ It is intentionally stricter than “the page loads.” Every V1 definition incl
 - TankaVOID T3 is source- and local-browser-complete in draft PR #29. Four fixed barricades, nearest swept tank/cover hits, tank separation, line-of-sight-aware bruiser routing, deterministic deployment/result holds, and explicit entity/render/frame ceilings pass 28 tests, a 59,208-byte transfer result, six responsive sizes, and ten pointer-driven six-hit wins. Evidence is in `docs/sprint-tankavoid-t3.md`.
 - TankaVOID T4 is source- and emulated-browser-complete in draft PR #31. One input owner now supports an intentional two-thumb candidate; one gesture-owned procedural audio context, persisted sound/motion choices, system reduced motion, first-run coaching, responsive settings, and exact pause/teardown pass 33 tests and a 62,857-byte transfer result. Five real Pointer Events touch-path wins and a six-size active matrix pass, but physical iOS/Android evidence is still absent, so mobile remains a release candidate rather than a support claim. Evidence is in `docs/sprint-tankavoid-t4.md`.
 - TankaVOID T5 is source- and local-browser-complete. Four fixed behavior profiles now form nine hostiles across five versioned waves, ending with a commander/scout/hunter pressure event. Tick-owned deployment, clear holds, field repair, result metrics, bounded multi-target collision, and a deliberate two-second fire-cadence balance gate pass 39 tests, the 64,753-byte transfer gate, full platform assembly, six active responsive sizes, pause/focus checks, and a quiet browser log. TankaVOID remains Coming Soon; T6 owns platform/session/result integration and T7 still owns physical devices, final tuning, deployed smoke, and rollback. Evidence is in `docs/sprint-tankavoid-t5.md`.
+- TankaVOID T6 is source- and local-browser-complete in draft PR #35. A shared contract now freezes server-created run identity, bounded terminal evidence, server-recomputed provisional scoring, idempotent finish, accepted-only board/personal-best reads, and private-safe receipts. Contract/game/platform tests, foundation assertions, full assembly, and responsive browser checks pass. The coordinated Supabase transaction has not run, so no accepted Tanka result is live; evidence is in `docs/sprint-tankavoid-t6.md`.
+- TankaVOID T7 is locally release-candidate complete on issue #36. One root command and Linux pull-request workflow now own the complete release gate; cumulative frame diagnostics, procedural arena depth, responsive portrait/landscape/desktop checks, pause/focus, reduced motion, muted audio, and a 21-start/20-reset soak pass with a 16.7 ms average, 17 ms maximum, zero long frames, and zero dropped simulation time. A Windows-local Netlify adapter error prevented upload after the application build, so Git-driven preview smoke and rollback evidence remain open. Physical iOS/Android and database evidence also remain open; evidence is in `docs/sprint-tankavoid-t7.md`.
 
 ### What is unsafe or misleading if activated today
 
@@ -678,7 +680,7 @@ Directory V1 may ship before integrated V1. The platform must not hold the rest 
 
 ### Current state
 
-T0–T4 replaced the active monorepo package with a buildable directional-combat encounter. It now has one seeded 60 Hz simulation, one loop, one unified keyboard/pointer/touch input owner, one responsive logical-pixel viewport, explicit deployment/combat/result pacing, pure face/incidence/damage math, one pooled cannon per side, swept tank/cover collision, four tactical barricades, deterministic separation, line-of-sight-aware bruiser behavior, one gesture-owned procedural audio context, system-aware motion, first-run coaching, and enforced input/audio/entity/render/frame ceilings. Thirty-three focused tests and a 62,857-byte initial compressed transfer pass. Ten T3 pointer victories and five T4 touch-path victories completed without lifecycle growth. It is not staged into the platform and remains Coming Soon; touch still lacks physical-device certification.
+T0–T7 replaced the active monorepo package with a buildable directional-combat release candidate. It now has one seeded 60 Hz simulation, one loop, one unified keyboard/pointer/touch input owner, one responsive logical-pixel viewport, pure face/incidence/damage math, five deterministic waves, four enemy behaviors, tactical cover, bounded pooled combat, procedural audio, system-aware motion, first-run coaching, optional platform run/receipt integration, and enforced input/audio/entity/render/frame ceilings. The complete release command passes 43 game tests plus shared contract, platform, catalog, foundation, bundle, and full-assembly gates. A 21-start/20-reset browser soak retained the written ownership ceilings with zero long frames or dropped simulation time. The build is staged only as a review artifact and remains Coming Soon; physical-device, database, deployed-preview, and rollback gates are still open.
 
 The replaced monorepo generation failed with 78 TypeScript errors across incompatible entity, collision, update/reset, input, particle, experience, and power-up contracts. Its source remains recoverable through Git history rather than compiling beside the rebuild.
 
@@ -758,7 +760,7 @@ TankaVOID V1 is a focused top-down survival/arena game:
 
 **Expected TankaVOID effort:** **4–6 engineering weeks plus 1–2 weeks of feel, art, and QA iteration** for the narrow V1 above. A playable vertical slice should appear in the first week. Attempting to rehabilitate every prototype system or add multiplayer would move it beyond this range.
 
-T0–T5 implementation evidence: [`tankavoid-v1-contract.md`](tankavoid-v1-contract.md), [`sprint-tankavoid-t0-t1.md`](sprint-tankavoid-t0-t1.md), [`sprint-tankavoid-t2.md`](sprint-tankavoid-t2.md), [`sprint-tankavoid-t3.md`](sprint-tankavoid-t3.md), [`sprint-tankavoid-t4.md`](sprint-tankavoid-t4.md), and [`sprint-tankavoid-t5.md`](sprint-tankavoid-t5.md). The package now has one clean simulation/lifecycle boundary, one five-wave content run, a supported keyboard/pointer path, and a browser-tested touch release candidate. T6 platform integration is next; physical touch evidence stays in T7.
+T0–T7 implementation evidence: [`tankavoid-v1-contract.md`](tankavoid-v1-contract.md), [`sprint-tankavoid-t0-t1.md`](sprint-tankavoid-t0-t1.md), [`sprint-tankavoid-t2.md`](sprint-tankavoid-t2.md), [`sprint-tankavoid-t3.md`](sprint-tankavoid-t3.md), [`sprint-tankavoid-t4.md`](sprint-tankavoid-t4.md), [`sprint-tankavoid-t5.md`](sprint-tankavoid-t5.md), [`sprint-tankavoid-t6.md`](sprint-tankavoid-t6.md), and [`sprint-tankavoid-t7.md`](sprint-tankavoid-t7.md). The bounded five-wave build is the release candidate and future Proving Grounds mode. A larger scrolling Expedition/survival mode is a separately approved product expansion, not an excuse to weaken this release gate.
 
 ### TankaVOID V1 acceptance checklist
 
@@ -768,8 +770,8 @@ T0–T5 implementation evidence: [`tankavoid-v1-contract.md`](tankavoid-v1-contr
 - [x] Ten natural browser encounters complete without stale loops, owners, projectiles, frames, or viewport overflow.
 - [ ] The supported input/device claim is backed by actual device evidence.
 - [x] The V1 enemy/content list is complete without reintroducing prototype sprawl.
-- [ ] Score has a versioned contract and an honest trust tier.
-- [ ] Detail page, Play, personal best, board, and receipt work.
+- [x] Score has a versioned contract and an honest trust tier in source; executable database acceptance remains open.
+- [x] Detail page, provisional personal best, accepted-only board, and receipt work in source/local review. Public Play remains intentionally held.
 - [ ] Performance, accessibility, browser/device, deployment, and rollback gates pass.
 - [x] Five complete waves and the V1 boss/final pressure event are reachable without development tools.
 

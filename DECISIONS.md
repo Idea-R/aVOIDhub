@@ -310,3 +310,19 @@ Build one static five-wave manifest from four readable tank profiles: scout, bru
 - Status: accepted for the T6 source gate; database execution pending
 
 Create each ranked attempt on the platform with a server-owned run id, unsigned seed, exact `five-wave` mode, and `tankavoid-v1-rules-1` identity. At natural completion, accept only a bounded terminal summary whose identity matches the stored manifest; reject impossible wave, kill, commander, shot, damage, repair, time, and hull combinations; and recompute the score on the server. The browser never supplies an authoritative score, user id, trust flag, game key, mode, or ruleset. This establishes the `bounds_recomputed` capability but remains `provisional`, because a browser can still fabricate plausible evidence. Do not use `verified` without independently reproducible simulation or replay evidence. Keep guest play complete, stage the full review build, and withhold the friendly Play route and catalog action until the database and T7 release gates pass.
+
+## D-045 — Treat five waves as Proving Grounds, not the ceiling of TankaVOID
+
+- Date: 2026-08-20
+- Status: accepted for product planning; expansion implementation not started
+
+Preserve the T0–T7 five-wave mode as the deterministic Proving Grounds ruleset: tutorial, browser demo, daily challenge, performance baseline, and ranked platform mode. The recovered prototype shows a broader original ambition—large scrolling terrain, survival waves, barracks, infantry, bosses, multiple weapons, mines, pickups, experience, and levels—but those disconnected systems do not become release scope merely because they exist.
+
+Plan a separately versioned Expedition mode around larger scrolling sorties, sector objectives, extraction decisions, tank buildcraft, and optional endless continuation. It receives its own mode, score/evidence contract, performance ceilings, progression rules, and acceptance train. Do not mutate `tankavoid-v1-rules-1`, delay the Proving Grounds review gate, or add multiplayer before the single-player sortie proves retention. Two-player cooperative sorties may be evaluated later; public PvP and persistent open-world infrastructure remain outside the approved scope.
+
+## D-046 — Require the intersection of data, device, deploy, and rollback evidence for public Tanka Play
+
+- Date: 2026-08-20
+- Status: accepted
+
+Local source, responsive browser emulation, and a review artifact are necessary but not sufficient to publish TankaVOID. The catalog can change from Coming Soon to Play only after the coordinated database matrix, physical iOS/Android checks for any claimed mobile support, Git-driven deployed-route smoke, and a verified rollback target all pass. A failure in one gate keeps the public route held without erasing the completed local candidate evidence.

@@ -390,3 +390,21 @@ Review the T5 stacked draft, then build T6 as the platform integration boundary:
 ### Next action
 
 Run the T6/WD1 shared data acceptance matrix on an approved short-lived Supabase branch. Then complete TankaVOID T7 physical-device, final feel/art/performance, deploy-preview smoke, and rollback evidence before exposing a public Play route.
+
+## 2026-08-20 — TankaVOID T7 release hardening
+
+- Opened issue `#36` and created isolated branch `codex/tankavoid-t7-release-hardening` from the exact T6 head `0a81360`.
+- Added `npm run verify:tankavoid:release` as the single contract/game/platform/catalog/foundation/assembly/review-route gate, plus a read-only Linux pull-request workflow that runs the same command.
+- Added cumulative frame diagnostics for rendered frames, average and maximum frame delta, frames above 34 ms, and dropped simulation time, with reset behavior covered in the 43-test Tanka suite.
+- Corrected the stale initial hull display and release copy, and added procedural combat lanes, sector labels, tank shadows, and a restrained arena stencil without shipping media or external runtime assets.
+- Passed the full release command: shared contract, Tanka type/lint/tests/build/budgets, platform tests/typecheck, catalog contract, 50 foundation assertions, four-game assembly, 29 Next.js pages, review artifacts, and the no-public-route assertion.
+- Browser-checked 360 × 780 portrait, 844 × 390 landscape, and 1920 × 1080 desktop. Controls, HUD, and coaching had zero measured intersections or overflow; 12 seconds of desktop combat averaged 16.7 ms with a 17 ms maximum, zero long frames, and zero dropped simulation time.
+- Verified one focused pause owner, tick hold/resume, reduced motion, muted audio, and an empty warning/error log.
+- Completed a 21-start/20-reset soak with 4,566 rendered frames, fixed listener/audio/entity/render capacities, zero terminal frames/voices/projectiles/impacts, and no dropped simulation time.
+- Attempted a Netlify draft deploy. The application build passed, but the local Windows Next adapter failed while resolving `@swc/helpers` above the repository root; no deploy was uploaded and no machine-wide workaround was introduced.
+- Reclassified the bounded five-wave candidate as the future Proving Grounds mode in product planning. The larger-world Expedition/survival idea is preserved as a separately scoped expansion rather than changing the frozen ranked ruleset.
+- Kept physical iOS/Android, coordinated Supabase execution, Git-driven preview smoke, rollback evidence, production Play, Stripe, AdSense, DNS, and production state outside the completed local gate.
+
+### Next action
+
+Publish the stacked T7 draft so Netlify can produce its normal Linux preview. Smoke the hub, detail, board, unavailable receipt, explicit review artifact, and absent friendly route; then record the verified rollback target. Keep public Play held until physical-device and database gates also pass.
