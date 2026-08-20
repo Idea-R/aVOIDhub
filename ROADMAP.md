@@ -76,6 +76,10 @@ Move the live aVOIDgame.io rebuild through the phased V1 completion program: sec
 - Active VOIDaVOID V2 draft PR: `https://github.com/Idea-R/aVOIDhub/pull/21`
 - VOIDaVOID V2 contract: `docs/voidavoid-v2-evidence-contract.md`
 - VOIDaVOID V2 evidence: `docs/sprint-voidavoid-v2.md`
+- Active VOIDaVOID V4 branch: `codex/fix-voidavoid-v4-hardening`
+- Active VOIDaVOID V4 issue: `https://github.com/Idea-R/aVOIDhub/issues/22`
+- VOIDaVOID V4 contract: `docs/voidavoid-v4-experience-contract.md`
+- VOIDaVOID V4 evidence: `docs/sprint-voidavoid-v4.md`
 - WreckaVOID W2 evidence: `docs/sprint-wreckavoid-w2.md`
 - WreckaVOID W0/W1 evidence: `docs/sprint-wreckavoid-w0-w1.md`
 - Program source of truth: `docs/V1-COMPLETION-PROGRAM.md`
@@ -117,7 +121,8 @@ Move the live aVOIDgame.io rebuild through the phased V1 completion program: sec
 22. **WORDaVOID WD3 experience hardening — local gates complete.** The owned typing surface, composable pause/focus lifecycle, rendered-arena viewport, reduced-motion/audio behavior, versioned local progress, explicit failure states, share fallback, and guarded repeat-run transitions pass 33 tests, standalone/full-platform builds, responsive browser QA, and a 20-cycle restart soak. Physical iOS/Android and production deploy/rollback evidence remain WD4 release gates; evidence is in `docs/sprint-wordavoid-wd3.md`.
 23. **VOIDaVOID V0/V1 baseline and lifecycle — local gates complete.** The actual scoring/difficulty/randomness contract was frozen as local/unranked; the canonical 51-file graph established one fixed-step loop, one Pointer Events path, one responsive resize manager, composed pause reasons, exact teardown, and honest local results. Typecheck, zero-warning lint, 9 tests, standalone/full-platform builds, desktop/portrait/landscape QA, and 30 finish/restart cycles passed; evidence is in `docs/sprint-voidavoid-v0-v1.md`.
 24. **VOIDaVOID V2 deterministic evidence — local gates complete.** One run seed now derives independent world, power-up, chain, score, and defense streams; all gameplay timers use the fixed simulation clock; and bounded ordered score events replay the final breakdown or fail closed. The 57-file canonical graph passes zero-warning lint, 22 tests, standalone/full-platform builds, three responsive browser sizes, and 20 consecutive replayable-local result cycles. Server-issued tickets, pointer/physics validation, receipts, and ranked placement remain V3; evidence is in `docs/sprint-voidavoid-v2.md`.
+25. **VOIDaVOID V4 experience hardening — local gates complete.** Local gesture-only audio, persisted sound/motion choices, OS-aware reduced motion, focus-owned dialogs, bounded particles, corrected frame sampling, and an 83,328-byte initial-transfer gate pass 30 tests and five browser sizes. A 20-cycle sample retains one audio context, five pointer listeners, zero terminal voices/frames, and a decreasing raw heap measurement. Physical iOS/Android, deployed audit, production smoke, and rollback evidence remain release gates; evidence is in `docs/sprint-voidavoid-v4.md`.
 
 ## Current next action
 
-Review the stacked VOIDaVOID V0–V2 branches. VOIDaVOID V3, WreckaVOID W3, WORDaVOID WD2, executable WD1 run-ticket acceptance, and the data-backed platform slices remain gated on the short-lived Supabase development branch. The next independent slice is the best remaining local-only V4 hardening work that does not invent production, physical-device, or server evidence. Production data, secrets, Stripe, AdSense, DNS, and production deploys remain untouched.
+Review the stacked VOIDaVOID V0–V2 and V4 branches. VOIDaVOID V3, WreckaVOID W3, WORDaVOID WD2, executable WD1 run-ticket acceptance, and the data-backed platform slices remain gated on the short-lived Supabase development branch. Physical-device certification and deployed release/rollback evidence remain explicit game release gates. Production data, secrets, Stripe, AdSense, DNS, and production deploys remain untouched.

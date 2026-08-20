@@ -259,3 +259,10 @@ Keep the recognizable meteor, defense, pulse, fragment, and chain-detonation gam
 - Status: accepted for V2
 
 Derive named world, power-up, chain, score, and defense streams from one recorded unsigned run seed. Cosmetic randomness stays outside those streams so performance and visual settings cannot change an outcome. Use the 60 Hz simulation tick for every gameplay timer and record bounded score events in tick order. A local verifier may call matching arithmetic `replayable-local`, but an unsigned browser envelope remains unranked and provisional. Only a server-issued ticket plus bounded input or authoritative simulation evidence can justify stronger trust in V3.
+
+## D-038 — Keep VOIDaVOID accessibility, sound, and motion outside the score contract
+
+- Date: 2026-08-20
+- Status: accepted for V4
+
+Use a small procedural Web Audio palette that starts only after a player gesture, persists mute, reports failure honestly, and owns exact voice/context teardown. The OS reduced-motion request is mandatory and may suppress particles, shake, shadows, trails, and decorative chain/defense work, but it cannot change gameplay streams, collisions, timing, scoring, or evidence. One semantic dialog owns each blocking state; score updates are not a continuous live region. Enforce central particle and shipping-transfer ceilings in code. Browser emulation, local FPS, and heap samples complete the local gate, while physical devices, deployed audits, production smoke, and rollback proof remain separate release evidence.

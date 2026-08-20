@@ -251,3 +251,21 @@ The coordinated Supabase foundation remains unexercised until the user approves 
 ### Next action
 
 Publish WD1 for review. Then either run the documented foundation/WD1 SQL and concurrency matrix after explicit approval of the short-lived Supabase branch, or continue the independent WD3 input/focus/reduced-motion/repeat-run hardening slice. Production activation remains gated.
+
+## 2026-08-20 — VOIDaVOID V4 experience hardening
+
+- Created isolated branch `codex/fix-voidavoid-v4-hardening` from reviewed V2 commit `03b05a2`; production and the V2 branch stayed untouched.
+- Opened issue `#22` for the bounded local V4 scope.
+- Added local procedural sound that creates one context only after a player gesture, persists mute, retries a blocked context, tracks/ends voices, and closes on real page teardown.
+- Added versioned sound/motion preferences and made both the OS reduced-motion request and the explicit Reduced choice suppress canvas effects without changing V2 gameplay or evidence.
+- Added one-owner semantic dialogs, focus containment, focus return, named canvas instructions, and removed the 200 ms live-score announcement stream.
+- Enforced particle ceilings and a release budget that rejects more than 140 KiB initial transfer, more than 320 KiB JavaScript, or any downloaded audio file.
+- Found and repaired a first-frame FPS bug that degraded every run because it compared the first animation timestamp with zero.
+- Passed 63-file zero-warning lint, 30 tests, standalone/full-platform builds, and an 83,328-byte initial-transfer measurement with zero audio files.
+- Browser-checked 390×844, 844×390, 768×1024, 1440×900, and 1920×1080 with no horizontal overflow; dialog focus wrap/return and accessible names passed with a quiet console.
+- Recorded five 60 FPS / 16.67 ms desktop samples and a 20-cycle sample with 20 unique replayable-local codes, five pointer listeners, one audio context, zero terminal voices/frames, and a 571,440-byte raw heap decrease.
+- Kept physical-device certification, a formal deployed audit, platform V3, Supabase, Netlify production, Stripe, AdSense, DNS, and rollback proof outside this slice.
+
+### Next action
+
+Run final full-platform verification, publish the stacked draft PR, and keep physical-device/deployed checks as explicit release gates. The next code dependency is V3/platform data work after the isolated Supabase branch is approved.
