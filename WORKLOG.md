@@ -302,7 +302,8 @@ Review draft PR `#25`, then implement T2 as an isolated deterministic combat sli
 - Browser-checked six briefing and five active viewports with no document overflow; narrow screens state that touch driving remains deferred.
 - Completed one live six-shot/six-hit enemy disable for 120 damage, one natural player-disable path, Escape/modal focus, and a 20-cycle ownership soak retaining one canvas, eight listeners, one observer, zero terminal projectiles, and zero terminal frame.
 - Kept TankaVOID out of platform staging and retained the public Coming Soon boundary.
+- Published the runtime and evidence as two commits in stacked draft PR `#27` above the T0/T1 head; no merge or deployment occurred.
 
 ### Next action
 
-Publish T2 for review, then build T3 as a complete encounter loop: intentional arena/cover, tank separation, spawn and terminal pacing, explicit entity/draw/frame ceilings, and ten natural start-to-result runs. Do not expand to multiple enemies, progression, touch, or platform scores in T3.
+Review draft PR `#27`, then build T3 as a complete encounter loop: intentional arena/cover, tank separation, spawn and terminal pacing, explicit entity/draw/frame ceilings, and ten natural start-to-result runs. Do not expand to multiple enemies, progression, touch, or platform scores in T3.

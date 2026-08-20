@@ -3,7 +3,7 @@
 - Date: 2026-08-20
 - Issue: [#26](https://github.com/Idea-R/aVOIDhub/issues/26)
 - Branch: `codex/tankavoid-t2-directional-combat`
-- Draft PR: pending
+- Draft PR: [#27](https://github.com/Idea-R/aVOIDhub/pull/27)
 - Base: TankaVOID T0/T1 commit `9eead82`
 
 ## Intended outcome
