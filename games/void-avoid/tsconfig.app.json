@@ -11,6 +11,7 @@
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "moduleDetection": "force",
+    "types": ["vite/client"],
     "noEmit": true,
     "jsx": "react-jsx",
 
@@ -20,5 +21,10 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"]
+  "files": [
+    "src/main.tsx",
+    "src/game/core/GameLoop.test.ts",
+    "src/game/InputHandler.test.ts",
+    "src/game/systems/ScoreSystem.test.ts"
+  ]
 }

@@ -1,4 +1,4 @@
-import { RenderCore, RenderState, GameSettings } from './RenderCore';
+import { RenderCore, type RenderState } from './RenderCore';
 import { RenderDrawing } from './RenderDrawing';
 import { RenderUtils } from './RenderUtils';
 

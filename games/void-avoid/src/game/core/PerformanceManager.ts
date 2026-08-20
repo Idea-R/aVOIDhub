@@ -89,26 +89,21 @@ export class PerformanceManager {
       return;
     }
     
-    let scalingEventOccurred = false;
-    
     if (this.currentFPS < 30) {
       this.lastScalingEvent = 'low-performance';
       this.scalingEventTime = Date.now();
       this.onPerformanceModeChange(true);
       this.onAutoScalingChange('low-performance');
-      scalingEventOccurred = true;
       console.log('🔧 Auto-scaling: Low performance mode activated (FPS < 30) - Trails disabled');
     } else if (this.currentFPS < 45) {
       this.lastScalingEvent = 'medium-performance';
       this.scalingEventTime = Date.now();
       this.onAutoScalingChange('medium-performance');
-      scalingEventOccurred = true;
       console.log('🔧 Auto-scaling: Medium performance mode activated (FPS < 45) - Trails disabled');
     } else if (this.currentFPS >= 55) {
       this.lastScalingEvent = 'high-performance';
       this.scalingEventTime = Date.now();
       this.onAutoScalingChange('high-performance');
-      scalingEventOccurred = true;
       console.log('🔧 Auto-scaling: High performance mode activated (FPS >= 55) - Trails enabled');
     }
   }

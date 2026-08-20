@@ -262,6 +262,11 @@ export class GameLogic {
     return this.stateManager.isGameOverState();
   }
 
+  /** Development-only seam used by the repeat-run lifecycle smoke test. */
+  forceGameOverForTest(): void {
+    this.stateManager.triggerGameOver();
+  }
+
   getSettings(): GameSettings {
     return this.settings;
   }

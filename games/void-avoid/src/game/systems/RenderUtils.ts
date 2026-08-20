@@ -18,18 +18,7 @@ export class RenderUtils {
 
   constructor(ctx: CanvasRenderingContext2D) {
     this.ctx = ctx;
-    
-    // Listen for canvas resize to clear cache
-    window.addEventListener('resize', this.handleCanvasResize);
   }
-
-  private handleCanvasResize = (): void => {
-    try {
-      this.clearGradientCache();
-    } catch (error) {
-      console.warn('Error clearing gradient cache on resize:', error);
-    }
-  };
 
   /**
    * Convert hex color to rgba with alpha
@@ -127,71 +116,6 @@ export class RenderUtils {
     }
     
     return gradient;
-  }
-
-  /**
-   * Generate cache key for gradient
-   */
-  private generateGradientCacheKey(radius: number, color: string, isSuper: boolean): string {
-    // Round radius to reduce cache fragmentation while maintaining visual quality
-    const roundedRadius = Math.round(radius * 2) / 2; // Round to nearest 0.5
-    return `${roundedRadius}:${color}:${isSuper}`;
-  }
-
-  /**
-   * Get gradient from cache
-   */
-  private getFromGradientCache(key: string): CanvasGradient | null {
-    try {
-      const entry = this.gradientCache.get(key);
-      if (entry) {
-        // Update timestamp for LRU tracking
-        entry.timestamp = Date.now();
-        this.cacheHits++;
-        return entry.gradient;
-      }
-      this.cacheMisses++;
-    } catch (error) {
-      console.warn('Error retrieving from gradient cache:', error);
-    }
-    return null;
-  }
-
-  /**
-   * Add gradient to cache
-   */
-  private addToGradientCache(key: string, gradient: CanvasGradient): void {
-    try {
-      // Prevent cache from growing too large
-      if (this.gradientCache.size >= this.maxCacheSize) {
-        this.cleanupOldestCacheEntries();
-      }
-      
-      this.gradientCache.set(key, {
-        gradient,
-        timestamp: Date.now()
-      });
-    } catch (error) {
-      console.warn('Error adding to gradient cache:', error);
-    }
-  }
-
-  /**
-   * Clean up oldest cache entries
-   */
-  private cleanupOldestCacheEntries(): void {
-    try {
-      // Remove oldest 25% of entries to make room
-      const entries = Array.from(this.gradientCache.entries());
-      entries.sort((a, b) => a[1].timestamp - b[1].timestamp);
-      
-      const removeCount = Math.floor(entries.length * 0.25);
-      for (let i = 0; i < removeCount; i++) {
-        this.gradientCache.delete(entries[i][0]);
-      }
-    } catch (error) {
-      console.warn('Error cleaning up gradient cache:', error);
-    }
   }
 
   /**
@@ -336,7 +260,6 @@ export class RenderUtils {
    */
   public destroy(): void {
     try {
-      window.removeEventListener('resize', this.handleCanvasResize);
       this.clearGradientCache();
     } catch (error) {
       console.warn('Error during RenderUtils cleanup:', error);

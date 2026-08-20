@@ -1,7 +1,7 @@
 // Extracted from Engine.ts on January 7, 2025
 // Original Engine.ts: 887 lines -> Refactored into modular architecture
 
-import { Meteor, createMeteor, resetMeteor, initializeMeteor } from '../entities/Meteor';
+import { Meteor, initializeMeteor } from '../entities/Meteor';
 import { ObjectPool } from '../utils/ObjectPool';
 import { CollisionSystem } from './CollisionSystem';
 import { ParticleSystem } from './ParticleSystem';
@@ -200,7 +200,7 @@ export class InputSystem {
   /**
    * Update input system (process events, check for spawning, etc.)
    */
-  update(deltaTime: number): void {
+  update(): void {
     // Input processing is handled by InputHandler automatically
     // This method can be used for any time-based input logic if needed
   }

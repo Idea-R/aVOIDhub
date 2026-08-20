@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- Legacy render packets combine several entity shapes. */
 import { Meteor } from '../entities/Meteor';
 import { Particle } from '../entities/Particle';
 import { PowerUp } from '../entities/PowerUp';
@@ -60,18 +61,7 @@ export class RenderCore {
     if (!context) throw new Error('Could not get canvas context');
     this.ctx = context;
     
-    // Listen for canvas resize for cleanup
-    window.addEventListener('resize', this.handleCanvasResize);
   }
-
-  private handleCanvasResize = (): void => {
-    try {
-      // Clear any canvas-dependent state
-      this.shadowGroups.clear();
-    } catch (error) {
-      console.warn('Error handling canvas resize in RenderCore:', error);
-    }
-  };
 
   /**
    * Main render method - orchestrates the rendering pipeline
@@ -333,7 +323,6 @@ export class RenderCore {
    */
   public destroy(): void {
     try {
-      window.removeEventListener('resize', this.handleCanvasResize);
       this.shadowGroups.clear();
     } catch (error) {
       console.warn('Error during RenderCore cleanup:', error);

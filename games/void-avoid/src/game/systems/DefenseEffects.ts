@@ -50,6 +50,7 @@ export class DefenseEffects {
   private electricParticles: ElectricParticle[] = [];
   private electricRings: ElectricRing[] = [];
   private staticElectricityTimer: number = 0;
+  private scheduledEffects = new Set<ReturnType<typeof setTimeout>>();
   
   // Performance optimization
   private maxLightningBolts: number = 5;
@@ -58,9 +59,6 @@ export class DefenseEffects {
   
   // Color scheme
   private readonly ELECTRIC_BLUE = '#00bfff';
-  private readonly WHITE_CORE = '#ffffff';
-  private readonly PURPLE_EDGE = '#8a2be2';
-  private readonly ELECTRIC_CYAN = '#00ffff';
   private readonly LIGHTNING_YELLOW = '#ffff00';
 
   constructor() {
@@ -101,7 +99,7 @@ export class DefenseEffects {
   public createPlayerEliminationEffect(badgeX: number, badgeY: number, playerX: number, playerY: number): void {
     // Create multiple intense lightning bolts
     for (let i = 0; i < 5; i++) {
-      setTimeout(() => {
+      this.schedule(() => {
         this.createLightningBolt(badgeX, badgeY, playerX, playerY, 'destroy');
       }, i * 30); // Staggered bolts for dramatic effect
     }
@@ -142,7 +140,7 @@ export class DefenseEffects {
       const endY = badgeY + Math.sin(angle) * distance;
       
       // Slight delay for each bolt
-      setTimeout(() => {
+      this.schedule(() => {
         this.createLightningBolt(badgeX, badgeY, endX, endY, type);
       }, i * 50);
     }
@@ -385,10 +383,20 @@ export class DefenseEffects {
    * Clear all effects
    */
   public clear(): void {
+    for (const timeout of this.scheduledEffects) clearTimeout(timeout);
+    this.scheduledEffects.clear();
     this.activeLightningBolts.length = 0;
     this.electricParticles.length = 0;
     this.electricRings.length = 0;
     this.staticElectricityTimer = 0;
+  }
+
+  private schedule(callback: () => void, delay: number): void {
+    const timeout = setTimeout(() => {
+      this.scheduledEffects.delete(timeout);
+      callback();
+    }, delay);
+    this.scheduledEffects.add(timeout);
   }
 
   /**

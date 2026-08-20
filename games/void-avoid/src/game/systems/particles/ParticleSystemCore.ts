@@ -1,5 +1,5 @@
 import { ObjectPool } from '../../utils/ObjectPool';
-import { Particle, createParticle, resetParticle, initializeParticle } from '../../entities/Particle';
+import { Particle, createParticle, resetParticle } from '../../entities/Particle';
 
 export class ParticleSystemCore {
   private particlePool: ObjectPool<Particle>;
@@ -110,7 +110,7 @@ export class ParticleSystemCore {
         particle.vy *= 0.995;
         break;
 
-      case 'expandingRing':
+      case 'expandingRing': {
         // Delayed expanding ring effect
         if (particle.behaviorTimer < 0) {
           // Still in delay phase, don't move yet but increment timer
@@ -135,6 +135,7 @@ export class ParticleSystemCore {
           particle.alpha = Math.max(0.1, 1.0 - (expansionFactor - 1) * 0.6);
         }
         break;
+      }
 
       case 'canvasRing':
         // Delayed canvas ring expansion

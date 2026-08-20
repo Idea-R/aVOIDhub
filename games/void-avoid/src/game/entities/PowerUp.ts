@@ -40,7 +40,6 @@ export interface PowerUp {
 export class PowerUpManager {
   private powerUps: PowerUp[] = [];
   private lastSpawnTime: number = 0;
-  private spawnInterval: number = 15000; // Start at 15 seconds
   private playerCharges: number = 0;
   private maxCharges: number = 3;
   private readonly MAX_POWERUPS_ON_SCREEN = 2;

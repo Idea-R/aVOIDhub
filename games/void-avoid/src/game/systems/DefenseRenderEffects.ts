@@ -35,10 +35,22 @@ interface ElectricParticle {
   color: string;
 }
 
+interface ElectricRing {
+  id: string;
+  x: number;
+  y: number;
+  radius: number;
+  maxRadius: number;
+  alpha: number;
+  thickness: number;
+  duration: number;
+  maxDuration: number;
+}
+
 interface EffectsData {
   lightningBolts: LightningBolt[];
   electricParticles: ElectricParticle[];
-  electricRings: any[];
+  electricRings: ElectricRing[];
   staticElectricityTimer: number;
 }
 
@@ -255,63 +267,4 @@ export class DefenseRenderEffects extends DefenseRenderCore {
     this.ctx.restore();
   }
 
-  // Advanced effect utilities
-  private createElectricArc(startX: number, startY: number, endX: number, endY: number, intensity: number): void {
-    const segments = Math.floor(5 + intensity * 3);
-    const jaggedAmount = 5 + intensity * 10;
-    
-    this.ctx.beginPath();
-    this.ctx.moveTo(startX, startY);
-    
-    for (let i = 1; i < segments; i++) {
-      const t = i / segments;
-      const baseX = startX + (endX - startX) * t;
-      const baseY = startY + (endY - startY) * t;
-      
-      const offsetX = (Math.random() - 0.5) * jaggedAmount;
-      const offsetY = (Math.random() - 0.5) * jaggedAmount;
-      
-      this.ctx.lineTo(baseX + offsetX, baseY + offsetY);
-    }
-    
-    this.ctx.lineTo(endX, endY);
-    this.ctx.strokeStyle = this.ELECTRIC_CYAN;
-    this.ctx.lineWidth = 1 + intensity;
-    this.ctx.stroke();
-  }
-
-  private createParticleBurst(x: number, y: number, particleCount: number, color: string): void {
-    this.ctx.save();
-    
-    for (let i = 0; i < particleCount; i++) {
-      const angle = (Math.PI * 2 * i) / particleCount + Math.random() * 0.5;
-      const distance = 10 + Math.random() * 20;
-      const particleX = x + Math.cos(angle) * distance;
-      const particleY = y + Math.sin(angle) * distance;
-      
-      this.ctx.beginPath();
-      this.ctx.arc(particleX, particleY, 1 + Math.random() * 2, 0, Math.PI * 2);
-      this.ctx.fillStyle = color;
-      this.ctx.fill();
-    }
-    
-    this.ctx.restore();
-  }
-
-  private renderEnergyField(x: number, y: number, radius: number, intensity: number): void {
-    this.ctx.save();
-    
-    const fieldGradient = this.createRadialGradient(
-      x, y, 0, radius,
-      `rgba(0, 255, 255, ${intensity * 0.3})`,
-      'rgba(0, 255, 255, 0)'
-    );
-    
-    this.ctx.beginPath();
-    this.ctx.arc(x, y, radius, 0, Math.PI * 2);
-    this.ctx.fillStyle = fieldGradient;
-    this.ctx.fill();
-    
-    this.ctx.restore();
-  }
 }

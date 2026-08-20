@@ -18,7 +18,7 @@ export class MeteorManager {
     this.meteorPool = new ObjectPool(createMeteor, resetMeteor, 20, this.MAX_METEORS);
   }
 
-  update(gameTime: number, adaptiveTrailsActive: boolean, performanceModeActive: boolean, showTrails: boolean): void {
+  update(_gameTime: number, adaptiveTrailsActive: boolean, performanceModeActive: boolean, showTrails: boolean): void {
     this.updateMeteors(adaptiveTrailsActive, performanceModeActive, showTrails);
   }
 

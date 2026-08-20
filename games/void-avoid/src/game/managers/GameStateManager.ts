@@ -68,6 +68,7 @@ export class GameStateManager {
   }
 
   triggerGameOver(): void {
+    if (this.isGameOver) return;
     this.isGameOver = true;
     this.onGameOver();
   }

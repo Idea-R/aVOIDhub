@@ -76,7 +76,7 @@ export class DefenseCore {
   public processMeteorDefense(meteors: Meteor[]): DefenseResult {
     const destroyedMeteors: Meteor[] = [];
     const deflectedMeteors: Array<{ meteor: Meteor; newVx: number; newVy: number }> = [];
-    let playerInDangerZone = false;
+    const playerInDangerZone = false;
 
     for (const meteor of meteors) {
       if (!meteor.active) continue;
@@ -185,7 +185,7 @@ export class DefenseCore {
    */
   public cleanupOldTrackers(): void {
     // Remove trackers older than 5 seconds (meteors should be cleaned up by then)
-    for (const [id, tracker] of this.meteorTrackers.entries()) {
+    for (const id of this.meteorTrackers.keys()) {
       // Simple cleanup - remove trackers that haven't been updated recently
       // In a real implementation, you'd want to track last update time
       if (this.meteorTrackers.size > 100) { // Prevent memory leak
