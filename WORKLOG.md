@@ -205,6 +205,12 @@ Exercise test-mode Stripe subscription and cosmetic fulfillment plus executable 
 - Passed platform type-check and the 24-route Next production build.
 - Browser-reviewed every platform-owned route at 768 × 900 and 390 × 844 with no horizontal overflow or undersized visible buttons. Visually reviewed login, account, creator, and admin surfaces at desktop and phone widths; no console warning or error was present.
 - The static-export review command remains blocked by the existing dynamic run-finish API and is not the correct build shape for authenticated server routes. Production remains unchanged.
+- Pushed commits `fdd6452` and `90a347f`, then opened stacked draft PR `#41` against the membership/creator contract branch.
+- The direct Windows Netlify runtime build reproduced the known `@swc/helpers` trace failure after the complete application build passed.
+- Built a temporary static feedback package with API, callback, dynamic player, and ads routes absent and all role surfaces forced into their explicit runtime-disconnected states.
+- Published non-production deploy `6a878bfb69cf762ff5930039` at `https://role-dashboard-review-41--coruscating-squirrel-a47ad9.netlify.app/`.
+- Verified HTTP 200 for the shell, login, account, creator application/workspace/submission, membership, leaderboards, admin, privacy, terms, and all three bundled game routes. Public mobile browser QA found no overflow or console warning/error.
+- Confirmed production remains deploy `6a86af420792ac00081b14a3`.
 
 ### Next action
 

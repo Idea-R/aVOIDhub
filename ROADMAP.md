@@ -49,6 +49,8 @@ Move the live aVOIDgame.io rebuild through the phased V1 completion program: sec
 - Active membership/creator public review: `https://membership-review-39--coruscating-squirrel-a47ad9.netlify.app/membership/`
 - Active role-dashboard branch: `codex/feature-platform-role-dashboards`
 - Active role-dashboard issue: `https://github.com/Idea-R/aVOIDhub/issues/40`
+- Active role-dashboard draft PR: `https://github.com/Idea-R/aVOIDhub/pull/41`
+- Active role-dashboard public review: `https://role-dashboard-review-41--coruscating-squirrel-a47ad9.netlify.app/`
 - Role-dashboard contract: `docs/platform-role-dashboards.md`
 - Membership/creator contract: `docs/membership-creator-v1.md`
 - Program source of truth: `docs/V1-COMPLETION-PROGRAM.md`

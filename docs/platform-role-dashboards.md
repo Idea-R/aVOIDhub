@@ -3,7 +3,9 @@
 Updated: 2026-08-20
 
 Issue: [#40](https://github.com/Idea-R/aVOIDhub/issues/40)  
-Branch: `codex/feature-platform-role-dashboards`
+Branch: `codex/feature-platform-role-dashboards`  
+Draft PR: [#41](https://github.com/Idea-R/aVOIDhub/pull/41)  
+Static feedback preview: [role-dashboard-review-41](https://role-dashboard-review-41--coruscating-squirrel-a47ad9.netlify.app/)
 
 ## Outcome
 
@@ -69,3 +71,5 @@ Production role assignment, database migration, secrets, charges, and publicatio
 - No browser warning or error in the reviewed routes
 
 The legacy static-export command remains blocked by the pre-existing dynamic `/api/v1/runs/[runId]/finish` route under Next `output: export`. The production server build is the authoritative build gate for authenticated and API-backed pages.
+
+The public feedback deploy is intentionally generated from a temporary package that excludes API, auth-callback, dynamic-player, and `ads.txt` route handlers and forces the remaining account pages through their explicit runtime-disconnected states. Deploy `6a878bfb69cf762ff5930039` contains no functions, account email, live data, checkout, admin writes, ad requests, or production mutation capability.
