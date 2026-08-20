@@ -11,6 +11,7 @@
 - Made all competitive timing pause-aware, reset the animation clock on resume, froze the visible session clock during pause, ignored non-contract keys, kept quit local, and removed fake no-environment Supabase calls from run start.
 - Passed the contract dictionary check, 12 contract tests, 15 WORDaVOID tests, 2 platform tests, standalone typecheck/zero-warning lint/build, foundation static verifier, and complete hosted-game/Next.js assembly.
 - Browser-checked a narrow rendered viewport and desktop viewport with no horizontal overflow; Classic deterministic prompt rendering; frozen positions and clock while paused; safe resume; Time Attack countdown; and a quiet console. Detailed contract and evidence are in `docs/wordavoid-validation-contract.md` and `docs/sprint-wordavoid-wd1.md`.
+- Published the two-commit WD1 review boundary as stacked draft PR #15 above the clean WD0 head; no merge or deployment occurred.
 - Started WORDaVOID WD0 on isolated stacked branch `codex/fix-wordavoid-wd0-baseline` with issue #12 after WreckaVOID W5 reached clean draft PR #11.
 - Traced all eight advertised WORDaVOID modes. Kept Classic Survival and two-minute Time Attack as the V1 set; classified Perfect Run and Daily Challenge as duplicate Classic behavior and four bespoke modes as partial experiments.
 - Added a typed mode/ruleset contract and changed the menu so six deferred experiments have no Start control or ranked promise.

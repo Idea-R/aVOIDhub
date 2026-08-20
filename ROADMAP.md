@@ -60,6 +60,7 @@ Move the live aVOIDgame.io rebuild through the phased V1 completion program: sec
 - WORDaVOID WD0 evidence: `docs/sprint-wordavoid-wd0.md`
 - Active WORDaVOID WD1 branch: `codex/fix-wordavoid-wd1-validation`
 - Active WORDaVOID WD1 issue: `https://github.com/Idea-R/aVOIDhub/issues/14`
+- Active WORDaVOID WD1 draft PR: `https://github.com/Idea-R/aVOIDhub/pull/15`
 - WORDaVOID WD1 validation contract: `docs/wordavoid-validation-contract.md`
 - WORDaVOID WD1 evidence: `docs/sprint-wordavoid-wd1.md`
 - WreckaVOID W2 evidence: `docs/sprint-wreckavoid-w2.md`

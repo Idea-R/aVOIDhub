@@ -4,7 +4,7 @@ Date: 2026-08-20
 
 Issue: [#14](https://github.com/Idea-R/aVOIDhub/issues/14)
 
-Draft PR: pending publication
+Draft PR: [#15](https://github.com/Idea-R/aVOIDhub/pull/15)
 
 Branch: `codex/fix-wordavoid-wd1-validation`
 
