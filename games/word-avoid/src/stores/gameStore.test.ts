@@ -1,14 +1,27 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createWordAvoidManifest, createWordAvoidPrompt, validateWordAvoidRun } from '@avoid/wordavoid-contract';
 
-vi.mock('../api/platformRuns', () => ({
-  beginPlatformRun: vi.fn(),
-  finishPlatformRun: vi.fn().mockResolvedValue(false),
-}));
+vi.mock('../api/platformRuns', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../api/platformRuns')>();
+  return {
+    ...actual,
+    beginPlatformRun: vi.fn(),
+    finishPlatformRun: vi.fn().mockResolvedValue(false),
+  };
+});
 
+import { finishPlatformRun } from '../api/platformRuns';
 import { useGameStore } from './gameStore';
+
+const manifest = createWordAvoidManifest({
+  runId: 'test-run',
+  seed: 'wordavoid-test-seed-0001',
+  mode: 'classic',
+});
 
 describe('game store baseline', () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     useGameStore.getState().resetGame();
   });
 
@@ -49,6 +62,9 @@ describe('game store baseline', () => {
       startTime: Date.now() - 1_000,
       words: [{
         id: 'target',
+        sequence: 0,
+        promptId: 'test-target',
+        level: 1,
         text: 'a',
         difficulty: 'easy',
         category: 'test',
@@ -61,6 +77,7 @@ describe('game store baseline', () => {
         isTyping: true,
         typedChars: 0,
         spawnTime: Date.now(),
+        spawnActiveMs: 0,
       }],
       player: { ...state.player },
     }));
@@ -80,6 +97,9 @@ describe('game store baseline', () => {
       player: { ...state.player, streak: 7, maxStreak: 7 },
       words: [{
         id: 'miss',
+        sequence: 0,
+        promptId: 'test-miss',
+        level: 1,
         text: 'meteor',
         difficulty: 'easy',
         category: 'test',
@@ -92,11 +112,105 @@ describe('game store baseline', () => {
         isTyping: false,
         typedChars: 0,
         spawnTime: Date.now(),
+        spawnActiveMs: 0,
       }],
     }));
 
     useGameStore.getState().missWord('miss');
 
     expect(useGameStore.getState().player).toMatchObject({ streak: 0, maxStreak: 7 });
+  });
+
+  it('ignores non-contract keys instead of poisoning competitive evidence', () => {
+    useGameStore.getState().startGame('classic', manifest);
+    useGameStore.getState().typeCharacter(' ');
+
+    expect(useGameStore.getState().player.charactersAttempted).toBe(0);
+    expect(useGameStore.getState().runEvents).toEqual([]);
+  });
+
+  it('spawns the same competitive prompt and angle from the same run seed', () => {
+    vi.stubGlobal('window', { innerWidth: 800, innerHeight: 600 });
+    useGameStore.getState().startGame('classic', manifest);
+    useGameStore.getState().spawnWord();
+
+    const expected = createWordAvoidPrompt(manifest.seed, 0);
+    const first = useGameStore.getState().words[0];
+    expect(first).toMatchObject({
+      sequence: expected.sequence,
+      promptId: expected.promptId,
+      text: expected.text,
+      difficulty: expected.difficulty,
+    });
+    expect(first.angle).toBe((expected.angleTurn / 65_536) * 2 * Math.PI);
+    expect(useGameStore.getState().runEvents[0]).toMatchObject({
+      type: 'spawn',
+      sequence: 0,
+      promptId: expected.promptId,
+    });
+    vi.unstubAllGlobals();
+  });
+
+  it('records pauses without charging their wall time to active WPM', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-20T00:00:00Z'));
+    useGameStore.getState().startGame('classic', manifest);
+    vi.advanceTimersByTime(1_000);
+    useGameStore.getState().pauseGame();
+    vi.advanceTimersByTime(5_000);
+    useGameStore.getState().resumeGame();
+    vi.advanceTimersByTime(1_000);
+    useGameStore.setState((state) => ({
+      player: { ...state.player, charactersCorrect: 10, charactersAttempted: 10 },
+    }));
+    useGameStore.getState().updateStats();
+
+    expect(useGameStore.getState().runEvents).toEqual([
+      { type: 'pause', atMs: 1_000 },
+      { type: 'resume', atMs: 6_000 },
+    ]);
+    expect(useGameStore.getState().player.wpm).toBe(60);
+    vi.useRealTimers();
+  });
+
+  it('finishes a health-ending run with evidence the shared validator recomputes', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-20T00:00:00Z'));
+    vi.stubGlobal('window', { innerWidth: 800, innerHeight: 600 });
+    useGameStore.getState().startGame('classic', manifest);
+    useGameStore.getState().spawnWord();
+    const completedPrompt = useGameStore.getState().words[0];
+    for (const character of completedPrompt.text) {
+      vi.advanceTimersByTime(10);
+      useGameStore.getState().typeCharacter(character);
+    }
+    for (let index = 0; index < 10; index += 1) {
+      useGameStore.getState().spawnWord();
+      vi.advanceTimersByTime(100);
+      useGameStore.getState().missWord(useGameStore.getState().words[0].id);
+    }
+    await vi.runAllTimersAsync();
+
+    const state = useGameStore.getState();
+    const evidence = {
+      runId: manifest.runId,
+      rulesetVersion: manifest.rulesetVersion,
+      dictionaryVersion: manifest.dictionaryVersion,
+      dictionaryHash: manifest.dictionaryHash,
+      normalizationVersion: manifest.normalizationVersion,
+      events: state.runEvents,
+    };
+    expect(validateWordAvoidRun(manifest, evidence)).toMatchObject({
+      ok: true,
+      summary: {
+        health: 0,
+        terminalReason: 'health',
+        wordsCompleted: 1,
+        wordsMissed: 10,
+      },
+    });
+    expect(finishPlatformRun).toHaveBeenCalledOnce();
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
   });
 });

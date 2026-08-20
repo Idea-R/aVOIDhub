@@ -8,6 +8,7 @@ import { SettingsMenu } from './components/menus/SettingsMenu';
 import { useGameStore } from './stores/gameStore';
 import { useAudioStore } from './stores/audioStore';
 import { useKeyboardInput } from './hooks/useKeyboardInput';
+import { beginPlatformRun, createLocalWordAvoidManifest } from './api/platformRuns';
 import type { GameMode } from './types/game';
 
 type AppState = 'menu' | 'playing' | 'gameOver' | 'settings' | 'stats';
@@ -60,8 +61,9 @@ function App() {
     }
   }, [isGameOver, appState, stopMusic]);
 
-  const handleStartGame = (mode: GameMode) => {
-    startGame(mode);
+  const handleStartGame = async (mode: GameMode) => {
+    const manifest = await beginPlatformRun(mode) ?? createLocalWordAvoidManifest(mode);
+    startGame(mode, manifest);
     setAppState('playing');
     startMusic();
   };

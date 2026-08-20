@@ -13,6 +13,7 @@
     "verify:release": "npm run type-check && npm run lint && npm run test -- --run && npm run build"
   },
   "dependencies": {
+    "@avoid/wordavoid-contract": "1.0.0",
     "@supabase/supabase-js": "^2.112.3",
     "framer-motion": "^12.23.0",
     "lucide-react": "^0.525.0",

@@ -15,6 +15,8 @@ export const DifficultyTracker: React.FC<DifficultyTrackerProps> = ({ className 
     wordsSpawned, 
     startTime, 
     isPlaying,
+    pauseStartedAt,
+    totalPausedMs,
     player
   } = useGameStore();
 
@@ -23,7 +25,9 @@ export const DifficultyTracker: React.FC<DifficultyTrackerProps> = ({ className 
   // Calculate time elapsed
   const getElapsedTime = () => {
     if (!isPlaying || !startTime) return 0;
-    return Date.now() - startTime;
+    const now = Date.now();
+    const currentPauseMs = pauseStartedAt === null ? 0 : Math.max(0, now - pauseStartedAt);
+    return Math.max(0, now - startTime - totalPausedMs - currentPauseMs);
   };
 
   const formatTime = (ms: number) => {

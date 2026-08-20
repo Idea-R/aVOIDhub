@@ -40,6 +40,9 @@ const requiredMigrationFragments = [
   "to service_role;",
   "ruleset_version",
   "octet_length(coalesce(p_metrics, '{}'::jsonb)::text) > 8192",
+  "if v_run.status = 'finished' then",
+  "where submission.run_session_id = v_run.id;",
+  "return query select v_submission_id, v_leaderboard_id, v_verification_level;",
 ];
 
 for (const fragment of requiredMigrationFragments) {

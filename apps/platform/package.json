@@ -8,9 +8,11 @@
     "build:preview": "cross-env AVOID_STATIC_EXPORT=1 next build",
     "build:netlify": "npm run build:platform:netlify --prefix ../..",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest --run"
   },
   "dependencies": {
+    "@avoid/wordavoid-contract": "1.0.0",
     "@supabase/ssr": "0.12.4",
     "@supabase/supabase-js": "2.112.3",
     "lucide-react": "^0.468.0",
@@ -25,6 +27,7 @@
     "@types/react": "^19.2.3",
     "@types/react-dom": "^19.2.3",
     "cross-env": "^10.1.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.10"
   }
 }

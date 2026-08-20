@@ -1,15 +1,25 @@
 import { create } from 'zustand';
 import type { GameState, GameMode, Difficulty, Word, Player, GameStats, GameSettings, DifficultyLevel, DigitAssaultChar } from '../types/game';
 import { getRandomWord, getRandomSkillWord, getRandomDigitChar, getDifficultyLevelByWPM, difficultyConfigs, getRandomGeometricPattern } from '../data/words';
-import { beginPlatformRun, finishPlatformRun } from '../api/platformRuns';
+import { createLocalWordAvoidManifest, finishPlatformRun } from '../api/platformRuns';
 import { calculateAccuracy, calculateWordScore, calculateWpm, TIME_ATTACK_DURATION_MS } from '../contracts/v1';
+import {
+  createWordAvoidPrompt,
+  isWordAvoidV1Mode,
+  normalizeWordAvoidInput,
+  validateWordAvoidRun,
+  type WordAvoidRunEvent,
+  type WordAvoidRunEvidence,
+  type WordAvoidRunManifest,
+  type WordAvoidTerminalReason,
+} from '@avoid/wordavoid-contract';
 
 interface GameStore extends GameState {
   // Actions
-  startGame: (mode: GameMode) => void;
+  startGame: (mode: GameMode, manifest?: WordAvoidRunManifest | null) => void;
   pauseGame: () => void;
   resumeGame: () => void;
-  endGame: () => void;
+  endGame: (reason?: WordAvoidTerminalReason | 'quit') => void;
   resetGame: () => void;
   
   // Word management
@@ -97,6 +107,29 @@ const initialStats: GameStats = {
   improvementRate: 0
 };
 
+function wallElapsedMs(state: Pick<GameState, 'startTime'>, now = Date.now()): number {
+  return Math.max(0, now - state.startTime);
+}
+
+function activeElapsedMs(
+  state: Pick<GameState, 'startTime' | 'totalPausedMs' | 'pauseStartedAt'>,
+  now = Date.now(),
+): number {
+  const currentPauseMs = state.pauseStartedAt === null ? 0 : Math.max(0, now - state.pauseStartedAt);
+  return Math.max(0, wallElapsedMs(state, now) - state.totalPausedMs - currentPauseMs);
+}
+
+function activeElapsedAtWall(
+  state: Pick<GameState, 'totalPausedMs'>,
+  elapsedWallMs: number,
+): number {
+  return Math.max(0, elapsedWallMs - state.totalPausedMs);
+}
+
+function appendRunEvent(events: readonly WordAvoidRunEvent[], event: WordAvoidRunEvent): WordAvoidRunEvent[] {
+  return [...events, event];
+}
+
 export const useGameStore = create<GameStore>((set, get) => ({
   // Initial state
   isPlaying: false,
@@ -122,13 +155,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
   capsMode: false,
   shiftMode: false,
   geometricChallenges: [],
+  runManifest: null,
+  runEvents: [],
+  pauseStartedAt: null,
+  totalPausedMs: 0,
   settings: initialSettings,
   stats: initialStats,
 
   // Game control actions
-  startGame: (mode: GameMode) => {
+  startGame: (mode: GameMode, suppliedManifest = null) => {
     const now = Date.now();
-    beginPlatformRun(mode);
+    const manifest = suppliedManifest ?? createLocalWordAvoidManifest(mode);
     set({
       isPlaying: true,
       isPaused: false,
@@ -147,18 +184,61 @@ export const useGameStore = create<GameStore>((set, get) => ({
       capsMode: false,
       shiftMode: false,
       geometricChallenges: [],
+      runManifest: manifest,
+      runEvents: [],
+      pauseStartedAt: null,
+      totalPausedMs: 0,
       timeRemaining: mode === 'timeAttack' ? TIME_ATTACK_DURATION_MS : undefined
     });
   },
 
-  pauseGame: () => set({ isPaused: true }),
+  pauseGame: () => {
+    const state = get();
+    if (!state.isPlaying || state.isPaused) return;
+    const now = Date.now();
+    const event: WordAvoidRunEvent = { type: 'pause', atMs: wallElapsedMs(state, now) };
+    set({
+      isPaused: true,
+      pauseStartedAt: now,
+      runEvents: state.runManifest ? appendRunEvent(state.runEvents, event) : state.runEvents,
+    });
+  },
   
-  resumeGame: () => set({ isPaused: false }),
+  resumeGame: () => {
+    const state = get();
+    if (!state.isPlaying || !state.isPaused || state.pauseStartedAt === null) return;
+    const now = Date.now();
+    const event: WordAvoidRunEvent = { type: 'resume', atMs: wallElapsedMs(state, now) };
+    set({
+      isPaused: false,
+      pauseStartedAt: null,
+      totalPausedMs: state.totalPausedMs + Math.max(0, now - state.pauseStartedAt),
+      runEvents: state.runManifest ? appendRunEvent(state.runEvents, event) : state.runEvents,
+    });
+  },
   
-  endGame: () => {
-    set({ isPlaying: false, isGameOver: true });
+  endGame: (reason = 'quit') => {
+    const state = get();
+    if (!state.isPlaying || state.isGameOver) return;
+    const competitiveFinish = reason === 'health' || reason === 'timer';
+    const endedAt = Date.now();
+    const currentPauseMs = state.pauseStartedAt === null ? 0 : Math.max(0, endedAt - state.pauseStartedAt);
+    const finishEvent: WordAvoidRunEvent | null = competitiveFinish
+      ? { type: 'finish', reason, atMs: wallElapsedMs(state, endedAt) }
+      : null;
+    set({
+      isPlaying: false,
+      isPaused: false,
+      isGameOver: true,
+      pauseStartedAt: null,
+      totalPausedMs: state.totalPausedMs + currentPauseMs,
+      runEvents: finishEvent && state.runManifest
+        ? appendRunEvent(state.runEvents, finishEvent)
+        : state.runEvents,
+    });
+    get().updateStats();
     get().updateGameStats();
-    get().savePlayerStats();
+    void get().savePlayerStats();
   },
   
   resetGame: () => set({
@@ -177,6 +257,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     capsMode: false,
     shiftMode: false,
     geometricChallenges: [],
+    runManifest: null,
+    runEvents: [],
+    pauseStartedAt: null,
+    totalPausedMs: 0,
     // Update player position to screen center
     player: { 
       ...initialPlayer, 
@@ -193,8 +277,24 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!state.isPlaying || state.isPaused || state.mode === 'digitAssault') return;
 
     let wordData;
+    const sequence = state.wordsSpawned;
+    let promptId = `experimental-${Date.now()}-${Math.random()}`;
+    let level = state.level;
+    let angle = Math.random() * 2 * Math.PI;
+
+    if (state.runManifest && isWordAvoidV1Mode(state.mode)) {
+      const prompt = createWordAvoidPrompt(state.runManifest.seed, sequence);
+      wordData = {
+        text: prompt.text,
+        difficulty: prompt.difficulty,
+        category: 'competitive',
+      };
+      promptId = prompt.promptId;
+      level = prompt.level;
+      angle = (prompt.angleTurn / 65_536) * 2 * Math.PI;
+    }
     
-    if (state.mode === 'skillTraining' && state.skillType) {
+    else if (state.mode === 'skillTraining' && state.skillType) {
       // Use skill-specific words
       wordData = getRandomSkillWord(state.skillType);
     } else if (state.mode === 'waveDefense') {
@@ -215,13 +315,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
       wordData = getRandomWord(difficulty);
     }
 
-    const angle = Math.random() * 2 * Math.PI;
     const spawnDistance = Math.min(window.innerWidth, window.innerHeight) * 0.45;
     const centerX = window.innerWidth / 2;
     const centerY = window.innerHeight / 2;
+    const spawnedAt = Date.now();
+    const spawnWallMs = wallElapsedMs(state, spawnedAt);
     
     const newWord: Word = {
       id: `word-${Date.now()}-${Math.random()}`,
+      sequence,
+      promptId,
+      level,
       text: wordData.text,
       difficulty: wordData.difficulty,
       category: wordData.category,
@@ -230,20 +334,31 @@ export const useGameStore = create<GameStore>((set, get) => ({
         y: centerY + Math.sin(angle) * spawnDistance
       },
       angle,
-      speed: state.wordSpeed + (state.level * 1.5),
+      speed: state.wordSpeed + (level * 1.5),
       distance: spawnDistance,
       maxDistance: spawnDistance,
       isActive: true,
       isTyping: false,
       typedChars: 0,
-      spawnTime: Date.now()
+      spawnTime: spawnedAt,
+      spawnActiveMs: activeElapsedAtWall(state, spawnWallMs),
+    };
+
+    const spawnEvent: WordAvoidRunEvent = {
+      type: 'spawn',
+      sequence,
+      promptId,
+      atMs: spawnWallMs,
     };
 
     set(state => ({
       words: [...state.words, newWord],
       wordsSpawned: state.wordsSpawned + 1,
+      runEvents: state.runManifest && isWordAvoidV1Mode(state.mode)
+        ? appendRunEvent(state.runEvents, spawnEvent)
+        : state.runEvents,
       // Increase level every 5 words spawned (faster progression)
-      level: Math.floor(state.wordsSpawned / 5) + 1,
+      level,
       // For wave defense, increase wave every 5 words
       waveNumber: state.mode === 'waveDefense' ? Math.floor(state.wordsSpawned / 5) + 1 : state.waveNumber
     }));
@@ -335,7 +450,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (state.mode === 'timeAttack' && state.timeRemaining !== undefined) {
       const newTimeRemaining = Math.max(0, state.timeRemaining - deltaTime);
       if (newTimeRemaining <= 0) {
-        get().endGame();
+        set({ timeRemaining: 0 });
+        get().endGame('timer');
         return;
       }
       set({ timeRemaining: newTimeRemaining });
@@ -486,6 +602,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
 
+    const normalizedInput = isWordAvoidV1Mode(state.mode) ? normalizeWordAvoidInput(char) : char;
+    if (!normalizedInput) return;
+
     // Find the currently targeted word or find a new one
     let targetWord = state.words.find(word => word.isTyping && word.isActive);
     
@@ -494,7 +613,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const matchingWords = state.words.filter(word => 
         word.isActive && 
         word.typedChars === 0 && 
-        word.text.toLowerCase().startsWith(char.toLowerCase())
+        word.text.toLowerCase().startsWith(normalizedInput.toLowerCase())
       );
       
       if (matchingWords.length > 0) {
@@ -509,8 +628,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
 
     const isCorrect = Boolean(
-      targetWord && targetWord.text[targetWord.typedChars]?.toLowerCase() === char.toLowerCase(),
+      targetWord && targetWord.text[targetWord.typedChars]?.toLowerCase() === normalizedInput.toLowerCase(),
     );
+    const attemptWallMs = wallElapsedMs(state);
+    const attemptEvent: WordAvoidRunEvent = {
+      type: 'attempt',
+      sequence: targetWord?.sequence ?? null,
+      key: normalizedInput,
+      atMs: attemptWallMs,
+    };
 
     set(currentState => {
       const charactersAttempted = currentState.player.charactersAttempted + 1;
@@ -522,6 +648,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
           charactersCorrect,
           accuracy: calculateAccuracy(charactersCorrect, charactersAttempted),
         },
+        runEvents: currentState.runManifest && isWordAvoidV1Mode(currentState.mode)
+          ? appendRunEvent(currentState.runEvents, attemptEvent)
+          : currentState.runEvents,
       };
     });
 
@@ -535,8 +664,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
           
           if (isComplete) {
             // Complete the word
-            setTimeout(() => get().completeWord(word.id), 50);
-            return { ...word, typedChars: newTypedChars, isTyping: false };
+            return {
+              ...word,
+              typedChars: newTypedChars,
+              isTyping: false,
+              completedActiveMs: activeElapsedAtWall(state, attemptWallMs),
+            };
           }
           
           return { ...word, typedChars: newTypedChars, isTyping: true };
@@ -548,6 +681,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
         words: updatedWords,
         currentWord: targetWord.text
       });
+      const completedWord = updatedWords.find(word => word.id === targetWord!.id);
+      if (completedWord?.completedActiveMs !== undefined) get().completeWord(completedWord.id);
     } else if (targetWord) {
       // Wrong character typed - reset the word
       const updatedWords = state.words.map(word => {
@@ -751,9 +886,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const totalScore = calculateWordScore({
       length: word.text.length,
       difficulty: word.difficulty,
-      responseMs: Date.now() - word.spawnTime,
+      responseMs: (word.completedActiveMs ?? activeElapsedMs(state)) - word.spawnActiveMs,
       currentStreak: state.player.streak,
-      level: state.level,
+      level: word.level,
     });
 
     // Remove the completed word and update state
@@ -790,7 +925,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (state.mode === 'timeAttack' && state.timeRemaining !== undefined && state.isPlaying && !state.isPaused) {
       const newTimeRemaining = Math.max(0, state.timeRemaining - 16); // Approximate 60fps
       if (newTimeRemaining <= 0) {
-        get().endGame();
+        set({ timeRemaining: 0 });
+        get().endGame('timer');
       } else {
         set({ timeRemaining: newTimeRemaining });
       }
@@ -820,15 +956,24 @@ export const useGameStore = create<GameStore>((set, get) => ({
       boss: 30
     }[word.difficulty];
 
-    get().takeDamage(damage);
+    const missEvent: WordAvoidRunEvent = {
+      type: 'miss',
+      sequence: word.sequence,
+      atMs: wallElapsedMs(state),
+    };
     
     set(state => ({
       player: {
         ...state.player,
         streak: 0
       },
-      words: state.words.filter(w => w.id !== wordId)
+      words: state.words.filter(w => w.id !== wordId),
+      runEvents: state.runManifest && isWordAvoidV1Mode(state.mode)
+        ? appendRunEvent(state.runEvents, missEvent)
+        : state.runEvents,
     }));
+
+    get().takeDamage(damage);
     
     // If this was the current target, find a new one
     if (word.isTyping) {
@@ -854,22 +999,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set(state => ({ screenShakeTrigger: state.screenShakeTrigger + 1 }));
     }
     
+    let ended = false;
     set(state => {
       const newHealth = Math.max(0, state.player.health - amount);
-      const isGameOver = newHealth <= 0;
-      
-      if (isGameOver) {
-        get().endGame();
-      }
+      ended = newHealth <= 0;
       
       return {
         player: {
           ...state.player,
           health: newHealth
-        },
-        isGameOver
+        }
       };
     });
+    if (ended) get().endGame('health');
   },
 
   addScore: (points: number) => {
@@ -883,8 +1025,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   updateStats: () => {
     const state = get();
-    const activeDurationMs = Math.max(0, Date.now() - state.startTime);
-    const wpm = calculateWpm(state.player.charactersCorrect, activeDurationMs);
+    const activeDuration = activeElapsedMs(state);
+    const wpm = calculateWpm(state.player.charactersCorrect, activeDuration);
     const accuracy = calculateAccuracy(state.player.charactersCorrect, state.player.charactersAttempted);
 
     set(state => ({
@@ -907,7 +1049,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   updateGameStats: () => {
     const state = get();
-    const gameTime = (Date.now() - state.startTime) / 1000;
+    const gameTime = activeElapsedMs(state) / 1000;
     
     set(prevState => ({
       stats: {
@@ -926,6 +1068,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   loadPlayerStats: async () => {
     try {
       // For now, use localStorage as fallback
+      if (typeof localStorage === 'undefined') return;
       const savedStats = localStorage.getItem('wordavoid-stats');
       if (savedStats) {
         const stats = JSON.parse(savedStats);
@@ -950,22 +1093,28 @@ export const useGameStore = create<GameStore>((set, get) => ({
   savePlayerStats: async () => {
     try {
       const state = get();
-      const { stats, player, mode, level, wordsTyped } = state;
+      const { stats, mode } = state;
 
       // Save to localStorage as fallback
-      localStorage.setItem('wordavoid-stats', JSON.stringify(stats));
-
-      // Submit score to leaderboard if score > 0
-      if (player.score > 0) {
-        const metadata = {
-          wpm: player.wpm,
-          accuracy: player.accuracy,
-          words_typed: wordsTyped,
-          mode: mode,
-          level: level
-        };
-        await finishPlatformRun(player.score, metadata);
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('wordavoid-stats', JSON.stringify(stats));
       }
+
+      if (!state.runManifest || !isWordAvoidV1Mode(mode)) return;
+      const evidence: WordAvoidRunEvidence = {
+        runId: state.runManifest.runId,
+        rulesetVersion: state.runManifest.rulesetVersion,
+        dictionaryVersion: state.runManifest.dictionaryVersion,
+        dictionaryHash: state.runManifest.dictionaryHash,
+        normalizationVersion: state.runManifest.normalizationVersion,
+        events: state.runEvents,
+      };
+      const validation = validateWordAvoidRun(state.runManifest, evidence);
+      if (!validation.ok) return;
+      await finishPlatformRun(validation.summary, {
+        ...evidence,
+        summary: validation.summary,
+      });
     } catch (error) {
       console.error('Failed to save player stats:', error);
     }

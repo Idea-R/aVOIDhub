@@ -41,6 +41,8 @@ export const GameArena: React.FC<GameArenaProps> = ({ className = '' }) => {
   // Game loop
   useEffect(() => {
     if (!isPlaying || isPaused) return;
+    lastTime.current = Date.now();
+    if (lastSpawnTime.current === 0) lastSpawnTime.current = lastTime.current;
 
     const gameLoop = () => {
       const currentTime = Date.now();
@@ -86,6 +88,10 @@ export const GameArena: React.FC<GameArenaProps> = ({ className = '' }) => {
       }
     };
   }, [isPlaying, isPaused, updateWords, updateDigitChars, updateGeometricChallenges, spawnWord, spawnDigitChar, spawnGeometricChallenge, spawnRate, wordCount, playerHealth, updateMusicIntensity, mode]);
+
+  useEffect(() => {
+    if (!isPlaying) lastSpawnTime.current = 0;
+  }, [isPlaying]);
 
   // Calculate arena center
   const arenaCenter = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
