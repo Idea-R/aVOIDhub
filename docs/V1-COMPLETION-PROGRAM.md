@@ -144,7 +144,7 @@ The complete program is not a two-week cleanup. For the platform and hosted firs
 
 ### Current state
 
-The platform is a Next.js 16 App Router application in [`apps/platform`](../apps/platform). The production shell is live and responsive. The current cards in [`src/data/games.ts`](../apps/platform/src/data/games.ts) still send hosted games directly to their immersive routes. Account, leaderboard, creator, membership, privacy, and terms surfaces exist.
+The platform is a Next.js 16 App Router application in [`apps/platform`](../apps/platform). The production shell is live and responsive. Sprint P3 now has a local canonical registry in [`src/data/games.ts`](../apps/platform/src/data/games.ts) and an eight-title [`/games/[slug]/`](../apps/platform/src/app/games/[slug]/page.tsx) page system. Playable catalog cards open those detail pages before a distinct Play or outbound handoff; TankaVOID remains intentionally noninteractive in the directory. The implementation has passed local build, type, catalog-contract, and responsive browser checks, but it has not been merged or deployed. Account, leaderboard, creator, membership, privacy, and terms surfaces also exist.
 
 The new account flow is not active in production. [`src/lib/env.ts`](../apps/platform/src/lib/env.ts) requires a publishable Supabase configuration, and [`src/components/AuthForm.tsx`](../apps/platform/src/components/AuthForm.tsx) disables submission when it is absent. The current form is email OTP only. The hosted games still contain their own older auth implementations.
 
@@ -162,7 +162,7 @@ Of the 69 historical primary score rows, 48 are currently marked `is_verified = 
 
 Production records 29 migrations while the repository root contains only three migration files. The database therefore cannot be reproduced from the current root history. The staged foundation migration closes important score-write paths, but it assumes legacy objects already exist, leaves unsafe historical `user_profiles` policies in place, and mixes direct client grants with admin-client application routes. It must be reconciled rather than applied unchanged.
 
-Other release gaps are concrete: `/games/wreckavoid/` currently returns 404; the platform package has no unit/integration/E2E test scripts; favorites exist only as proposed schema; the global header has no signed-in state; creator review/admin surfaces do not exist; and the 20-minute run-ticket expiry is unsuitable for an unbounded survival run unless renewal or game-specific duration rules are added.
+Other release gaps are concrete: production still returns 404 for `/games/wreckavoid/` until the P3 branch is reviewed and released; the platform has a catalog contract test but no broader unit/integration/E2E suite; favorites exist only as proposed schema; the global header has no signed-in state; creator review/admin surfaces do not exist; and the 20-minute run-ticket expiry is unsuitable for an unbounded survival run unless renewal or game-specific duration rules are added. The P3 board preview is intentionally not the final P5 public read model.
 
 ### Platform V1 experience
 
@@ -252,6 +252,8 @@ A new visitor can browse without an account. A returning player can sign in once
 | P7     | Stripe test-mode membership and entitlement lifecycle                                   |    L | P2, Stripe product decisions                            | Checkout/portal/webhook tests, duplicate/out-of-order events, revoke/renew behavior                |
 | P8     | Consent and directory-only AdSense canary readiness                                     |    M | Privacy decisions, exact publisher ID, site Ready state | CMP/opt-out QA, paid no-request proof, spacing/CLS checks; no gameplay ads                         |
 | P9     | Platform release hardening                                                              |    L | P0–P8 applicable V1 scope                               | CI green, accessibility/performance/browser matrix, backups, rollback, production smoke test       |
+
+**P3 implementation note (2026-08-20):** the page system, typed boundaries, catalog navigation, SEO coverage, and responsive layouts are complete on `codex/feature-game-detail-surfaces`. All eight routes render at tablet size with unique metadata and no horizontal overflow; hosted Play routes, external-domain handoffs, and TankaVOID's no-play state are covered by `npm run test:catalog --workspace=@avoid/platform`. Live personal-best/leaderboard behavior remains P1/P5-dependent, and production release remains a separate approval gate.
 
 **Expected platform effort:** approximately **47–76 focused engineering days** (roughly 9–15 solo sprint-weeks), excluding approval delays, SMTP/OAuth ownership, Stripe/AdSense account review, and major surprises in the live schema. Two disciplined lanes may reduce elapsed time to 6–10 weeks, but schema/auth and release gates remain serial.
 

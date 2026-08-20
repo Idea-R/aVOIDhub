@@ -137,9 +137,11 @@ Do not pin seals, badges, or decorative controls over responsive copy. Give prom
 ## D-020 — Use separate platform detail and immersive play routes
 
 - Date: 2026-08-20
-- Status: proposed for V1 program review
+- Status: accepted and implemented locally for Sprint P3
 
 First-party catalog cards should open `/games/<slug>/` pages with controls, status, scores, personal best, favorites, share, and a clear Play action. Preserve the current immersive routes for bookmarks and focused play. External titles must state the destination domain and cannot imply shared account or leaderboard behavior.
+
+The Sprint P3 implementation extends the detail surface to all eight catalog titles. TankaVOID is the deliberate exception to card navigation and Play: its directory card remains a noninteractive coming-soon artifact, while its direct detail URL documents the rebuild target without exposing a playable route. Favorites remain P4 work, and live personal-best/board reads remain subject to the P1/P5 data gates.
 
 ## D-021 — Give every title its own V1 gate
 

@@ -8,6 +8,7 @@
     "build:preview": "cross-env AVOID_STATIC_EXPORT=1 next build",
     "build:netlify": "npm run build:platform:netlify --prefix ../..",
     "start": "next start",
+    "test:catalog": "node scripts/verify-game-catalog.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

@@ -31,10 +31,19 @@
 - Replaced the overlapping circular Founding Player seal and thin disclaimer pill with a generated meteor collectible, a tactile angled membership ticket, and a container-owned responsive artifact lane.
 - Verified the membership section across desktop, laptop, tablet, and phone viewports with no horizontal overflow, no copy/art overlap, no escaped controls, and a clean browser console.
 - Received explicit approval to push the reviewed platform candidate live; the production rollout is now in progress while database, Stripe, and AdSense activation remain separately gated.
+- Built the Sprint P3 canonical eight-title registry and `/games/[slug]/` detail architecture on an isolated branch based on the frozen Sprint 0 baseline.
+- Changed every playable directory card to open its first-party detail page before Play; preserved `/voidavoid/`, `/wreckavoid/`, and `/wordavoid/` as focused game routes.
+- Added explicit subdomain and independent-domain handoffs for FLIPSIDE, Bloomfall, Acrolis Crawlers, and Tic Tac Toe in 3D without claiming shared identity, purchases, progression, or scores.
+- Kept TankaVOID's directory card noninteractive and gave its direct detail route an honest, non-clickable “No playable build yet” state.
+- Added unique metadata, VideoGame structured data, sitemap entries, real captures, controls, device guidance, current-build notes, score/account boundary copy, and a deliberately staged platform-board state.
+- Removed an early server-wide leaderboard preview read from P3. Live boards and personal bests now wait for P5's restricted, moderation-aware public read model instead of using the administrative database client on a public page.
+- Added `test:catalog`, which verifies all eight IDs and details, seven real play destinations, the three stable hosted routes, independent score boundaries, and TankaVOID's no-play contract.
+- Passed platform type-check and the complete Netlify platform/game build; the dependency audit remains at zero vulnerabilities.
+- Browser-verified all eight detail routes at tablet size, representative desktop and 390 px phone layouts, zero horizontal overflow, the external-domain target behavior, and TankaVOID's lack of a Play action.
 
 ### Next action
 
-Commit and push the approved platform candidate, verify the Git-driven Netlify runtime preview, then publish and verify production. Do not apply the score-locking migration separately from the platform and staged game deploy.
+Package Sprint P3 as a stacked draft PR for review. Do not merge or deploy it yet. The separate Sprint 1 database branch test remains gated by cost approval; do not apply the score-locking migration separately from the platform and staged game deploy.
 
 ## 2026-08-19
 
