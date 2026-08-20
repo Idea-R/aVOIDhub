@@ -4,6 +4,8 @@ Date: 2026-08-20
 
 Issue: [#10](https://github.com/Idea-R/aVOIDhub/issues/10)
 
+Draft PR: [#11](https://github.com/Idea-R/aVOIDhub/pull/11)
+
 Branch: `codex/fix-wreckavoid-w5-hardening`
 
 Stack base: `codex/fix-wreckavoid-w2-responsive` at `0f28a5a`

@@ -14,6 +14,7 @@
 - The 300-frame sample held 16.7 ms average / 16.8 ms p95 / 16.9 ms max with zero 50 ms frames. Forty finish/restart cycles held RAF 1, input 1, timers 0, and one-for-one 41 finishes/restarts; heap settled at 38.43 MB versus a 37.79 MB baseline after decreasing through the second 20-cycle batch.
 - Mobile Lighthouse against the production Vite preview scored 98 performance, 100 accessibility, 100 best practices, and 100 SEO, with 1.8 s FCP, 2.1 s LCP, 0 ms TBT, 0 CLS, and 168 KiB transfer.
 - Passed the complete hosted-game staging plus normal Next.js build after W5. No production deploy or external-service mutation occurred; detailed evidence is in `docs/sprint-wreckavoid-w5.md`.
+- Published WreckaVOID W5 for review as draft PR #11, stacked only on the verified W2 branch so its source and evidence remain independently reviewable.
 - Started WreckaVOID W2 on isolated stacked branch `codex/fix-wreckavoid-w2-responsive` with issue #8 after publishing the clean W0/W1 draft PR #7.
 - Replaced hard-coded window-height canvas math with rendered-canvas `ResizeObserver` ownership, dynamic viewport/flex layout, visual viewport/orientation synchronization, safe-area padding, pointer clamping, and a readable 320 × 320 minimum-playfield guard.
 - Added reason-aware `manual`, `help`, and `focus` pause ownership. Browser smoke proved help cannot resume a manually paused or focus-paused run and focus return clears only its own reason.

@@ -51,6 +51,7 @@ Move the live aVOIDgame.io rebuild through the phased V1 completion program: sec
 - Active WreckaVOID W2 draft PR: `https://github.com/Idea-R/aVOIDhub/pull/9`
 - Active WreckaVOID W5 branch: `codex/fix-wreckavoid-w5-hardening`
 - Active WreckaVOID W5 issue: `https://github.com/Idea-R/aVOIDhub/issues/10`
+- Active WreckaVOID W5 draft PR: `https://github.com/Idea-R/aVOIDhub/pull/11`
 - WreckaVOID W5 evidence: `docs/sprint-wreckavoid-w5.md`
 - WreckaVOID W2 evidence: `docs/sprint-wreckavoid-w2.md`
 - WreckaVOID W0/W1 evidence: `docs/sprint-wreckavoid-w0-w1.md`
