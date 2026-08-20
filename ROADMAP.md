@@ -65,6 +65,7 @@ Move the live aVOIDgame.io rebuild through the phased V1 completion program: sec
 - WORDaVOID WD1 evidence: `docs/sprint-wordavoid-wd1.md`
 - Active WORDaVOID WD3 branch: `codex/fix-wordavoid-wd3-experience`
 - Active WORDaVOID WD3 issue: `https://github.com/Idea-R/aVOIDhub/issues/16`
+- Active WORDaVOID WD3 draft PR: `https://github.com/Idea-R/aVOIDhub/pull/17`
 - WORDaVOID WD3 evidence: `docs/sprint-wordavoid-wd3.md`
 - WreckaVOID W2 evidence: `docs/sprint-wreckavoid-w2.md`
 - WreckaVOID W0/W1 evidence: `docs/sprint-wreckavoid-w0-w1.md`

@@ -10,6 +10,7 @@
 - Guarded asynchronous start/restart generations and stale finishes, removed delayed targeting work, and browser-proved 20 repeat-run cycles without duplicate dialogs, inputs, or restart transitions.
 - Passed WORDaVOID typecheck, zero-warning lint, 5 files / 33 tests, production build, full hosted-game/Next.js assembly, Git whitespace checks, desktop/narrow/landscape browser QA, live orientation change, focus isolation, reduced-motion persistence, and quiet application console.
 - Recorded the honest physical-device and production boundaries in `docs/sprint-wordavoid-wd3.md`; no database, Netlify, Stripe, AdSense, DNS, or production state changed.
+- Published WORDaVOID WD3 for review as mergeable stacked draft PR #17 above WD1 PR #15.
 
 - Started WORDaVOID WD1 on isolated stacked branch `codex/fix-wordavoid-wd1-validation` with issue #14 after WD0 reached clean draft PR #13.
 - Added `@avoid/wordavoid-contract`, generated and hash-locked the 1,770-entry competitive dictionary, and froze ruleset `wordavoid-v1.0.0-rc.1` plus `ascii-lower-v1` normalization.
