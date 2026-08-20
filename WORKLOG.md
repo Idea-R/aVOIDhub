@@ -264,8 +264,9 @@ Publish WD1 for review. Then either run the documented foundation/WD1 SQL and co
 - Passed 63-file zero-warning lint, 30 tests, standalone/full-platform builds, and an 83,328-byte initial-transfer measurement with zero audio files.
 - Browser-checked 390×844, 844×390, 768×1024, 1440×900, and 1920×1080 with no horizontal overflow; dialog focus wrap/return and accessible names passed with a quiet console.
 - Recorded five 60 FPS / 16.67 ms desktop samples and a 20-cycle sample with 20 unique replayable-local codes, five pointer listeners, one audio context, zero terminal voices/frames, and a 571,440-byte raw heap decrease.
+- Published the two-commit V4 review boundary as stacked draft PR `#23` above VOIDaVOID V2 PR `#21`; no merge or deployment occurred.
 - Kept physical-device certification, a formal deployed audit, platform V3, Supabase, Netlify production, Stripe, AdSense, DNS, and rollback proof outside this slice.
 
 ### Next action
 
-Run final full-platform verification, publish the stacked draft PR, and keep physical-device/deployed checks as explicit release gates. The next code dependency is V3/platform data work after the isolated Supabase branch is approved.
+Review stacked draft PR `#23` and keep physical-device/deployed checks as explicit release gates. The next code dependency is V3/platform data work after the isolated Supabase branch is approved.

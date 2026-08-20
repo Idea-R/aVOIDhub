@@ -3,7 +3,7 @@
 Date: 2026-08-20
 Branch: `codex/fix-voidavoid-v4-hardening`
 Issue: [#22](https://github.com/Idea-R/aVOIDhub/issues/22)
-Draft PR: pending
+Draft PR: [#23](https://github.com/Idea-R/aVOIDhub/pull/23)
 Base: VOIDaVOID V2 commit `03b05a2`
 
 ## Intended outcome

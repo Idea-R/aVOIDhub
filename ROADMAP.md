@@ -78,6 +78,7 @@ Move the live aVOIDgame.io rebuild through the phased V1 completion program: sec
 - VOIDaVOID V2 evidence: `docs/sprint-voidavoid-v2.md`
 - Active VOIDaVOID V4 branch: `codex/fix-voidavoid-v4-hardening`
 - Active VOIDaVOID V4 issue: `https://github.com/Idea-R/aVOIDhub/issues/22`
+- Active VOIDaVOID V4 draft PR: `https://github.com/Idea-R/aVOIDhub/pull/23`
 - VOIDaVOID V4 contract: `docs/voidavoid-v4-experience-contract.md`
 - VOIDaVOID V4 evidence: `docs/sprint-voidavoid-v4.md`
 - WreckaVOID W2 evidence: `docs/sprint-wreckavoid-w2.md`
