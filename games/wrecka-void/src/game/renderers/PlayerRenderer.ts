@@ -203,4 +203,4 @@ export class PlayerRenderer {
     this.ctx.lineTo(mouse.x, mouse.y + 10);
     this.ctx.stroke();
   }
-} 
+}

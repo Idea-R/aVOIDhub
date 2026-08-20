@@ -1,16 +1,22 @@
-import { Vector2, ChainSegment, Enemy, SecondChain } from '../types/Game';
-import { ActiveEffects, PlayerUpgrades } from '../types/PowerUps';
-import { PowerUpManager } from '../components/Game/PowerUpManager';
-import { ParticleSystem } from './ParticleSystem';
-import { ChainRenderer } from './renderers/ChainRenderer';
-import { PlayerRenderer } from './renderers/PlayerRenderer';
-import { EnemyRenderer } from './renderers/EnemyRenderer';
-import { EffectsRenderer } from './renderers/EffectsRenderer';
+import {
+  Vector2,
+  ChainSegment,
+  Enemy,
+  Projectile,
+  SecondChain,
+} from "../types/Game";
+import { ActiveEffects, PlayerUpgrades } from "../types/PowerUps";
+import { PowerUpManager } from "../components/Game/PowerUpManager";
+import { ParticleSystem } from "./ParticleSystem";
+import { ChainRenderer } from "./renderers/ChainRenderer";
+import { PlayerRenderer } from "./renderers/PlayerRenderer";
+import { EnemyRenderer } from "./renderers/EnemyRenderer";
+import { EffectsRenderer } from "./renderers/EffectsRenderer";
 
 export class GameRenderer {
   private ctx: CanvasRenderingContext2D;
   private canvas: HTMLCanvasElement;
-  
+
   // Specialized renderers
   private chainRenderer: ChainRenderer;
   private playerRenderer: PlayerRenderer;
@@ -19,8 +25,8 @@ export class GameRenderer {
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
-    this.ctx = canvas.getContext('2d')!;
-    
+    this.ctx = canvas.getContext("2d")!;
+
     // Initialize specialized renderers
     this.chainRenderer = new ChainRenderer(this.ctx);
     this.playerRenderer = new PlayerRenderer(this.ctx);
@@ -44,23 +50,53 @@ export class GameRenderer {
     this.effectsRenderer.drawPowerUps(powerUpManager);
   }
 
-  drawChain(chain: ChainSegment[], ball: Vector2, isRetracting: boolean, activeEffects: ActiveEffects, playerUpgrades?: { chainDamage: number }): void {
-    this.chainRenderer.drawChain(chain, ball, isRetracting, activeEffects, playerUpgrades);
+  drawChain(
+    chain: ChainSegment[],
+    ball: Vector2,
+    isRetracting: boolean,
+    activeEffects: ActiveEffects,
+    playerUpgrades?: { chainDamage: number },
+  ): void {
+    this.chainRenderer.drawChain(
+      chain,
+      ball,
+      isRetracting,
+      activeEffects,
+      playerUpgrades,
+    );
   }
 
-  drawSecondChain(secondChain: SecondChain, isRetracting: boolean, activeEffects: ActiveEffects, playerUpgrades?: PlayerUpgrades): void {
-    this.chainRenderer.drawSecondChain(secondChain, isRetracting, activeEffects, playerUpgrades);
+  drawSecondChain(
+    secondChain: SecondChain,
+    isRetracting: boolean,
+    activeEffects: ActiveEffects,
+    playerUpgrades?: PlayerUpgrades,
+  ): void {
+    this.chainRenderer.drawSecondChain(
+      secondChain,
+      isRetracting,
+      activeEffects,
+      playerUpgrades,
+    );
   }
 
   drawSecondBall(ball: Vector2, activeEffects: ActiveEffects): void {
     this.playerRenderer.drawSecondBall(ball, activeEffects);
   }
 
-  drawPlayer(player: Vector2, playerSize: number, activeEffects: ActiveEffects): void {
+  drawPlayer(
+    player: Vector2,
+    playerSize: number,
+    activeEffects: ActiveEffects,
+  ): void {
     this.playerRenderer.drawPlayer(player, playerSize, activeEffects);
   }
 
-  drawBall(ball: Vector2, ballRadius: number, activeEffects: ActiveEffects): void {
+  drawBall(
+    ball: Vector2,
+    ballRadius: number,
+    activeEffects: ActiveEffects,
+  ): void {
     this.playerRenderer.drawBall(ball, ballRadius, activeEffects);
   }
 
@@ -68,7 +104,7 @@ export class GameRenderer {
     this.enemyRenderer.drawEnemies(enemies);
   }
 
-  drawProjectiles(projectiles: any[]): void {
+  drawProjectiles(projectiles: Projectile[]): void {
     this.effectsRenderer.drawProjectiles(projectiles);
   }
 
@@ -100,6 +136,6 @@ export class GameRenderer {
 
   // Performance optimization: batch rendering operations
   batchRender(renderOperations: (() => void)[]): void {
-    renderOperations.forEach(operation => operation());
+    renderOperations.forEach((operation) => operation());
   }
-} 
+}

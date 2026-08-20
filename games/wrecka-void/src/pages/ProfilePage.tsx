@@ -1,7 +1,6 @@
-import React from 'react';
-import { ArrowLeft, LogOut } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
-import { ProfileForm } from '../components/Profile/ProfileForm';
+import { ArrowLeft, LogOut } from "lucide-react";
+import { useAuth } from "../hooks/useAuth";
+import { ProfileForm } from "../components/Profile/ProfileForm";
 
 interface ProfilePageProps {
   onNavigate: (page: string) => void;
@@ -12,11 +11,11 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
 
   const handleSignOut = async () => {
     await signOut();
-    onNavigate('home');
+    onNavigate("home");
   };
 
   if (!user) {
-    onNavigate('home');
+    onNavigate("home");
     return null;
   }
 
@@ -25,13 +24,13 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
           <button
-            onClick={() => onNavigate('home')}
+            onClick={() => onNavigate("home")}
             className="flex items-center space-x-2 px-4 py-2 text-gray-300 hover:text-white transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
             <span>Back to Menu</span>
           </button>
-          
+
           <div className="flex items-center space-x-4">
             <h1 className="text-3xl font-bold text-white">Profile Settings</h1>
             <button
@@ -43,7 +42,7 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
             </button>
           </div>
         </div>
-        
+
         <div className="max-w-2xl mx-auto">
           <ProfileForm user={user} />
         </div>

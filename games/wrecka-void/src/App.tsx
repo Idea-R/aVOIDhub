@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
-import { useAuth } from './hooks/useAuth';
-import { HomePage } from './pages/HomePage';
-import { GamePage } from './pages/GamePage';
-import { LeaderboardPage } from './pages/LeaderboardPage';
-import { ProfilePage } from './pages/ProfilePage';
+import { useState } from "react";
+import { useAuth } from "./hooks/useAuth";
+import { HomePage } from "./pages/HomePage";
+import { GamePage } from "./pages/GamePage";
+import { LeaderboardPage } from "./pages/LeaderboardPage";
+import { ProfilePage } from "./pages/ProfilePage";
 
 function App() {
   const { loading } = useAuth();
-  const [currentPage, setCurrentPage] = useState('home');
+  const [currentPage, setCurrentPage] = useState("home");
 
   if (loading) {
     return (
@@ -22,11 +22,11 @@ function App() {
 
   const renderPage = () => {
     switch (currentPage) {
-      case 'game':
+      case "game":
         return <GamePage onNavigate={setCurrentPage} />;
-      case 'leaderboard':
+      case "leaderboard":
         return <LeaderboardPage onNavigate={setCurrentPage} />;
-      case 'profile':
+      case "profile":
         return <ProfilePage onNavigate={setCurrentPage} />;
       default:
         return <HomePage onNavigate={setCurrentPage} />;

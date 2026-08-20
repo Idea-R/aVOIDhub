@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { X } from 'lucide-react';
-import { LoginForm } from './LoginForm';
-import { SignupForm } from './SignupForm';
+import { useState } from "react";
+import { X } from "lucide-react";
+import { LoginForm } from "./LoginForm";
+import { SignupForm } from "./SignupForm";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -25,13 +25,12 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-white mb-2">
-            {isSignup ? 'Join the Battle' : 'Welcome Back'}
+            {isSignup ? "Join the Battle" : "Welcome Back"}
           </h2>
           <p className="text-gray-400">
-            {isSignup 
-              ? 'Create your account to start wreaking havoc'
-              : 'Sign in to continue your destruction'
-            }
+            {isSignup
+              ? "Create your account to start wreaking havoc"
+              : "Sign in to continue your destruction"}
           </p>
         </div>
 

@@ -1,8 +1,30 @@
-import { Vector2 } from '../types/Game';
+import { Vector2 } from "../types/Game";
+
+interface CanvasRect {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
+export function mapClientPointToCanvas(
+  clientX: number,
+  clientY: number,
+  rect: CanvasRect,
+  canvasWidth: number,
+  canvasHeight: number,
+): Vector2 {
+  const scaleX = rect.width > 0 ? canvasWidth / rect.width : 1;
+  const scaleY = rect.height > 0 ? canvasHeight / rect.height : 1;
+  return {
+    x: (clientX - rect.left) * scaleX,
+    y: (clientY - rect.top) * scaleY,
+  };
+}
 
 export class InputManager {
   private keys = new Set<string>();
-  private mousePos: Vector2 = { x: 400, y: 300 };
+  private mousePos: Vector2;
   private mouseDown = false;
   private canvas: HTMLCanvasElement | null = null;
   private listeners: {
@@ -15,6 +37,7 @@ export class InputManager {
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
+    this.mousePos = { x: canvas.width / 2, y: canvas.height / 2 };
     this.setupEventListeners();
   }
 
@@ -22,8 +45,8 @@ export class InputManager {
     const handleKeyDown = (e: KeyboardEvent) => {
       this.keys.add(e.code);
       this.listeners.onKeyDown?.(e.code);
-      
-      if (e.code === 'Space') {
+
+      if (e.code === "Space") {
         e.preventDefault();
       }
     };
@@ -33,44 +56,55 @@ export class InputManager {
       this.listeners.onKeyUp?.(e.code);
     };
 
-    const handleMouseMove = (e: MouseEvent) => {
+    const updatePointerPosition = (e: PointerEvent) => {
       if (this.canvas) {
         const rect = this.canvas.getBoundingClientRect();
-        this.mousePos = {
-          x: e.clientX - rect.left,
-          y: e.clientY - rect.top,
-        };
+        this.mousePos = mapClientPointToCanvas(
+          e.clientX,
+          e.clientY,
+          rect,
+          this.canvas.width,
+          this.canvas.height,
+        );
         this.listeners.onMouseMove?.(this.mousePos);
       }
     };
 
-    const handleMouseDown = (e: MouseEvent) => {
-      if (e.button === 0) {
+    const handlePointerMove = (e: PointerEvent) => {
+      updatePointerPosition(e);
+    };
+
+    const handlePointerDown = (e: PointerEvent) => {
+      if (e.isPrimary && e.button === 0) {
+        updatePointerPosition(e);
         this.mouseDown = true;
+        this.canvas?.setPointerCapture?.(e.pointerId);
         this.listeners.onMouseDown?.();
       }
     };
 
-    const handleMouseUp = (e: MouseEvent) => {
-      if (e.button === 0) {
+    const handlePointerUp = (e: PointerEvent) => {
+      if (e.isPrimary) {
         this.mouseDown = false;
         this.listeners.onMouseUp?.();
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mousedown', handleMouseDown);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    this.canvas?.addEventListener("pointermove", handlePointerMove);
+    this.canvas?.addEventListener("pointerdown", handlePointerDown);
+    window.addEventListener("pointerup", handlePointerUp);
+    window.addEventListener("pointercancel", handlePointerUp);
 
     // Store cleanup function
     this.cleanup = () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mousedown', handleMouseDown);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+      this.canvas?.removeEventListener("pointermove", handlePointerMove);
+      this.canvas?.removeEventListener("pointerdown", handlePointerDown);
+      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("pointercancel", handlePointerUp);
     };
   }
 

@@ -1,33 +1,36 @@
-import React from 'react';
-import { Share2, Copy, CheckCircle } from 'lucide-react';
-import { GameState } from '../../types/Game';
-import logoImage from '../../assets/ChatGPT Image Jun 28, 2025, 12_39_11 PM.png';
+import { useState } from "react";
+import type { User } from "@supabase/supabase-js";
+import { Share2, Copy, CheckCircle } from "lucide-react";
+import { GameState } from "../../types/Game";
+import logoImage from "../../assets/ChatGPT Image Jun 28, 2025, 12_39_11 PM.png";
 
 interface GameOverlaysProps {
   gameState: GameState;
   showHelp: boolean;
-  user: any;
+  user: User | null;
   onToggleHelp: () => void;
   onTogglePause: () => void;
   onRestartGame: () => void;
 }
 
-export function GameOverlays({ 
-  gameState, 
-  showHelp, 
-  user, 
-  onToggleHelp, 
-  onTogglePause, 
-  onRestartGame 
+export function GameOverlays({
+  gameState,
+  showHelp,
+  user,
+  onToggleHelp,
+  onTogglePause,
+  onRestartGame,
 }: GameOverlaysProps) {
-  const [shareStatus, setShareStatus] = React.useState<'idle' | 'copied' | 'shared'>('idle');
+  const [shareStatus, setShareStatus] = useState<"idle" | "copied" | "shared">(
+    "idle",
+  );
 
   const generateShareText = () => {
     const minutes = Math.floor(gameState.gameTime / 60);
     const seconds = Math.floor(gameState.gameTime % 60);
     const timeText = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
     const bossesKilled = Math.floor(gameState.wave / 10); // Rough estimate based on boss spawn rate
-    
+
     return `🎮 Just survived ${timeText} in WreckaVOID! 
 
 📊 Final Stats:
@@ -44,19 +47,19 @@ export function GameOverlays({
   const handleCopyShare = async () => {
     try {
       await navigator.clipboard.writeText(generateShareText());
-      setShareStatus('copied');
-      setTimeout(() => setShareStatus('idle'), 2000);
+      setShareStatus("copied");
+      setTimeout(() => setShareStatus("idle"), 2000);
     } catch (error) {
-      console.error('Failed to copy to clipboard:', error);
+      console.error("Failed to copy to clipboard:", error);
     }
   };
 
   const handleTwitterShare = () => {
     const shareText = generateShareText();
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
-    window.open(twitterUrl, '_blank', 'width=550,height=420');
-    setShareStatus('shared');
-    setTimeout(() => setShareStatus('idle'), 2000);
+    window.open(twitterUrl, "_blank", "width=550,height=420");
+    setShareStatus("shared");
+    setTimeout(() => setShareStatus("idle"), 2000);
   };
 
   return (
@@ -67,15 +70,25 @@ export function GameOverlays({
           <div className="bg-gray-900 p-8 rounded-lg text-center max-w-md border border-gray-700">
             <h2 className="text-2xl font-bold text-white mb-6">How to Play</h2>
             <div className="space-y-3 text-gray-300 text-left">
-              <div><strong>Mouse:</strong> Control character</div>
-              <div><strong>Hold Mouse:</strong> Retract chain</div>
-              <div><strong>Space:</strong> Pause game</div>
-              <div><strong>H:</strong> Toggle this help</div>
+              <div>
+                <strong>Mouse or touch:</strong> Control character
+              </div>
+              <div>
+                <strong>Hold:</strong> Retract chain
+              </div>
+              <div>
+                <strong>Space:</strong> Pause game
+              </div>
+              <div>
+                <strong>H:</strong> Toggle this help
+              </div>
               <div className="text-gray-400 text-sm mt-4">
-                • Swing the ball to destroy enemies<br/>
-                • Chain damages basic enemies only<br/>
-                • Collect power-ups for upgrades<br/>
-                • Survive as long as possible!
+                • Swing the ball to destroy enemies
+                <br />
+                • Chain damages basic enemies only
+                <br />
+                • Collect power-ups for upgrades
+                <br />• Survive as long as possible!
               </div>
             </div>
             <button
@@ -119,8 +132,12 @@ export function GameOverlays({
               <div>Time Survived: {Math.floor(gameState.gameTime)}s</div>
               {!user && (
                 <div className="text-yellow-400 text-sm mt-4 p-3 bg-yellow-900/20 rounded-lg border border-yellow-600/30">
-                  <p className="font-semibold mb-1">Score not saved - Guest Mode</p>
-                  <p className="text-xs">Sign in to save your scores to the leaderboard!</p>
+                  <p className="font-semibold mb-1">
+                    Score not saved - Guest Mode
+                  </p>
+                  <p className="text-xs">
+                    Sign in to save your scores to the leaderboard!
+                  </p>
                 </div>
               )}
             </div>
@@ -128,13 +145,15 @@ export function GameOverlays({
               {/* Share buttons for guest users */}
               {!user && (
                 <div className="bg-gray-800/60 rounded-lg p-4 mb-4 border border-gray-600">
-                  <h4 className="text-white font-semibold mb-3 text-center">Share Your Score!</h4>
+                  <h4 className="text-white font-semibold mb-3 text-center">
+                    Share Your Score!
+                  </h4>
                   <div className="flex space-x-2">
                     <button
                       onClick={handleCopyShare}
                       className="flex-1 flex items-center justify-center space-x-2 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-3 rounded-lg transition-colors text-sm"
                     >
-                      {shareStatus === 'copied' ? (
+                      {shareStatus === "copied" ? (
                         <>
                           <CheckCircle className="w-4 h-4 text-green-400" />
                           <span>Copied!</span>
@@ -150,7 +169,7 @@ export function GameOverlays({
                       onClick={handleTwitterShare}
                       className="flex-1 flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 rounded-lg transition-colors text-sm"
                     >
-                      {shareStatus === 'shared' ? (
+                      {shareStatus === "shared" ? (
                         <>
                           <CheckCircle className="w-4 h-4 text-green-400" />
                           <span>Shared!</span>
@@ -168,7 +187,7 @@ export function GameOverlays({
                   </p>
                 </div>
               )}
-              
+
               <button
                 onClick={onRestartGame}
                 className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
@@ -177,7 +196,7 @@ export function GameOverlays({
               </button>
               {!user && (
                 <button
-                  onClick={() => window.location.href = '/'}
+                  onClick={() => (window.location.href = "/")}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors text-sm"
                 >
                   Sign In to Save Scores

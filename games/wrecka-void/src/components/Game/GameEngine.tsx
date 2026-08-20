@@ -1,30 +1,40 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { useAuth } from '../../hooks/useAuth';
-import { useLeaderboard } from '../../hooks/useLeaderboard';
-import { PowerUpManager } from './PowerUpManager';
-import { PowerUp, PlayerUpgrades, ActiveEffects } from '../../types/PowerUps';
-import { Vector2, ChainSegment, SecondChain, DEFAULT_GAME_CONFIG } from '../../types/Game';
-import { GameStateManager } from '../../game/GameState';
-import { InputManager } from '../../game/InputManager';
-import { PhysicsEngine } from '../../game/PhysicsEngine';
-import { ParticleSystem } from '../../game/ParticleSystem';
-import { CollisionDetection } from '../../game/CollisionDetection';
-import { EnemyManager } from '../../game/EnemyManager';
-import { GameRenderer } from '../../game/GameRenderer';
-import { GameHUD } from './GameHUD';
-import { GameOverlays } from './GameOverlays';
-import { beginPlatformRun } from '../../api/platformRuns';
+import { useRef, useEffect, useState, useCallback } from "react";
+import { useAuth } from "../../hooks/useAuth";
+import { useLeaderboard } from "../../hooks/useLeaderboard";
+import { PowerUpManager } from "./PowerUpManager";
+import { PowerUp, PlayerUpgrades, ActiveEffects } from "../../types/PowerUps";
+import {
+  Vector2,
+  ChainSegment,
+  SecondChain,
+  DEFAULT_GAME_CONFIG,
+} from "../../types/Game";
+import { GameStateManager } from "../../game/GameState";
+import { InputManager } from "../../game/InputManager";
+import { PhysicsEngine } from "../../game/PhysicsEngine";
+import { ParticleSystem } from "../../game/ParticleSystem";
+import { CollisionDetection } from "../../game/CollisionDetection";
+import { EnemyManager } from "../../game/EnemyManager";
+import { GameRenderer } from "../../game/GameRenderer";
+import { FixedStepClock } from "../../game/FixedStepClock";
+import { RunCompletionGate } from "../../game/RunCompletionGate";
+import { GameHUD } from "./GameHUD";
+import { GameOverlays } from "./GameOverlays";
+import { beginPlatformRun } from "../../api/platformRuns";
 
 interface GameEngineProps {
   onNavigate: (page: string) => void;
 }
 
 export function GameEngine({ onNavigate }: GameEngineProps) {
+  const smokeMode =
+    import.meta.env.DEV &&
+    new URLSearchParams(window.location.search).has("smoke");
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>();
   const { user } = useAuth();
   const { submitScore } = useLeaderboard();
-  
+
   // Game managers
   const gameStateRef = useRef<GameStateManager>(new GameStateManager());
   const inputManagerRef = useRef<InputManager | null>(null);
@@ -32,11 +42,11 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
   const enemyManagerRef = useRef<EnemyManager>(new EnemyManager());
   const powerUpManagerRef = useRef<PowerUpManager>(new PowerUpManager());
   const gameRendererRef = useRef<GameRenderer | null>(null);
-  
+
   // Game state
   const [gameState, setGameState] = useState(gameStateRef.current.getState());
   const [showHelp, setShowHelp] = useState(false);
-  
+
   // Player upgrades and effects
   const [playerUpgrades, setPlayerUpgrades] = useState<PlayerUpgrades>({
     chainDamage: 0,
@@ -57,62 +67,101 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
   const ballRef = useRef<Vector2>({ x: 400, y: 400 });
   const ballVelocityRef = useRef<Vector2>({ x: 0, y: 0 });
   const secondChainRef = useRef<SecondChain | null>(null);
-  
+
   // Timing
-  const lastTimeRef = useRef<number>(0);
-  const pausedTimeRef = useRef<number>(0);
   const pauseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const clockRef = useRef(new FixedStepClock());
+  const runCompletionRef = useRef(new RunCompletionGate());
+  const helpPausedRunRef = useRef(false);
+  const toggleHelpRef = useRef<() => void>(() => undefined);
+  const deferredSetupRef = useRef<Set<NodeJS.Timeout>>(new Set());
+  const updatePhysicsRef = useRef<(deltaTime: number) => void>(() => undefined);
+  const checkCollisionsRef = useRef<() => void>(() => undefined);
+  const renderRef = useRef<() => void>(() => undefined);
+  const initializeChainRef = useRef<() => void>(() => undefined);
+  const finishCurrentRunRef = useRef<() => void>(() => undefined);
+  const lifecycleCountersRef = useRef({
+    rafOwners: 0,
+    inputOwners: 0,
+    finishTransitions: 0,
+    restarts: 0,
+  });
 
   // Canvas dimensions
-  const [canvasSize, setCanvasSize] = useState({ 
+  const [canvasSize, setCanvasSize] = useState({
     width: window.innerWidth,
-    height: window.innerHeight - 40  // Further reduced to 40 for more game space
+    height: window.innerHeight - 40, // Further reduced to 40 for more game space
   });
+  const canvasSizeRef = useRef(canvasSize);
+  const playerUpgradesRef = useRef(playerUpgrades);
+  const activeEffectsRef = useRef(activeEffects);
+  const userRef = useRef(user);
+  const submitScoreRef = useRef(submitScore);
+
+  canvasSizeRef.current = canvasSize;
+  playerUpgradesRef.current = playerUpgrades;
+  activeEffectsRef.current = activeEffects;
+  userRef.current = user;
+  submitScoreRef.current = submitScore;
 
   // Initialize game state subscription
   useEffect(() => {
+    const deferredSetups = deferredSetupRef.current;
     const unsubscribe = gameStateRef.current.subscribe(setGameState);
+    runCompletionRef.current.reset();
     beginPlatformRun();
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      deferredSetups.forEach(clearTimeout);
+      deferredSetups.clear();
+    };
   }, []);
 
   // Handle window resize
   useEffect(() => {
     const handleResize = () => {
-      setCanvasSize({ width: window.innerWidth, height: window.innerHeight - 40 });
+      const nextSize = {
+        width: window.innerWidth,
+        height: window.innerHeight - 40,
+      };
+      canvasSizeRef.current = nextSize;
+      setCanvasSize(nextSize);
     };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   // Initialize canvas-dependent systems
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    const lifecycleCounters = lifecycleCountersRef.current;
 
     // Initialize systems
     inputManagerRef.current = new InputManager(canvas);
     gameRendererRef.current = new GameRenderer(canvas);
+    lifecycleCounters.inputOwners += 1;
 
     // Setup input listeners
     inputManagerRef.current.setListeners({
       onKeyDown: (key: string) => {
-        if (key === 'Space') {
+        if (key === "Space") {
           gameStateRef.current.togglePause();
         }
-        if (key === 'KeyH') {
-          setShowHelp(!showHelp);
+        if (key === "KeyH") {
+          toggleHelpRef.current();
         }
       },
     });
 
     // Initialize chain
-    initializeChain();
+    initializeChainRef.current();
 
     return () => {
       inputManagerRef.current?.destroy();
+      lifecycleCounters.inputOwners -= 1;
     };
-  }, [canvasSize, showHelp]);
+  }, []);
 
   // Handle window focus/blur with delay
   useEffect(() => {
@@ -139,89 +188,132 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
       }
     };
 
-    window.addEventListener('focus', handleFocus);
-    window.addEventListener('blur', handleBlur);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener("focus", handleFocus);
+    window.addEventListener("blur", handleBlur);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
-      window.removeEventListener('focus', handleFocus);
-      window.removeEventListener('blur', handleBlur);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("blur", handleBlur);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       if (pauseTimeoutRef.current) {
         clearTimeout(pauseTimeoutRef.current);
       }
     };
   }, []);
 
-  const initializeChain = () => {
-    const baseChainLength = DEFAULT_GAME_CONFIG.chainLength + (playerUpgrades.chainExtensions * 3);
-    const chain: ChainSegment[] = [];
-    for (let i = 0; i < baseChainLength; i++) {
-      chain.push({
-        pos: { 
-          x: canvasSize.width / 2, 
-          y: canvasSize.height / 2 + i * DEFAULT_GAME_CONFIG.chainSegmentDistance 
-        },
-        oldPos: { 
-          x: canvasSize.width / 2, 
-          y: canvasSize.height / 2 + i * DEFAULT_GAME_CONFIG.chainSegmentDistance 
-        },
-      });
-    }
-    chainRef.current = chain;
-    ballRef.current = { 
-      x: canvasSize.width / 2, 
-      y: canvasSize.height / 2 + baseChainLength * DEFAULT_GAME_CONFIG.chainSegmentDistance 
-    };
-    playerRef.current = { x: canvasSize.width / 2, y: canvasSize.height / 2 };
-    
-    // Initialize second chain if available
-    if (playerUpgrades.hasSecondChain) {
-      initializeSecondChain();
-    }
-  };
+  const initializeSecondChain = useCallback(() => {
+    const upgrades = playerUpgradesRef.current;
+    const size = canvasSizeRef.current;
+    if (!upgrades.hasSecondChain) return;
 
-  const initializeSecondChain = () => {
-    if (!playerUpgrades.hasSecondChain) return;
-    
     const secondChainSegments: ChainSegment[] = [];
     for (let i = 0; i < DEFAULT_GAME_CONFIG.secondChainLength; i++) {
       secondChainSegments.push({
-        pos: { 
-          x: canvasSize.width / 2 + 50, 
-          y: canvasSize.height / 2 + i * DEFAULT_GAME_CONFIG.secondChainDistance 
+        pos: {
+          x: size.width / 2 + 50,
+          y: size.height / 2 + i * DEFAULT_GAME_CONFIG.secondChainDistance,
         },
-        oldPos: { 
-          x: canvasSize.width / 2 + 50, 
-          y: canvasSize.height / 2 + i * DEFAULT_GAME_CONFIG.secondChainDistance 
+        oldPos: {
+          x: size.width / 2 + 50,
+          y: size.height / 2 + i * DEFAULT_GAME_CONFIG.secondChainDistance,
         },
       });
     }
-    
+
     secondChainRef.current = {
       segments: secondChainSegments,
-      ball: { 
-        x: canvasSize.width / 2 + 50, 
-        y: canvasSize.height / 2 + DEFAULT_GAME_CONFIG.secondChainLength * DEFAULT_GAME_CONFIG.secondChainDistance 
+      ball: {
+        x: size.width / 2 + 50,
+        y:
+          size.height / 2 +
+          DEFAULT_GAME_CONFIG.secondChainLength *
+            DEFAULT_GAME_CONFIG.secondChainDistance,
       },
       ballVelocity: { x: 0, y: 0 },
       angle: 0,
       targetAngle: 0,
     };
-  };
+  }, []);
+
+  const initializeChain = useCallback(() => {
+    const upgrades = playerUpgradesRef.current;
+    const size = canvasSizeRef.current;
+    const baseChainLength =
+      DEFAULT_GAME_CONFIG.chainLength + upgrades.chainExtensions * 3;
+    const chain: ChainSegment[] = [];
+    for (let i = 0; i < baseChainLength; i++) {
+      chain.push({
+        pos: {
+          x: size.width / 2,
+          y: size.height / 2 + i * DEFAULT_GAME_CONFIG.chainSegmentDistance,
+        },
+        oldPos: {
+          x: size.width / 2,
+          y: size.height / 2 + i * DEFAULT_GAME_CONFIG.chainSegmentDistance,
+        },
+      });
+    }
+    chainRef.current = chain;
+    ballRef.current = {
+      x: size.width / 2,
+      y:
+        size.height / 2 +
+        baseChainLength * DEFAULT_GAME_CONFIG.chainSegmentDistance,
+    };
+    playerRef.current = { x: size.width / 2, y: size.height / 2 };
+
+    // Initialize second chain if available
+    if (upgrades.hasSecondChain) {
+      initializeSecondChain();
+    }
+  }, [initializeSecondChain]);
+
+  const deferSetup = useCallback((callback: () => void) => {
+    const timeout = setTimeout(() => {
+      deferredSetupRef.current.delete(timeout);
+      callback();
+    }, 100);
+    deferredSetupRef.current.add(timeout);
+  }, []);
+
+  initializeChainRef.current = initializeChain;
 
   const applyPowerUp = (powerUp: PowerUp) => {
-    if (powerUp.type === 'permanent') {
-      setPlayerUpgrades(prev => ({
-        chainDamage: Math.min(prev.chainDamage + (powerUp.effect.chainDamage || 0), 3),
-        ballDamage: Math.min(prev.ballDamage + (powerUp.effect.ballDamage || 0), 3),
-        healthIncrease: prev.healthIncrease + (powerUp.effect.healthIncrease || 0),
-        speedBoost: Math.min(prev.speedBoost + (powerUp.effect.speedBoost || 0), 3),
-        ballSize: Math.min(prev.ballSize + (powerUp.effect.ballSizeIncrease || 0), 2),
-        chainExtensions: Math.min(prev.chainExtensions + (powerUp.effect.chainExtension ? 1 : 0), 2),
-        hasSecondChain: prev.hasSecondChain || (powerUp.effect.secondChain || false),
-        secondChainDamage: Math.min(prev.secondChainDamage + (powerUp.effect.secondChainDamage || 0), 3),
-        secondChainSpeed: Math.min(prev.secondChainSpeed + (powerUp.effect.secondChainSpeed || 0), 2),
+    if (powerUp.type === "permanent") {
+      setPlayerUpgrades((prev) => ({
+        chainDamage: Math.min(
+          prev.chainDamage + (powerUp.effect.chainDamage || 0),
+          3,
+        ),
+        ballDamage: Math.min(
+          prev.ballDamage + (powerUp.effect.ballDamage || 0),
+          3,
+        ),
+        healthIncrease:
+          prev.healthIncrease + (powerUp.effect.healthIncrease || 0),
+        speedBoost: Math.min(
+          prev.speedBoost + (powerUp.effect.speedBoost || 0),
+          3,
+        ),
+        ballSize: Math.min(
+          prev.ballSize + (powerUp.effect.ballSizeIncrease || 0),
+          2,
+        ),
+        chainExtensions: Math.min(
+          prev.chainExtensions + (powerUp.effect.chainExtension ? 1 : 0),
+          2,
+        ),
+        hasSecondChain:
+          prev.hasSecondChain || powerUp.effect.secondChain || false,
+        secondChainDamage: Math.min(
+          prev.secondChainDamage + (powerUp.effect.secondChainDamage || 0),
+          3,
+        ),
+        secondChainSpeed: Math.min(
+          prev.secondChainSpeed + (powerUp.effect.secondChainSpeed || 0),
+          2,
+        ),
       }));
 
       if (powerUp.effect.healthIncrease) {
@@ -229,27 +321,27 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
         gameStateRef.current.setState({
           health: Math.min(
             currentState.health + powerUp.effect.healthIncrease,
-            currentState.maxHealth + powerUp.effect.healthIncrease
+            currentState.maxHealth + powerUp.effect.healthIncrease,
           ),
           maxHealth: currentState.maxHealth + powerUp.effect.healthIncrease,
         });
       }
-      
+
       // Handle chain extension - need to reinitialize chain
       if (powerUp.effect.chainExtension) {
-        setTimeout(() => initializeChain(), 100); // Small delay to ensure state update
+        deferSetup(initializeChain);
       }
-      
+
       // Handle second chain unlock
       if (powerUp.effect.secondChain) {
-        setTimeout(() => initializeSecondChain(), 100);
+        deferSetup(initializeSecondChain);
       }
     } else {
       // Temporary power-up
       const currentTime = Date.now();
       const endTime = currentTime + (powerUp.duration || 5000);
 
-      setActiveEffects(prev => {
+      setActiveEffects((prev) => {
         const newEffects = { ...prev };
 
         if (powerUp.effect.berserkDamage) {
@@ -284,11 +376,11 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
 
   const updateActiveEffects = () => {
     const currentTime = Date.now();
-    setActiveEffects(prev => {
+    setActiveEffects((prev) => {
       const newEffects = { ...prev };
       let changed = false;
 
-      Object.keys(newEffects).forEach(key => {
+      Object.keys(newEffects).forEach((key) => {
         const effect = newEffects[key as keyof ActiveEffects];
         if (effect && effect.endTime <= currentTime) {
           delete newEffects[key as keyof ActiveEffects];
@@ -301,9 +393,13 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
   };
 
   const updatePhysics = (deltaTime: number) => {
-    if (gameState.isPaused) return;
+    if (gameStateRef.current.getState().isPaused) return;
 
-    const dt = Math.min(deltaTime, 16);
+    const dt = deltaTime;
+    const upgrades = playerUpgradesRef.current;
+    const effects = activeEffectsRef.current;
+    const size = canvasSizeRef.current;
+    const state = gameStateRef.current.getState();
     updateActiveEffects();
 
     const inputManager = inputManagerRef.current;
@@ -314,37 +410,35 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
       playerRef.current,
       inputManager.getMousePosition(),
       dt,
-      playerUpgrades,
-      activeEffects,
-      canvasSize.width,
-      canvasSize.height,
-      DEFAULT_GAME_CONFIG.playerSize
+      upgrades,
+      effects,
+      size.width,
+      size.height,
+      DEFAULT_GAME_CONFIG.playerSize,
     );
 
     // Update chain and ball physics based on hyper spin state
-    if (activeEffects.hyperSpin) {
+    if (effects.hyperSpin) {
       // Special hyper spin physics
-      const baseChainLength = DEFAULT_GAME_CONFIG.chainLength + (playerUpgrades.chainExtensions * 3);
+      const baseChainLength =
+        DEFAULT_GAME_CONFIG.chainLength + upgrades.chainExtensions * 3;
       PhysicsEngine.updateChainPhysicsWithHyperSpin(
         chainRef.current,
         playerRef.current,
         ballRef.current,
-        inputManager.isMouseDown(),
         DEFAULT_GAME_CONFIG.chainSegmentDistance,
-        activeEffects,
-        baseChainLength
+        effects,
+        baseChainLength,
       );
-      
+
       // Update second chain with opposite rotation if available
       if (secondChainRef.current) {
         PhysicsEngine.updateSecondChainPhysicsWithHyperSpin(
           secondChainRef.current,
           playerRef.current,
-          inputManager.isMouseDown(),
           DEFAULT_GAME_CONFIG.secondChainDistance,
-          activeEffects,
-          playerUpgrades,
-          true // Opposite direction
+          effects,
+          true, // Opposite direction
         );
       }
     } else {
@@ -353,9 +447,9 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
         chainRef.current,
         playerRef.current,
         inputManager.isMouseDown(),
-        DEFAULT_GAME_CONFIG.chainSegmentDistance
+        DEFAULT_GAME_CONFIG.chainSegmentDistance,
       );
-      
+
       // Update second chain physics if available
       if (secondChainRef.current) {
         PhysicsEngine.updateSecondChainPhysics(
@@ -363,55 +457,63 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
           playerRef.current,
           inputManager.isMouseDown(),
           DEFAULT_GAME_CONFIG.secondChainDistance,
-          playerUpgrades,
-          dt
+          upgrades,
+          dt,
         );
       }
-      
+
       // Normal ball physics
-      const currentBallRadius = DEFAULT_GAME_CONFIG.ballRadius + (playerUpgrades.ballSize * 8);
       PhysicsEngine.updateBallPhysics(
         ballRef.current,
         ballVelocityRef.current,
         chainRef.current[chainRef.current.length - 1],
         inputManager.isMouseDown(),
         DEFAULT_GAME_CONFIG.chainSegmentDistance,
-        activeEffects,
+        effects,
         dt,
-        canvasSize.width,
-        canvasSize.height,
-        currentBallRadius
       );
     }
 
     // Update game systems
-    enemyManagerRef.current.update(dt, canvasSize.width, canvasSize.height, gameState.wave, playerRef.current);
+    enemyManagerRef.current.update(
+      dt,
+      size.width,
+      size.height,
+      state.wave,
+      playerRef.current,
+    );
     particleSystemRef.current.update(dt);
-    powerUpManagerRef.current.update(dt, canvasSize.width, canvasSize.height, gameState.wave, playerUpgrades);
-    
-    // Update enemy physics separately
-    PhysicsEngine.updateEnemies(enemyManagerRef.current.getEnemies(), dt, canvasSize.width, canvasSize.height);
-    
+    powerUpManagerRef.current.update(
+      dt,
+      size.width,
+      size.height,
+      state.wave,
+      upgrades,
+    );
+
     // Create electric sparks if electrified
-    if (activeEffects.electrified && Math.random() < 0.3) {
+    if (effects.electrified && Math.random() < 0.3) {
       particleSystemRef.current.createElectricSparks(ballRef.current);
     }
   };
 
   const checkCollisions = () => {
-    if (gameState.isPaused) return;
+    if (gameStateRef.current.getState().isPaused) return;
 
-    const currentBallRadius = DEFAULT_GAME_CONFIG.ballRadius + (playerUpgrades.ballSize * 8);
+    const upgrades = playerUpgradesRef.current;
+    const effects = activeEffectsRef.current;
+    const currentBallRadius =
+      DEFAULT_GAME_CONFIG.ballRadius + upgrades.ballSize * 8;
     const enemies = enemyManagerRef.current.getEnemies();
     const projectiles = enemyManagerRef.current.getProjectiles();
-    
+
     // Store current enemies before collision detection for boss drop checking
     const currentEnemies = [...enemies];
 
     // Check power-up collisions
     const collectedPowerUp = powerUpManagerRef.current.checkCollisions(
-      playerRef.current, 
-      DEFAULT_GAME_CONFIG.playerSize
+      playerRef.current,
+      DEFAULT_GAME_CONFIG.playerSize,
     );
     if (collectedPowerUp) {
       applyPowerUp(collectedPowerUp);
@@ -422,33 +524,37 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
       ballRef.current,
       currentBallRadius,
       enemies,
-      playerUpgrades,
-      activeEffects,
+      upgrades,
+      effects,
       particleSystemRef.current,
-      ballVelocityRef.current
+      ballVelocityRef.current,
     );
 
     // Check chain vs enemies
     const chainCollisions = CollisionDetection.checkChainEnemyCollisions(
       chainRef.current,
       enemies,
-      playerUpgrades,
-      activeEffects,
+      upgrades,
+      effects,
       particleSystemRef.current,
-      ballVelocityRef.current
+      ballVelocityRef.current,
     );
 
     // Check second chain vs enemies if available
-    let secondChainCollisions = { destroyedEnemies: [], totalPoints: 0, chainWrappedEnemies: [] };
+    let secondChainCollisions: {
+      destroyedEnemies: number[];
+      totalPoints: number;
+      chainWrappedEnemies: number[];
+    } = { destroyedEnemies: [], totalPoints: 0, chainWrappedEnemies: [] };
     if (secondChainRef.current) {
-      secondChainCollisions = CollisionDetection.checkSecondChainEnemyCollisions(
-        secondChainRef.current.segments,
-        enemies,
-        playerUpgrades,
-        activeEffects,
-        particleSystemRef.current,
-        secondChainRef.current.ballVelocity
-      );
+      secondChainCollisions =
+        CollisionDetection.checkSecondChainEnemyCollisions(
+          secondChainRef.current.segments,
+          enemies,
+          upgrades,
+          effects,
+          particleSystemRef.current,
+        );
     }
 
     // Check player vs enemies
@@ -456,20 +562,24 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
       playerRef.current,
       DEFAULT_GAME_CONFIG.playerSize,
       enemies,
-      activeEffects,
-      particleSystemRef.current
+      effects,
+      particleSystemRef.current,
     );
 
     // Check player vs projectiles
-    const projectileCollisions = CollisionDetection.checkProjectilePlayerCollisions(
-      playerRef.current,
-      DEFAULT_GAME_CONFIG.playerSize,
-      projectiles,
-      particleSystemRef.current
-    );
+    const projectileCollisions =
+      CollisionDetection.checkProjectilePlayerCollisions(
+        playerRef.current,
+        DEFAULT_GAME_CONFIG.playerSize,
+        projectiles,
+        particleSystemRef.current,
+      );
 
     // Apply collision results
-    const totalPoints = ballCollisions.totalPoints + chainCollisions.totalPoints + secondChainCollisions.totalPoints;
+    const totalPoints =
+      ballCollisions.totalPoints +
+      chainCollisions.totalPoints +
+      secondChainCollisions.totalPoints;
     if (totalPoints > 0) {
       gameStateRef.current.updateScore(totalPoints);
     }
@@ -484,32 +594,32 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
       ...ballCollisions.destroyedEnemies,
       ...chainCollisions.destroyedEnemies,
       ...secondChainCollisions.destroyedEnemies,
-      ...playerCollisions.hitEnemies
+      ...playerCollisions.hitEnemies,
     ];
-    
+
     // Check for boss defeats and spawn power-ups before removing enemies
-    allDestroyedEnemies.forEach(enemyIndex => {
+    allDestroyedEnemies.forEach((enemyIndex) => {
       if (enemyIndex >= 0 && enemyIndex < currentEnemies.length) {
         const destroyedEnemy = currentEnemies[enemyIndex];
-        if (destroyedEnemy.type === 'boss') {
+        if (destroyedEnemy.type === "boss") {
           // Boss defeated! Spawn a guaranteed permanent power-up
           powerUpManagerRef.current.spawnBossPowerUp(
             destroyedEnemy.pos,
-            canvasSize.width,
-            canvasSize.height,
-            playerUpgrades
+            upgrades,
           );
         }
       }
     });
-    
+
     if (allDestroyedEnemies.length > 0) {
       enemyManagerRef.current.removeEnemies(allDestroyedEnemies);
     }
-    
+
     // Remove hit projectiles
     if (projectileCollisions.hitProjectiles.length > 0) {
-      enemyManagerRef.current.removeProjectiles(projectileCollisions.hitProjectiles);
+      enemyManagerRef.current.removeProjectiles(
+        projectileCollisions.hitProjectiles,
+      );
     }
   };
 
@@ -523,79 +633,103 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
     renderer.drawParticles(particleSystemRef.current);
     renderer.drawPowerUps(powerUpManagerRef.current);
     renderer.drawChain(
-      chainRef.current, 
-      ballRef.current, 
-      inputManager.isMouseDown(), 
-      activeEffects,
-      playerUpgrades
+      chainRef.current,
+      ballRef.current,
+      inputManager.isMouseDown(),
+      activeEffectsRef.current,
+      playerUpgradesRef.current,
     );
-    
+
     // Draw second chain if available
     if (secondChainRef.current) {
       renderer.drawSecondChain(
         secondChainRef.current,
         inputManager.isMouseDown(),
-        activeEffects,
-        playerUpgrades
+        activeEffectsRef.current,
+        playerUpgradesRef.current,
       );
     }
-    
-    renderer.drawPlayer(playerRef.current, DEFAULT_GAME_CONFIG.playerSize, activeEffects);
-    
-    const currentBallRadius = DEFAULT_GAME_CONFIG.ballRadius + (playerUpgrades.ballSize * 8);
-    renderer.drawBall(ballRef.current, currentBallRadius, activeEffects);
+
+    renderer.drawPlayer(
+      playerRef.current,
+      DEFAULT_GAME_CONFIG.playerSize,
+      activeEffects,
+    );
+
+    const currentBallRadius =
+      DEFAULT_GAME_CONFIG.ballRadius + playerUpgradesRef.current.ballSize * 8;
+    renderer.drawBall(
+      ballRef.current,
+      currentBallRadius,
+      activeEffectsRef.current,
+    );
     renderer.drawEnemies(enemyManagerRef.current.getEnemies());
     renderer.drawMouseCursor(inputManager.getMousePosition());
   };
 
-  const gameLoop = useCallback((currentTime: number) => {
-    if (!lastTimeRef.current) lastTimeRef.current = currentTime;
-    let deltaTime = currentTime - lastTimeRef.current;
-    
-    if (gameState.isPaused) {
-      pausedTimeRef.current += deltaTime;
-      render();
-      animationRef.current = requestAnimationFrame(gameLoop);
-      return;
-    }
-    
-    if (pausedTimeRef.current > 0) {
-      pausedTimeRef.current = 0;
-      deltaTime = 16;
-    }
-    
-    lastTimeRef.current = currentTime;
+  updatePhysicsRef.current = updatePhysics;
+  checkCollisionsRef.current = checkCollisions;
+  renderRef.current = render;
 
-    if (!gameState.isGameOver) {
-      gameStateRef.current.updateGameTime(deltaTime);
-      gameStateRef.current.updateWave();
-      updatePhysics(deltaTime);
-      checkCollisions();
+  const finishCurrentRun = () => {
+    const finalState = gameStateRef.current.getState();
+    if (!runCompletionRef.current.shouldFinish(finalState.isGameOver)) return;
 
-      const finalState = gameStateRef.current.getState();
-      if (finalState.health <= 0) {
-        gameStateRef.current.setState({ isGameOver: true });
-        if (user?.id) {
-          submitScore(finalState.score, finalState.wave, finalState.gameTime);
-        }
-      }
+    lifecycleCountersRef.current.finishTransitions += 1;
+    if (userRef.current?.id) {
+      void submitScoreRef.current(
+        finalState.score,
+        finalState.wave,
+        finalState.gameTime,
+      );
     }
+  };
 
-    render();
-    animationRef.current = requestAnimationFrame(gameLoop);
-  }, [gameState, user, submitScore, playerUpgrades, activeEffects]);
+  finishCurrentRunRef.current = finishCurrentRun;
 
   useEffect(() => {
+    let running = true;
+    const lifecycleCounters = lifecycleCountersRef.current;
+    lifecycleCounters.rafOwners += 1;
+    const gameLoop = (currentTime: number) => {
+      if (!running) return;
+
+      const state = gameStateRef.current.getState();
+      clockRef.current.advance(
+        currentTime,
+        state.isPaused || state.isGameOver,
+        (deltaTime) => {
+          const frameState = gameStateRef.current.getState();
+          if (frameState.isPaused || frameState.isGameOver) return;
+
+          gameStateRef.current.updateGameTime(deltaTime);
+          gameStateRef.current.updateWave();
+          updatePhysicsRef.current(deltaTime);
+          checkCollisionsRef.current();
+
+          finishCurrentRunRef.current();
+        },
+      );
+
+      renderRef.current();
+      animationRef.current = requestAnimationFrame(gameLoop);
+    };
+
     animationRef.current = requestAnimationFrame(gameLoop);
     return () => {
+      running = false;
+      lifecycleCounters.rafOwners -= 1;
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [gameLoop]);
+  }, []);
 
   const restartGame = () => {
     beginPlatformRun();
+    lifecycleCountersRef.current.restarts += 1;
+    runCompletionRef.current.reset();
+    clockRef.current.reset();
     gameStateRef.current.reset();
     setPlayerUpgrades({
       chainDamage: 0,
@@ -609,41 +743,90 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
       secondChainSpeed: 0,
     });
     setActiveEffects({});
-    
+
     enemyManagerRef.current.clear();
     particleSystemRef.current.clear();
     powerUpManagerRef.current.clear();
-    
+
     ballVelocityRef.current = { x: 0, y: 0 };
     secondChainRef.current = null;
-    initializeChain();
+    initializeChainRef.current();
   };
+
+  const toggleHelp = () => {
+    setShowHelp((visible) => {
+      const nextVisible = !visible;
+      if (nextVisible) {
+        const state = gameStateRef.current.getState();
+        helpPausedRunRef.current = !state.isPaused;
+        if (helpPausedRunRef.current) {
+          gameStateRef.current.setState({ isPaused: true });
+        }
+      } else if (helpPausedRunRef.current) {
+        helpPausedRunRef.current = false;
+        gameStateRef.current.setState({ isPaused: false });
+      }
+      return nextVisible;
+    });
+  };
+
+  toggleHelpRef.current = toggleHelp;
+
+  const forceGameOverForSmoke = () => {
+    const state = gameStateRef.current.getState();
+    gameStateRef.current.updateHealth(state.health);
+    finishCurrentRunRef.current();
+  };
+
+  const lifecycle = lifecycleCountersRef.current;
 
   return (
     <div className="relative w-full h-screen bg-gray-900 overflow-hidden">
-      <GameHUD 
-        gameState={gameState} 
-        activeEffects={activeEffects} 
-        playerUpgrades={playerUpgrades} 
+      <GameHUD
+        gameState={gameState}
+        activeEffects={activeEffects}
+        playerUpgrades={playerUpgrades}
         user={user}
         onNavigate={onNavigate}
+        onToggleHelp={toggleHelp}
+        onTogglePause={() => gameStateRef.current.togglePause()}
       />
-      
+
       <canvas
         ref={canvasRef}
         width={canvasSize.width}
         height={canvasSize.height}
-        className="block bg-gray-800 mt-10"  // Further reduced to mt-10
+        className="block bg-gray-800 mt-10 touch-none"
       />
 
       <GameOverlays
         gameState={gameState}
         showHelp={showHelp}
         user={user}
-        onToggleHelp={() => setShowHelp(!showHelp)}
+        onToggleHelp={toggleHelp}
         onTogglePause={() => gameStateRef.current.togglePause()}
         onRestartGame={restartGame}
       />
+
+      {smokeMode && (
+        <aside
+          aria-label="Development smoke controls"
+          className="absolute bottom-2 left-2 z-[60] rounded border border-cyan-400/50 bg-gray-950/90 p-2 text-[10px] text-cyan-100"
+        >
+          <button
+            type="button"
+            onClick={forceGameOverForSmoke}
+            className="rounded bg-cyan-700 px-2 py-1 font-semibold text-white"
+          >
+            Force game over
+          </button>
+          <output className="ml-2" aria-label="Lifecycle owners">
+            RAF {lifecycle.rafOwners} · input {lifecycle.inputOwners} · timers{" "}
+            {deferredSetupRef.current.size} · finishes{" "}
+            {lifecycle.finishTransitions} · restarts {lifecycle.restarts}
+          </output>
+        </aside>
+      )}
     </div>
   );
 }
