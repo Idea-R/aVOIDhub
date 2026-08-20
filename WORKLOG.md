@@ -166,3 +166,21 @@ The production deploy and merge remain intentionally unchanged until the user re
 ### Next action
 
 Review the refined draft, then approve or request changes before the production deploy and merge.
+
+## 2026-08-20 — Player and Creator membership contract
+
+- Opened issue `#38` and created isolated branch `codex/feature-membership-creator-contract` from the exact reviewed platform-foundation head `f1976f2`.
+- Defined Free Player, Founding Player, and Creator offers in `docs/membership-creator-v1.md`, including cosmetic, advertising, subscription, hosting, and future payout boundaries.
+- Kept ordinary accounts, profiles, favorites, play, and eligible leaderboards free. Paid benefits remain comfort, identity, cosmetics, early access, and creator capacity—never score or gameplay power.
+- Made creator application free and separated review approval from subscription entitlement. Creator checkout and private game submission now require approved status; game submission additionally requires an active `creator.submit_game` entitlement.
+- Removed paid `creator.profile` from the plan mapping so payment cannot create approval or publication. Added the supporter-cosmetic entitlement promised by the Player offer.
+- Added focused pure eligibility tests plus database/static assertions that paid plans do not grant creator approval.
+- Rewrote membership and creator-intake copy around observable requirements, private review, hosting lanes, and honest live-vs-planned boundaries.
+- Consulted the current Supabase changelog before implementation. The Data API exposure change is already handled by explicit grants; current Node 22 and TypeScript versions satisfy the announced client-library requirements.
+- Passed seven focused eligibility tests, platform type-check, the 52-assertion foundation verifier, and the complete 21-route Next production build.
+- Browser-verified the membership and creator-intake pages at 390 × 844 and 1440 × 900 with no horizontal overflow, visible overlap, or console warning/error.
+- No Supabase branch or migration execution, Stripe Product/Price, charge, AdSense request, creator publication, payout, DNS change, or production deploy occurred.
+
+### Next action
+
+Publish the issue #38 draft review. Test-mode Stripe lifecycle, cosmetic fulfillment, executable database acceptance, and AdSense activation remain later gated steps.

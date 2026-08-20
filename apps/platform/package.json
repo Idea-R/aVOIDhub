@@ -8,6 +8,7 @@
     "build:preview": "cross-env AVOID_STATIC_EXPORT=1 next build",
     "build:netlify": "npm run build:platform:netlify --prefix ../..",
     "start": "next start",
+    "test": "vitest --run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -25,6 +26,7 @@
     "@types/react": "^19.2.3",
     "@types/react-dom": "^19.2.3",
     "cross-env": "^10.1.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.10"
   }
 }

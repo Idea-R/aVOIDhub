@@ -299,18 +299,19 @@ insert into public.entitlement_definitions (entitlement_key, description) values
   ('platform.ad_free', 'Do not request platform display ads for this member.'),
   ('profile.founding_mark', 'Display the founding player profile mark.'),
   ('experiments.early_access', 'Access selected early platform experiments.'),
-  ('creator.profile', 'Create and publish a creator profile.'),
-  ('creator.submit_game', 'Submit games to the review queue.')
+  ('cosmetics.supporter', 'Receive supporter cosmetics in games that implement them.'),
+  ('creator.submit_game', 'Use paid submission capacity after creator approval.')
 on conflict (entitlement_key) do update set description = excluded.description;
 
 insert into public.plan_entitlements (plan_key, entitlement_key) values
   ('player', 'platform.ad_free'),
   ('player', 'profile.founding_mark'),
   ('player', 'experiments.early_access'),
+  ('player', 'cosmetics.supporter'),
   ('creator', 'platform.ad_free'),
   ('creator', 'profile.founding_mark'),
   ('creator', 'experiments.early_access'),
-  ('creator', 'creator.profile'),
+  ('creator', 'cosmetics.supporter'),
   ('creator', 'creator.submit_game')
 on conflict do nothing;
 

@@ -108,6 +108,26 @@ select is(
   true,
   'service role can reconcile subscriptions'
 );
+select is(
+  (
+    select count(*)
+    from public.plan_entitlements
+    where plan_key = 'creator'
+      and entitlement_key = 'creator.profile'
+  ),
+  0::bigint,
+  'payment does not grant creator approval or profile publication'
+);
+select is(
+  (
+    select count(*)
+    from public.plan_entitlements
+    where plan_key = 'creator'
+      and entitlement_key = 'creator.submit_game'
+  ),
+  1::bigint,
+  'creator subscription grants only the paid submission half of eligibility'
+);
 
 select is(
   (

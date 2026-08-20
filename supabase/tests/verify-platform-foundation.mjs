@@ -40,6 +40,8 @@ const requiredMigrationFragments = [
   "to service_role;",
   "ruleset_version",
   "octet_length(coalesce(p_metrics, '{}'::jsonb)::text) > 8192",
+  "('cosmetics.supporter', 'Receive supporter cosmetics in games that implement them.')",
+  "('creator.submit_game', 'Use paid submission capacity after creator approval.')",
 ];
 
 for (const fragment of requiredMigrationFragments) {
@@ -57,6 +59,7 @@ const forbiddenPatterns = [
   /create\s+policy[^;]*(?:leaderboard_scores|game_scores)[^;]*for\s+(?:insert|update|delete|all)/is,
   /raw_user_meta_data\s*->>\s*'email'/i,
   /split_part\s*\(\s*new\.email/i,
+  /\('creator',\s*'creator\.profile'\)/i,
 ];
 
 for (const pattern of forbiddenPatterns) {

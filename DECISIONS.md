@@ -196,3 +196,12 @@ Revoke inherited table and function privileges from `anon` and `authenticated`, 
 - Status: accepted for the Sprint 1 foundation
 
 Every new run session and score submission records a bounded ruleset version. The atomic finishing transaction copies game, mode, user, and ruleset identity from the locked server-created run rather than accepting those values from the finishing client. A leaderboard may compare results only within a compatibility rule defined by the game; a future balance or scoring change cannot silently share a ranking with an incompatible ruleset.
+
+## D-029 — Separate creator approval from creator payment
+
+- Date: 2026-08-20
+- Status: accepted for the membership source gate
+
+Creator application is free. Human review establishes creator approval; Stripe establishes only subscription state. Private game submission and paid hosting capacity require both an approved application and an active Creator entitlement. Payment cannot create a creator profile, approve an application, publish a game, enable ads, or promise revenue sharing. Cancellation removes subscription-sourced capacity without deleting creator ownership, application, profile, submission, or review history.
+
+Free accounts retain core profiles, favorites, play, and eligible leaderboards. Founding Player and Creator plans may add ad-free eligible platform pages, noncompetitive identity/cosmetics, selected experiments, and reviewed creator capacity. No plan may change score, damage, armor, movement, ranked trust, or other competitive outcomes.
