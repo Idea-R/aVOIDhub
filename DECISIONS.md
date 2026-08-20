@@ -266,3 +266,10 @@ Derive named world, power-up, chain, score, and defense streams from one recorde
 - Status: accepted for V4
 
 Use a small procedural Web Audio palette that starts only after a player gesture, persists mute, reports failure honestly, and owns exact voice/context teardown. The OS reduced-motion request is mandatory and may suppress particles, shake, shadows, trails, and decorative chain/defense work, but it cannot change gameplay streams, collisions, timing, scoring, or evidence. One semantic dialog owns each blocking state; score updates are not a continuous live region. Enforce central particle and shipping-transfer ceilings in code. Browser emulation, local FPS, and heap samples complete the local gate, while physical devices, deployed audits, production smoke, and rollback proof remain separate release evidence.
+
+## D-039 — Rebuild TankaVOID around directional combat, not prototype breadth
+
+- Date: 2026-08-20
+- Status: accepted for T0/T1
+
+Preserve both prototype histories, then remove the incompatible monorepo generations from the active graph. The stronger standalone tree is a mechanics reference, not a production base. Establish one seeded 60 Hz simulation, loop, input owner, resize owner, logical-pixel viewport, and exact lifecycle before porting combat. T2 must pass an impact vector into pure face/incidence/damage math; it cannot call a generic `takeDamage(damage)` path. TankaVOID remains Coming Soon until the narrow directional-combat loop, content, platform, device, deploy, and rollback gates pass.

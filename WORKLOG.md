@@ -270,3 +270,21 @@ Publish WD1 for review. Then either run the documented foundation/WD1 SQL and co
 ### Next action
 
 Review stacked draft PR `#23` and keep physical-device/deployed checks as explicit release gates. The next code dependency is V3/platform data work after the isolated Supabase branch is approved.
+
+## 2026-08-20 — TankaVOID T0/T1 prototype recovery and clean runtime
+
+- Selected TankaVOID T0/T1 as the highest-value local slice that does not require the paid Supabase branch.
+- Opened issue `#24` and created isolated branch `codex/tankavoid-t0-t1-foundation` from reviewed VOIDaVOID V4 commit `932263a`.
+- Confirmed the monorepo generation failed with 78 TypeScript errors and the stronger standalone tree had 19 modified plus 5 untracked entries with one remaining TypeScript error.
+- Preserved the standalone dirty source in `C:\dev\TankAVOIDz-recovery-20260820-0700.zip` and all committed history in `C:\dev\TankAVOIDz-history-20260820.bundle`; recorded both SHA-256 values without changing that worktree.
+- Removed the fake leaderboard shell and sixteen incompatible legacy engine/entity/system/math files from the active branch after preservation.
+- Added one deterministic 60 Hz tank simulation, bounded fixed-step loop, keyboard/pointer owner, responsive logical-pixel viewport, renderer, explicit drill lifecycle, diagnostics, and honest non-score UI.
+- Froze the narrow V1/T2 directional armor, incidence, ricochet, damage, content, score, input, lifecycle, and performance contract in `docs/tankavoid-v1-contract.md`.
+- Passed zero-warning typecheck/lint, 5 test files / 10 tests, Vite build, root audit, and the 54,130 / 122,880-byte initial-transfer gate with no downloaded or external runtime assets.
+- Browser-checked six briefing and five running viewports, Escape/modal focus, quiet console, and a 20-cycle sample retaining one canvas, eight listeners, one observer, and no terminal frame.
+- Corrected the frame-owner diagnostic and narrow briefing overflow discovered during browser QA.
+- Kept TankaVOID out of platform staging and retained the public Coming Soon/noninteractive boundary.
+
+### Next action
+
+Publish T0/T1 for review, then implement T2 as an isolated deterministic combat slice: one cannon, one enemy, pure face/incidence/damage math, and readable ricochet/glancing/penetration outcomes. Do not reopen infantry, mines, progression, multiplayer, or fake leaderboard scope.
