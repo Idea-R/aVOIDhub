@@ -5,6 +5,7 @@
 - **Base:** `security/platform-foundation-v1`
 - **Game:** `games/wrecka-void`
 - **Issue:** `https://github.com/Idea-R/aVOIDhub/issues/6`
+- **Draft PR:** `https://github.com/Idea-R/aVOIDhub/pull/7`
 - **Status:** W0 and W1 local exit gates complete; no production deployment
 
 ## Sprint intent
@@ -55,14 +56,14 @@ npm run build --workspace=@avoid/wrecka-void
 
 Result on 2026-08-20:
 
-| Gate                          | Result                   |
-| ----------------------------- | ------------------------ |
-| Standalone TypeScript         | Pass                     |
-| ESLint                        | Pass, zero warnings      |
-| Vitest                        | Pass, 5 files / 14 tests |
-| Vite production build         | Pass                     |
+| Gate                          | Result                             |
+| ----------------------------- | ---------------------------------- |
+| Standalone TypeScript         | Pass                               |
+| ESLint                        | Pass, zero warnings                |
+| Vitest                        | Pass, 5 files / 14 tests           |
+| Vite production build         | Pass                               |
 | Next.js runtime build         | Pass with staged WreckaVOID bundle |
-| npm audit from locked install | Zero vulnerabilities     |
+| npm audit from locked install | Zero vulnerabilities               |
 
 The focused suite covers:
 

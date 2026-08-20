@@ -45,6 +45,7 @@ Move the live aVOIDgame.io rebuild through the phased V1 completion program: sec
 - Active Sprint 1 draft PR: `https://github.com/Idea-R/aVOIDhub/pull/4`
 - Active game-repair branch: `codex/fix-wreckavoid-v1-baseline`
 - Active game-repair issue: `https://github.com/Idea-R/aVOIDhub/issues/6`
+- Active game-repair draft PR: `https://github.com/Idea-R/aVOIDhub/pull/7`
 - WreckaVOID W0/W1 evidence: `docs/sprint-wreckavoid-w0-w1.md`
 - Program source of truth: `docs/V1-COMPLETION-PROGRAM.md`
 - Sprint 0 evidence: `docs/sprint-0-recoverability.md`
