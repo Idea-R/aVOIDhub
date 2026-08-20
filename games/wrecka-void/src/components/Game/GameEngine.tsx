@@ -18,6 +18,8 @@ import { EnemyManager } from "../../game/EnemyManager";
 import { GameRenderer } from "../../game/GameRenderer";
 import { FixedStepClock } from "../../game/FixedStepClock";
 import { RunCompletionGate } from "../../game/RunCompletionGate";
+import { PauseController } from "../../game/PauseController";
+import { SoundManager } from "../../game/SoundManager";
 import { GameHUD } from "./GameHUD";
 import { GameOverlays } from "./GameOverlays";
 import { beginPlatformRun } from "../../api/platformRuns";
@@ -46,6 +48,15 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
   // Game state
   const [gameState, setGameState] = useState(gameStateRef.current.getState());
   const [showHelp, setShowHelp] = useState(false);
+  const showHelpRef = useRef(showHelp);
+  const [audioEnabled, setAudioEnabled] = useState(
+    () => window.localStorage.getItem("wreckavoid:audio") !== "muted",
+  );
+  const soundManagerRef = useRef(new SoundManager(audioEnabled));
+  const [reducedMotion, setReducedMotion] = useState(
+    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  );
+  const reducedMotionRef = useRef(reducedMotion);
 
   // Player upgrades and effects
   const [playerUpgrades, setPlayerUpgrades] = useState<PlayerUpgrades>({
@@ -72,7 +83,8 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
   const pauseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const clockRef = useRef(new FixedStepClock());
   const runCompletionRef = useRef(new RunCompletionGate());
-  const helpPausedRunRef = useRef(false);
+  const pauseControllerRef = useRef(new PauseController());
+  const toggleManualPauseRef = useRef<() => void>(() => undefined);
   const toggleHelpRef = useRef<() => void>(() => undefined);
   const deferredSetupRef = useRef<Set<NodeJS.Timeout>>(new Set());
   const updatePhysicsRef = useRef<(deltaTime: number) => void>(() => undefined);
@@ -89,8 +101,8 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
 
   // Canvas dimensions
   const [canvasSize, setCanvasSize] = useState({
-    width: window.innerWidth,
-    height: window.innerHeight - 40, // Further reduced to 40 for more game space
+    width: 1,
+    height: 1,
   });
   const canvasSizeRef = useRef(canvasSize);
   const playerUpgradesRef = useRef(playerUpgrades);
@@ -103,6 +115,8 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
   activeEffectsRef.current = activeEffects;
   userRef.current = user;
   submitScoreRef.current = submitScore;
+  showHelpRef.current = showHelp;
+  reducedMotionRef.current = reducedMotion;
 
   // Initialize game state subscription
   useEffect(() => {
@@ -117,18 +131,60 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
     };
   }, []);
 
-  // Handle window resize
+  useEffect(
+    () => () => {
+      soundManagerRef.current.destroy();
+    },
+    [],
+  );
+
   useEffect(() => {
-    const handleResize = () => {
+    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const handleChange = (event: MediaQueryListEvent) => {
+      reducedMotionRef.current = event.matches;
+      setReducedMotion(event.matches);
+    };
+    preference.addEventListener("change", handleChange);
+    return () => preference.removeEventListener("change", handleChange);
+  }, []);
+
+  // Own the bitmap from the rendered canvas so dynamic viewport chrome,
+  // orientation, safe areas, and CSS layout all share one source of truth.
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const syncCanvasSize = () => {
+      const rect = canvas.getBoundingClientRect();
       const nextSize = {
-        width: window.innerWidth,
-        height: window.innerHeight - 40,
+        width: Math.max(1, Math.round(rect.width)),
+        height: Math.max(1, Math.round(rect.height)),
       };
+      const currentSize = canvasSizeRef.current;
+      if (
+        currentSize.width === nextSize.width &&
+        currentSize.height === nextSize.height
+      ) {
+        return;
+      }
       canvasSizeRef.current = nextSize;
+      inputManagerRef.current?.resize(nextSize.width, nextSize.height);
       setCanvasSize(nextSize);
     };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+
+    const observer = new ResizeObserver(syncCanvasSize);
+    observer.observe(canvas);
+    window.visualViewport?.addEventListener("resize", syncCanvasSize);
+    window.visualViewport?.addEventListener("scroll", syncCanvasSize);
+    window.addEventListener("orientationchange", syncCanvasSize);
+    syncCanvasSize();
+
+    return () => {
+      observer.disconnect();
+      window.visualViewport?.removeEventListener("resize", syncCanvasSize);
+      window.visualViewport?.removeEventListener("scroll", syncCanvasSize);
+      window.removeEventListener("orientationchange", syncCanvasSize);
+    };
   }, []);
 
   // Initialize canvas-dependent systems
@@ -146,11 +202,14 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
     inputManagerRef.current.setListeners({
       onKeyDown: (key: string) => {
         if (key === "Space") {
-          gameStateRef.current.togglePause();
+          toggleManualPauseRef.current();
         }
         if (key === "KeyH") {
           toggleHelpRef.current();
         }
+      },
+      onMouseDown: () => {
+        void soundManagerRef.current.resume();
       },
     });
 
@@ -171,12 +230,21 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
         clearTimeout(pauseTimeoutRef.current);
         pauseTimeoutRef.current = null;
       }
+      gameStateRef.current.setState({
+        isPaused: pauseControllerRef.current.set("focus", false),
+      });
     };
 
     const handleBlur = () => {
       gameStateRef.current.setWindowFocus(false);
+      if (pauseTimeoutRef.current) {
+        clearTimeout(pauseTimeoutRef.current);
+      }
       pauseTimeoutRef.current = setTimeout(() => {
-        gameStateRef.current.setState({ isPaused: true });
+        gameStateRef.current.setState({
+          isPaused: pauseControllerRef.current.set("focus", true),
+        });
+        pauseTimeoutRef.current = null;
       }, DEFAULT_GAME_CONFIG.pauseDelay);
     };
 
@@ -492,7 +560,11 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
     );
 
     // Create electric sparks if electrified
-    if (effects.electrified && Math.random() < 0.3) {
+    if (
+      !reducedMotionRef.current &&
+      effects.electrified &&
+      Math.random() < 0.3
+    ) {
       particleSystemRef.current.createElectricSparks(ballRef.current);
     }
   };
@@ -517,6 +589,7 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
     );
     if (collectedPowerUp) {
       applyPowerUp(collectedPowerUp);
+      soundManagerRef.current.powerUp();
     }
 
     // Check ball vs enemies
@@ -582,11 +655,13 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
       secondChainCollisions.totalPoints;
     if (totalPoints > 0) {
       gameStateRef.current.updateScore(totalPoints);
+      soundManagerRef.current.impact(totalPoints);
     }
 
     const totalDamage = playerCollisions.damage + projectileCollisions.damage;
     if (totalDamage > 0) {
       gameStateRef.current.updateHealth(totalDamage);
+      soundManagerRef.current.damage();
     }
 
     // Remove destroyed enemies
@@ -630,7 +705,9 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
 
     renderer.clear();
     renderer.drawGrid();
-    renderer.drawParticles(particleSystemRef.current);
+    if (!reducedMotionRef.current) {
+      renderer.drawParticles(particleSystemRef.current);
+    }
     renderer.drawPowerUps(powerUpManagerRef.current);
     renderer.drawChain(
       chainRef.current,
@@ -676,6 +753,7 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
     if (!runCompletionRef.current.shouldFinish(finalState.isGameOver)) return;
 
     lifecycleCountersRef.current.finishTransitions += 1;
+    soundManagerRef.current.gameOver();
     if (userRef.current?.id) {
       void submitScoreRef.current(
         finalState.score,
@@ -729,8 +807,11 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
     beginPlatformRun();
     lifecycleCountersRef.current.restarts += 1;
     runCompletionRef.current.reset();
+    pauseControllerRef.current.reset();
     clockRef.current.reset();
     gameStateRef.current.reset();
+    showHelpRef.current = false;
+    setShowHelp(false);
     setPlayerUpgrades({
       chainDamage: 0,
       ballDamage: 0,
@@ -754,23 +835,33 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
   };
 
   const toggleHelp = () => {
-    setShowHelp((visible) => {
-      const nextVisible = !visible;
-      if (nextVisible) {
-        const state = gameStateRef.current.getState();
-        helpPausedRunRef.current = !state.isPaused;
-        if (helpPausedRunRef.current) {
-          gameStateRef.current.setState({ isPaused: true });
-        }
-      } else if (helpPausedRunRef.current) {
-        helpPausedRunRef.current = false;
-        gameStateRef.current.setState({ isPaused: false });
-      }
-      return nextVisible;
+    const nextVisible = !showHelpRef.current;
+    showHelpRef.current = nextVisible;
+    setShowHelp(nextVisible);
+    gameStateRef.current.setState({
+      isPaused: pauseControllerRef.current.set("help", nextVisible),
     });
   };
 
+  const toggleManualPause = () => {
+    soundManagerRef.current.pause();
+    gameStateRef.current.setState({
+      isPaused: pauseControllerRef.current.toggleManual(),
+    });
+  };
+
+  toggleManualPauseRef.current = toggleManualPause;
   toggleHelpRef.current = toggleHelp;
+
+  const toggleAudio = () => {
+    const nextEnabled = !soundManagerRef.current.isEnabled();
+    setAudioEnabled(nextEnabled);
+    window.localStorage.setItem(
+      "wreckavoid:audio",
+      nextEnabled ? "enabled" : "muted",
+    );
+    void soundManagerRef.current.setEnabled(nextEnabled);
+  };
 
   const forceGameOverForSmoke = () => {
     const state = gameStateRef.current.getState();
@@ -778,10 +869,19 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
     finishCurrentRunRef.current();
   };
 
+  const setFocusPauseForSmoke = (active: boolean) => {
+    gameStateRef.current.setWindowFocus(!active);
+    gameStateRef.current.setState({
+      isPaused: pauseControllerRef.current.set("focus", active),
+    });
+  };
+
   const lifecycle = lifecycleCountersRef.current;
+  const viewportReady = canvasSize.width > 1 && canvasSize.height > 1;
+  const viewportSupported = canvasSize.width >= 320 && canvasSize.height >= 320;
 
   return (
-    <div className="relative w-full h-screen bg-gray-900 overflow-hidden">
+    <div className="relative flex h-screen h-[100dvh] w-full flex-col overflow-hidden bg-gray-900 pb-[env(safe-area-inset-bottom)]">
       <GameHUD
         gameState={gameState}
         activeEffects={activeEffects}
@@ -789,14 +889,16 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
         user={user}
         onNavigate={onNavigate}
         onToggleHelp={toggleHelp}
-        onTogglePause={() => gameStateRef.current.togglePause()}
+        onTogglePause={toggleManualPause}
+        audioEnabled={audioEnabled}
+        onToggleAudio={toggleAudio}
       />
 
       <canvas
         ref={canvasRef}
         width={canvasSize.width}
         height={canvasSize.height}
-        className="block bg-gray-800 mt-10 touch-none"
+        className="block min-h-0 w-full flex-1 touch-none bg-gray-800"
       />
 
       <GameOverlays
@@ -804,26 +906,89 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
         showHelp={showHelp}
         user={user}
         onToggleHelp={toggleHelp}
-        onTogglePause={() => gameStateRef.current.togglePause()}
+        onTogglePause={toggleManualPause}
         onRestartGame={restartGame}
       />
+
+      {!gameState.isPaused &&
+        !gameState.isGameOver &&
+        !showHelp &&
+        gameState.gameTime < 6 &&
+        gameState.score === 0 && (
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute left-1/2 top-[calc(3.5rem+env(safe-area-inset-top))] z-20 w-[min(90vw,34rem)] -translate-x-1/2 text-center"
+          >
+            <p className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-xl border border-white/10 bg-gray-950/75 px-4 py-2 text-xs font-medium text-gray-200 shadow-xl backdrop-blur-sm motion-reduce:transition-none sm:text-sm">
+              <span>
+                <strong className="text-cyan-300">Drag</strong> to steer
+              </span>
+              <span aria-hidden="true" className="text-gray-500">
+                •
+              </span>
+              <span>
+                <strong className="text-orange-300">Hold</strong> to pull in
+              </span>
+              <span aria-hidden="true" className="text-gray-500">
+                •
+              </span>
+              <span>
+                <strong className="text-yellow-300">Swing</strong> to strike
+              </span>
+            </p>
+          </div>
+        )}
+
+      {viewportReady && !viewportSupported && (
+        <section
+          role="status"
+          aria-label="Viewport not supported"
+          className="absolute inset-0 z-[70] flex items-center justify-center bg-gray-950/95 p-6 text-center text-white"
+        >
+          <div className="max-w-sm">
+            <h2 className="text-2xl font-bold">Give the wrecking ball room.</h2>
+            <p className="mt-3 text-sm text-gray-300">
+              Rotate your device or make this window a little taller. WreckaVOID
+              needs at least a 320 × 320 playfield to keep the action readable.
+            </p>
+          </div>
+        </section>
+      )}
 
       {smokeMode && (
         <aside
           aria-label="Development smoke controls"
-          className="absolute bottom-2 left-2 z-[60] rounded border border-cyan-400/50 bg-gray-950/90 p-2 text-[10px] text-cyan-100"
+          className="pointer-events-none absolute bottom-2 left-2 z-[60] rounded border border-cyan-400/50 bg-gray-950/90 p-2 text-[10px] text-cyan-100"
         >
           <button
             type="button"
             onClick={forceGameOverForSmoke}
-            className="rounded bg-cyan-700 px-2 py-1 font-semibold text-white"
+            className="pointer-events-auto rounded bg-cyan-700 px-2 py-1 font-semibold text-white"
           >
             Force game over
+          </button>
+          <button
+            type="button"
+            onClick={() => setFocusPauseForSmoke(true)}
+            className="pointer-events-auto ml-1 rounded bg-gray-700 px-2 py-1 font-semibold text-white"
+          >
+            Simulate focus loss
+          </button>
+          <button
+            type="button"
+            onClick={() => setFocusPauseForSmoke(false)}
+            className="pointer-events-auto ml-1 rounded bg-gray-700 px-2 py-1 font-semibold text-white"
+          >
+            Simulate focus return
           </button>
           <output className="ml-2" aria-label="Lifecycle owners">
             RAF {lifecycle.rafOwners} · input {lifecycle.inputOwners} · timers{" "}
             {deferredSetupRef.current.size} · finishes{" "}
             {lifecycle.finishTransitions} · restarts {lifecycle.restarts}
+            {" · pauses "}
+            {pauseControllerRef.current.activeReasons().join("+") || "none"}
+            {" · motion "}
+            {reducedMotion ? "reduced" : "standard"}
           </output>
         </aside>
       )}

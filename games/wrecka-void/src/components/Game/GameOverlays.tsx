@@ -121,17 +121,19 @@ export function GameOverlays({
 
       {/* Game over overlay */}
       {gameState.isGameOver && (
-        <div className="absolute inset-0 bg-black/90 flex items-center justify-center backdrop-blur-sm z-40">
-          <div className="bg-gray-900 p-8 rounded-lg text-center max-w-md border border-gray-700">
-            <h2 className="text-4xl font-bold text-red-400 mb-6">Game Over!</h2>
-            <div className="space-y-3 text-gray-300 mb-8">
-              <div className="text-2xl font-bold text-yellow-400">
+        <div className="absolute inset-0 z-40 flex items-center justify-center overflow-y-auto bg-black/90 p-3 backdrop-blur-sm sm:p-6">
+          <div className="my-auto w-full max-w-md rounded-lg border border-gray-700 bg-gray-900 p-4 text-center sm:p-8">
+            <h2 className="mb-3 text-3xl font-bold text-red-400 sm:mb-6 sm:text-4xl">
+              Game Over!
+            </h2>
+            <div className="mb-4 space-y-2 text-gray-300 sm:mb-8 sm:space-y-3">
+              <div className="text-xl font-bold text-yellow-400 sm:text-2xl">
                 Final Score: {gameState.score.toLocaleString()}
               </div>
               <div>Wave Reached: {gameState.wave}</div>
               <div>Time Survived: {Math.floor(gameState.gameTime)}s</div>
               {!user && (
-                <div className="text-yellow-400 text-sm mt-4 p-3 bg-yellow-900/20 rounded-lg border border-yellow-600/30">
+                <div className="mt-2 rounded-lg border border-yellow-600/30 bg-yellow-900/20 p-2 text-sm text-yellow-400 sm:mt-4 sm:p-3">
                   <p className="font-semibold mb-1">
                     Score not saved - Guest Mode
                   </p>
@@ -144,8 +146,8 @@ export function GameOverlays({
             <div className="space-y-3">
               {/* Share buttons for guest users */}
               {!user && (
-                <div className="bg-gray-800/60 rounded-lg p-4 mb-4 border border-gray-600">
-                  <h4 className="text-white font-semibold mb-3 text-center">
+                <div className="mb-2 rounded-lg border border-gray-600 bg-gray-800/60 p-3 sm:mb-4 sm:p-4">
+                  <h4 className="mb-2 text-center font-semibold text-white sm:mb-3">
                     Share Your Score!
                   </h4>
                   <div className="flex space-x-2">
@@ -182,7 +184,7 @@ export function GameOverlays({
                       )}
                     </button>
                   </div>
-                  <p className="text-gray-400 text-xs text-center mt-2">
+                  <p className="mt-2 text-center text-xs text-gray-400">
                     Share your achievement and challenge your friends!
                   </p>
                 </div>

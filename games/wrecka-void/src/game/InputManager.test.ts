@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mapClientPointToCanvas } from "./InputManager";
+import { clampCanvasPoint, mapClientPointToCanvas } from "./InputManager";
 
 describe("mapClientPointToCanvas", () => {
   it("preserves coordinates when the CSS and bitmap sizes match", () => {
@@ -24,5 +24,12 @@ describe("mapClientPointToCanvas", () => {
         200,
       ),
     ).toEqual({ x: 200, y: 100 });
+  });
+
+  it("keeps a stale pointer inside the resized playfield", () => {
+    expect(clampCanvasPoint({ x: 900, y: -20 }, 390, 804)).toEqual({
+      x: 390,
+      y: 0,
+    });
   });
 });

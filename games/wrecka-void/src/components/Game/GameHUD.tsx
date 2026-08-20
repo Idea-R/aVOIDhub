@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { User } from "@supabase/supabase-js";
-import { ArrowLeft, HelpCircle, Pause } from "lucide-react";
+import { ArrowLeft, HelpCircle, Pause, Volume2, VolumeX } from "lucide-react";
 import { GameState } from "../../types/Game";
 import { ActiveEffects, PlayerUpgrades } from "../../types/PowerUps";
 
@@ -12,6 +12,8 @@ interface GameHUDProps {
   onNavigate: (page: string) => void;
   onToggleHelp: () => void;
   onTogglePause: () => void;
+  audioEnabled: boolean;
+  onToggleAudio: () => void;
 }
 
 export function GameHUD({
@@ -22,6 +24,8 @@ export function GameHUD({
   onNavigate,
   onToggleHelp,
   onTogglePause,
+  audioEnabled,
+  onToggleAudio,
 }: GameHUDProps) {
   const [hoveredUpgrade, setHoveredUpgrade] = useState<string | null>(null);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
@@ -129,7 +133,7 @@ export function GameHUD({
   };
   return (
     <>
-      <div className="absolute top-0 left-0 right-0 h-10 bg-gray-900/90 backdrop-blur-sm border-b border-gray-700 z-10">
+      <div className="relative z-10 h-[calc(2.5rem+env(safe-area-inset-top))] flex-none border-b border-gray-700 bg-gray-900/90 pt-[env(safe-area-inset-top)] backdrop-blur-sm">
         <div className="flex items-center justify-between h-full gap-1 px-2 sm:px-4">
           {/* Left: Back Button, Power-ups and Health */}
           <div className="flex min-w-0 items-center gap-2 sm:gap-4">
@@ -143,7 +147,7 @@ export function GameHUD({
               <span className="hidden text-xs sm:inline">Menu</span>
             </button>
 
-            <div className="flex items-center md:hidden">
+            <div className="flex items-center lg:hidden">
               <button
                 type="button"
                 aria-label="Pause game"
@@ -161,6 +165,22 @@ export function GameHUD({
                 <HelpCircle className="h-3.5 w-3.5" />
               </button>
             </div>
+
+            <button
+              type="button"
+              aria-label={
+                audioEnabled ? "Mute game audio" : "Enable game audio"
+              }
+              aria-pressed={audioEnabled}
+              onClick={onToggleAudio}
+              className="rounded-md p-1 text-gray-300 transition-colors hover:bg-gray-800/50 hover:text-white"
+            >
+              {audioEnabled ? (
+                <Volume2 className="h-3.5 w-3.5" />
+              ) : (
+                <VolumeX className="h-3.5 w-3.5" />
+              )}
+            </button>
 
             {/* Health Bar */}
             <div className="flex min-w-0 items-center gap-1 sm:gap-2">

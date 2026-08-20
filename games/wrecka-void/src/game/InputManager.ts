@@ -22,10 +22,22 @@ export function mapClientPointToCanvas(
   };
 }
 
+export function clampCanvasPoint(
+  point: Vector2,
+  width: number,
+  height: number,
+): Vector2 {
+  return {
+    x: Math.min(Math.max(point.x, 0), width),
+    y: Math.min(Math.max(point.y, 0), height),
+  };
+}
+
 export class InputManager {
   private keys = new Set<string>();
   private mousePos: Vector2;
   private mouseDown = false;
+  private hasPointerInput = false;
   private canvas: HTMLCanvasElement | null = null;
   private listeners: {
     onKeyDown?: (key: string) => void;
@@ -58,6 +70,7 @@ export class InputManager {
 
     const updatePointerPosition = (e: PointerEvent) => {
       if (this.canvas) {
+        this.hasPointerInput = true;
         const rect = this.canvas.getBoundingClientRect();
         this.mousePos = mapClientPointToCanvas(
           e.clientX,
@@ -124,6 +137,15 @@ export class InputManager {
 
   isMouseDown(): boolean {
     return this.mouseDown;
+  }
+
+  resize(width: number, height: number): void {
+    if (!this.hasPointerInput) {
+      this.mousePos = { x: width / 2, y: height / 2 };
+      return;
+    }
+
+    this.mousePos = clampCanvasPoint(this.mousePos, width, height);
   }
 
   destroy(): void {
