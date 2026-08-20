@@ -133,3 +133,24 @@ Creator applications and game submissions enter a private review queue. Profiles
 - Status: accepted
 
 Do not pin seals, badges, or decorative controls over responsive copy. Give prominent artifacts their own grid lane and let them stack naturally on small screens. Use asymmetrical collectible shapes, shallow perspective, tactile press depth, and transform-based motion with reduced-motion fallbacks instead of generic thin circular badges or disclaimer pills.
+
+## D-020 — Use separate platform detail and immersive play routes
+
+- Date: 2026-08-20
+- Status: proposed for V1 program review
+
+First-party catalog cards should open `/games/<slug>/` pages with controls, status, scores, personal best, favorites, share, and a clear Play action. Preserve the current immersive routes for bookmarks and focused play. External titles must state the destination domain and cannot imply shared account or leaderboard behavior.
+
+## D-021 — Give every title its own V1 gate
+
+- Date: 2026-08-20
+- Status: accepted as program structure
+
+Platform V1, full-catalog V1, and individual game V1 are separate milestones. WreckaVOID, WORDaVOID, VOIDaVOID, FLIPSIDE, and TankaVOID each carry their own current-state evidence, sprint sequence, trust boundary, effort range, and acceptance checks in `docs/V1-COMPLETION-PROGRAM.md`. A working URL does not satisfy a title’s V1 gate.
+
+## D-022 — Rebuild TankaVOID around the combat idea, not every prototype system
+
+- Date: 2026-08-20
+- Status: proposed for V1 program review
+
+Preserve the prototype in history, then build a clean fixed-step vertical slice around deliberate hull movement, turret aim, directional armor, impact angle, and readable damage. Do not make multiplayer, campaign progression, infantry, every pickup, or every prototype boss a V1 requirement.

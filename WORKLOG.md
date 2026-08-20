@@ -2,6 +2,11 @@
 
 ## 2026-08-20
 
+- Started the sustained aVOID V1 completion goal with `docs/V1-COMPLETION-PROGRAM.md` as its source of truth.
+- Drafted separate V1 definitions, scope boundaries, sprint sequences, effort ranges, dependencies, and acceptance gates for the main platform, WreckaVOID, WORDaVOID, VOIDaVOID, FLIPSIDE, TankaVOID, and the independent Ideas Realized directory titles.
+- Defined a 5-day evidence-based sprint model, separate platform/full-catalog gates, three bounded workstream lanes, approval boundaries, and Sprint 0 as a recoverability packet with no production changes.
+- Re-ran TankaVOID type-check and confirmed the prototype has dozens of incompatible engine/entity/system contracts; the program treats it as a narrow rebuild rather than a cosmetic repair.
+- Created `codex/docs-v1-completion-program` from the merged production `main` branch. No production, database, Netlify, Stripe, AdSense, or domain state changed in this documentation sprint.
 - Audited the live Supabase project and found that clients could insert arbitrary `leaderboard_scores`, including `is_verified = true`; several public `SECURITY DEFINER` functions and permissive policies also need hardening.
 - Audited VOIDaVOID, WreckaVOID, WORDaVOID, and the public FLIPSIDE bundle. Confirmed every current score path was browser-authored; WreckaVOID's intended submission was also skipped by its game-over state ordering.
 - Designed an incremental platform migration with explicit RLS/grants, membership and entitlement tables, private review queues, run sessions, score submissions, Stripe webhook idempotency, and a service-role-only atomic run-finishing function.
