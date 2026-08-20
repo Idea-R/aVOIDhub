@@ -303,3 +303,10 @@ Route keyboard, pointer, drive-thumb, and aim-thumb state through one `InputCont
 - Status: accepted for T5
 
 Build one static five-wave manifest from four readable tank profiles: scout, bruiser, hunter, and final-wave commander. Escalation comes from speed, range, approach, crossfire, health, and coordinated composition—not mines, infantry, pickups, alternate weapons, upgrades, new arenas, or boss-only machinery. Keep deployment, clear holds, field repair, and results on simulation ticks; keep the seed limited to small spawn/orbit variation; and preserve fixed entity/render/audio/input ceilings. A fast pilot and a deliberate one-shot-every-two-seconds pilot must each clear ten seeds, while an idle player must still lose. These local facts do not create a platform score or trust claim.
+
+## D-044 — Recompute TankaVOID arithmetic without overstating browser trust
+
+- Date: 2026-08-20
+- Status: accepted for the T6 source gate; database execution pending
+
+Create each ranked attempt on the platform with a server-owned run id, unsigned seed, exact `five-wave` mode, and `tankavoid-v1-rules-1` identity. At natural completion, accept only a bounded terminal summary whose identity matches the stored manifest; reject impossible wave, kill, commander, shot, damage, repair, time, and hull combinations; and recompute the score on the server. The browser never supplies an authoritative score, user id, trust flag, game key, mode, or ruleset. This establishes the `bounds_recomputed` capability but remains `provisional`, because a browser can still fabricate plausible evidence. Do not use `verified` without independently reproducible simulation or replay evidence. Keep guest play complete, stage the full review build, and withhold the friendly Play route and catalog action until the database and T7 release gates pass.

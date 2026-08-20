@@ -126,13 +126,13 @@ T2 implements that separation explicitly. Choosing a face from projectile travel
 
 T5 turns the proving encounter into one bounded run. It keeps one arena, one player cannon, the existing armor rules, and no pickups or upgrade screen.
 
-| Wave | Name | Hostiles | Positioning problem |
-| ---: | --- | --- | --- |
-| 1 | Cut the angle | One scout | Fast lateral pressure exposes a side plate. |
-| 2 | Break the line | One bruiser | Slow frontal pressure tests cover and facing. |
-| 3 | Crossfire | One scout and one hunter | The scout closes while the hunter holds a long firing lane. |
-| 4 | No safe range | One bruiser and one hunter | Cover must answer two different preferred ranges. |
-| 5 | Last command | One commander, one scout, and one hunter | The commander closes while the two specialist behaviors remain active. |
+| Wave | Name           | Hostiles                                 | Positioning problem                                                    |
+| ---: | -------------- | ---------------------------------------- | ---------------------------------------------------------------------- |
+|    1 | Cut the angle  | One scout                                | Fast lateral pressure exposes a side plate.                            |
+|    2 | Break the line | One bruiser                              | Slow frontal pressure tests cover and facing.                          |
+|    3 | Crossfire      | One scout and one hunter                 | The scout closes while the hunter holds a long firing lane.            |
+|    4 | No safe range  | One bruiser and one hunter               | Cover must answer two different preferred ranges.                      |
+|    5 | Last command   | One commander, one scout, and one hunter | The commander closes while the two specialist behaviors remain active. |
 
 The behavior identities are fixed:
 
@@ -156,6 +156,21 @@ T5 raises only the ceilings required by the written roster:
 - zero particles;
 - 64 logical renderer draw-items;
 - one simulation, one frame owner, one resize owner, 12 input listeners, one audio context, and eight audio voices.
+
+## T6 platform run and receipt contract
+
+T6 connects the bounded five-wave run to the platform without changing its public Coming Soon state.
+
+- The browser asks the same-origin platform for one authenticated run. The server creates the unsigned 32-bit seed and returns it in a manifest with mode `five-wave` and ruleset `tankavoid-v1-rules-1`.
+- A guest, an unavailable platform, or an unconfigured preview still starts immediately with a local seed. Failure to save never invalidates the local result.
+- Only natural `run-cleared` and `player-disabled` terminals are eligible. The development-only systems check never submits.
+- The terminal summary contains bounded integer values for waves, disabled enemies, commander state, combat ticks, damage, repair, shots, hits, ricochets, and remaining hull.
+- The server rejects wrong-run, wrong-mode, wrong-ruleset, impossible wave/kill/commander combinations, living defeats, dead clears, overlong runs, and inconsistent hit totals.
+- The server ignores any browser-authored score and recomputes the frozen additive formula from the accepted summary.
+- A successful finish is idempotent through the platform's one-use ticket function and returns an immutable `/results/<submission-id>/` receipt.
+- Trust remains `provisional`; the capability is `bounds_recomputed`. This proves the identity, ticket, ruleset, bounds, and score math, not the truth of every browser-authored combat event.
+- Accepted TankaVOID rows may appear on its platform detail page and personal-best view. Historic rows stay `legacy` and cannot be mixed into this board.
+- The build may be assembled for deployment review, but the catalog has no Play link and no public lowercase redirect until T7 physical-device, deployed, and rollback evidence passes.
 
 Mines, infantry, barracks, pickups, alternate weapons, abilities, destructible cover, upgrade trees, progression currency, additional arenas, multiplayer, and platform scoring remain rejected for this sprint.
 

@@ -373,3 +373,19 @@ Review the T4 stacked draft, then build T5 as the narrow V1 content pass: scout,
 ### Next action
 
 Review the T5 stacked draft, then build T6 as the platform integration boundary: detail-page Play state, optional platform session, one-use run start/finish, accepted receipt, personal best, trust-labelled board, and quiet guest/service-failure behavior. T7 remains the physical-device, final balance/art/performance, deployed-smoke, and rollback gate.
+
+## 2026-08-20 — TankaVOID T6 platform integration
+
+- Opened issue `#34` and created isolated branch `codex/tankavoid-t6-platform-integration` from the exact T5 head `0eea9a5`, then imported the canonical P3 game-detail foundation at `de7be47`.
+- Added the shared `@avoid/tankavoid-contract` package for server-created manifest identity, bounded natural-terminal evidence, impossible-combination checks, and a maximum 5,770 server-recomputed score.
+- Added optional same-origin run start/finish to TankaVOID with a 1.8-second start boundary, local guest fallback, stale-start generation guard, natural-result-only submission, one transient retry, and no browser-authored score.
+- Added provisional result status, receipt/share actions, accepted-only Tanka board and personal-best reads, and a private-safe, noindex `/results/[submissionId]/` receipt surface.
+- Kept Tanka visibly Coming Soon, without a catalog Play action or lowercase public route, while including its build in full platform assembly for review.
+- Passed shared contract 9 tests; Tanka zero-warning type/lint, 43 tests and 66,621-byte transfer gate; platform 5 tests/typecheck; 50 foundation assertions; catalog verification; and the full 29-page Netlify assembly.
+- Browser-checked desktop, 360 × 780 and 844 × 390 briefing/combat/detail/receipt states, pause/resume, guest fallback, non-overlapping touch controls, no horizontal overflow, and systems-check submission exclusion.
+- Confirmed in production-mode local HTTP that an unconfigured run start returns deliberate 503 `platform_unavailable`, while Tanka detail, leaderboard and unavailable receipt render 200.
+- Read-only production inspection confirmed the coordinated migration and run/score/favorite tables are absent. No migration, paid branch, production write, deploy, DNS, Stripe, AdSense, or secret state changed.
+
+### Next action
+
+Run the T6/WD1 shared data acceptance matrix on an approved short-lived Supabase branch. Then complete TankaVOID T7 physical-device, final feel/art/performance, deploy-preview smoke, and rollback evidence before exposing a public Play route.
