@@ -224,3 +224,10 @@ Manual pause, help, and focus loss are independent reasons; clearing one reason 
 - Status: accepted for W5
 
 Keep WreckaVOID’s fixed-step simulation authoritative while presenting its clock to React at a bounded cadence. Cap particle collections and reduce decorative density under the operating-system motion preference. Help, pause, exit, game-over, and unsupported-viewport states must each have one semantic/focus owner; opening one surface cannot expose a second modal behind it or clear another pause reason. Enforce the shipping transfer ceiling in code rather than relying on a one-time report.
+
+## D-033 — WORDaVOID V1 ships two honest modes before six experiments
+
+- Date: 2026-08-20
+- Status: accepted for WD0
+
+Classic Survival and two-minute Time Attack are the WORDaVOID V1 modes. Perfect Run and Daily Challenge are duplicate Classic behavior; Wave Defense, Skill Training, Digit Assault, and Geometric Typing are partial experiments. Keep their source for later evaluation, but remove their Start actions and label them unranked until each has a versioned ruleset, statistics model, balance gate, and server-recomputable evidence. Competitive accuracy is correct characters divided by attempted characters with no motivational floor; WPM uses five correct characters per standardized word; best streak means the run maximum, not the terminal active streak.

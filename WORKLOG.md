@@ -2,6 +2,15 @@
 
 ## 2026-08-20
 
+- Started WORDaVOID WD0 on isolated stacked branch `codex/fix-wordavoid-wd0-baseline` with issue #12 after WreckaVOID W5 reached clean draft PR #11.
+- Traced all eight advertised WORDaVOID modes. Kept Classic Survival and two-minute Time Attack as the V1 set; classified Perfect Run and Daily Challenge as duplicate Classic behavior and four bespoke modes as partial experiments.
+- Added a typed mode/ruleset contract and changed the menu so six deferred experiments have no Start control or ranked promise.
+- Extracted and tested the common-word score formula, exact Time Attack duration, character-based accuracy and standardized-character WPM.
+- Removed the artificial 60% accuracy floor, added maximum-streak ownership, fixed result/persistent streak reporting, and made replay preserve the selected mode.
+- Browser QA at 360 px caught and then verified fixes for a clipped title and difficulty selector. The final 1440 × 900, 360 × 640, 844 × 390, and 320 × 568 menu checks have no horizontal overflow and expose exactly two Start actions plus six deferred labels.
+- Time Attack smoke proved the active countdown, Escape pause, Resume state, and a frozen timer across a 1.2-second paused interval.
+- Fixed out-of-root Vite output hygiene so stale hashed bundles cannot accumulate into platform deploys; stopped shipping an unreferenced 245,811-byte source screenshot and removed the broken Vite favicon reference.
+- Passed WORDaVOID typecheck, zero-warning lint, 2 files / 9 tests, production build, and the complete hosted-game staging plus Next.js build. Detailed evidence is in `docs/sprint-wordavoid-wd0.md`.
 - Started WreckaVOID W5 on isolated stacked branch `codex/fix-wreckavoid-w5-hardening` with issue #10 while W3 remains gated on the isolated platform data environment.
 - Replaced the active 1,500,458-byte PNG with a 31,846-byte WebP, fixed the stale favicon, and added a release budget that passes at 168,404 bytes of compressed HTML/CSS/JavaScript plus WebP against a 204,800-byte limit.
 - Bounded React clock presentation to roughly 10 Hz without altering fixed-step simulation time; capped particles at 480 normally and 96 under reduced motion; added a rolling frame monitor for development evidence.
@@ -192,8 +201,8 @@ Review the updated Netlify draft preview and proposed meteor identity, then auth
 
 ### Current gate
 
-The production deploy and merge remain intentionally unchanged until the user reviews the release candidate and explicitly approves rollout.
+The coordinated Supabase foundation remains unexercised until the user approves or declines the proposed 72-hour paid development branch. Production deploys and merges remain intentionally unchanged.
 
 ### Next action
 
-Review the refined draft, then approve or request changes before the production deploy and merge.
+Publish WD0 for review, then begin the persistence-free part of WD1: deterministic prompt generation and pure result recomputation. Persisted run tickets and end-to-end score acceptance wait for the isolated data environment.

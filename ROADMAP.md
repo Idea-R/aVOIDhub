@@ -53,6 +53,10 @@ Move the live aVOIDgame.io rebuild through the phased V1 completion program: sec
 - Active WreckaVOID W5 issue: `https://github.com/Idea-R/aVOIDhub/issues/10`
 - Active WreckaVOID W5 draft PR: `https://github.com/Idea-R/aVOIDhub/pull/11`
 - WreckaVOID W5 evidence: `docs/sprint-wreckavoid-w5.md`
+- Active WORDaVOID WD0 branch: `codex/fix-wordavoid-wd0-baseline`
+- Active WORDaVOID WD0 issue: `https://github.com/Idea-R/aVOIDhub/issues/12`
+- WORDaVOID WD0 contract: `docs/wordavoid-v1-contract.md`
+- WORDaVOID WD0 evidence: `docs/sprint-wordavoid-wd0.md`
 - WreckaVOID W2 evidence: `docs/sprint-wreckavoid-w2.md`
 - WreckaVOID W0/W1 evidence: `docs/sprint-wreckavoid-w0-w1.md`
 - Program source of truth: `docs/V1-COMPLETION-PROGRAM.md`
@@ -89,7 +93,8 @@ Move the live aVOIDgame.io rebuild through the phased V1 completion program: sec
 17. **WreckaVOID W0/W1 repair — local gates complete.** The canonical game now passes standalone typecheck, lint, 14 focused tests, and production build. The collision crash, doubled enemy movement, unstable variable-step loop, skipped terminal finish, desktop-only input, mobile pointer start, and narrow HUD controls are repaired. Forty deterministic terminal/restart browser cycles held one RAF owner, one input owner, zero deferred timers, and one finish per run; the measured final 20-cycle heap sample decreased by about 1.5 MB.
 18. **WreckaVOID W2 responsive play — local gates complete.** Rendered-canvas viewport ownership, orientation-safe pointer bounds, a 320 × 320 support guard, reason-aware manual/help/focus pauses, touch controls, first-run coaching, persisted procedural audio, reduced-motion particle suppression, and a compact phone result screen pass 19 tests plus the desktop/portrait/landscape browser matrix. A post-change 20-restart smoke retained one RAF and one input owner.
 19. **WreckaVOID W5 hardening — local gates complete.** The active logo dropped from 1.50 MB to 31.85 KB, an enforceable 200 KiB transfer budget passes at 168.4 KB, game-clock React presentation and particles are bounded, service-unconfigured guest play is quiet, and semantic single-owner dialogs/focus/viewport pauses pass 31 tests. Desktop/phone/landscape browser checks, a 40-cycle restart sample, and mobile Lighthouse at 98 performance / 100 accessibility / 100 best practices / 100 SEO are recorded in `docs/sprint-wreckavoid-w5.md`. No deploy occurred.
+20. **WORDaVOID WD0 baseline — local gates complete.** Classic and two-minute Time Attack are the two source-enforced V1 modes; six duplicate/partial experiments are visible but unranked and non-launchable. The score formula is pure, accuracy has no 60% floor, maximum streak survives misses, restart preserves the selected mode, stale build artifacts are removed, and the menu passes four viewports with no horizontal overflow. Typecheck, zero-warning lint, 9 tests, production build, and full platform assembly pass; evidence is in `docs/sprint-wordavoid-wd0.md`.
 
 ## Current next action
 
-WreckaVOID W3 and the data-backed part of W4 remain dependency-gated on the coordinated platform auth/run foundation. Review `docs/sprint-1-foundation-test-plan.md` and approve or decline the proposed 72-hour Supabase development branch at the currently reported `$0.01344/hour` (about `$0.97` for 72 hours). Without that approval, the next independent safe slice is WORDaVOID WD0 source/baseline canonicalization. Production data, secrets, Stripe, AdSense, DNS, and production deploys remain untouched.
+WreckaVOID W3, persisted WORDaVOID run tickets, and the data-backed platform slices remain dependency-gated on the coordinated platform auth/run foundation. Review `docs/sprint-1-foundation-test-plan.md` and approve or decline the proposed 72-hour Supabase development branch at the currently reported `$0.01344/hour` (about `$0.97` for 72 hours). Without that approval, the next independent safe slice is the pure part of WORDaVOID WD1: deterministic prompt generation and server recomputation tests without persistence. Production data, secrets, Stripe, AdSense, DNS, and production deploys remain untouched.
