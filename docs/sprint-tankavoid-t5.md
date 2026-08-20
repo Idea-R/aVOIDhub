@@ -3,7 +3,7 @@
 - Date: 2026-08-20
 - Issue: [#32](https://github.com/Idea-R/aVOIDhub/issues/32)
 - Branch: `codex/tankavoid-t5-content-run`
-- Draft PR: pending at the time of this evidence commit
+- Draft PR: [#33](https://github.com/Idea-R/aVOIDhub/pull/33)
 - Base: exact T4 commit `05c898a`
 - Public state: Coming Soon; no platform staging or deployment
 

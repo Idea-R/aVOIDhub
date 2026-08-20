@@ -359,6 +359,7 @@ Review the T4 stacked draft, then build T5 as the narrow V1 content pass: scout,
 - Verified pause focus and exact frame stop/resume, six-metric internally scrollable results, fifth-wave reachability through real UI gestures, one context, 12 listeners, one resize owner, published entity ceilings, and an empty browser warning/error log.
 - Recorded that local-canvas screenshot capture was unavailable; evidence uses semantic snapshots, measured geometry, diagnostics, real UI gestures, and console logs instead of inventing visual proof.
 - Kept platform scoring/session work, physical mobile certification, deployment, Supabase, Stripe, AdSense, DNS, and production state outside T5. TankaVOID remains Coming Soon.
+- Published the two-commit T5 boundary as stacked draft PR `#33` above the exact T4 head; no merge or deployment occurred.
 
 ### Next action
 

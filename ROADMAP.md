@@ -100,6 +100,7 @@ Move the live aVOIDgame.io rebuild through the phased V1 completion program: sec
 - TankaVOID T4 evidence: `docs/sprint-tankavoid-t4.md`
 - Active TankaVOID T5 branch: `codex/tankavoid-t5-content-run`
 - Active TankaVOID T5 issue: `https://github.com/Idea-R/aVOIDhub/issues/32`
+- Active TankaVOID T5 draft PR: `https://github.com/Idea-R/aVOIDhub/pull/33`
 - TankaVOID T5 evidence: `docs/sprint-tankavoid-t5.md`
 - WreckaVOID W2 evidence: `docs/sprint-wreckavoid-w2.md`
 - WreckaVOID W0/W1 evidence: `docs/sprint-wreckavoid-w0-w1.md`
