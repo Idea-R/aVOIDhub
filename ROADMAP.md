@@ -55,6 +55,7 @@ Move the live aVOIDgame.io rebuild through the phased V1 completion program: sec
 - WreckaVOID W5 evidence: `docs/sprint-wreckavoid-w5.md`
 - Active WORDaVOID WD0 branch: `codex/fix-wordavoid-wd0-baseline`
 - Active WORDaVOID WD0 issue: `https://github.com/Idea-R/aVOIDhub/issues/12`
+- Active WORDaVOID WD0 draft PR: `https://github.com/Idea-R/aVOIDhub/pull/13`
 - WORDaVOID WD0 contract: `docs/wordavoid-v1-contract.md`
 - WORDaVOID WD0 evidence: `docs/sprint-wordavoid-wd0.md`
 - WreckaVOID W2 evidence: `docs/sprint-wreckavoid-w2.md`

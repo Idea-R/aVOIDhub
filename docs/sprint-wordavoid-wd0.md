@@ -4,6 +4,8 @@ Date: 2026-08-20
 
 Issue: [#12](https://github.com/Idea-R/aVOIDhub/issues/12)
 
+Draft PR: [#13](https://github.com/Idea-R/aVOIDhub/pull/13)
+
 Branch: `codex/fix-wordavoid-wd0-baseline`
 
 Stack base: `codex/fix-wreckavoid-w5-hardening` at `c72e9f1`

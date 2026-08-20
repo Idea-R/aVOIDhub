@@ -11,6 +11,7 @@
 - Time Attack smoke proved the active countdown, Escape pause, Resume state, and a frozen timer across a 1.2-second paused interval.
 - Fixed out-of-root Vite output hygiene so stale hashed bundles cannot accumulate into platform deploys; stopped shipping an unreferenced 245,811-byte source screenshot and removed the broken Vite favicon reference.
 - Passed WORDaVOID typecheck, zero-warning lint, 2 files / 9 tests, production build, and the complete hosted-game staging plus Next.js build. Detailed evidence is in `docs/sprint-wordavoid-wd0.md`.
+- Published WORDaVOID WD0 for review as stacked draft PR #13 above the clean WreckaVOID W5 review boundary.
 - Started WreckaVOID W5 on isolated stacked branch `codex/fix-wreckavoid-w5-hardening` with issue #10 while W3 remains gated on the isolated platform data environment.
 - Replaced the active 1,500,458-byte PNG with a 31,846-byte WebP, fixed the stale favicon, and added a release budget that passes at 168,404 bytes of compressed HTML/CSS/JavaScript plus WebP against a 204,800-byte limit.
 - Bounded React clock presentation to roughly 10 Hz without altering fixed-step simulation time; capped particles at 480 normally and 96 under reduced motion; added a rolling frame monitor for development evidence.
