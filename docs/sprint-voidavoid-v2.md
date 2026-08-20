@@ -3,6 +3,7 @@
 Date: 2026-08-20
 Branch: `codex/fix-voidavoid-v2-evidence`
 Issue: [#20](https://github.com/Idea-R/aVOIDhub/issues/20)
+Draft PR: [#21](https://github.com/Idea-R/aVOIDhub/pull/21)
 Base: VOIDaVOID V0/V1 commit `f28b41d`
 
 ## Intended outcome

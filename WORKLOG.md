@@ -11,6 +11,7 @@
 - Passed standalone Vite and full 21-route Next.js production builds. Browser QA passed at 1440×900, 390×844, and 844×390 with no overflow or console errors.
 - Completed 20 consecutive result/replay cycles: 20 distinct codes, every result `replayable-local`, 21 starts/finishes total, 20 resets, one loop owner, five input listeners, and no pending terminal frame.
 - Recorded the intentional boundary: V2 proves seeded world generation and score arithmetic, not legitimate client input or server trust. No database, Netlify, Stripe, AdSense, DNS, merge, or production state changed.
+- Published the two-commit V2 stack as mergeable draft PR #21 above VOIDaVOID V0/V1 PR #19. GitHub has no Actions workflow configured for this head commit, so the recorded local release and browser gates remain the available evidence.
 
 - Started VOIDaVOID V0/V1 on isolated stacked branch `codex/fix-voidavoid-v0-v1-baseline` with issue #18, leaving the dirty main checkout and production untouched.
 - Traced the shipping graph and reproduced the misleading baseline: roughly 100 TypeScript errors, 173 lint errors, 10 warnings, no tests, duplicate input/resize/lifecycle owners, false verified-placement copy, game-local auth, external audio, and a 1.57 MB result image.
