@@ -140,12 +140,19 @@ export interface ParticleEffect {
   maxLife: number;
 }
 
+declare global {
+  interface Window {
+    createExplosion?: (x: number, y: number, wordLength?: number, color?: string) => void;
+    createTypingTrail?: (x: number, y: number) => void;
+  }
+}
+
 export interface Achievement {
   id: string;
   name: string;
   description: string;
   icon: string;
-  criteria: Record<string, any>;
+  criteria: Record<string, unknown>;
   points: number;
   rarity: 'common' | 'rare' | 'epic' | 'legendary';
   unlockedAt?: Date;

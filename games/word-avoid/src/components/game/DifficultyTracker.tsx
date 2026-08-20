@@ -15,8 +15,7 @@ export const DifficultyTracker: React.FC<DifficultyTrackerProps> = ({ className 
     wordsSpawned, 
     startTime, 
     isPlaying,
-    player,
-    mode
+    player
   } = useGameStore();
 
   const difficultyConfig = difficultyConfigs[difficultyLevel];

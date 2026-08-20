@@ -3,6 +3,14 @@
 
 # Node.js
 node_modules/
+.next/
+apps/platform/out/
+*.tsbuildinfo
+apps/platform/public/VOIDaVOID/
+apps/platform/public/WreckaVOID/
+apps/platform/public/WORDaVOID/
+dist/VOIDaVOID/
+dist/WORDaVOID/
 
 # Logs
 logs
@@ -76,3 +84,5 @@ archive/
 mcp-configs/
 PRD/
 scripts/
+!apps/platform/scripts/
+!apps/platform/scripts/prepare-games.mjs

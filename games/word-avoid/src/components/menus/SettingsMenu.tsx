@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Volume2, VolumeX, Eye, EyeOff, Gamepad2, Palette, ArrowLeft } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { GlassPanel } from '../ui/GlassPanel';
 import { NeonButton } from '../ui/NeonButton';
 import { useGameStore } from '../../stores/gameStore';
@@ -62,7 +63,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     label: string; 
     value: number; 
     onChange: (value: number) => void; 
-    icon: React.ComponentType<any>;
+    icon: LucideIcon;
   }) => (
     <div className="flex items-center space-x-4">
       <Icon className="w-5 h-5 text-avoid-primary" />
@@ -101,7 +102,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     description: string; 
     value: boolean; 
     onChange: (value: boolean) => void; 
-    icon: React.ComponentType<any>;
+    icon: LucideIcon;
   }) => (
     <div className="flex items-center justify-between p-4 glass-panel border border-white/10 rounded-lg">
       <div className="flex items-center space-x-3">
@@ -112,6 +113,9 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
         </div>
       </div>
       <motion.button
+        type="button"
+        aria-label={`${value ? 'Disable' : 'Enable'} ${label}`}
+        aria-pressed={value}
         className={`relative w-12 h-6 rounded-full transition-colors ${
           value ? 'bg-avoid-primary' : 'bg-bg-tertiary'
         }`}

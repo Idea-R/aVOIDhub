@@ -29,6 +29,28 @@ function App() {
   // Initialize keyboard input handling
   useKeyboardInput();
 
+  // Browser audio must begin from a real user gesture. Tone.js stays out of
+  // the initial download and is loaded once on the first pointer or key input.
+  useEffect(() => {
+    const removeAudioListeners = () => {
+      window.removeEventListener('pointerdown', initializeAudio);
+      window.removeEventListener('keydown', initializeAudio);
+    };
+
+    const initializeAudio = () => {
+      removeAudioListeners();
+      const audio = useAudioStore.getState();
+      if (!audio.isInitialized) {
+        void audio.initializeAudio();
+      }
+    };
+
+    window.addEventListener('pointerdown', initializeAudio, { once: true });
+    window.addEventListener('keydown', initializeAudio, { once: true });
+
+    return removeAudioListeners;
+  }, []);
+
   // Handle game state changes
   useEffect(() => {
     if (isGameOver && appState === 'playing') {
@@ -41,11 +63,6 @@ function App() {
     startGame(mode);
     setAppState('playing');
     startMusic();
-  };
-
-  const handleRestartGame = () => {
-    resetGame();
-    setAppState('menu');
   };
 
   const handleMainMenu = () => {
@@ -154,17 +171,6 @@ function App() {
         )}
       </AnimatePresence>
 
-      {/* Global Audio Click Handler */}
-      <div
-        className="fixed inset-0 pointer-events-none z-0"
-        onClick={() => {
-          // This helps initialize audio context on first user interaction
-          const { initializeAudio, isInitialized } = useAudioStore.getState();
-          if (!isInitialized) {
-            initializeAudio();
-          }
-        }}
-      />
     </div>
   );
 }

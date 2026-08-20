@@ -64,12 +64,12 @@ export const ParticleSystem: React.FC<ParticleSystemProps> = ({ className = '' }
 
   // Expose particle creation functions globally for other components
   useEffect(() => {
-    (window as any).createExplosion = createExplosion;
-    (window as any).createTypingTrail = createTypingTrail;
+    window.createExplosion = createExplosion;
+    window.createTypingTrail = createTypingTrail;
     
     return () => {
-      delete (window as any).createExplosion;
-      delete (window as any).createTypingTrail;
+      delete window.createExplosion;
+      delete window.createTypingTrail;
     };
   }, []);
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Shield, Zap } from 'lucide-react';
+import { Shield } from 'lucide-react';
 import type { Player } from '../../types/game';
 
 interface PlayerAvatarProps {

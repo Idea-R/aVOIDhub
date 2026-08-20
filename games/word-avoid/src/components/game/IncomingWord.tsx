@@ -5,17 +5,14 @@ import { getDifficultyColor } from '../../data/words';
 
 interface IncomingWordProps {
   word: Word;
-  onComplete?: (wordId: string) => void;
   className?: string;
 }
 
 export const IncomingWord: React.FC<IncomingWordProps> = ({
   word,
-  onComplete,
   className = ''
 }) => {
   const difficultyColor = getDifficultyColor(word.difficulty);
-  const progress = 1 - (word.distance / word.maxDistance);
   const isNearCenter = word.distance < 100;
   const isCurrentTarget = word.isTyping;
   const typedText = word.text.slice(0, word.typedChars);

@@ -1,33 +1,79 @@
 [build]
-  publish = "dist"
-  # Build only working workspaces (excludes broken tanka-void)
-  command = "npm run build --workspace=@avoid/shared --workspace=@avoid/game-hub --workspace=@avoid/void-main --workspace=@avoid/word-avoid --workspace=@avoid/wreck-avoid --workspace=@avoid/wrecka-void"
+  command = "npm run build:platform:netlify"
+  publish = "apps/platform/.next"
 
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "22"
+  NPM_VERSION = "10"
+
+[context.deploy-preview]
+  command = "npm run build:platform:netlify"
+
+[context.branch-deploy]
+  command = "npm run build:platform:netlify"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Preserve the verified public game URLs while their Vite bundles remain
+# independent from the Next.js platform shell. Specific rules must precede
+# the Next runtime's generated catch-all routes.
+[[redirects]]
+  from = "/voidavoid"
+  to = "/VOIDaVOID/"
+  status = 301
 
 [[redirects]]
-  from = "/*"
-  to = "/index.html"
+  from = "/voidavoid/*"
+  to = "/VOIDaVOID/:splat"
   status = 200
 
-# Subdirectory redirects for games
 [[redirects]]
-  from = "/VOIDaVOID/*"
-  to = "/VOIDaVOID/index.html"
+  from = "/wreckavoid"
+  to = "/WreckaVOID/"
+  status = 301
+
+[[redirects]]
+  from = "/wreckavoid/*"
+  to = "/WreckaVOID/:splat"
   status = 200
 
 [[redirects]]
-  from = "/TankaVOID/*"
-  to = "/TankaVOID/index.html"
-  status = 200
+  from = "/wordavoid"
+  to = "/WORDaVOID/"
+  status = 301
 
 [[redirects]]
-  from = "/WreckaVOID/*"
-  to = "/WreckaVOID/index.html"
+  from = "/wordavoid/*"
+  to = "/WORDaVOID/:splat"
   status = 200
 
-[[redirects]]
-  from = "/WORDaVOID/*"
-  to = "/WORDaVOID/index.html"
-  status = 200 
+[[headers]]
+  for = "/VOIDaVOID/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/WreckaVOID/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/WORDaVOID/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/_next/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/games/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400, stale-while-revalidate=604800"
+
+[[headers]]
+  for = "/avoid-hero.webp"
+  [headers.values]
+    Cache-Control = "public, max-age=86400, stale-while-revalidate=604800"

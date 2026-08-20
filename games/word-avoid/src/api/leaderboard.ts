@@ -1,4 +1,4 @@
-import { supabase } from '../main';
+import { supabase } from '../lib/supabase';
 
 const GAME_KEY = 'wordavoid';
 
@@ -73,7 +73,7 @@ export class LeaderboardAPI {
     playerName: string,
     score: number,
     metadata?: LeaderboardScore['metadata']
-  ): Promise<{ success: boolean; data?: any }> {
+  ): Promise<{ success: boolean; data?: LeaderboardScore }> {
     const gameSessionId = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     console.log('Submitting guest score:', { playerName, score, gameSessionId });

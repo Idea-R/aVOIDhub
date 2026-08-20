@@ -13,6 +13,7 @@ import { EnemyManager } from '../../game/EnemyManager';
 import { GameRenderer } from '../../game/GameRenderer';
 import { GameHUD } from './GameHUD';
 import { GameOverlays } from './GameOverlays';
+import { beginPlatformRun } from '../../api/platformRuns';
 
 interface GameEngineProps {
   onNavigate: (page: string) => void;
@@ -71,6 +72,7 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
   // Initialize game state subscription
   useEffect(() => {
     const unsubscribe = gameStateRef.current.subscribe(setGameState);
+    beginPlatformRun();
     return unsubscribe;
   }, []);
 
@@ -570,10 +572,11 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
       updatePhysics(deltaTime);
       checkCollisions();
 
-      if (gameState.health <= 0) {
+      const finalState = gameStateRef.current.getState();
+      if (finalState.health <= 0) {
         gameStateRef.current.setState({ isGameOver: true });
         if (user?.id) {
-          submitScore(gameState.score, gameState.wave, gameState.gameTime, user.id);
+          submitScore(finalState.score, finalState.wave, finalState.gameTime);
         }
       }
     }
@@ -592,6 +595,7 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
   }, [gameLoop]);
 
   const restartGame = () => {
+    beginPlatformRun();
     gameStateRef.current.reset();
     setPlayerUpgrades({
       chainDamage: 0,
