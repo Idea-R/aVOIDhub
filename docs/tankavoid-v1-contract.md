@@ -60,6 +60,12 @@ briefing → running ⇄ paused → complete → restart
     └──────────── return to briefing ──┘
 ```
 
+T3 refines `running` without changing the outer ownership boundary:
+
+```text
+deploying (180 ticks) → combat → resolved (90 ticks) → complete
+```
+
 - One `GameRuntime` owns one simulation, one fixed-step loop, one input controller, one `ResizeObserver`, one canvas renderer, and teardown.
 - Simulation advances at 60 Hz. A rendered frame may process at most five catch-up steps. Additional backlog is dropped and recorded instead of creating a death spiral.
 - Start and restart take an unsigned 32-bit seed. All later world, spawn, AI, and score-affecting randomness must derive from named streams rooted in that seed.
@@ -96,6 +102,16 @@ T2 must implement this contract as pure tested math before visual effects:
 
 T2 implements that separation explicitly. Choosing a face from projectile travel would constrain every four-face incidence to 45° or less and make the written glancing/ricochet thresholds unreachable. Swept collision therefore supplies the impact point, the center-to-impact vector chooses the face, and the inverse travel vector is compared with that face's outward normal.
 
+## T3 encounter-loop contract
+
+- The arena owns exactly four fixed barricades: two north, two south, with an unobstructed central lane.
+- Tanks are circles for world separation. They cannot overlap cover or each other, and collision correction is deterministic.
+- A shell resolves the nearest swept collision across its target and all cover. Cover in front of a tank always wins; there is no through-cover damage.
+- The bruiser cannot fire through cover. When line of sight is blocked, it routes toward the central lane until it can reacquire the player.
+- Deployment locks all combat input and AI for 180 ticks. A disable locks movement/input, clears live shells, and holds the final impact for 90 ticks before completion.
+- Tank-impact and cover-strike histories each retain at most eight entries.
+- T3 cover is indestructible. Destruction, debris, and particles are not hidden or implied systems.
+
 ## V1 content and score boundary
 
 The intended run is five waves in one arena:
@@ -129,8 +145,20 @@ T1 establishes the floor that later sprints must preserve:
 - no listener, frame, observer, or canvas growth across twenty runs;
 - maximum five simulation catch-up steps per rendered frame.
 
-T3 adds explicit active-enemy, projectile, particle, draw-call, and frame-time ceilings after the combat slice exists.
+T3 adds and enforces these encounter ceilings:
+
+- one active enemy;
+- four static cover pieces;
+- 32 active projectiles;
+- eight retained tank impacts;
+- eight retained cover strikes;
+- zero particles;
+- 56 logical renderer draw-items;
+- five catch-up simulation steps per rendered frame;
+- a 250 ms accepted frame-delta clamp, with the largest accepted delta diagnosed.
+
+The draw-item ceiling counts bounded logical render entries rather than individual Canvas API methods.
 
 ## Public boundary
 
-TankaVOID stays **Coming Soon** and noninteractive in the aVOID catalog. T0–T2 do not add a platform Play route, stage the build into the platform, create a leaderboard, activate auth, or change production. The first public preview requires both the completed T2 directional-combat proof and T3 full-loop evidence; V1 publication still requires T4–T7.
+TankaVOID stays **Coming Soon** and noninteractive in the aVOID catalog. T0–T3 do not add a platform Play route, stage the build into the platform, create a leaderboard, activate auth, or change production. T2 and T3 now satisfy the source-level directional-combat and repeatable-loop prerequisites for a later preview, but T4 device/control evidence is the next gate and V1 publication still requires T4–T7.

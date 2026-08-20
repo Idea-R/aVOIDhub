@@ -673,7 +673,7 @@ Directory V1 may ship before integrated V1. The platform must not hold the rest 
 
 ### Current state
 
-T0–T2 replaced the active monorepo package with a buildable directional-combat proof. It now has one seeded 60 Hz simulation, one loop, one keyboard/pointer owner, one responsive logical-pixel viewport, explicit briefing/run/pause/complete/restart states, pure face/incidence/damage math, one pooled cannon per side, swept collision, and one deterministic bruiser. Twenty-one focused tests and a 57,331-byte initial compressed transfer pass. It is not staged into the platform and remains Coming Soon.
+T0–T3 replaced the active monorepo package with a buildable directional-combat encounter. It now has one seeded 60 Hz simulation, one loop, one keyboard/pointer owner, one responsive logical-pixel viewport, explicit deployment/combat/result pacing, pure face/incidence/damage math, one pooled cannon per side, swept tank/cover collision, four tactical barricades, deterministic separation, line-of-sight-aware bruiser behavior, and enforced entity/render/frame ceilings. Twenty-eight focused tests and a 59,208-byte initial compressed transfer pass. Ten actual pointer-driven browser encounters completed without lifecycle growth. It is not staged into the platform and remains Coming Soon.
 
 The replaced monorepo generation failed with 78 TypeScript errors across incompatible entity, collision, update/reset, input, particle, experience, and power-up contracts. Its source remains recoverable through Git history rather than compiling beside the rebuild.
 
@@ -753,14 +753,14 @@ TankaVOID V1 is a focused top-down survival/arena game:
 
 **Expected TankaVOID effort:** **4–6 engineering weeks plus 1–2 weeks of feel, art, and QA iteration** for the narrow V1 above. A playable vertical slice should appear in the first week. Attempting to rehabilitate every prototype system or add multiplayer would move it beyond this range.
 
-T0–T2 implementation evidence: [`tankavoid-v1-contract.md`](tankavoid-v1-contract.md), [`sprint-tankavoid-t0-t1.md`](sprint-tankavoid-t0-t1.md), and [`sprint-tankavoid-t2.md`](sprint-tankavoid-t2.md). The package now has one clean simulation/lifecycle boundary and one complete directional-combat proof; T3 must turn it into a repeatable encounter loop.
+T0–T3 implementation evidence: [`tankavoid-v1-contract.md`](tankavoid-v1-contract.md), [`sprint-tankavoid-t0-t1.md`](sprint-tankavoid-t0-t1.md), [`sprint-tankavoid-t2.md`](sprint-tankavoid-t2.md), and [`sprint-tankavoid-t3.md`](sprint-tankavoid-t3.md). The package now has one clean simulation/lifecycle boundary and one repeatable encounter loop; T4 must decide and prove the supported device/control experience.
 
 ### TankaVOID V1 acceptance checklist
 
 - [x] A new clean T1 build passes type-check, lint, tests, production build, source budgets, and a responsive local-browser/repeat-run gate.
 - [x] Directional armor and impact angle materially change damage and are understandable during play.
 - [x] Shallow-angle hits consistently deflect or reduce penetration under the written rule set.
-- [x] The T2 start/combat/disable/restart boundary remains stable across repeated runs; T3 still owes ten natural complete encounter loops.
+- [x] Ten natural browser encounters complete without stale loops, owners, projectiles, frames, or viewport overflow.
 - [ ] The supported input/device claim is backed by actual device evidence.
 - [ ] The V1 enemy/content list is complete without reintroducing prototype sprawl.
 - [ ] Score has a versioned contract and an honest trust tier.

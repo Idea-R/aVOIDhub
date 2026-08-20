@@ -280,3 +280,10 @@ Preserve both prototype histories, then remove the incompatible monorepo generat
 - Status: accepted for T2
 
 Swept collision supplies the impact point. The defender-center-to-impact direction selects front, left, right, or rear armor; inverse projectile travel is then compared with that plate's outward normal to determine penetration, glancing, or ricochet. Do not select both face and incidence from projectile travel: with four nearest faces that would cap incidence at 45° and make the frozen 50°/68° thresholds unreachable. Primary pointer-down is a queued action pulse rather than a transient level so a complete click between fixed ticks cannot disappear.
+
+## D-041 — Make T3 cover structural and the encounter states explicit
+
+- Date: 2026-08-20
+- Status: accepted for T3
+
+Use four indestructible barricades around a clear central lane. Tanks resolve as circles against cover and each other; shells resolve the nearest swept tank-or-cover intersection; and the bruiser cannot fire through a blocked sight line. Treat deployment, combat, and the final-impact hold as deterministic running substates rather than timers owned by React. Enforce one enemy, four cover pieces, 32 projectiles, eight tank impacts, eight cover strikes, zero particles, 56 logical renderer draw-items, five catch-up steps, and a 250 ms accepted frame-delta clamp. Do not add destructible scenery, debris, waves, touch, progression, or scoring to make this slice appear larger.

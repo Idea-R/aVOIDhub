@@ -307,3 +307,20 @@ Review draft PR `#25`, then implement T2 as an isolated deterministic combat sli
 ### Next action
 
 Review draft PR `#27`, then build T3 as a complete encounter loop: intentional arena/cover, tank separation, spawn and terminal pacing, explicit entity/draw/frame ceilings, and ten natural start-to-result runs. Do not expand to multiple enemies, progression, touch, or platform scores in T3.
+
+## 2026-08-20 — TankaVOID T3 encounter loop
+
+- Opened issue `#28` and created isolated branch `codex/tankavoid-t3-encounter-loop` from the exact T2 head `e75c8a1`.
+- Added four fixed tactical barricades around a clear central lane, swept nearest-hit shell/cover resolution, eight bounded cover-strike records, tank/cover separation, and symmetric tank/tank separation.
+- Made the bruiser hold fire when cover blocks line of sight and route back toward the central lane before reacquiring the player.
+- Added a 180-tick input-safe deployment countdown and a 90-tick terminal hold that stops motion, clears shells, preserves the final impact, and completes without a pending frame.
+- Enforced and diagnosed ceilings of one enemy, four cover pieces, 32 projectiles, eight tank impacts, eight cover strikes, zero particles, 56 logical draw-items, five catch-up steps, and a 250 ms accepted frame-delta clamp.
+- Passed zero-warning typecheck/lint, 8 test files / 28 tests, Vite build, full 21-route platform build, clean root audit, and the 59,208 / 122,880-byte initial-transfer gate with no downloaded or external runtime assets.
+- Browser-checked briefing/live states at 320×568, 390×844, 844×390, 768×1024, 1440×900, and 1920×1080 with one canvas and zero document overflow.
+- Found and repaired a phone result defect where button focus could scroll the title above a 320×568 viewport; the bounded dialog now focuses its heading surface without moving it.
+- Completed ten actual pointer-driven browser encounters at six hits from six shots each. The tenth retained 10 starts / 10 finishes / 9 restarts, eight listeners, one observer, zero terminal projectiles/frame, four cover pieces, 16/56 draw-items, 0 particles, and a 17 ms largest accepted frame delta.
+- Kept touch, audio, extra enemies, waves, progression, scores, accounts, platform staging, Supabase, Stripe, AdSense, DNS, and production deployment outside T3.
+
+### Next action
+
+Publish T3 for review, then make T4 an honest device/control sprint: prototype intentional touch driving, finish HUD/onboarding/audio/accessibility work, and validate the supported control claim on target hardware. TankaVOID remains Coming Soon.
