@@ -273,3 +273,10 @@ Use a small procedural Web Audio palette that starts only after a player gesture
 - Status: accepted for T0/T1
 
 Preserve both prototype histories, then remove the incompatible monorepo generations from the active graph. The stronger standalone tree is a mechanics reference, not a production base. Establish one seeded 60 Hz simulation, loop, input owner, resize owner, logical-pixel viewport, and exact lifecycle before porting combat. T2 must pass an impact vector into pure face/incidence/damage math; it cannot call a generic `takeDamage(damage)` path. TankaVOID remains Coming Soon until the narrow directional-combat loop, content, platform, device, deploy, and rollback gates pass.
+
+## D-040 — Let the struck plate and shell travel answer different questions
+
+- Date: 2026-08-20
+- Status: accepted for T2
+
+Swept collision supplies the impact point. The defender-center-to-impact direction selects front, left, right, or rear armor; inverse projectile travel is then compared with that plate's outward normal to determine penetration, glancing, or ricochet. Do not select both face and incidence from projectile travel: with four nearest faces that would cap incidence at 45° and make the frozen 50°/68° thresholds unreachable. Primary pointer-down is a queued action pulse rather than a transient level so a complete click between fixed ticks cannot disappear.

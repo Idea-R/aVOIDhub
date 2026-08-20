@@ -82,7 +82,7 @@ T2 must implement this contract as pure tested math before visual effects:
 
 1. A projectile carries position, previous position, normalized travel direction, speed, base damage, penetration, owner, and deterministic identifier.
 2. Collision provides an impact point and the defender's hull angle. The game never calls `takeDamage(damage)` without an impact vector.
-3. Convert the source-facing direction into defender-local space:
+3. Convert the defender-center-to-impact direction into defender-local space. The impact point chooses the physical plate; projectile travel is reserved for incidence:
    - front face: absolute local angle ≤ 45°;
    - rear face: absolute local angle ≥ 135°;
    - otherwise left or right side.
@@ -93,6 +93,8 @@ T2 must implement this contract as pure tested math before visual effects:
 5. Initial face multipliers are front `0.55`, side `0.90`, rear `1.35`. They are balance constants, not hidden random rolls.
 6. Feedback must state the outcome with at least two channels: shape/motion plus sound or text. Color alone is insufficient.
 7. Deterministic tests cover face boundaries, shallow and square incidence, left/right symmetry, zero-length input rejection, damage clamping, and exact repeatability.
+
+T2 implements that separation explicitly. Choosing a face from projectile travel would constrain every four-face incidence to 45° or less and make the written glancing/ricochet thresholds unreachable. Swept collision therefore supplies the impact point, the center-to-impact vector chooses the face, and the inverse travel vector is compared with that face's outward normal.
 
 ## V1 content and score boundary
 
@@ -131,4 +133,4 @@ T3 adds explicit active-enemy, projectile, particle, draw-call, and frame-time c
 
 ## Public boundary
 
-TankaVOID stays **Coming Soon** and noninteractive in the aVOID catalog. T0/T1 do not add a platform Play route, stage the build into the platform, create a leaderboard, activate auth, or change production. The first public preview requires T2 directional combat and T3 full-loop evidence; V1 publication still requires T4–T7.
+TankaVOID stays **Coming Soon** and noninteractive in the aVOID catalog. T0–T2 do not add a platform Play route, stage the build into the platform, create a leaderboard, activate auth, or change production. The first public preview requires both the completed T2 directional-combat proof and T3 full-loop evidence; V1 publication still requires T4–T7.

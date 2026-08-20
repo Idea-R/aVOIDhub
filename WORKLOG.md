@@ -289,3 +289,20 @@ Review stacked draft PR `#23` and keep physical-device/deployed checks as explic
 ### Next action
 
 Review draft PR `#25`, then implement T2 as an isolated deterministic combat slice: one cannon, one enemy, pure face/incidence/damage math, and readable ricochet/glancing/penetration outcomes. Do not reopen infantry, mines, progression, multiplayer, or fake leaderboard scope.
+
+## 2026-08-20 — TankaVOID T2 directional combat
+
+- Opened issue `#26` and created isolated branch `codex/tankavoid-t2-directional-combat` from the exact T0/T1 head `9eead82`.
+- Added pure face, outward-normal, incidence, outcome, multiplier, penetration, and health-clamp math with the frozen 45°/135° and 50°/68° boundaries.
+- Clarified that center-to-impact direction selects the plate while projectile travel selects incidence; using travel for both would make glancing and ricochet unreachable.
+- Added swept segment-versus-oriented-box collision, a fixed 32-projectile pool, one player cannon, one deterministic bruiser cannon/behavior, eight bounded impact records, health, disable, automatic results, and restart cleanup.
+- Added distinct penetration/glancing/ricochet shapes plus visible face, angle, and damage text; no random roll or color-only outcome exists.
+- Found that quick clicks could disappear between fixed steps and replaced transient fire level with a bounded queued trigger-pull boundary.
+- Passed zero-warning typecheck/lint, 8 test files / 21 tests, Vite build, full 21-route platform build, root audit, and the 57,331 / 122,880-byte initial-transfer gate with no downloaded or external runtime assets.
+- Browser-checked six briefing and five active viewports with no document overflow; narrow screens state that touch driving remains deferred.
+- Completed one live six-shot/six-hit enemy disable for 120 damage, one natural player-disable path, Escape/modal focus, and a 20-cycle ownership soak retaining one canvas, eight listeners, one observer, zero terminal projectiles, and zero terminal frame.
+- Kept TankaVOID out of platform staging and retained the public Coming Soon boundary.
+
+### Next action
+
+Publish T2 for review, then build T3 as a complete encounter loop: intentional arena/cover, tank separation, spawn and terminal pacing, explicit entity/draw/frame ceilings, and ten natural start-to-result runs. Do not expand to multiple enemies, progression, touch, or platform scores in T3.

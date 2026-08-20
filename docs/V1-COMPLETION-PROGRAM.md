@@ -5,7 +5,7 @@
 - **Repository:** `C:\dev\aVOID-next` / `Idea-R/aVOIDhub`
 - **Production baseline:** `https://avoidgame.io` at merge commit `7cd9788`
 - **Program branch:** `codex/docs-v1-completion-program`
-- **Current execution branch:** `codex/tankavoid-t0-t1-foundation` (stacked on the reviewed VOIDaVOID V4 boundary and published in draft PR #25)
+- **Current execution branch:** `codex/tankavoid-t2-directional-combat` (stacked on the TankaVOID T0/T1 head and tracked in issue #26)
 - **Related records:** [`ROADMAP.md`](../ROADMAP.md), [`WORKLOG.md`](../WORKLOG.md), [`DECISIONS.md`](../DECISIONS.md)
 
 ## 1. Why this document exists
@@ -60,6 +60,7 @@ It is intentionally stricter than “the page loads.” Every V1 definition incl
 - VOIDaVOID V2 is local-source and browser complete. Named streams now seed every score-affecting meteor, power-up, chain, score-roll, and defense fallback decision; gameplay timers use the 60 Hz simulation clock; and a bounded tick-ordered envelope independently recomputes each final score. Twenty-two tests, standalone/full-platform builds, three responsive browser sizes, and a 20-cycle evidence soak pass. The result is honestly labeled `replayable-local`, not server validated; evidence is in `docs/voidavoid-v2-evidence-contract.md` and `docs/sprint-voidavoid-v2.md`.
 - VOIDaVOID V4 is local-source and browser complete. Gesture-only procedural audio, persisted preferences, system-aware reduced motion, semantic focus-owned dialogs, central particle bounds, a repaired FPS sampler, and an enforced transfer/audio budget pass 30 tests and five responsive browser sizes. Twenty repeat cycles retain one context, five pointer listeners, bounded particles, zero terminal voices/frames, and a decreasing raw heap sample. Physical devices, a formal deployed audit, deployment, and rollback remain release gates; evidence is in `docs/voidavoid-v4-experience-contract.md` and `docs/sprint-voidavoid-v4.md`.
 - TankaVOID T0/T1 is source- and local-browser-complete in draft PR #25. The 78-error monorepo generation and the stronger dirty standalone prototype are preserved, inventoried, and replaced in the active graph by one seeded fixed-step proving ground with one input owner, one resize owner, explicit run states, headless tests, and an enforced 54,130-byte initial-transfer result. Twenty browser cycles retain one canvas, eight listeners, one observer, and no terminal frame. Directional combat, enemies, touch, scoring, platform integration, and any public route remain T2–T7; evidence is in `docs/tankavoid-v1-contract.md` and `docs/sprint-tankavoid-t0-t1.md`.
+- TankaVOID T2 is source- and local-browser-complete. One player and one deterministic bruiser now exchange pooled swept shells through pure impact-point face selection and incidence-based penetration, glancing, or ricochet math. Twenty-one tests, a 57,331-byte transfer result, a live six-shot enemy disable, a natural player-disable path, responsive QA, pause focus, and a 20-cycle ownership soak pass. Touch, a complete arena/loop, content expansion, scoring, platform integration, and any public route remain T3–T7; evidence is in `docs/sprint-tankavoid-t2.md`.
 
 ### What is unsafe or misleading if activated today
 
@@ -672,13 +673,13 @@ Directory V1 may ship before integrated V1. The platform must not hold the rest 
 
 ### Current state
 
-T0/T1 replaced the active monorepo package with a buildable engineering proving ground. It now has one seeded 60 Hz simulation, one loop, one keyboard/pointer owner, one responsive logical-pixel viewport, explicit briefing/run/pause/complete/restart states, ten focused tests, and a 54,130-byte initial compressed transfer. It is not staged into the platform and remains Coming Soon.
+T0–T2 replaced the active monorepo package with a buildable directional-combat proof. It now has one seeded 60 Hz simulation, one loop, one keyboard/pointer owner, one responsive logical-pixel viewport, explicit briefing/run/pause/complete/restart states, pure face/incidence/damage math, one pooled cannon per side, swept collision, and one deterministic bruiser. Twenty-one focused tests and a 57,331-byte initial compressed transfer pass. It is not staged into the platform and remains Coming Soon.
 
 The replaced monorepo generation failed with 78 TypeScript errors across incompatible entity, collision, update/reset, input, particle, experience, and power-up contracts. Its source remains recoverable through Git history rather than compiling beside the rebuild.
 
 There is a better standalone prototype at `C:\dev\TankAVOIDz`, remote `Idea-R/TankaVOID`, on `feat/get-game-working` with substantial uncommitted work. It nearly type-checks and contains a usable canvas loop, waves, camera, score, keyboard/mouse/joystick/touch input, directional front/side/rear armor, weapons, enemies, bosses, mines, power-ups, terrain, and particles. It is the mechanics salvage candidate, not the production runtime.
 
-The strongest original idea—directional damage, armor angle, deliberate tank movement, and satisfying impacts—is still disconnected. `Tank.takeDamage` can accept an impact angle, but the projectile collision path currently calls it with damage alone; no demonstrated ricochet contract exists. Its leaderboard is hard-coded sample HTML, its last `dist` predates current source changes, and it has no auth, backend, score security, tests, or production deployment.
+The original prototype left its strongest idea disconnected: `Tank.takeDamage` accepted an optional angle while projectile collision omitted it. T2 replaces that path rather than repairing it. Every impact now carries a swept collision point and normalized travel vector into pure plate/incidence math, with no generic damage-only call. The prototype's hard-coded leaderboard, stale distribution build, and absent backend remain rejected rather than ported.
 
 T0 froze that standalone dirty tree in a checksummed source archive plus a full Git bundle before any rebuild work. The exact recovery record, salvage/reject decisions, `tankavoid-v1-rules-1` score boundary, and T2 face/incidence/damage rules are in [`tankavoid-v1-contract.md`](tankavoid-v1-contract.md). No prototype module is directly ported until isolated tests justify it.
 
@@ -752,14 +753,14 @@ TankaVOID V1 is a focused top-down survival/arena game:
 
 **Expected TankaVOID effort:** **4–6 engineering weeks plus 1–2 weeks of feel, art, and QA iteration** for the narrow V1 above. A playable vertical slice should appear in the first week. Attempting to rehabilitate every prototype system or add multiplayer would move it beyond this range.
 
-T0/T1 implementation evidence: [`tankavoid-v1-contract.md`](tankavoid-v1-contract.md) and [`sprint-tankavoid-t0-t1.md`](sprint-tankavoid-t0-t1.md). The package now has one clean simulation/lifecycle boundary; T2 is the directional-combat vertical slice.
+T0–T2 implementation evidence: [`tankavoid-v1-contract.md`](tankavoid-v1-contract.md), [`sprint-tankavoid-t0-t1.md`](sprint-tankavoid-t0-t1.md), and [`sprint-tankavoid-t2.md`](sprint-tankavoid-t2.md). The package now has one clean simulation/lifecycle boundary and one complete directional-combat proof; T3 must turn it into a repeatable encounter loop.
 
 ### TankaVOID V1 acceptance checklist
 
 - [x] A new clean T1 build passes type-check, lint, tests, production build, source budgets, and a responsive local-browser/repeat-run gate.
-- [ ] Directional armor and impact angle materially change damage and are understandable during play.
-- [ ] Shallow-angle hits consistently deflect or reduce penetration under the written rule set.
-- [ ] The full start/play/death/restart loop remains stable across repeated runs.
+- [x] Directional armor and impact angle materially change damage and are understandable during play.
+- [x] Shallow-angle hits consistently deflect or reduce penetration under the written rule set.
+- [x] The T2 start/combat/disable/restart boundary remains stable across repeated runs; T3 still owes ten natural complete encounter loops.
 - [ ] The supported input/device claim is backed by actual device evidence.
 - [ ] The V1 enemy/content list is complete without reintroducing prototype sprawl.
 - [ ] Score has a versioned contract and an honest trust tier.
