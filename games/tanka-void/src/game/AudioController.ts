@@ -1,4 +1,10 @@
-export type AudioCue = "fire" | "impact" | "cover" | "victory" | "defeat";
+export type AudioCue =
+  | "fire"
+  | "impact"
+  | "cover"
+  | "wave"
+  | "victory"
+  | "defeat";
 
 export type AudioState = "locked" | "ready" | "unavailable";
 
@@ -40,6 +46,7 @@ const CUES: Record<
   fire: { frequency: 92, endFrequency: 54, duration: 0.12, gain: 0.13 },
   impact: { frequency: 170, endFrequency: 74, duration: 0.16, gain: 0.11 },
   cover: { frequency: 420, endFrequency: 210, duration: 0.08, gain: 0.07 },
+  wave: { frequency: 190, endFrequency: 390, duration: 0.24, gain: 0.08 },
   victory: { frequency: 240, endFrequency: 520, duration: 0.34, gain: 0.1 },
   defeat: { frequency: 150, endFrequency: 48, duration: 0.42, gain: 0.11 },
 };

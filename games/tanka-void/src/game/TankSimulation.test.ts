@@ -1,29 +1,81 @@
 import { describe, expect, it } from "vitest";
+import { TANKAVOID_WAVES } from "./content";
 import { TankSimulation } from "./TankSimulation";
-import type { InputSnapshot } from "./types";
+import type { EnemySnapshot, InputSnapshot, RunSnapshot } from "./types";
 
 const IDLE: InputSnapshot = {
   throttle: 0,
   turn: 0,
-  aim: { x: 912, y: 360 },
+  aim: { x: 925, y: 360 },
   fire: false,
 };
+
+function activeTarget(snapshot: RunSnapshot): EnemySnapshot | undefined {
+  return snapshot.enemies
+    .filter((enemy) => !enemy.disabled)
+    .sort((left, right) => {
+      const leftDistance = Math.hypot(
+        left.x - snapshot.tank.x,
+        left.y - snapshot.tank.y,
+      );
+      const rightDistance = Math.hypot(
+        right.x - snapshot.tank.x,
+        right.y - snapshot.tank.y,
+      );
+      return leftDistance - rightDistance || left.id.localeCompare(right.id);
+    })[0];
+}
+
+function pilot(
+  snapshot: RunSnapshot,
+  tick: number,
+  fireIntervalTicks = 20,
+): InputSnapshot {
+  const target = activeTarget(snapshot);
+  if (!target || snapshot.stage !== "combat") return IDLE;
+  const distance = Math.hypot(
+    target.x - snapshot.tank.x,
+    target.y - snapshot.tank.y,
+  );
+  const leadSeconds = distance / 620;
+  return {
+    throttle: 0,
+    turn: 0,
+    aim: {
+      x: target.x + Math.cos(target.hullAngle) * target.speed * leadSeconds,
+      y: target.y + Math.sin(target.hullAngle) * target.speed * leadSeconds,
+    },
+    fire: tick % fireIntervalTicks === 0,
+  };
+}
 
 function deploy(simulation: TankSimulation): void {
   while (simulation.snapshot().stage === "deploying") simulation.step(IDLE);
 }
 
-function runNaturalEncounter(seed: number) {
+function runNaturalCampaign(seed: number, maximumTicks = 15_000) {
+  const simulation = new TankSimulation();
+  const waves = new Map<number, string>();
+  simulation.start(seed);
+  for (let tick = 0; tick < maximumTicks; tick += 1) {
+    const snapshot = simulation.snapshot();
+    waves.set(
+      snapshot.wave,
+      snapshot.enemies.map((enemy) => enemy.archetype).join(","),
+    );
+    if (snapshot.phase === "complete") return { snapshot, waves };
+    simulation.step(pilot(snapshot, tick));
+  }
+  return { snapshot: simulation.snapshot(), waves };
+}
+
+function runDeliberateCampaign(seed: number, maximumTicks = 20_000) {
   const simulation = new TankSimulation();
   simulation.start(seed);
-  for (let tick = 0; tick < 1_200; tick += 1) {
+  for (let tick = 0; tick < maximumTicks; tick += 1) {
     const snapshot = simulation.snapshot();
     if (snapshot.phase === "complete") return snapshot;
-    simulation.step({
-      ...IDLE,
-      aim: { x: snapshot.enemy.x, y: snapshot.enemy.y },
-      fire: snapshot.stage === "combat" && tick % 24 === 0,
-    });
+    simulation.step(pilot(snapshot, tick, 120));
   }
   return simulation.snapshot();
 }
@@ -38,20 +90,30 @@ function distanceFromCover(
 }
 
 describe("TankSimulation", () => {
-  it("is deterministic for the same seed and fixed combat history", () => {
+  it("publishes the exact T5 entity and draw ceilings", () => {
+    expect(new TankSimulation().limits()).toEqual({
+      enemies: 3,
+      cover: 4,
+      projectiles: 32,
+      impacts: 12,
+      coverStrikes: 8,
+      particles: 0,
+      drawItems: 64,
+    });
+  });
+
+  it("is deterministic for the same seed and fixed pilot history", () => {
     const first = new TankSimulation();
     const second = new TankSimulation();
     first.start(42);
     second.start(42);
-    for (let tick = 0; tick < 240; tick += 1) {
-      const input = {
-        throttle: tick < 90 ? 0.35 : 0,
-        turn: tick < 90 ? 0.12 : 0,
-        aim: { x: 900, y: 360 },
-        fire: tick % 30 === 0,
-      };
-      first.step(input);
-      second.step(input);
+    for (let tick = 0; tick < 2_000; tick += 1) {
+      const firstSnapshot = first.snapshot();
+      const secondSnapshot = second.snapshot();
+      expect(firstSnapshot).toEqual(secondSnapshot);
+      if (firstSnapshot.phase === "complete") break;
+      first.step(pilot(firstSnapshot, tick));
+      second.step(pilot(secondSnapshot, tick));
     }
     expect(first.snapshot()).toEqual(second.snapshot());
     expect(first.snapshot().projectiles.length).toBeLessThanOrEqual(
@@ -59,17 +121,13 @@ describe("TankSimulation", () => {
     );
   });
 
-  it("keeps both tanks inside the world and freezes every combat clock on pause", () => {
+  it("keeps every tank in bounds and freezes every combat clock on pause", () => {
     const simulation = new TankSimulation();
     simulation.start(99);
-    const driving: InputSnapshot = {
-      ...IDLE,
-      throttle: 1,
-      turn: 0.7,
-    };
-    for (let tick = 0; tick < 70; tick += 1) simulation.step(driving);
+    const driving: InputSnapshot = { ...IDLE, throttle: 1, turn: 0.7 };
+    for (let tick = 0; tick < 240; tick += 1) simulation.step(driving);
     const moving = simulation.snapshot();
-    for (const tank of [moving.tank, moving.enemy]) {
+    for (const tank of [moving.tank, ...moving.enemies]) {
       expect(tank.x).toBeGreaterThanOrEqual(36);
       expect(tank.x).toBeLessThanOrEqual(1164);
       expect(tank.y).toBeGreaterThanOrEqual(36);
@@ -84,51 +142,65 @@ describe("TankSimulation", () => {
     expect(simulation.snapshot().tick).toBe(moving.tick + 1);
   });
 
-  it("fires one pooled shell per accepted trigger edge and records a real hit", () => {
+  it("fires one pooled shell per accepted action and records the target id", () => {
     const simulation = new TankSimulation();
     simulation.start(7);
     deploy(simulation);
-    simulation.step({ ...IDLE, fire: true });
+    const target = simulation.snapshot().enemies[0];
+    simulation.step({ ...IDLE, aim: target, fire: true });
     simulation.step(IDLE);
     expect(simulation.snapshot().triggerPulls).toBe(1);
     expect(simulation.snapshot().stats.shotsFired).toBe(1);
-    simulation.step(IDLE);
-    for (let tick = 0; tick < 75; tick += 1) simulation.step(IDLE);
-    expect(simulation.snapshot().stats.hits).toBeGreaterThanOrEqual(1);
-    expect(simulation.snapshot().enemy.health).toBeLessThan(120);
-    expect(simulation.snapshot().impacts.length).toBeGreaterThanOrEqual(1);
-  });
-
-  it("reaches one deterministic enemy-disabled terminal result", () => {
-    const result = runNaturalEncounter(12);
-    expect(result.phase).toBe("complete");
-    expect(result.completionReason).toBe("enemy-disabled");
-    expect(result.enemy.health).toBe(0);
-    expect(result.projectiles).toHaveLength(0);
-    expect(result.impacts.length).toBeLessThanOrEqual(8);
-  });
-
-  it("holds deployment and the final impact before completing", () => {
-    const simulation = new TankSimulation();
-    simulation.start(31);
-    const initial = simulation.snapshot();
-    for (let tick = 0; tick < 179; tick += 1)
-      simulation.step({ ...IDLE, throttle: 1, fire: true });
-    expect(simulation.snapshot()).toMatchObject({
-      stage: "deploying",
-      triggerPulls: 0,
-      tank: { x: initial.tank.x, y: initial.tank.y },
+    for (let tick = 0; tick < 100; tick += 1) simulation.step(IDLE);
+    const snapshot = simulation.snapshot();
+    expect(snapshot.stats.hits).toBeGreaterThanOrEqual(1);
+    expect(snapshot.impacts[snapshot.impacts.length - 1]).toMatchObject({
+      target: "enemy",
+      targetId: target.id,
     });
-    simulation.step(IDLE);
-    expect(simulation.snapshot().stage).toBe("combat");
-
-    const result = runNaturalEncounter(31);
-    expect(result.phase).toBe("complete");
-    expect(result.stage).toBe("resolved");
-    expect(result.stageTicksRemaining).toBe(0);
   });
 
-  it("records bounded cover strikes instead of letting shells cross barricades", () => {
+  it("holds deployment, wave clear, repair, and the final result on ticks", () => {
+    const campaign = runNaturalCampaign(31);
+    expect(campaign.snapshot).toMatchObject({
+      phase: "complete",
+      stage: "resolved",
+      stageTicksRemaining: 0,
+      completionReason: "run-cleared",
+      wave: 5,
+      waveCount: 5,
+      stats: { wavesCleared: 5, enemiesDisabled: 9 },
+    });
+    expect(campaign.snapshot.stats.armorRepaired).toBeGreaterThan(0);
+    expect(campaign.snapshot.stats.armorRepaired).toBeLessThanOrEqual(112);
+  });
+
+  it("reaches the exact static roster in order without development tools", () => {
+    const campaign = runNaturalCampaign(77);
+    expect([...campaign.waves.entries()]).toEqual(
+      TANKAVOID_WAVES.map((wave) => [
+        wave.number,
+        wave.enemies.map((enemy) => enemy.archetype).join(","),
+      ]),
+    );
+    expect(campaign.snapshot.completionReason).toBe("run-cleared");
+  });
+
+  it("still reaches an honest player-disabled result when the player does nothing", () => {
+    const simulation = new TankSimulation();
+    simulation.start(91);
+    for (let tick = 0; tick < 30_000; tick += 1) {
+      if (simulation.snapshot().phase === "complete") break;
+      simulation.step(IDLE);
+    }
+    expect(simulation.snapshot()).toMatchObject({
+      phase: "complete",
+      completionReason: "player-disabled",
+      stats: { wavesCleared: 0, enemiesDisabled: 0 },
+    });
+  });
+
+  it("records bounded cover strikes instead of crossing barricades", () => {
     const simulation = new TankSimulation();
     simulation.start(8);
     deploy(simulation);
@@ -144,38 +216,68 @@ describe("TankSimulation", () => {
     ).toBe(true);
   });
 
-  it("keeps moving tanks outside every barricade and separated from each other", () => {
+  it("keeps moving tanks outside cover and separated from one another", () => {
     const simulation = new TankSimulation();
     simulation.start(18);
     deploy(simulation);
-    for (let tick = 0; tick < 480; tick += 1) {
+    for (let tick = 0; tick < 720; tick += 1) {
       const snapshot = simulation.snapshot();
       if (snapshot.phase === "complete") break;
+      const target = activeTarget(snapshot);
       simulation.step({
         ...IDLE,
         throttle: 1,
-        turn: tick < 150 ? -0.74 : tick < 300 ? 0.82 : -0.45,
-        aim: { x: snapshot.enemy.x, y: snapshot.enemy.y },
+        turn: tick < 220 ? -0.74 : tick < 440 ? 0.82 : -0.45,
+        aim: target ?? IDLE.aim,
       });
       const moved = simulation.snapshot();
-      for (const tank of [moved.tank, moved.enemy])
+      const tanks = [moved.tank, ...moved.enemies];
+      for (const tank of tanks)
         for (const cover of moved.cover)
           expect(distanceFromCover(tank, cover)).toBeGreaterThanOrEqual(35.999);
-      expect(
-        Math.hypot(moved.enemy.x - moved.tank.x, moved.enemy.y - moved.tank.y),
-      ).toBeGreaterThanOrEqual(71.999);
+      for (let first = 0; first < tanks.length; first += 1)
+        for (let second = first + 1; second < tanks.length; second += 1)
+          expect(
+            Math.hypot(
+              tanks[first].x - tanks[second].x,
+              tanks[first].y - tanks[second].y,
+            ),
+          ).toBeGreaterThanOrEqual(71.9);
     }
   });
 
-  it("completes ten natural loops inside every explicit runtime ceiling", () => {
+  it("completes ten natural campaigns inside every explicit ceiling", () => {
     for (let seed = 1; seed <= 10; seed += 1) {
-      const result = runNaturalEncounter(seed);
+      const result = runNaturalCampaign(seed).snapshot;
       expect(result.phase, `seed ${seed}`).toBe("complete");
-      expect(result.completionReason, `seed ${seed}`).toBe("enemy-disabled");
+      expect(result.completionReason, `seed ${seed}`).toBe("run-cleared");
+      expect(result.stats.wavesCleared, `seed ${seed}`).toBe(5);
+      expect(result.stats.enemiesDisabled, `seed ${seed}`).toBe(9);
+      expect(result.combatSeconds, `seed ${seed}`).toBeGreaterThanOrEqual(20);
+      expect(result.combatSeconds, `seed ${seed}`).toBeLessThan(45);
+      expect(result.tank.health, `seed ${seed}`).toBeGreaterThan(0);
+      expect(result.stats.shotsFired, `seed ${seed}`).toBeGreaterThanOrEqual(
+        60,
+      );
+      expect(
+        result.stats.hits / result.stats.shotsFired,
+        `seed ${seed}`,
+      ).toBeGreaterThan(0.6);
       expect(result.projectiles.length).toBeLessThanOrEqual(32);
-      expect(result.impacts.length).toBeLessThanOrEqual(8);
+      expect(result.impacts.length).toBeLessThanOrEqual(12);
       expect(result.coverStrikes.length).toBeLessThanOrEqual(8);
+      expect(result.enemies.length).toBeLessThanOrEqual(3);
       expect(result.cover).toHaveLength(4);
+    }
+  });
+
+  it("leaves room for a deliberate touch cadence to clear every wave", () => {
+    for (let seed = 1; seed <= 10; seed += 1) {
+      const result = runDeliberateCampaign(seed);
+      expect(result.completionReason, `seed ${seed}`).toBe("run-cleared");
+      expect(result.stats.wavesCleared, `seed ${seed}`).toBe(5);
+      expect(result.stats.enemiesDisabled, `seed ${seed}`).toBe(9);
+      expect(result.tank.health, `seed ${seed}`).toBeGreaterThan(0);
     }
   });
 });

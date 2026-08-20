@@ -215,7 +215,7 @@ export class GameRuntime {
       maximumStepsPerFrame: loop.maximumStepsPerFrame,
       activeProjectiles: snapshot.projectiles.length,
       projectileCapacity: this.simulation.projectileCapacity(),
-      activeEnemies: snapshot.enemy.disabled ? 0 : 1,
+      activeEnemies: snapshot.enemies.filter((enemy) => !enemy.disabled).length,
       enemyCapacity: limits.enemies,
       coverCount: snapshot.cover.length,
       coverCapacity: limits.cover,
@@ -289,9 +289,11 @@ export class GameRuntime {
     const afterCover =
       after.coverStrikes[after.coverStrikes.length - 1]?.id ?? 0;
     if (afterCover > beforeCover) this.audio.play("cover");
+    if (before.stage !== "wave-clear" && after.stage === "wave-clear")
+      this.audio.play("wave");
     if (before.stage !== "resolved" && after.stage === "resolved")
       this.audio.play(
-        after.completionReason === "enemy-disabled" ? "victory" : "defeat",
+        after.completionReason === "run-cleared" ? "victory" : "defeat",
       );
   }
 }

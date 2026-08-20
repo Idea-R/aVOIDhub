@@ -3,13 +3,14 @@ export const WORLD_HEIGHT = 720;
 export const FIXED_STEP_MS = 1000 / 60;
 
 export type RunPhase = "briefing" | "running" | "paused" | "complete";
-export type EncounterStage = "deploying" | "combat" | "resolved";
+export type EncounterStage = "deploying" | "combat" | "wave-clear" | "resolved";
 export type PauseReason = "manual" | "focus";
 export type CombatantId = "player" | "enemy";
+export type EnemyArchetype = "scout" | "bruiser" | "hunter" | "commander";
 export type ArmorFace = "front" | "left" | "right" | "rear";
 export type ImpactOutcome = "penetration" | "glancing" | "ricochet";
 export type CompletionReason =
-  | "enemy-disabled"
+  | "run-cleared"
   | "player-disabled"
   | "systems-check";
 
@@ -34,6 +35,12 @@ export interface TankSnapshot {
   health: number;
   maxHealth: number;
   disabled: boolean;
+}
+
+export interface EnemySnapshot extends TankSnapshot {
+  id: string;
+  archetype: EnemyArchetype;
+  label: string;
 }
 
 export interface ProjectileSnapshot {
@@ -67,6 +74,7 @@ export interface ImpactSnapshot {
   id: number;
   tick: number;
   target: CombatantId;
+  targetId: string;
   point: WorldPoint;
   face: ArmorFace;
   outcome: ImpactOutcome;
@@ -80,6 +88,9 @@ export interface CombatStatsSnapshot {
   ricochets: number;
   damageDealt: number;
   damageTaken: number;
+  armorRepaired: number;
+  enemiesDisabled: number;
+  wavesCleared: number;
 }
 
 export interface RunSnapshot {
@@ -89,9 +100,13 @@ export interface RunSnapshot {
   seed: number;
   tick: number;
   elapsedSeconds: number;
+  combatSeconds: number;
   triggerPulls: number;
+  wave: number;
+  waveCount: number;
+  waveTitle: string;
   tank: TankSnapshot;
-  enemy: TankSnapshot;
+  enemies: EnemySnapshot[];
   projectiles: ProjectileSnapshot[];
   cover: CoverSnapshot[];
   impacts: ImpactSnapshot[];

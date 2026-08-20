@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { TouchControls } from "./TouchControls";
 import { GameRuntime } from "./game/GameRuntime";
+import { TANKAVOID_WAVES } from "./game/content";
 import { createRunSeed } from "./game/random";
 import { TANKAVOID_COVER } from "./game/TankSimulation";
 import {
@@ -17,7 +18,11 @@ const INITIAL_SNAPSHOT: RunSnapshot = {
   seed: 1,
   tick: 0,
   elapsedSeconds: 0,
+  combatSeconds: 0,
   triggerPulls: 0,
+  wave: 1,
+  waveCount: TANKAVOID_WAVES.length,
+  waveTitle: TANKAVOID_WAVES[0].title,
   tank: {
     x: WORLD_WIDTH * 0.26,
     y: WORLD_HEIGHT * 0.5,
@@ -28,16 +33,21 @@ const INITIAL_SNAPSHOT: RunSnapshot = {
     maxHealth: 140,
     disabled: false,
   },
-  enemy: {
-    x: WORLD_WIDTH * 0.76,
-    y: WORLD_HEIGHT * 0.5,
-    hullAngle: Math.PI,
-    turretAngle: Math.PI,
-    speed: 0,
-    health: 120,
-    maxHealth: 120,
-    disabled: false,
-  },
+  enemies: [
+    {
+      id: "wave-1-1-scout",
+      archetype: "scout",
+      label: "SCOUT",
+      x: 925,
+      y: WORLD_HEIGHT * 0.5,
+      hullAngle: Math.PI,
+      turretAngle: Math.PI,
+      speed: 0,
+      health: 100,
+      maxHealth: 100,
+      disabled: false,
+    },
+  ],
   projectiles: [],
   cover: TANKAVOID_COVER.map((cover) => ({ ...cover })),
   impacts: [],
@@ -48,6 +58,9 @@ const INITIAL_SNAPSHOT: RunSnapshot = {
     ricochets: 0,
     damageDealt: 0,
     damageTaken: 0,
+    armorRepaired: 0,
+    enemiesDisabled: 0,
+    wavesCleared: 0,
   },
 };
 
@@ -65,17 +78,17 @@ const INITIAL_DIAGNOSTICS: RuntimeDiagnostics = {
   activeProjectiles: 0,
   projectileCapacity: 32,
   activeEnemies: 1,
-  enemyCapacity: 1,
+  enemyCapacity: 3,
   coverCount: 4,
   coverCapacity: 4,
   impactHistory: 0,
-  impactHistoryCapacity: 8,
+  impactHistoryCapacity: 12,
   coverStrikeHistory: 0,
   coverStrikeHistoryCapacity: 8,
   particleCount: 0,
   particleCapacity: 0,
   drawItems: 0,
-  drawItemCapacity: 56,
+  drawItemCapacity: 64,
   audioState: "locked",
   soundMuted: false,
   audioContexts: 0,
@@ -150,8 +163,8 @@ function formatSeed(seed: number): string {
 }
 
 function completionTitle(snapshot: RunSnapshot): string {
-  if (snapshot.completionReason === "enemy-disabled")
-    return "Armor line broken.";
+  if (snapshot.completionReason === "run-cleared")
+    return "The whole line broke.";
   if (snapshot.completionReason === "player-disabled") return "Hull disabled.";
   return "Combat systems held.";
 }
@@ -181,6 +194,13 @@ function App() {
     [],
   );
   const lastImpact = snapshot.impacts[snapshot.impacts.length - 1];
+  const activeEnemies = snapshot.enemies.filter((enemy) => !enemy.disabled);
+  const leadEnemy = activeEnemies.reduce<(typeof activeEnemies)[number] | null>(
+    (current, enemy) =>
+      !current || enemy.health > current.health ? enemy : current,
+    null,
+  );
+  const waveDefinition = TANKAVOID_WAVES[snapshot.wave - 1];
   const touchPreview = useMemo(
     () =>
       typeof location !== "undefined" &&
@@ -200,7 +220,7 @@ function App() {
     });
     runtimeRef.current = runtime;
     if (import.meta.env.DEV) {
-      window.__TANKAVOID_T4__ = {
+      window.__TANKAVOID_T5__ = {
         snapshot: () => runtime.snapshot(),
         diagnostics: () => runtime.diagnostics(),
         start: (seed = createRunSeed()) => runtime.start(seed),
@@ -211,7 +231,7 @@ function App() {
     return () => {
       runtime.destroy();
       runtimeRef.current = null;
-      if (import.meta.env.DEV) delete window.__TANKAVOID_T4__;
+      if (import.meta.env.DEV) delete window.__TANKAVOID_T5__;
     };
   }, []);
 
@@ -295,7 +315,7 @@ function App() {
         aria-label={
           touchMode
             ? "TankaVOID directional combat proving ground. Drag the left touch control to drive and steer. Drag the right control to aim, then release it to fire. Keep your front armor toward incoming shells."
-            : "TankaVOID directional combat proving ground. Use W A S D or arrow keys to drive, the pointer to aim the turret, and primary click to fire. Keep your front armor toward incoming shells. Escape pauses."
+            : "TankaVOID five-wave directional combat run. Use W A S D or arrow keys to drive, the pointer to aim the turret, and primary click to fire. Keep your front armor toward incoming shells. Escape pauses."
         }
       />
       <p className="tank-status" role="status" aria-live="polite">
@@ -305,7 +325,10 @@ function App() {
           "Tanks deploying."}
         {snapshot.phase === "running" &&
           snapshot.stage === "combat" &&
-          "Arena live."}
+          `Wave ${snapshot.wave} live. ${activeEnemies.length} hostiles remain.`}
+        {snapshot.phase === "running" &&
+          snapshot.stage === "wave-clear" &&
+          `Wave ${snapshot.wave} clear. Field repair underway.`}
         {snapshot.phase === "running" &&
           snapshot.stage === "resolved" &&
           "Final impact confirmed."}
@@ -316,22 +339,26 @@ function App() {
       {snapshot.phase !== "briefing" && (
         <section className="tank-hud" aria-label="Run status">
           <div className="tank-hud__identity">
-            <span>T4 / CONTROL CANDIDATE</span>
-            <strong>{formatTime(snapshot.elapsedSeconds)}</strong>
+            <span>
+              T5 / WAVE {snapshot.wave} OF {snapshot.waveCount}
+            </span>
+            <strong>{formatTime(snapshot.combatSeconds)}</strong>
           </div>
           <div className="tank-hud__telemetry">
             <span>
               Hull <strong>{Math.ceil(snapshot.tank.health)}</strong>
             </span>
             <span>
-              Target <strong>{Math.ceil(snapshot.enemy.health)}</strong>
+              Hostiles <strong>{activeEnemies.length}</strong>
             </span>
             <span>
-              {lastImpact ? lastImpact.outcome : "No impact"}{" "}
+              {leadEnemy ? leadEnemy.label : "Line clear"}{" "}
               <strong>
-                {lastImpact
-                  ? `${lastImpact.face} ${Math.round(lastImpact.damage)}`
-                  : formatSeed(snapshot.seed)}
+                {leadEnemy
+                  ? Math.ceil(leadEnemy.health)
+                  : lastImpact
+                    ? `${lastImpact.face} ${Math.round(lastImpact.damage)}`
+                    : formatSeed(snapshot.seed)}
               </strong>
             </span>
           </div>
@@ -386,9 +413,10 @@ function App() {
               ? touchMode
                 ? "Left thumb drives. Right thumb aims; release to fire."
                 : "WASD drives. The pointer aims; click to fire."
-              : snapshot.tick < 360
-                ? "Keep the bright front plate toward the bruiser."
-                : "Barricades stop shells. Break line of sight when you need room."}
+              : snapshot.stage === "wave-clear"
+                ? "Field repair is automatic. Use the hold to read the next line."
+                : (waveDefinition?.cue ??
+                  "Barricades stop shells. Break line of sight when you need room.")}
           </p>
           <button type="button" onClick={hideTips}>
             Hide tips
@@ -399,18 +427,18 @@ function App() {
       {snapshot.phase === "briefing" && (
         <section className="tank-briefing" aria-labelledby="tank-title">
           <div className="tank-briefing__copy">
-            <p className="tank-kicker">aVOID combat proof / T4</p>
+            <p className="tank-kicker">aVOID combat proof / T5</p>
             <h1 id="tank-title">
               Tanka<span>VOID</span>
             </h1>
             <p className="tank-thesis">Direction matters.</p>
             <p className="tank-lede">
-              The front plate can take a punch. The rear cannot. Turn the hull,
-              aim the turret independently, use the barricades, and break one
-              bruiser before it finds your weak side.
+              Five waves. Three ways to get flanked. One commander at the end.
+              Keep the strong plate toward the shot, use the barricades, and
+              break the line before it pulls you apart.
             </p>
             <button className="tank-primary" type="button" onClick={start}>
-              <span>Test the armor</span>
+              <span>Break all five waves</span>
               <small>
                 {touchMode
                   ? "Two thumbs / aim / release to fire"
@@ -457,8 +485,8 @@ function App() {
               </li>
               <li>
                 <span>03</span>
-                <strong>Cover</strong>
-                <small>Hard stops for tracks and shells</small>
+                <strong>Five waves</strong>
+                <small>Scout / bruiser / hunter / command</small>
               </li>
             </ol>
             <div className="tank-briefing__readout">
@@ -534,12 +562,22 @@ function App() {
             aria-labelledby="complete-title"
             tabIndex={-1}
           >
-            <p className="tank-kicker">T4 combat result</p>
+            <p className="tank-kicker">T5 five-wave result</p>
             <h2 id="complete-title">{completionTitle(snapshot)}</h2>
             <div className="tank-result-grid">
               <span>
-                <small>Duration</small>
-                <strong>{formatTime(snapshot.elapsedSeconds)}</strong>
+                <small>Waves</small>
+                <strong>
+                  {snapshot.stats.wavesCleared} / {snapshot.waveCount}
+                </strong>
+              </span>
+              <span>
+                <small>Hostiles disabled</small>
+                <strong>{snapshot.stats.enemiesDisabled}</strong>
+              </span>
+              <span>
+                <small>Combat time</small>
+                <strong>{formatTime(snapshot.combatSeconds)}</strong>
               </span>
               <span>
                 <small>Damage dealt</small>
@@ -551,10 +589,15 @@ function App() {
                   {snapshot.stats.hits} / {snapshot.stats.shotsFired}
                 </strong>
               </span>
+              <span>
+                <small>Field repair</small>
+                <strong>{Math.round(snapshot.stats.armorRepaired)}</strong>
+              </span>
             </div>
             <p>
               This remains an engineering result, not a platform score. The
-              face, incidence, and damage record is deterministic and local.
+              wave, face, incidence, and damage record is deterministic and
+              local.
             </p>
             <div className="tank-dialog__actions">
               <button className="tank-primary" type="button" onClick={restart}>
@@ -593,9 +636,14 @@ function App() {
           voices:{diagnostics.activeAudioVoices}/
           {diagnostics.audioVoiceCapacity} muted:
           {diagnostics.soundMuted ? 1 : 0}
-          tank:{Math.round(snapshot.tank.x)},{Math.round(snapshot.tank.y)}{" "}
-          shots:
-          {snapshot.stats.shotsFired} hits:{snapshot.stats.hits}
+          tank:{Math.round(snapshot.tank.x)},{Math.round(snapshot.tank.y)} wave:
+          {snapshot.wave}/{snapshot.waveCount} kills:
+          {snapshot.stats.enemiesDisabled} shots:{snapshot.stats.shotsFired}{" "}
+          hits:
+          {snapshot.stats.hits} lead:
+          {leadEnemy
+            ? `${leadEnemy.label}@${Math.round(leadEnemy.x)},${Math.round(leadEnemy.y)}`
+            : "none"}
         </output>
       )}
     </main>
@@ -604,7 +652,7 @@ function App() {
 
 declare global {
   interface Window {
-    __TANKAVOID_T4__?: {
+    __TANKAVOID_T5__?: {
       snapshot(): RunSnapshot;
       diagnostics(): RuntimeDiagnostics;
       start(seed?: number): void;

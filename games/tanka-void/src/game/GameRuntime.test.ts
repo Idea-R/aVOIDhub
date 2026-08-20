@@ -145,13 +145,13 @@ describe("GameRuntime", () => {
       resizeObservers: 1,
       framePending: false,
       activeEnemies: 1,
-      enemyCapacity: 1,
+      enemyCapacity: 3,
       coverCount: 4,
       coverCapacity: 4,
       particleCount: 0,
       particleCapacity: 0,
       drawItems: 7,
-      drawItemCapacity: 56,
+      drawItemCapacity: 64,
       destroyed: false,
     });
     runtime.destroy();

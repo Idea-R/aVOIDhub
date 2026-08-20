@@ -4,6 +4,7 @@ import {
   type CombatantId,
   type CoverSnapshot,
   type CoverStrikeSnapshot,
+  type EnemySnapshot,
   type ImpactSnapshot,
   type ProjectileSnapshot,
   type RunSnapshot,
@@ -17,6 +18,16 @@ const TEAM_COLORS: Record<
 > = {
   player: { body: "#8c9d3d", edge: "#e7ff4f", dark: "#4e5b23" },
   enemy: { body: "#a6412d", edge: "#ff8b6f", dark: "#60251d" },
+};
+
+const ENEMY_COLORS: Record<
+  EnemySnapshot["archetype"],
+  { body: string; edge: string; dark: string }
+> = {
+  scout: { body: "#a84d2d", edge: "#ff9b54", dark: "#632918" },
+  bruiser: TEAM_COLORS.enemy,
+  hunter: { body: "#843f68", edge: "#f48bc7", dark: "#4e203c" },
+  commander: { body: "#663f87", edge: "#cf96ff", dark: "#38214c" },
 };
 
 function drawArena(context: CanvasRenderingContext2D): void {
@@ -108,8 +119,13 @@ function drawTank(
   context: CanvasRenderingContext2D,
   tank: TankSnapshot,
   team: CombatantId,
+  label = "YOU",
+  enemyArchetype?: EnemySnapshot["archetype"],
 ): void {
-  const colors = TEAM_COLORS[team];
+  const colors =
+    team === "enemy" && enemyArchetype
+      ? ENEMY_COLORS[enemyArchetype]
+      : TEAM_COLORS[team];
   drawArmorGuide(context, tank);
 
   context.save();
@@ -156,11 +172,7 @@ function drawTank(
   context.fillStyle = "rgba(244, 241, 223, 0.72)";
   context.font = "700 10px ui-monospace, monospace";
   context.textAlign = "center";
-  context.fillText(
-    team === "player" ? "YOU" : "BRUISER / T3",
-    tank.x,
-    tank.y - 65,
-  );
+  context.fillText(label, tank.x, tank.y - 65);
   context.textAlign = "start";
 }
 
@@ -280,16 +292,20 @@ function drawStage(
   const title =
     snapshot.stage === "deploying"
       ? String(Math.max(1, Math.ceil(snapshot.stageTicksRemaining / 60)))
-      : snapshot.completionReason === "enemy-disabled"
-        ? "LINE BROKEN"
-        : "HULL LOST";
+      : snapshot.stage === "wave-clear"
+        ? `WAVE ${snapshot.wave} CLEAR`
+        : snapshot.completionReason === "run-cleared"
+          ? "FIVE WAVES CLEAR"
+          : "HULL LOST";
   context.fillText(title, WORLD_WIDTH / 2, WORLD_HEIGHT / 2);
   context.fillStyle = "#f4f1df";
   context.font = "700 16px ui-monospace, monospace";
   context.fillText(
     snapshot.stage === "deploying"
-      ? "HOLD / SYSTEMS ARMING"
-      : "IMPACT CONFIRMED / RESULT LOCKING",
+      ? `WAVE ${snapshot.wave}/${snapshot.waveCount} · ${snapshot.waveTitle.toUpperCase()}`
+      : snapshot.stage === "wave-clear"
+        ? "FIELD REPAIR / NEXT LINE FORMING"
+        : "IMPACT CONFIRMED / RESULT LOCKING",
     WORLD_WIDTH / 2,
     WORLD_HEIGHT / 2 + 46,
   );
@@ -318,7 +334,14 @@ export class TankRenderer {
     for (const projectile of snapshot.projectiles)
       drawProjectile(context, projectile);
     drawTank(context, snapshot.tank, "player");
-    drawTank(context, snapshot.enemy, "enemy");
+    for (const enemy of snapshot.enemies)
+      drawTank(
+        context,
+        enemy,
+        "enemy",
+        `${enemy.label} / W${snapshot.wave}`,
+        enemy.archetype,
+      );
     for (const impact of snapshot.impacts)
       drawImpact(context, impact, snapshot.tick - impact.tick);
     for (const strike of snapshot.coverStrikes)
@@ -328,7 +351,8 @@ export class TankRenderer {
       1 +
       snapshot.cover.length +
       snapshot.projectiles.length +
-      2 +
+      1 +
+      snapshot.enemies.length +
       snapshot.impacts.length +
       snapshot.coverStrikes.length +
       (snapshot.stage === "combat" || snapshot.phase === "briefing" ? 0 : 1)
