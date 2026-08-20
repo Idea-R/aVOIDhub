@@ -14,12 +14,25 @@ export class InputController {
   private queuedFirePulls = 0;
   private attached = false;
   private enabled = false;
+  private touchThrottle = 0;
+  private touchTurn = 0;
+  private drivePointerId: number | null = null;
+  private aimPointerId: number | null = null;
+  private aimTouchArmed = false;
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
     private readonly getLayout: () => ViewportLayout,
     private readonly onPauseIntent: (intent: PauseIntent) => void,
     private readonly windowTarget: Window = window,
+    private readonly touchSurface?: HTMLElement,
+    private readonly getPlayerPosition: () => {
+      x: number;
+      y: number;
+    } = () => ({
+      x: WORLD_WIDTH / 2,
+      y: WORLD_HEIGHT / 2,
+    }),
   ) {}
 
   attach(): void {
@@ -32,6 +45,10 @@ export class InputController {
     this.canvas.addEventListener("pointerup", this.onPointerUp);
     this.canvas.addEventListener("pointercancel", this.onPointerUp);
     this.canvas.addEventListener("contextmenu", this.onContextMenu);
+    this.touchSurface?.addEventListener("pointerdown", this.onTouchPointerDown);
+    this.touchSurface?.addEventListener("pointermove", this.onTouchPointerMove);
+    this.touchSurface?.addEventListener("pointerup", this.onTouchPointerUp);
+    this.touchSurface?.addEventListener("pointercancel", this.onTouchPointerUp);
     this.attached = true;
   }
 
@@ -45,6 +62,19 @@ export class InputController {
     this.canvas.removeEventListener("pointerup", this.onPointerUp);
     this.canvas.removeEventListener("pointercancel", this.onPointerUp);
     this.canvas.removeEventListener("contextmenu", this.onContextMenu);
+    this.touchSurface?.removeEventListener(
+      "pointerdown",
+      this.onTouchPointerDown,
+    );
+    this.touchSurface?.removeEventListener(
+      "pointermove",
+      this.onTouchPointerMove,
+    );
+    this.touchSurface?.removeEventListener("pointerup", this.onTouchPointerUp);
+    this.touchSurface?.removeEventListener(
+      "pointercancel",
+      this.onTouchPointerUp,
+    );
     this.attached = false;
     this.reset();
   }
@@ -60,8 +90,8 @@ export class InputController {
     const right = this.isDown("d", "arrowright") ? 1 : 0;
     const left = this.isDown("a", "arrowleft") ? 1 : 0;
     const snapshot = {
-      throttle: forward - reverse,
-      turn: right - left,
+      throttle: clamp(forward - reverse + this.touchThrottle, -1, 1),
+      turn: clamp(right - left + this.touchTurn, -1, 1),
       aim: { ...this.aim },
       fire: this.queuedFirePulls > 0,
     };
@@ -70,7 +100,7 @@ export class InputController {
   }
 
   listenerCount(): number {
-    return this.attached ? 8 : 0;
+    return this.attached ? 8 + (this.touchSurface ? 4 : 0) : 0;
   }
 
   private isDown(primary: string, alternate: string): boolean {
@@ -80,6 +110,15 @@ export class InputController {
   private reset(): void {
     this.keys.clear();
     this.queuedFirePulls = 0;
+    this.touchThrottle = 0;
+    this.touchTurn = 0;
+    this.drivePointerId = null;
+    this.aimPointerId = null;
+    this.aimTouchArmed = false;
+    for (const pad of this.touchSurface?.querySelectorAll<HTMLElement>(
+      "[data-touch-stick]",
+    ) ?? [])
+      this.resetTouchPad(pad);
   }
 
   private readonly onKeyDown = (event: KeyboardEvent): void => {
@@ -145,4 +184,101 @@ export class InputController {
   private readonly onContextMenu = (event: MouseEvent): void => {
     event.preventDefault();
   };
+
+  private touchPad(event: PointerEvent): HTMLElement | null {
+    const target = event.target as
+      | (EventTarget & { closest?: (selector: string) => Element | null })
+      | null;
+    return (
+      (target?.closest?.("[data-touch-stick]") as HTMLElement | null) ?? null
+    );
+  }
+
+  private updateTouchVector(event: PointerEvent, pad: HTMLElement): number {
+    const rect = pad.getBoundingClientRect();
+    const radius = Math.max(1, Math.min(rect.width, rect.height) / 2);
+    const x = clamp(
+      (event.clientX - (rect.left + rect.width / 2)) / radius,
+      -1,
+      1,
+    );
+    const y = clamp(
+      (event.clientY - (rect.top + rect.height / 2)) / radius,
+      -1,
+      1,
+    );
+    const magnitude = Math.min(1, Math.hypot(x, y));
+    pad.style.setProperty("--stick-x", `${x * 34}%`);
+    pad.style.setProperty("--stick-y", `${y * 34}%`);
+    if (pad.dataset.touchStick === "drive") {
+      this.touchTurn = Math.abs(x) < 0.12 ? 0 : x;
+      this.touchThrottle = Math.abs(y) < 0.12 ? 0 : -y;
+    } else if (magnitude >= 0.18) {
+      const player = this.getPlayerPosition();
+      this.aim = {
+        x: player.x + (x / magnitude) * 1000,
+        y: player.y + (y / magnitude) * 1000,
+      };
+      this.aimTouchArmed = true;
+    }
+    return magnitude;
+  }
+
+  private readonly onTouchPointerDown = (event: PointerEvent): void => {
+    if (!this.enabled || event.button !== 0) return;
+    const pad = this.touchPad(event);
+    if (!pad) return;
+    event.preventDefault();
+    const kind = pad.dataset.touchStick;
+    if (kind === "drive" && this.drivePointerId === null)
+      this.drivePointerId = event.pointerId;
+    else if (kind === "aim" && this.aimPointerId === null) {
+      this.aimPointerId = event.pointerId;
+      this.aimTouchArmed = false;
+    } else return;
+    pad.setPointerCapture?.(event.pointerId);
+    this.updateTouchVector(event, pad);
+  };
+
+  private readonly onTouchPointerMove = (event: PointerEvent): void => {
+    if (!this.enabled) return;
+    const pad = this.touchPad(event);
+    if (!pad) return;
+    if (
+      event.pointerId !== this.drivePointerId &&
+      event.pointerId !== this.aimPointerId
+    )
+      return;
+    event.preventDefault();
+    this.updateTouchVector(event, pad);
+  };
+
+  private readonly onTouchPointerUp = (event: PointerEvent): void => {
+    const pad = this.touchPad(event);
+    if (!pad) return;
+    if (event.pointerId === this.drivePointerId) {
+      this.drivePointerId = null;
+      this.touchThrottle = 0;
+      this.touchTurn = 0;
+      this.resetTouchPad(pad);
+    }
+    if (event.pointerId === this.aimPointerId) {
+      this.aimPointerId = null;
+      if (this.enabled && this.aimTouchArmed)
+        this.queuedFirePulls = Math.min(4, this.queuedFirePulls + 1);
+      this.aimTouchArmed = false;
+      this.resetTouchPad(pad);
+    }
+    if (pad.hasPointerCapture?.(event.pointerId))
+      pad.releasePointerCapture?.(event.pointerId);
+  };
+
+  private resetTouchPad(pad: HTMLElement): void {
+    pad.style.setProperty("--stick-x", "0%");
+    pad.style.setProperty("--stick-y", "0%");
+  }
+}
+
+function clamp(value: number, minimum: number, maximum: number): number {
+  return Math.max(minimum, Math.min(maximum, value));
 }

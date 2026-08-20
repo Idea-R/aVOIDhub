@@ -136,6 +136,11 @@ export interface RuntimeDiagnostics {
   particleCapacity: number;
   drawItems: number;
   drawItemCapacity: number;
+  audioState: "locked" | "ready" | "unavailable";
+  soundMuted: boolean;
+  audioContexts: number;
+  activeAudioVoices: number;
+  audioVoiceCapacity: number;
   destroyed: boolean;
 }
 

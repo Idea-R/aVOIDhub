@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { TouchControls } from "./TouchControls";
 import { GameRuntime } from "./game/GameRuntime";
 import { createRunSeed } from "./game/random";
 import { TANKAVOID_COVER } from "./game/TankSimulation";
@@ -75,8 +76,66 @@ const INITIAL_DIAGNOSTICS: RuntimeDiagnostics = {
   particleCapacity: 0,
   drawItems: 0,
   drawItemCapacity: 56,
+  audioState: "locked",
+  soundMuted: false,
+  audioContexts: 0,
+  activeAudioVoices: 0,
+  audioVoiceCapacity: 8,
   destroyed: false,
 };
+
+function readStoredBoolean(key: string, fallback: boolean): boolean {
+  if (typeof localStorage === "undefined") return fallback;
+  const value = localStorage.getItem(key);
+  return value === null ? fallback : value === "true";
+}
+
+interface SettingsControlsProps {
+  soundOn: boolean;
+  audioState: RuntimeDiagnostics["audioState"];
+  reducedMotion: boolean;
+  systemReducedMotion: boolean;
+  onToggleSound(): void;
+  onToggleMotion(): void;
+}
+
+function SettingsControls({
+  soundOn,
+  audioState,
+  reducedMotion,
+  systemReducedMotion,
+  onToggleSound,
+  onToggleMotion,
+}: SettingsControlsProps) {
+  const soundUnavailable = audioState === "unavailable";
+  return (
+    <div className="tank-setting-controls" aria-label="Game settings">
+      <button
+        type="button"
+        aria-pressed={soundOn && !soundUnavailable}
+        onClick={onToggleSound}
+        disabled={soundUnavailable}
+      >
+        Sound{" "}
+        <strong>
+          {soundUnavailable ? "unavailable" : soundOn ? "on" : "off"}
+        </strong>
+      </button>
+      <button
+        type="button"
+        aria-pressed={reducedMotion}
+        aria-label={`Motion ${reducedMotion ? "reduced" : "full"}${
+          systemReducedMotion ? ". System motion setting honored" : ""
+        }`}
+        onClick={onToggleMotion}
+        disabled={systemReducedMotion}
+      >
+        Motion <strong>{reducedMotion ? "reduced" : "full"}</strong>
+      </button>
+      {systemReducedMotion && <span>System motion setting honored</span>}
+    </div>
+  );
+}
 
 function formatTime(seconds: number): string {
   const wholeSeconds = Math.max(0, Math.floor(seconds));
@@ -98,11 +157,23 @@ function completionTitle(snapshot: RunSnapshot): string {
 }
 
 function App() {
+  const mainRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const runtimeRef = useRef<GameRuntime | null>(null);
   const dialogRef = useRef<HTMLElement>(null);
   const [snapshot, setSnapshot] = useState(INITIAL_SNAPSHOT);
   const [diagnostics, setDiagnostics] = useState(INITIAL_DIAGNOSTICS);
+  const [soundOn, setSoundOn] = useState(() =>
+    readStoredBoolean("tankavoid:sound:v1", true),
+  );
+  const [userReducedMotion, setUserReducedMotion] = useState(() =>
+    readStoredBoolean("tankavoid:motion:v1", false),
+  );
+  const [systemReducedMotion, setSystemReducedMotion] = useState(false);
+  const [coarsePointer, setCoarsePointer] = useState(false);
+  const [tipsVisible, setTipsVisible] = useState(
+    () => !readStoredBoolean("tankavoid:tutorial-seen:v1", false),
+  );
   const smokeMode = useMemo(
     () =>
       typeof location !== "undefined" &&
@@ -110,17 +181,26 @@ function App() {
     [],
   );
   const lastImpact = snapshot.impacts[snapshot.impacts.length - 1];
+  const touchPreview = useMemo(
+    () =>
+      typeof location !== "undefined" &&
+      new URLSearchParams(location.search).has("touch"),
+    [],
+  );
+  const touchMode = coarsePointer || touchPreview;
+  const reducedMotion = systemReducedMotion || userReducedMotion;
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
-    const runtime = GameRuntime.create(canvas, {
+    const main = mainRef.current;
+    if (!canvas || !main) return;
+    const runtime = GameRuntime.create(canvas, main, {
       onSnapshot: setSnapshot,
       onDiagnostics: setDiagnostics,
     });
     runtimeRef.current = runtime;
     if (import.meta.env.DEV) {
-      window.__TANKAVOID_T3__ = {
+      window.__TANKAVOID_T4__ = {
         snapshot: () => runtime.snapshot(),
         diagnostics: () => runtime.diagnostics(),
         start: (seed = createRunSeed()) => runtime.start(seed),
@@ -131,9 +211,40 @@ function App() {
     return () => {
       runtime.destroy();
       runtimeRef.current = null;
-      if (import.meta.env.DEV) delete window.__TANKAVOID_T3__;
+      if (import.meta.env.DEV) delete window.__TANKAVOID_T4__;
     };
   }, []);
+
+  useEffect(() => {
+    const pointerQuery = matchMedia("(pointer: coarse)");
+    const motionQuery = matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => {
+      setCoarsePointer(pointerQuery.matches);
+      setSystemReducedMotion(motionQuery.matches);
+    };
+    update();
+    pointerQuery.addEventListener("change", update);
+    motionQuery.addEventListener("change", update);
+    return () => {
+      pointerQuery.removeEventListener("change", update);
+      motionQuery.removeEventListener("change", update);
+    };
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("tankavoid:sound:v1", String(soundOn));
+    runtimeRef.current?.setAudioMuted(!soundOn);
+  }, [soundOn]);
+
+  useEffect(() => {
+    localStorage.setItem("tankavoid:motion:v1", String(userReducedMotion));
+  }, [userReducedMotion]);
+
+  useEffect(() => {
+    if (snapshot.phase !== "complete") return;
+    localStorage.setItem("tankavoid:tutorial-seen:v1", "true");
+    setTipsVisible(false);
+  }, [snapshot.phase]);
 
   useEffect(() => {
     if (snapshot.phase === "paused" || snapshot.phase === "complete")
@@ -141,22 +252,51 @@ function App() {
   }, [snapshot.phase]);
 
   const start = () => {
+    if (soundOn) void runtimeRef.current?.unlockAudio();
     runtimeRef.current?.start(createRunSeed());
     requestAnimationFrame(() => canvasRef.current?.focus());
   };
   const restart = () => {
+    if (soundOn) void runtimeRef.current?.unlockAudio();
     runtimeRef.current?.restart(createRunSeed());
     requestAnimationFrame(() => canvasRef.current?.focus());
   };
+  const toggleSound = () => {
+    const next = !soundOn;
+    setSoundOn(next);
+    runtimeRef.current?.setAudioMuted(!next);
+    if (next) void runtimeRef.current?.unlockAudio();
+  };
+  const toggleMotion = () => {
+    if (!systemReducedMotion) setUserReducedMotion((current) => !current);
+  };
+  const hideTips = () => {
+    localStorage.setItem("tankavoid:tutorial-seen:v1", "true");
+    setTipsVisible(false);
+  };
+  const showTips = () => {
+    localStorage.setItem("tankavoid:tutorial-seen:v1", "false");
+    setTipsVisible(true);
+  };
 
   return (
-    <main className="tank-app" data-phase={snapshot.phase}>
+    <main
+      ref={mainRef}
+      className="tank-app"
+      data-phase={snapshot.phase}
+      data-motion={reducedMotion ? "reduced" : "full"}
+      data-controls={touchMode ? "touch-candidate" : "keyboard-pointer"}
+    >
       <div className="tank-atmosphere" aria-hidden="true" />
       <canvas
         ref={canvasRef}
         className="tank-canvas"
         tabIndex={0}
-        aria-label="TankaVOID directional combat proving ground. Use W A S D or arrow keys to drive, the pointer to aim the turret, and primary click to fire. Keep your front armor toward incoming shells. Escape pauses."
+        aria-label={
+          touchMode
+            ? "TankaVOID directional combat proving ground. Drag the left touch control to drive and steer. Drag the right control to aim, then release it to fire. Keep your front armor toward incoming shells."
+            : "TankaVOID directional combat proving ground. Use W A S D or arrow keys to drive, the pointer to aim the turret, and primary click to fire. Keep your front armor toward incoming shells. Escape pauses."
+        }
       />
       <p className="tank-status" role="status" aria-live="polite">
         {snapshot.phase === "briefing" && "TankaVOID rebuild briefing."}
@@ -176,7 +316,7 @@ function App() {
       {snapshot.phase !== "briefing" && (
         <section className="tank-hud" aria-label="Run status">
           <div className="tank-hud__identity">
-            <span>T3 / COVER ENCOUNTER</span>
+            <span>T4 / CONTROL CANDIDATE</span>
             <strong>{formatTime(snapshot.elapsedSeconds)}</strong>
           </div>
           <div className="tank-hud__telemetry">
@@ -196,15 +336,25 @@ function App() {
             </span>
           </div>
           <div className="tank-hud__actions">
-            {(snapshot.stage === "combat" || snapshot.phase === "paused") && (
+            {snapshot.phase === "running" && snapshot.stage === "combat" && (
               <button
                 type="button"
                 onClick={() => runtimeRef.current?.toggleManualPause()}
               >
-                {snapshot.phase === "paused" ? "Resume drill" : "Pause drill"}
+                Pause drill
               </button>
             )}
-            {smokeMode && snapshot.phase !== "complete" && (
+            {snapshot.phase === "running" && (
+              <SettingsControls
+                soundOn={soundOn}
+                audioState={diagnostics.audioState}
+                reducedMotion={reducedMotion}
+                systemReducedMotion={systemReducedMotion}
+                onToggleSound={toggleSound}
+                onToggleMotion={toggleMotion}
+              />
+            )}
+            {smokeMode && snapshot.phase === "running" && (
               <button
                 type="button"
                 onClick={() => runtimeRef.current?.finish()}
@@ -214,15 +364,42 @@ function App() {
             )}
           </div>
           <p className="tank-touch-boundary">
-            Keyboard + pointer combat build. Touch driving arrives in T4.
+            {touchMode
+              ? "Touch layout is a release candidate pending physical-device checks."
+              : "Keyboard + pointer is the verified control path."}
           </p>
         </section>
+      )}
+
+      <TouchControls
+        visible={
+          touchMode &&
+          snapshot.phase === "running" &&
+          snapshot.stage === "combat"
+        }
+      />
+
+      {tipsVisible && snapshot.phase === "running" && (
+        <aside className="tank-coach" aria-label="First-run combat tip">
+          <p>
+            {snapshot.stage === "deploying"
+              ? touchMode
+                ? "Left thumb drives. Right thumb aims; release to fire."
+                : "WASD drives. The pointer aims; click to fire."
+              : snapshot.tick < 360
+                ? "Keep the bright front plate toward the bruiser."
+                : "Barricades stop shells. Break line of sight when you need room."}
+          </p>
+          <button type="button" onClick={hideTips}>
+            Hide tips
+          </button>
+        </aside>
       )}
 
       {snapshot.phase === "briefing" && (
         <section className="tank-briefing" aria-labelledby="tank-title">
           <div className="tank-briefing__copy">
-            <p className="tank-kicker">aVOID combat proof / T3</p>
+            <p className="tank-kicker">aVOID combat proof / T4</p>
             <h1 id="tank-title">
               Tanka<span>VOID</span>
             </h1>
@@ -234,8 +411,29 @@ function App() {
             </p>
             <button className="tank-primary" type="button" onClick={start}>
               <span>Test the armor</span>
-              <small>WASD + pointer + primary fire</small>
+              <small>
+                {touchMode
+                  ? "Two thumbs / aim / release to fire"
+                  : "WASD + pointer + primary fire"}
+              </small>
             </button>
+            <SettingsControls
+              soundOn={soundOn}
+              audioState={diagnostics.audioState}
+              reducedMotion={reducedMotion}
+              systemReducedMotion={systemReducedMotion}
+              onToggleSound={toggleSound}
+              onToggleMotion={toggleMotion}
+            />
+            {!tipsVisible && (
+              <button
+                className="tank-tip-toggle"
+                type="button"
+                onClick={showTips}
+              >
+                Show combat tips next run
+              </button>
+            )}
             <p className="tank-boundary">
               Local engineering build. No account, leaderboard, purchases, or
               public Play route.
@@ -250,12 +448,12 @@ function App() {
               <li>
                 <span>01</span>
                 <strong>Hull</strong>
-                <small>WASD / arrows</small>
+                <small>{touchMode ? "Left thumb" : "WASD / arrows"}</small>
               </li>
               <li>
                 <span>02</span>
                 <strong>Turret</strong>
-                <small>Pointer aim</small>
+                <small>{touchMode ? "Right thumb" : "Pointer aim"}</small>
               </li>
               <li>
                 <span>03</span>
@@ -305,6 +503,23 @@ function App() {
                 Return to briefing
               </button>
             </div>
+            <SettingsControls
+              soundOn={soundOn}
+              audioState={diagnostics.audioState}
+              reducedMotion={reducedMotion}
+              systemReducedMotion={systemReducedMotion}
+              onToggleSound={toggleSound}
+              onToggleMotion={toggleMotion}
+            />
+            {!tipsVisible && (
+              <button
+                className="tank-tip-toggle"
+                type="button"
+                onClick={showTips}
+              >
+                Show combat tips next run
+              </button>
+            )}
           </section>
         </div>
       )}
@@ -319,7 +534,7 @@ function App() {
             aria-labelledby="complete-title"
             tabIndex={-1}
           >
-            <p className="tank-kicker">T3 combat result</p>
+            <p className="tank-kicker">T4 combat result</p>
             <h2 id="complete-title">{completionTitle(snapshot)}</h2>
             <div className="tank-result-grid">
               <span>
@@ -374,6 +589,10 @@ function App() {
           {diagnostics.drawItems}/{diagnostics.drawItemCapacity} particles:
           {diagnostics.particleCount}/{diagnostics.particleCapacity} maxdt:
           {Math.round(diagnostics.maximumFrameDeltaMilliseconds)}
+          audio:{diagnostics.audioState} contexts:{diagnostics.audioContexts}
+          voices:{diagnostics.activeAudioVoices}/
+          {diagnostics.audioVoiceCapacity} muted:
+          {diagnostics.soundMuted ? 1 : 0}
           tank:{Math.round(snapshot.tank.x)},{Math.round(snapshot.tank.y)}{" "}
           shots:
           {snapshot.stats.shotsFired} hits:{snapshot.stats.hits}
@@ -385,7 +604,7 @@ function App() {
 
 declare global {
   interface Window {
-    __TANKAVOID_T3__?: {
+    __TANKAVOID_T4__?: {
       snapshot(): RunSnapshot;
       diagnostics(): RuntimeDiagnostics;
       start(seed?: number): void;

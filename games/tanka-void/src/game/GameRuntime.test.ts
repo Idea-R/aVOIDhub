@@ -8,21 +8,59 @@ import {
 } from "./GameRuntime";
 import { TankSimulation } from "./TankSimulation";
 import { computeViewport } from "./Viewport";
+import type { AudioCue, AudioDiagnostics, AudioPort } from "./AudioController";
 
 class FakeInput implements InputPort {
   listeners = 0;
+  fire = false;
   attach(): void {
-    this.listeners = 8;
+    this.listeners = 12;
   }
   destroy(): void {
     this.listeners = 0;
   }
   setEnabled(): void {}
   snapshot() {
-    return { throttle: 1, turn: 0, aim: { x: 900, y: 360 }, fire: false };
+    return {
+      throttle: 1,
+      turn: 0,
+      aim: { x: 900, y: 360 },
+      fire: this.fire,
+    };
   }
   listenerCount(): number {
     return this.listeners;
+  }
+}
+
+class FakeAudio implements AudioPort {
+  cues: AudioCue[] = [];
+  muted = false;
+  silences = 0;
+  destroyed = false;
+  async unlock(): Promise<boolean> {
+    return true;
+  }
+  setMuted(muted: boolean): void {
+    this.muted = muted;
+  }
+  play(cue: AudioCue): void {
+    this.cues.push(cue);
+  }
+  silence(): void {
+    this.silences += 1;
+  }
+  diagnostics(): AudioDiagnostics {
+    return {
+      state: "ready",
+      muted: this.muted,
+      contexts: 1,
+      activeVoices: 0,
+      voiceCapacity: 8,
+    };
+  }
+  destroy(): void {
+    this.destroyed = true;
   }
 }
 
@@ -103,7 +141,7 @@ describe("GameRuntime", () => {
       starts: 20,
       finishes: 20,
       resets: 19,
-      inputListeners: 8,
+      inputListeners: 12,
       resizeObservers: 1,
       framePending: false,
       activeEnemies: 1,
@@ -123,5 +161,39 @@ describe("GameRuntime", () => {
       framePending: false,
       destroyed: true,
     });
+  });
+
+  it("routes combat cues through one audio owner and silences pause/destroy", () => {
+    const input = new FakeInput();
+    const viewport = new FakeViewport();
+    const audio = new FakeAudio();
+    let loop: FakeLoop | undefined;
+    const runtime = new GameRuntime(
+      new TankSimulation(),
+      input,
+      viewport,
+      { render: () => 7 },
+      (step, render) => (loop = new FakeLoop(step, render)),
+      { onSnapshot: vi.fn(), onDiagnostics: vi.fn() },
+      audio,
+    );
+    runtime.start(4);
+    loop?.advance(180);
+    input.fire = true;
+    loop?.advance(1);
+    input.fire = false;
+    expect(audio.cues).toContain("fire");
+    expect(runtime.diagnostics()).toMatchObject({
+      audioState: "ready",
+      audioContexts: 1,
+      audioVoiceCapacity: 8,
+    });
+
+    runtime.pause("manual");
+    expect(audio.silences).toBeGreaterThan(0);
+    runtime.setAudioMuted(true);
+    expect(runtime.diagnostics().soundMuted).toBe(true);
+    runtime.destroy();
+    expect(audio.destroyed).toBe(true);
   });
 });

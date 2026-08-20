@@ -1,5 +1,10 @@
 import { FixedStepLoop } from "./FixedStepLoop";
 import { InputController } from "./InputController";
+import {
+  SILENT_AUDIO,
+  TankAudioController,
+  type AudioPort,
+} from "./AudioController";
 import { TankRenderer } from "./Renderer";
 import { TankSimulation } from "./TankSimulation";
 import { CanvasViewport } from "./Viewport";
@@ -55,6 +60,7 @@ export class GameRuntime {
     private readonly renderer: RendererPort,
     loopFactory: LoopFactory,
     private readonly callbacks: RuntimeCallbacks,
+    private readonly audio: AudioPort = SILENT_AUDIO,
   ) {
     this.loop = loopFactory(
       () => this.step(),
@@ -68,6 +74,7 @@ export class GameRuntime {
 
   static create(
     canvas: HTMLCanvasElement,
+    touchSurface: HTMLElement,
     callbacks: RuntimeCallbacks,
   ): GameRuntime {
     const context = canvas.getContext("2d");
@@ -76,6 +83,7 @@ export class GameRuntime {
     let runtime: GameRuntime | null = null;
     const renderer = new TankRenderer(context);
     const viewport = new CanvasViewport(canvas, () => runtime?.render());
+    const simulation = new TankSimulation();
     const input = new InputController(
       canvas,
       () => viewport.getLayout(),
@@ -83,14 +91,18 @@ export class GameRuntime {
         intent === "manual"
           ? runtime?.toggleManualPause()
           : runtime?.pause("focus"),
+      window,
+      touchSurface,
+      () => simulation.snapshot().tank,
     );
     runtime = new GameRuntime(
-      new TankSimulation(),
+      simulation,
       input,
       viewport,
       renderer,
       (step, render) => new FixedStepLoop(step, render),
       callbacks,
+      new TankAudioController(),
     );
     return runtime;
   }
@@ -98,6 +110,7 @@ export class GameRuntime {
   start(seed: number): void {
     if (this.destroyed) return;
     this.loop.pause();
+    this.audio.silence();
     this.pauseReasons.clear();
     this.simulation.start(seed);
     this.input.setEnabled(false);
@@ -123,6 +136,7 @@ export class GameRuntime {
     this.pauseReasons.add(reason);
     this.simulation.pause();
     this.input.setEnabled(false);
+    this.audio.silence();
     this.loop.pause();
     this.render();
     this.emit();
@@ -150,6 +164,7 @@ export class GameRuntime {
     this.simulation.finish();
     this.pauseReasons.clear();
     this.input.setEnabled(false);
+    this.audio.silence();
     this.loop.pause();
     this.finishes += 1;
     this.render();
@@ -161,6 +176,7 @@ export class GameRuntime {
     this.loop.pause();
     this.pauseReasons.clear();
     this.input.setEnabled(false);
+    this.audio.silence();
     this.simulation.returnToBriefing();
     this.render();
     this.emit();
@@ -170,10 +186,22 @@ export class GameRuntime {
     return this.simulation.snapshot();
   }
 
+  async unlockAudio(): Promise<boolean> {
+    const unlocked = await this.audio.unlock();
+    this.emit();
+    return unlocked;
+  }
+
+  setAudioMuted(muted: boolean): void {
+    this.audio.setMuted(muted);
+    this.emit();
+  }
+
   diagnostics(): RuntimeDiagnostics {
     const loop = this.loop.diagnostics();
     const snapshot = this.simulation.snapshot();
     const limits = this.simulation.limits();
+    const audio = this.audio.diagnostics();
     return {
       starts: this.starts,
       finishes: this.finishes,
@@ -199,6 +227,11 @@ export class GameRuntime {
       particleCapacity: limits.particles,
       drawItems: this.drawItems,
       drawItemCapacity: limits.drawItems,
+      audioState: audio.state,
+      soundMuted: audio.muted,
+      audioContexts: audio.contexts,
+      activeAudioVoices: audio.activeVoices,
+      audioVoiceCapacity: audio.voiceCapacity,
       destroyed: this.destroyed,
     };
   }
@@ -209,6 +242,7 @@ export class GameRuntime {
     this.loop.stop();
     this.input.destroy();
     this.viewport.destroy();
+    this.audio.destroy();
     this.callbacks.onDiagnostics(this.diagnostics());
   }
 
@@ -220,8 +254,10 @@ export class GameRuntime {
   }
 
   private step(): void {
+    const before = this.simulation.snapshot();
     this.simulation.step(this.input.snapshot());
     const snapshot = this.simulation.snapshot();
+    this.emitAudio(before, snapshot);
     this.input.setEnabled(
       snapshot.phase === "running" && snapshot.stage === "combat",
     );
@@ -240,5 +276,22 @@ export class GameRuntime {
   private emit(): void {
     this.callbacks.onSnapshot(this.simulation.snapshot());
     this.callbacks.onDiagnostics(this.diagnostics());
+  }
+
+  private emitAudio(before: RunSnapshot, after: RunSnapshot): void {
+    if (after.stats.shotsFired > before.stats.shotsFired)
+      this.audio.play("fire");
+    const beforeImpact = before.impacts[before.impacts.length - 1]?.id ?? 0;
+    const afterImpact = after.impacts[after.impacts.length - 1]?.id ?? 0;
+    if (afterImpact > beforeImpact) this.audio.play("impact");
+    const beforeCover =
+      before.coverStrikes[before.coverStrikes.length - 1]?.id ?? 0;
+    const afterCover =
+      after.coverStrikes[after.coverStrikes.length - 1]?.id ?? 0;
+    if (afterCover > beforeCover) this.audio.play("cover");
+    if (before.stage !== "resolved" && after.stage === "resolved")
+      this.audio.play(
+        after.completionReason === "enemy-disabled" ? "victory" : "defeat",
+      );
   }
 }
