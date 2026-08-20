@@ -112,6 +112,16 @@ T2 implements that separation explicitly. Choosing a face from projectile travel
 - Tank-impact and cover-strike histories each retain at most eight entries.
 - T3 cover is indestructible. Destruction, debris, and particles are not hidden or implied systems.
 
+## T4 control, audio, and accessibility contract
+
+- Keyboard/pointer is the supported local-browser path. Touch is a release candidate until a physical iOS and Android matrix passes.
+- One input controller owns keyboard, canvas pointer, drive-thumb, and aim-thumb state. Left-thumb drag maps to throttle and hull turn; right-thumb drag maps to aim; releasing an armed right thumb queues exactly one bounded trigger pull.
+- Touch pads are semantic, container-bound controls with reactive knobs. They may not overlap the HUD, coaching surface, each other, or the viewport safe edge at a claimed size.
+- Audio is procedural and local. One context is created only after a player gesture, eight voices are the hard ceiling, mute persists, failure is reported honestly, and pause/result/teardown leave zero voices.
+- System reduced motion is mandatory. The local preference may request additional reduction but may not restore motion the operating system disabled. Motion and sound choices never affect the simulation or a future score contract.
+- First-run coaching is short, device-aware, locally dismissible, and derived from existing encounter state. It cannot introduce timers or a second gameplay owner.
+- Browser emulation is acceptable for responsive and Pointer Events evidence, but it is not physical-device certification.
+
 ## V1 content and score boundary
 
 The intended run is five waves in one arena:
@@ -159,6 +169,8 @@ T3 adds and enforces these encounter ceilings:
 
 The draw-item ceiling counts bounded logical render entries rather than individual Canvas API methods.
 
+T4 changes the input ceiling from eight to 12 listeners by adding four delegated touch-surface listeners. It also adds hard ceilings of two owned touch pointers, one audio context, eight audio voices, zero downloaded media, and zero external runtime assets. The frame, observer, simulation, projectile, impact, cover, enemy, particle, and draw-item ceilings do not change.
+
 ## Public boundary
 
-TankaVOID stays **Coming Soon** and noninteractive in the aVOID catalog. T0–T3 do not add a platform Play route, stage the build into the platform, create a leaderboard, activate auth, or change production. T2 and T3 now satisfy the source-level directional-combat and repeatable-loop prerequisites for a later preview, but T4 device/control evidence is the next gate and V1 publication still requires T4–T7.
+TankaVOID stays **Coming Soon** and noninteractive in the aVOID catalog. T0–T4 do not add a platform Play route, stage the build into the platform, create a leaderboard, activate auth, or change production. T4 establishes a browser-tested touch release candidate but deliberately does not claim physical mobile support. V1 publication still requires T5 content, T6 platform integration, and T7 physical-device, deployed, and rollback evidence.

@@ -325,3 +325,21 @@ Review draft PR `#27`, then build T3 as a complete encounter loop: intentional a
 ### Next action
 
 Review draft PR `#29`, then make T4 an honest device/control sprint: prototype intentional touch driving, finish HUD/onboarding/audio/accessibility work, and validate the supported control claim on target hardware. TankaVOID remains Coming Soon.
+
+## 2026-08-20 — TankaVOID T4 controls and feedback
+
+- Opened issue `#30` and created isolated branch `codex/tankavoid-t4-controls-feedback` from the exact T3 head `04129a3`.
+- Froze the touch candidate as left-thumb throttle/hull turn plus right-thumb aim and one queued shot on release, all owned by the existing bounded input controller.
+- Added delegated multi-pointer capture, container-bound reactive pads, exact reset/disable cleanup, and semantic control names without moving gameplay ownership into React.
+- Added one gesture-owned procedural audio controller with fire, tank-hit, cover-hit, victory, and defeat cues; one-context/eight-voice ceilings; persisted mute; honest unavailable state; and exact pause/result/teardown silence.
+- Added persisted local motion choice, mandatory operating-system reduced motion, device-aware first-run coaching, restoreable tips, responsive settings, and focus-owned pause/result surfaces.
+- Found that the smoke-only diagnostic bar could intercept phone touch gestures and made the instrumentation pointer-transparent before accepting any touch evidence.
+- Passed zero-warning typecheck/lint, 9 test files / 33 tests, Vite build, full 21-route platform build, and the 62,857 / 122,880-byte initial-transfer gate with no downloaded media or external runtime assets.
+- Browser-checked seven briefing sizes and six active forced-touch sizes with no document horizontal overflow or pad/HUD/coach collisions.
+- Proved one aim release creates one shot, then completed five touch-path victories at six shots, six hits, and 120 damage each. Terminal runs retained 12 listeners, one observer, one audio context, zero voices, zero projectiles, and zero frame owner.
+- Verified pause focus, muted silence, one-context unmute, app-root reduced motion, desktop keyboard/pointer mode without touch controls, and an empty warning/error log.
+- Kept physical iOS/Android certification, content expansion, platform integration, scores, production staging, Supabase, Stripe, AdSense, DNS, and deployment outside T4. TankaVOID remains Coming Soon.
+
+### Next action
+
+Review the T4 stacked draft, then build T5 as the narrow V1 content pass: scout, bruiser, hunter, five waves, and one final pressure event. Preserve the directional-armor identity and current ceilings; do not revive mines, infantry, broad progression, multiplayer, or the prototype feature pile.

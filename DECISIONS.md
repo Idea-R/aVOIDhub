@@ -287,3 +287,10 @@ Swept collision supplies the impact point. The defender-center-to-impact directi
 - Status: accepted for T3
 
 Use four indestructible barricades around a clear central lane. Tanks resolve as circles against cover and each other; shells resolve the nearest swept tank-or-cover intersection; and the bruiser cannot fire through a blocked sight line. Treat deployment, combat, and the final-impact hold as deterministic running substates rather than timers owned by React. Enforce one enemy, four cover pieces, 32 projectiles, eight tank impacts, eight cover strikes, zero particles, 56 logical renderer draw-items, five catch-up steps, and a 250 ms accepted frame-delta clamp. Do not add destructible scenery, debris, waves, touch, progression, or scoring to make this slice appear larger.
+
+## D-042 — Treat touch as a single-owner candidate until hardware proves it
+
+- Date: 2026-08-20
+- Status: accepted for T4; physical certification pending
+
+Route keyboard, pointer, drive-thumb, and aim-thumb state through one `InputController`. The left thumb owns throttle and hull turn; the right thumb owns aim and queues exactly one cannon shot when released. React may present labelled, responsive pads but cannot become a second gameplay-input owner. Audio is one gesture-created procedural context with eight bounded voices and exact silence on pause/result/teardown. System reduced motion is mandatory and neither motion nor sound may change simulation truth. Browser Pointer Events and responsive emulation can establish a release candidate, but only physical iOS and Android evidence can establish a public touch-support claim.

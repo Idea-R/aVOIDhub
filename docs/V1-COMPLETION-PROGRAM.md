@@ -5,7 +5,7 @@
 - **Repository:** `C:\dev\aVOID-next` / `Idea-R/aVOIDhub`
 - **Production baseline:** `https://avoidgame.io` at merge commit `7cd9788`
 - **Program branch:** `codex/docs-v1-completion-program`
-- **Current execution branch:** `codex/tankavoid-t2-directional-combat` (stacked on the TankaVOID T0/T1 head and published in draft PR #27)
+- **Current execution branch:** `codex/tankavoid-t4-controls-feedback` (stacked on the exact TankaVOID T3 head; issue #30)
 - **Related records:** [`ROADMAP.md`](../ROADMAP.md), [`WORKLOG.md`](../WORKLOG.md), [`DECISIONS.md`](../DECISIONS.md)
 
 ## 1. Why this document exists
@@ -61,6 +61,8 @@ It is intentionally stricter than “the page loads.” Every V1 definition incl
 - VOIDaVOID V4 is local-source and browser complete. Gesture-only procedural audio, persisted preferences, system-aware reduced motion, semantic focus-owned dialogs, central particle bounds, a repaired FPS sampler, and an enforced transfer/audio budget pass 30 tests and five responsive browser sizes. Twenty repeat cycles retain one context, five pointer listeners, bounded particles, zero terminal voices/frames, and a decreasing raw heap sample. Physical devices, a formal deployed audit, deployment, and rollback remain release gates; evidence is in `docs/voidavoid-v4-experience-contract.md` and `docs/sprint-voidavoid-v4.md`.
 - TankaVOID T0/T1 is source- and local-browser-complete in draft PR #25. The 78-error monorepo generation and the stronger dirty standalone prototype are preserved, inventoried, and replaced in the active graph by one seeded fixed-step proving ground with one input owner, one resize owner, explicit run states, headless tests, and an enforced 54,130-byte initial-transfer result. Twenty browser cycles retain one canvas, eight listeners, one observer, and no terminal frame. Directional combat, enemies, touch, scoring, platform integration, and any public route remain T2–T7; evidence is in `docs/tankavoid-v1-contract.md` and `docs/sprint-tankavoid-t0-t1.md`.
 - TankaVOID T2 is source- and local-browser-complete in draft PR #27. One player and one deterministic bruiser now exchange pooled swept shells through pure impact-point face selection and incidence-based penetration, glancing, or ricochet math. Twenty-one tests, a 57,331-byte transfer result, a live six-shot enemy disable, a natural player-disable path, responsive QA, pause focus, and a 20-cycle ownership soak pass. Touch, a complete arena/loop, content expansion, scoring, platform integration, and any public route remain T3–T7; evidence is in `docs/sprint-tankavoid-t2.md`.
+- TankaVOID T3 is source- and local-browser-complete in draft PR #29. Four fixed barricades, nearest swept tank/cover hits, tank separation, line-of-sight-aware bruiser routing, deterministic deployment/result holds, and explicit entity/render/frame ceilings pass 28 tests, a 59,208-byte transfer result, six responsive sizes, and ten pointer-driven six-hit wins. Evidence is in `docs/sprint-tankavoid-t3.md`.
+- TankaVOID T4 is source- and emulated-browser-complete on issue #30. One input owner now supports an intentional two-thumb candidate; one gesture-owned procedural audio context, persisted sound/motion choices, system reduced motion, first-run coaching, responsive settings, and exact pause/teardown pass 33 tests and a 62,857-byte transfer result. Five real Pointer Events touch-path wins and a six-size active matrix pass, but physical iOS/Android evidence is still absent, so mobile remains a release candidate rather than a support claim. Evidence is in `docs/sprint-tankavoid-t4.md`.
 
 ### What is unsafe or misleading if activated today
 
@@ -673,7 +675,7 @@ Directory V1 may ship before integrated V1. The platform must not hold the rest 
 
 ### Current state
 
-T0–T3 replaced the active monorepo package with a buildable directional-combat encounter. It now has one seeded 60 Hz simulation, one loop, one keyboard/pointer owner, one responsive logical-pixel viewport, explicit deployment/combat/result pacing, pure face/incidence/damage math, one pooled cannon per side, swept tank/cover collision, four tactical barricades, deterministic separation, line-of-sight-aware bruiser behavior, and enforced entity/render/frame ceilings. Twenty-eight focused tests and a 59,208-byte initial compressed transfer pass. Ten actual pointer-driven browser encounters completed without lifecycle growth. It is not staged into the platform and remains Coming Soon.
+T0–T4 replaced the active monorepo package with a buildable directional-combat encounter. It now has one seeded 60 Hz simulation, one loop, one unified keyboard/pointer/touch input owner, one responsive logical-pixel viewport, explicit deployment/combat/result pacing, pure face/incidence/damage math, one pooled cannon per side, swept tank/cover collision, four tactical barricades, deterministic separation, line-of-sight-aware bruiser behavior, one gesture-owned procedural audio context, system-aware motion, first-run coaching, and enforced input/audio/entity/render/frame ceilings. Thirty-three focused tests and a 62,857-byte initial compressed transfer pass. Ten T3 pointer victories and five T4 touch-path victories completed without lifecycle growth. It is not staged into the platform and remains Coming Soon; touch still lacks physical-device certification.
 
 The replaced monorepo generation failed with 78 TypeScript errors across incompatible entity, collision, update/reset, input, particle, experience, and power-up contracts. Its source remains recoverable through Git history rather than compiling beside the rebuild.
 
@@ -753,7 +755,7 @@ TankaVOID V1 is a focused top-down survival/arena game:
 
 **Expected TankaVOID effort:** **4–6 engineering weeks plus 1–2 weeks of feel, art, and QA iteration** for the narrow V1 above. A playable vertical slice should appear in the first week. Attempting to rehabilitate every prototype system or add multiplayer would move it beyond this range.
 
-T0–T3 implementation evidence: [`tankavoid-v1-contract.md`](tankavoid-v1-contract.md), [`sprint-tankavoid-t0-t1.md`](sprint-tankavoid-t0-t1.md), [`sprint-tankavoid-t2.md`](sprint-tankavoid-t2.md), and [`sprint-tankavoid-t3.md`](sprint-tankavoid-t3.md). The package now has one clean simulation/lifecycle boundary and one repeatable encounter loop; T4 must decide and prove the supported device/control experience.
+T0–T4 implementation evidence: [`tankavoid-v1-contract.md`](tankavoid-v1-contract.md), [`sprint-tankavoid-t0-t1.md`](sprint-tankavoid-t0-t1.md), [`sprint-tankavoid-t2.md`](sprint-tankavoid-t2.md), [`sprint-tankavoid-t3.md`](sprint-tankavoid-t3.md), and [`sprint-tankavoid-t4.md`](sprint-tankavoid-t4.md). The package now has one clean simulation/lifecycle boundary, one repeatable encounter loop, a supported keyboard/pointer path, and a browser-tested touch release candidate. T5 content is next; physical touch evidence stays in T7.
 
 ### TankaVOID V1 acceptance checklist
 
