@@ -84,3 +84,52 @@ Use pre-compressed WebP assets for the platform hero and catalog cards so the Wi
 - Status: accepted
 
 Install dependencies and run the platform/game build orchestration from the repository root so every npm workspace receives its declared tools. Keep `apps/platform` as Netlify's package directory, publish `apps/platform/.next`, and declare the bundled Next runtime explicitly because this pre-existing site's framework detector otherwise treats the root workspace as an unknown framework. This arrangement is verified by the Git-driven Linux deploy preview at commit `1f38533`.
+
+## D-013 — Treat AdSense as domain-level infrastructure, not game UI
+
+- Date: 2026-08-19
+- Status: accepted working rule pending account confirmation
+
+Use the approved `avoidgame.io` root-domain entry for normal aVOID subdomains. Add privacy and terms surfaces before ad activation, verify the account through an environment-provided publisher ID, publish the matching root `ads.txt`, and configure a Google-certified consent flow where required. Ad placements may appear only on calm platform-directory surfaces; never overlay active gameplay, controls, pause states, or game-over actions.
+
+## D-014 — Use direct game captures and restrained physical depth
+
+- Date: 2026-08-19
+- Status: accepted working direction pending preview review
+
+Represent separately hosted Ideas Realized games with direct captures from their own live properties, label them as live-site captures, and preserve their independent-domain language. Use generated art only as non-representational atmosphere. Let cards respond to pointer position with shallow tilt and moving light; give links and CTAs distinct hover and pressed states; disable the effect for touch-only and reduced-motion contexts.
+
+## D-015 — Build the identity around the aVOID meteor
+
+- Date: 2026-08-19
+- Status: proposed working direction pending owner review
+
+Use a compact cyan-rimmed, orange-tailed meteor as the platform mark so the identity connects to the original aVOID artwork and survives favicon scale. Pair it with the existing aVOIDgame.io wordmark. Adapt Ideas Realized's social-rail behavior into an aVOID-specific signal dock with darker arcade hardware, verified official destinations, hover reveals, tactile press depth, keyboard focus, and a compact footer fallback on smaller screens.
+
+## D-016 — Separate authenticated scores from verified scores
+
+- Date: 2026-08-20
+- Status: accepted
+
+Authentication proves who submitted a score, not how the score was earned. Replace direct browser inserts with short-lived one-use run tickets and a service-role-only finishing transaction. Label current browser-reported runs `provisional`. Reserve `verified` for runs the platform can independently recompute or replay.
+
+## D-017 — Use Billing before Connect
+
+- Date: 2026-08-20
+- Status: accepted for MVP
+
+Use Stripe Billing, hosted Checkout, signed webhooks, database entitlements, and Customer Portal for player and creator memberships. Do not introduce Stripe Connect until the product has an approved reason to route game sales or revenue share to creators. Membership can unlock ad-free platform pages and creator workflow; it cannot improve scores or game outcomes.
+
+## D-018 — Moderate creator content before publication or ads
+
+- Date: 2026-08-20
+- Status: accepted
+
+Creator applications and game submissions enter a private review queue. Profiles, games, leaderboards, and monetization are activated independently after ownership, content, security, and technical review. Pending, rejected, empty, login, checkout, and administration surfaces never carry ads.
+
+## D-019 — Keep decorative artifacts inside responsive layout lanes
+
+- Date: 2026-08-20
+- Status: accepted
+
+Do not pin seals, badges, or decorative controls over responsive copy. Give prominent artifacts their own grid lane and let them stack naturally on small screens. Use asymmetrical collectible shapes, shallow perspective, tactile press depth, and transform-based motion with reduced-motion fallbacks instead of generic thin circular badges or disclaimer pills.

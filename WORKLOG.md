@@ -1,5 +1,55 @@
 # aVOIDgame.io worklog
 
+## 2026-08-20
+
+- Audited the live Supabase project and found that clients could insert arbitrary `leaderboard_scores`, including `is_verified = true`; several public `SECURITY DEFINER` functions and permissive policies also need hardening.
+- Audited VOIDaVOID, WreckaVOID, WORDaVOID, and the public FLIPSIDE bundle. Confirmed every current score path was browser-authored; WreckaVOID's intended submission was also skipped by its game-over state ordering.
+- Designed an incremental platform migration with explicit RLS/grants, membership and entitlement tables, private review queues, run sessions, score submissions, Stripe webhook idempotency, and a service-role-only atomic run-finishing function.
+- Added passwordless Supabase authentication, session refresh proxying, editable profiles, opt-in public player pages, social links, and account entitlement visibility.
+- Added per-game platform leaderboards with explicit legacy/provisional/validated/verified trust labels.
+- Added one-use run-ticket APIs and updated WORDaVOID and WreckaVOID to submit through them. Fixed WreckaVOID's game-over ordering bug and moved its leaderboard read to the canonical score table. Disabled VOIDaVOID's unsafe direct carryover write until its full lifecycle adapter exists.
+- Added Stripe-hosted subscription Checkout, Customer Portal, signed webhook verification, retry-safe event storage, subscription reconciliation, and entitlement grant/revocation. Stripe Connect remains deliberately out of the MVP until creator payouts exist.
+- Added creator applications and entitlement-gated private game submissions; neither publishes content automatically.
+- Added a root `ads.txt` route that returns plain-text 404 without a valid publisher ID and generates the exact standard seller line only from a validated `ca-pub-…` value. No AdSense runtime or ad request was added.
+- Read the connected Netlify project's environment inventory without exposing values. It currently contains only the legacy game `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`; every server-runtime, Stripe, price, label, site URL, and AdSense variable for the new platform is still absent.
+- Passed platform type-check and Next production build, all three staged game builds, and the platform production dependency audit with zero vulnerabilities.
+- Kept production, the live database, Stripe charges, AdSense requests, and Netlify environment values unchanged.
+- Replaced the overlapping circular Founding Player seal and thin disclaimer pill with a generated meteor collectible, a tactile angled membership ticket, and a container-owned responsive artifact lane.
+- Verified the membership section across desktop, laptop, tablet, and phone viewports with no horizontal overflow, no copy/art overlap, no escaped controls, and a clean browser console.
+- Received explicit approval to push the reviewed platform candidate live; the production rollout is now in progress while database, Stripe, and AdSense activation remain separately gated.
+
+### Next action
+
+Commit and push the approved platform candidate, verify the Git-driven Netlify runtime preview, then publish and verify production. Do not apply the score-locking migration separately from the platform and staged game deploy.
+
+## 2026-08-19
+
+- Resumed the clean release-candidate worktree at `a13f04d`; the draft PR remains open, mergeable, and clean while the legacy `main` checkout remains intentionally untouched with pre-existing deletions.
+- Verified Netlify deploy preview `6a832932124b140008f7ee8d` is still ready, unpublished, attached to PR #1, and serving the exact branch head. Production remains on restored deploy `6980919035d9cae6748f9f58`.
+- Confirmed Google AdSense now manages normal subdomains at the root-domain level, so `flipside.avoidgame.io` belongs under the `avoidgame.io` site entry rather than a separate site record.
+- Checked the currently signed-in Google account and found it is not associated with an AdSense account; the correct account and publisher ID remain required inputs.
+- Audited the release candidate for monetization readiness and found no privacy page, terms page, valid `ads.txt`, consent configuration, or publisher-ID hook.
+- Added plain-language privacy and terms routes, reusable legal-page and footer components, sitemap entries, and an environment-validated `google-adsense-account` verification meta tag.
+- Kept the AdSense runtime disabled and recorded a directory-only placement rule that excludes active game surfaces.
+- Passed the platform type-check, normal Next production build, and complete Windows static-review build with all three staged games.
+- Browser-verified `/privacy/` and `/terms/` at desktop and 390 × 844 mobile widths with correct headings, working legal navigation, zero horizontal overflow, and no console warnings or errors.
+- Replaced the Bloomfall, Acrolis Crawlers, and Tic Tac Toe in 3D monograms with direct first-party browser captures of their character select, game menu, and spatial board states; recorded source and usage provenance in `docs/visual-assets.md`.
+- Generated one text-free aVOID dimensional atmosphere asset and limited it to a low-opacity external-directory background so it cannot be mistaken for game artwork.
+- Added pointer-responsive card tilt and light, tactile hover/press states for launch keys and major CTAs, strong focus treatment, and explicit touch/reduced-motion fallbacks.
+- Reduced the four new visual assets to 218.6 KB of WebP output in total.
+- Passed the platform type-check and complete static preview build after the visual refresh.
+- Browser-verified the refreshed external-game section at 1280 × 800 and 390 × 844, including live image crops, dynamic matrix3d hover response, clean console output, and clipped root overflow on mobile.
+- Published draft deploy `6a868dd1cfd3428f743943c7` to the stable `avoid-platform-preview` alias and reverified all three live captures, desktop/mobile overflow, and a clean deployed browser console. Production was not changed.
+- Reviewed the live Ideas Realized social rail and verified its X, Instagram, Facebook, and LinkedIn destinations.
+- Generated a proposed compact meteor identity from the original aVOID meteor art direction, corrected the generator's baked checkerboard with deterministic alpha extraction, and integrated the mark into the header, footer, manifest, and favicon system.
+- Adapted the Ideas Realized social interaction into an aVOID signal dock with darker arcade-hardware styling, per-network accents, hover account reveals, tactile press depth, focus states, and a compact footer presentation.
+- Browser-verified the identity at 1280 × 720 and 390 × 844, including social hover state, mobile dock hiding, footer fallback, landmark naming, and zero horizontal overflow.
+- Published the combined refresh as draft deploy `6a869202290d729379475257` at the stable `avoid-platform-preview` alias; verified the 512 px meteor asset, SVG icon, legal routes, official social destinations, desktop hover reveal, mobile breakpoint, and clean browser console. Production remains on deploy `6980919035d9cae6748f9f58` at commit `4653e58`.
+
+### Next action
+
+Review the updated Netlify draft preview and proposed meteor identity, then authorize the commit/push and production rollout. The correct AdSense account and publisher identifier remain required before ad verification or activation.
+
 ## 2026-08-17
 
 - Audited the existing Vite hub, Netlify configuration, production catalog, related domains, and unfinished tank project.
