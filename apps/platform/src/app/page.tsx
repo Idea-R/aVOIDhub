@@ -105,6 +105,10 @@ export default function HomePage() {
             <h2 id="platform-title">A better home for games that are <em>already fun.</em></h2>
             <p>We&apos;re building the connective tissue: profiles, reliable leaderboards, favorites, creator pages, and sensible hosting. The games stay the point.</p>
             <div className="buildTag"><BadgeCheck size={16} /> Profiles and honest scoreboards are taking shape now.</div>
+            <div className="platformAccessLinks">
+              <a href="/account/">Open your player deck <ArrowRight aria-hidden="true" /></a>
+              <a href="/creators/dashboard/">Creator workspace <ArrowRight aria-hidden="true" /></a>
+            </div>
           </Reveal>
           <div className="featureStack">
             {platformFeatures.map((feature, index) => {

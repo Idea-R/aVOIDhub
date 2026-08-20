@@ -16,6 +16,7 @@ export function SiteFooter() {
           <a href="/#games">Games</a>
           <a href="/leaderboards/">Leaderboards</a>
           <a href="/creators/apply/">Creators</a>
+          <a href="/creators/dashboard/">Creator workspace</a>
           <a href="https://ideas-realized.com/" target="_blank" rel="noreferrer">Ideas Realized ↗</a>
         </div>
         <div className="footerLinks">

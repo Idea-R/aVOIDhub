@@ -18,6 +18,7 @@ export default function CreatorApplyPage() {
       }
       intro="Applying is free. Show us what you made, prove you can publish it, and choose the kind of help you need. Approval comes before any paid creator tools."
     >
+      <div className="workspaceRibbon"><span>Already applied?</span><a href="/creators/dashboard/">Open your creator workspace →</a></div>
       <section className="platformDashboard creatorIntake">
         <article className="platformPanel">
           <p className="panelLabel">How it works</p>

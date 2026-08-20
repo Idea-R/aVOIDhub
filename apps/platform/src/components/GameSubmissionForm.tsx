@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 
-export function GameSubmissionForm() {
+export function GameSubmissionForm({ enabled = true }: { enabled?: boolean }) {
   const [status, setStatus] = useState("");
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -19,6 +19,10 @@ export function GameSubmissionForm() {
         requestedHosting: form.get("requestedHosting"),
       }),
     });
+    if (response.status === 401) {
+      window.location.assign('/login/?next=/creators/submit/')
+      return
+    }
     const data = await response.json();
     setStatus(
       response.ok
@@ -72,11 +76,11 @@ export function GameSubmissionForm() {
         <option value="subdomain">aVOID subdomain</option>
         <option value="managed">Managed platform build</option>
       </select>
-      <button className="primaryButton" type="submit">
+      <button className="primaryButton" type="submit" disabled={!enabled}>
         Submit private review
       </button>
       <p className="formStatus" aria-live="polite">
-        {status}
+        {status || (!enabled ? 'Preview only—submission requires a connected, eligible creator account.' : 'The build stays private until review is complete.')}
       </p>
     </form>
   );

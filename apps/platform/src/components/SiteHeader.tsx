@@ -10,6 +10,7 @@ const navigation = [
   { href: '/leaderboards/', label: 'Scores' },
   { href: '/creators/apply/', label: 'Creators' },
   { href: '/membership/', label: 'Membership' },
+  { href: '/account/', label: 'Account' },
 ]
 
 export function SiteHeader() {

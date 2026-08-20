@@ -19,7 +19,7 @@ export function CreatorApplicationForm({ enabled }: { enabled: boolean }) {
       }),
     });
     if (response.status === 401) {
-      window.location.assign("/login/");
+      window.location.assign("/login/?next=/creators/apply/");
       return;
     }
     const data = await response.json();
