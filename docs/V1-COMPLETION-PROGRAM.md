@@ -5,7 +5,7 @@
 - **Repository:** `C:\dev\aVOID-next` / `Idea-R/aVOIDhub`
 - **Production baseline:** `https://avoidgame.io` at merge commit `7cd9788`
 - **Program branch:** `codex/docs-v1-completion-program`
-- **Current execution branch:** `codex/fix-wreckavoid-v1-baseline` (stacked on `security/platform-foundation-v1`)
+- **Current execution branch:** `codex/fix-wreckavoid-w2-responsive` (stacked on W0/W1 and `security/platform-foundation-v1`)
 - **Related records:** [`ROADMAP.md`](../ROADMAP.md), [`WORKLOG.md`](../WORKLOG.md), [`DECISIONS.md`](../DECISIONS.md)
 
 ## 1. Why this document exists
@@ -51,6 +51,7 @@ It is intentionally stricter than “the page loads.” Every V1 definition incl
 - The exact branch procedure and exit evidence are in `docs/sprint-1-foundation-test-plan.md`.
 - P3 is source-complete in draft PR #5: all eight catalog slugs have responsive platform detail routes and honest first-party/external launch boundaries without pretending the dormant leaderboard backend is live.
 - WreckaVOID W0/W1 local gates are complete. Standalone typecheck, lint, 14 focused tests, production build, and desktop/mobile browser play pass after repairing the pusher crash, duplicate enemy updates, lifecycle ownership, terminal finish gate, pointer scaling, and narrow HUD controls. Forty deterministic terminal/restart cycles held one RAF owner, one input owner, zero deferred timers, one finish per run, and no positive measured heap trend; evidence is in `docs/sprint-wreckavoid-w0-w1.md`.
+- WreckaVOID W2 local gates are complete. Rendered-canvas viewport ownership, live portrait/landscape resize, minimum-playfield messaging, reason-aware pause/focus/help, concise onboarding, persistent procedural audio, reduced-motion particle suppression, compact phone results, 19 tests, and a post-change 20-restart smoke pass are recorded in `docs/sprint-wreckavoid-w2.md`.
 
 ### What is unsafe or misleading if activated today
 

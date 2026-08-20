@@ -203,3 +203,17 @@ Every new run session and score submission records a bounded ruleset version. Th
 - Status: accepted for W0/W1
 
 Keep `games/wrecka-void` as the canonical WreckaVOID runtime. Preserve its recognizable chain-and-ball play while replacing unsafe lifecycle ownership: one fixed-step simulation clock, one RAF owner, one enemy-physics owner, and one terminal finish transition per run. Pointer/touch support and a readable narrow HUD are baseline playability, not a later visual redesign. Do not call W1 complete until a deterministic browser harness proves 20 restart cycles without accumulating RAF callbacks, listeners, timers, or memory.
+
+## D-030 — Let rendered layout own WreckaVOID’s canvas
+
+- Date: 2026-08-20
+- Status: accepted for W2
+
+Size the gameplay bitmap from the rendered flex-owned canvas, not `window.innerHeight` arithmetic. Dynamic viewport changes, safe-area padding, orientation, CSS layout, and pointer bounds must converge on that measured rectangle. Below a 320 × 320 playfield, stop play behind a clear support message instead of compressing the HUD and interactions into an unreadable surface.
+
+## D-031 — Compose pause reasons and keep WreckaVOID audio local
+
+- Date: 2026-08-20
+- Status: accepted for W2
+
+Manual pause, help, and focus loss are independent reasons; clearing one reason cannot clear another. W2 audio is a small local feedback layer with a persistent mute choice, no score effect, and no platform entitlement. Reduced-motion preference may suppress decorative particles and sparks, but must not silently alter physics, scoring, enemy timing, or leaderboard rules.

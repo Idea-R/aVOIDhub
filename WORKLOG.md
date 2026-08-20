@@ -2,6 +2,14 @@
 
 ## 2026-08-20
 
+- Started WreckaVOID W2 on isolated stacked branch `codex/fix-wreckavoid-w2-responsive` with issue #8 after publishing the clean W0/W1 draft PR #7.
+- Replaced hard-coded window-height canvas math with rendered-canvas `ResizeObserver` ownership, dynamic viewport/flex layout, visual viewport/orientation synchronization, safe-area padding, pointer clamping, and a readable 320 × 320 minimum-playfield guard.
+- Added reason-aware `manual`, `help`, and `focus` pause ownership. Browser smoke proved help cannot resume a manually paused or focus-paused run and focus return clears only its own reason.
+- Added six-second in-run coaching, a persisted and accessible procedural audio control with impact/damage/power-up/pause/game-over cues, and reduced-motion suppression for decorative particles/sparks.
+- Compactified the game-over surface so Score, Share, Play Again, and Sign In remain visible at 360 × 640 without document overflow.
+- Passed WreckaVOID typecheck, lint with zero warnings, 19 focused tests, and production build. Browser-verified 1440 × 900 desktop, 360 × 640 portrait, 844 × 390 live landscape resize, 300 × 300 unsupported guard, pause-reason composition, audio preference persistence, onboarding dismissal, and narrow result layout.
+- Passed the complete Netlify build pipeline after W2: VOIDaVOID, WreckaVOID, and WORDaVOID built and staged, then the normal Next.js runtime generated all 21 static pages and retained its dynamic server routes.
+- Re-ran 20 terminal/restart cycles after W2; owners remained RAF 1, input 1, timers 0 with one finish and restart per cycle. Recorded evidence in `docs/sprint-wreckavoid-w2.md`.
 - Started the first hosted-game repair slice on isolated branch `codex/fix-wreckavoid-v1-baseline`, stacked on the dormant platform foundation rather than editing the dirty main checkout.
 - Reproduced WreckaVOID’s misleading baseline: Vite built while standalone TypeScript and lint failed, no tests existed, pusher collisions could crash, enemy movement was applied twice, RAF ownership followed React state churn, lethal score submission was skipped, and mobile controls/HUD were not viable.
 - Added a bounded fixed-step clock, stable single RAF owner, one-finish-per-run gate, same-step terminal handling, canonical enemy-physics ownership, corrected retained enemy types, and the pusher collision fix.
@@ -56,7 +64,7 @@
 
 ### Next action
 
-Begin WreckaVOID W2 safe-area/dynamic viewport, orientation/focus-loss, onboarding, reduced-motion, and audio work. The separate foundation approval remains open: approve or decline the 72-hour Supabase development branch at the last verified `$0.01344/hour` (about `$0.97`). Do not apply the score-locking migration separately from the platform and staged game deploy.
+WreckaVOID W3 is blocked on the coordinated platform auth/run environment. Approve or decline the 72-hour Supabase development branch at the last verified `$0.01344/hour` (about `$0.97`), or continue the independent W5 asset/performance/accessibility slice. Do not apply the score-locking migration separately from the platform and staged game deploy.
 
 ## 2026-08-19
 
