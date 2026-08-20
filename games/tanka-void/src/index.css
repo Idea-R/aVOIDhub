@@ -319,6 +319,10 @@ button:focus-visible {
   gap: 0.55rem;
   justify-self: end;
 }
+.tank-touch-boundary {
+  display: none;
+  margin: 0;
+}
 .tank-hud button {
   padding: 0.72rem 0.85rem;
   font-family: "IBM Plex Mono", monospace;
@@ -437,6 +441,22 @@ button:focus-visible {
   .tank-hud__actions {
     grid-column: 2;
     grid-row: 1;
+  }
+  .tank-touch-boundary {
+    position: fixed;
+    right: max(0.75rem, env(safe-area-inset-right));
+    bottom: max(0.75rem, env(safe-area-inset-bottom));
+    left: max(0.75rem, env(safe-area-inset-left));
+    display: block;
+    padding: 0.55rem 0.7rem;
+    color: #f4f1df;
+    background: rgba(8, 10, 8, 0.86);
+    border-left: 0.35rem solid #ff6c4a;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.56rem;
+    letter-spacing: 0.08em;
+    text-align: center;
+    text-transform: uppercase;
   }
 }
 @media (max-width: 520px) {

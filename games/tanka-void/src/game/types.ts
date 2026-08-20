@@ -4,6 +4,13 @@ export const FIXED_STEP_MS = 1000 / 60;
 
 export type RunPhase = "briefing" | "running" | "paused" | "complete";
 export type PauseReason = "manual" | "focus";
+export type CombatantId = "player" | "enemy";
+export type ArmorFace = "front" | "left" | "right" | "rear";
+export type ImpactOutcome = "penetration" | "glancing" | "ricochet";
+export type CompletionReason =
+  | "enemy-disabled"
+  | "player-disabled"
+  | "systems-check";
 
 export interface WorldPoint {
   x: number;
@@ -23,6 +30,39 @@ export interface TankSnapshot {
   hullAngle: number;
   turretAngle: number;
   speed: number;
+  health: number;
+  maxHealth: number;
+  disabled: boolean;
+}
+
+export interface ProjectileSnapshot {
+  id: number;
+  owner: CombatantId;
+  position: WorldPoint;
+  previousPosition: WorldPoint;
+  direction: WorldPoint;
+  speed: number;
+  baseDamage: number;
+  penetration: number;
+}
+
+export interface ImpactSnapshot {
+  id: number;
+  tick: number;
+  target: CombatantId;
+  point: WorldPoint;
+  face: ArmorFace;
+  outcome: ImpactOutcome;
+  incidenceDegrees: number;
+  damage: number;
+}
+
+export interface CombatStatsSnapshot {
+  shotsFired: number;
+  hits: number;
+  ricochets: number;
+  damageDealt: number;
+  damageTaken: number;
 }
 
 export interface RunSnapshot {
@@ -32,7 +72,11 @@ export interface RunSnapshot {
   elapsedSeconds: number;
   triggerPulls: number;
   tank: TankSnapshot;
-  beacon: WorldPoint;
+  enemy: TankSnapshot;
+  projectiles: ProjectileSnapshot[];
+  impacts: ImpactSnapshot[];
+  stats: CombatStatsSnapshot;
+  completionReason?: CompletionReason;
 }
 
 export interface ViewportLayout {
@@ -55,6 +99,9 @@ export interface RuntimeDiagnostics {
   framePending: boolean;
   simulationSteps: number;
   droppedMilliseconds: number;
+  activeProjectiles: number;
+  projectileCapacity: number;
+  impactHistory: number;
   destroyed: boolean;
 }
 

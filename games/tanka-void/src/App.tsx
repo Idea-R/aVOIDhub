@@ -15,13 +15,34 @@ const INITIAL_SNAPSHOT: RunSnapshot = {
   elapsedSeconds: 0,
   triggerPulls: 0,
   tank: {
-    x: WORLD_WIDTH * 0.3,
+    x: WORLD_WIDTH * 0.26,
     y: WORLD_HEIGHT * 0.5,
     hullAngle: 0,
     turretAngle: 0,
     speed: 0,
+    health: 140,
+    maxHealth: 140,
+    disabled: false,
   },
-  beacon: { x: WORLD_WIDTH * 0.75, y: WORLD_HEIGHT * 0.35 },
+  enemy: {
+    x: WORLD_WIDTH * 0.76,
+    y: WORLD_HEIGHT * 0.5,
+    hullAngle: Math.PI,
+    turretAngle: Math.PI,
+    speed: 0,
+    health: 120,
+    maxHealth: 120,
+    disabled: false,
+  },
+  projectiles: [],
+  impacts: [],
+  stats: {
+    shotsFired: 0,
+    hits: 0,
+    ricochets: 0,
+    damageDealt: 0,
+    damageTaken: 0,
+  },
 };
 
 const INITIAL_DIAGNOSTICS: RuntimeDiagnostics = {
@@ -33,6 +54,9 @@ const INITIAL_DIAGNOSTICS: RuntimeDiagnostics = {
   framePending: false,
   simulationSteps: 0,
   droppedMilliseconds: 0,
+  activeProjectiles: 0,
+  projectileCapacity: 32,
+  impactHistory: 0,
   destroyed: false,
 };
 
@@ -48,6 +72,13 @@ function formatSeed(seed: number): string {
   return seed.toString(16).toUpperCase().padStart(8, "0");
 }
 
+function completionTitle(snapshot: RunSnapshot): string {
+  if (snapshot.completionReason === "enemy-disabled")
+    return "Armor line broken.";
+  if (snapshot.completionReason === "player-disabled") return "Hull disabled.";
+  return "Combat systems held.";
+}
+
 function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const runtimeRef = useRef<GameRuntime | null>(null);
@@ -60,6 +91,7 @@ function App() {
       new URLSearchParams(location.search).has("smoke"),
     [],
   );
+  const lastImpact = snapshot.impacts[snapshot.impacts.length - 1];
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -70,7 +102,7 @@ function App() {
     });
     runtimeRef.current = runtime;
     if (import.meta.env.DEV) {
-      window.__TANKAVOID_T1__ = {
+      window.__TANKAVOID_T2__ = {
         snapshot: () => runtime.snapshot(),
         diagnostics: () => runtime.diagnostics(),
         start: (seed = createRunSeed()) => runtime.start(seed),
@@ -81,7 +113,7 @@ function App() {
     return () => {
       runtime.destroy();
       runtimeRef.current = null;
-      if (import.meta.env.DEV) delete window.__TANKAVOID_T1__;
+      if (import.meta.env.DEV) delete window.__TANKAVOID_T2__;
     };
   }, []);
 
@@ -106,7 +138,7 @@ function App() {
         ref={canvasRef}
         className="tank-canvas"
         tabIndex={0}
-        aria-label="TankaVOID proving ground. Use W A S D or arrow keys to drive and the pointer to aim the turret. Escape pauses. Firing records a trigger pull; combat arrives in the next sprint."
+        aria-label="TankaVOID directional combat proving ground. Use W A S D or arrow keys to drive, the pointer to aim the turret, and primary click to fire. Keep your front armor toward incoming shells. Escape pauses."
       />
       <p className="tank-status" role="status" aria-live="polite">
         {snapshot.phase === "briefing" && "TankaVOID rebuild briefing."}
@@ -118,18 +150,23 @@ function App() {
       {snapshot.phase !== "briefing" && (
         <section className="tank-hud" aria-label="Run status">
           <div className="tank-hud__identity">
-            <span>T1 / PROVING GROUND</span>
+            <span>T2 / DIRECTIONAL COMBAT</span>
             <strong>{formatTime(snapshot.elapsedSeconds)}</strong>
           </div>
           <div className="tank-hud__telemetry">
             <span>
-              Speed <strong>{Math.round(Math.abs(snapshot.tank.speed))}</strong>
+              Hull <strong>{Math.ceil(snapshot.tank.health)}</strong>
             </span>
             <span>
-              Trigger <strong>{snapshot.triggerPulls}</strong>
+              Target <strong>{Math.ceil(snapshot.enemy.health)}</strong>
             </span>
             <span>
-              Seed <strong>{formatSeed(snapshot.seed)}</strong>
+              {lastImpact ? lastImpact.outcome : "No impact"}{" "}
+              <strong>
+                {lastImpact
+                  ? `${lastImpact.face} ${Math.round(lastImpact.damage)}`
+                  : formatSeed(snapshot.seed)}
+              </strong>
             </span>
           </div>
           <div className="tank-hud__actions">
@@ -148,25 +185,28 @@ function App() {
               </button>
             )}
           </div>
+          <p className="tank-touch-boundary">
+            Keyboard + pointer combat build. Touch driving arrives in T4.
+          </p>
         </section>
       )}
 
       {snapshot.phase === "briefing" && (
         <section className="tank-briefing" aria-labelledby="tank-title">
           <div className="tank-briefing__copy">
-            <p className="tank-kicker">aVOID prototype recovery / T1</p>
+            <p className="tank-kicker">aVOID combat proof / T2</p>
             <h1 id="tank-title">
               Tanka<span>VOID</span>
             </h1>
             <p className="tank-thesis">Direction matters.</p>
             <p className="tank-lede">
-              The old game tried to be an army. This rebuild begins with one
-              dependable machine: one loop, one arena, and a tank that goes
-              exactly where the simulation says it went.
+              The front plate can take a punch. The rear cannot. Turn the hull,
+              aim the turret independently, and break one bruiser before it
+              finds your weak side.
             </p>
             <button className="tank-primary" type="button" onClick={start}>
-              <span>Enter the proving ground</span>
-              <small>Keyboard + pointer foundation</small>
+              <span>Test the armor</span>
+              <small>WASD + pointer + primary fire</small>
             </button>
             <p className="tank-boundary">
               Local engineering build. No account, leaderboard, purchases, or
@@ -192,7 +232,7 @@ function App() {
               <li>
                 <span>03</span>
                 <strong>Armor</strong>
-                <small>Directional model / T2</small>
+                <small>Front .55 / side .90 / rear 1.35</small>
               </li>
             </ol>
             <div className="tank-briefing__readout">
@@ -248,25 +288,27 @@ function App() {
             aria-modal="true"
             aria-labelledby="complete-title"
           >
-            <p className="tank-kicker">T1 runtime result</p>
-            <h2 id="complete-title">The machine held.</h2>
+            <p className="tank-kicker">T2 combat result</p>
+            <h2 id="complete-title">{completionTitle(snapshot)}</h2>
             <div className="tank-result-grid">
               <span>
                 <small>Duration</small>
                 <strong>{formatTime(snapshot.elapsedSeconds)}</strong>
               </span>
               <span>
-                <small>Simulation ticks</small>
-                <strong>{snapshot.tick}</strong>
+                <small>Damage dealt</small>
+                <strong>{Math.round(snapshot.stats.damageDealt)}</strong>
               </span>
               <span>
-                <small>Trigger pulls</small>
-                <strong>{snapshot.triggerPulls}</strong>
+                <small>Hits / shots</small>
+                <strong>
+                  {snapshot.stats.hits} / {snapshot.stats.shotsFired}
+                </strong>
               </span>
             </div>
             <p>
-              This is not a score. T2 earns the right to add shells, impact
-              angles, armor faces, and damage.
+              This remains an engineering result, not a platform score. The
+              face, incidence, and damage record is deterministic and local.
             </p>
             <div className="tank-dialog__actions">
               <button
@@ -296,6 +338,11 @@ function App() {
           starts:{diagnostics.starts} finishes:{diagnostics.finishes} resets:
           {diagnostics.resets} listeners:{diagnostics.inputListeners} resize:
           {diagnostics.resizeObservers} frame:{diagnostics.framePending ? 1 : 0}
+          projectiles:{diagnostics.activeProjectiles}/
+          {diagnostics.projectileCapacity} impacts:{diagnostics.impactHistory}
+          tank:{Math.round(snapshot.tank.x)},{Math.round(snapshot.tank.y)}{" "}
+          shots:
+          {snapshot.stats.shotsFired} hits:{snapshot.stats.hits}
         </output>
       )}
     </main>
@@ -304,7 +351,7 @@ function App() {
 
 declare global {
   interface Window {
-    __TANKAVOID_T1__?: {
+    __TANKAVOID_T2__?: {
       snapshot(): RunSnapshot;
       diagnostics(): RuntimeDiagnostics;
       start(seed?: number): void;

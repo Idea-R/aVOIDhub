@@ -174,6 +174,9 @@ export class GameRuntime {
       framePending: loop.framePending,
       simulationSteps: loop.simulationSteps,
       droppedMilliseconds: loop.droppedMilliseconds,
+      activeProjectiles: this.simulation.snapshot().projectiles.length,
+      projectileCapacity: this.simulation.projectileCapacity(),
+      impactHistory: this.simulation.snapshot().impacts.length,
       destroyed: this.destroyed,
     };
   }
@@ -193,6 +196,15 @@ export class GameRuntime {
 
   private step(): void {
     this.simulation.step(this.input.snapshot());
+    if (this.simulation.snapshot().phase === "complete") {
+      this.pauseReasons.clear();
+      this.input.setEnabled(false);
+      this.loop.pause();
+      this.finishes += 1;
+      this.render();
+      this.emit();
+      return;
+    }
     if (this.simulation.snapshot().tick % 6 === 0) this.emit();
   }
 

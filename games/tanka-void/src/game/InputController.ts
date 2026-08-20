@@ -11,7 +11,7 @@ type PauseIntent = "manual" | "focus";
 export class InputController {
   private readonly keys = new Set<string>();
   private aim = { x: WORLD_WIDTH * 0.7, y: WORLD_HEIGHT * 0.5 };
-  private fire = false;
+  private queuedFirePulls = 0;
   private attached = false;
   private enabled = false;
 
@@ -59,12 +59,14 @@ export class InputController {
     const reverse = this.isDown("s", "arrowdown") ? 1 : 0;
     const right = this.isDown("d", "arrowright") ? 1 : 0;
     const left = this.isDown("a", "arrowleft") ? 1 : 0;
-    return {
+    const snapshot = {
       throttle: forward - reverse,
       turn: right - left,
       aim: { ...this.aim },
-      fire: this.fire,
+      fire: this.queuedFirePulls > 0,
     };
+    this.queuedFirePulls = Math.max(0, this.queuedFirePulls - 1);
+    return snapshot;
   }
 
   listenerCount(): number {
@@ -77,7 +79,7 @@ export class InputController {
 
   private reset(): void {
     this.keys.clear();
-    this.fire = false;
+    this.queuedFirePulls = 0;
   }
 
   private readonly onKeyDown = (event: KeyboardEvent): void => {
@@ -130,13 +132,14 @@ export class InputController {
   private readonly onPointerDown = (event: PointerEvent): void => {
     if (!this.enabled || event.button !== 0) return;
     this.canvas.setPointerCapture?.(event.pointerId);
-    this.fire = true;
+    this.queuedFirePulls = Math.min(4, this.queuedFirePulls + 1);
     this.onPointerMove(event);
   };
 
   private readonly onPointerUp = (event: PointerEvent): void => {
-    if (event.button !== 0) return;
-    this.fire = false;
+    if (event.type !== "pointercancel" && event.button !== 0) return;
+    if (this.canvas.hasPointerCapture?.(event.pointerId))
+      this.canvas.releasePointerCapture?.(event.pointerId);
   };
 
   private readonly onContextMenu = (event: MouseEvent): void => {
