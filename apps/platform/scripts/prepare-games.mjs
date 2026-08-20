@@ -22,6 +22,11 @@ const games = [
     source: path.join(repositoryRoot, 'dist', 'WORDaVOID'),
     target: path.join(publicRoot, 'WORDaVOID'),
   },
+  {
+    name: 'TankaVOID review build',
+    source: path.join(repositoryRoot, 'dist', 'TankaVOID'),
+    target: path.join(publicRoot, 'TankaVOID'),
+  },
 ]
 
 const allowedTargets = new Set(games.map((game) => path.resolve(game.target)))

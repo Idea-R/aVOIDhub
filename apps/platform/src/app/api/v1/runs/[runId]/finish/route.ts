@@ -3,7 +3,9 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { z } from 'zod'
 import { getRequestUser } from '@/lib/auth/request-user'
 import { validateWordAvoidFinish } from '@/lib/games/wordavoid'
+import { validateTankaVOIDFinish } from '@/lib/games/tankavoid'
 import { hasAllowedWriteOrigin } from '@/lib/http/same-origin'
+import { isPlatformRuntimeConfigured } from '@/lib/env'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 const bodySchema = z.object({
@@ -16,6 +18,9 @@ const bodySchema = z.object({
 export async function POST(request: NextRequest, context: { params: Promise<{ runId: string }> }) {
   if (!hasAllowedWriteOrigin(request)) {
     return NextResponse.json({ error: 'origin_not_allowed' }, { status: 403 })
+  }
+  if (!isPlatformRuntimeConfigured()) {
+    return NextResponse.json({ error: 'platform_unavailable' }, { status: 503 })
   }
 
   const user = await getRequestUser(request)
@@ -46,10 +51,13 @@ export async function POST(request: NextRequest, context: { params: Promise<{ ru
     const result = validateWordAvoidFinish(run, parsed.data.evidence)
     if (!result) return NextResponse.json({ error: 'run_manifest_invalid' }, { status: 400 })
     if (!result.validation.ok) {
-      return NextResponse.json({
-        error: 'run_evidence_rejected',
-        reasons: result.validation.errors.map(({ code, eventIndex, field }) => ({ code, eventIndex, field })),
-      }, { status: 400 })
+      return NextResponse.json(
+        {
+          error: 'run_evidence_rejected',
+          reasons: result.validation.errors.map(({ code, eventIndex, field }) => ({ code, eventIndex, field })),
+        },
+        { status: 400 },
+      )
     }
     acceptedScore = result.validation.summary.score
     acceptedMetrics = {
@@ -60,6 +68,30 @@ export async function POST(request: NextRequest, context: { params: Promise<{ ru
       validationCapability: 'server_recomputed',
     }
     validationCapability = 'server_recomputed'
+  }
+
+  if (run.game_key === 'tankavoid') {
+    const result = validateTankaVOIDFinish(run, parsed.data.evidence)
+    if (!result) return NextResponse.json({ error: 'run_manifest_invalid' }, { status: 400 })
+    if (!result.validation.ok) {
+      return NextResponse.json(
+        {
+          error: 'run_evidence_rejected',
+          reasons: result.validation.errors.map(({ code, field }) => ({
+            code,
+            field,
+          })),
+        },
+        { status: 400 },
+      )
+    }
+    acceptedScore = result.validation.score
+    acceptedMetrics = {
+      ...result.validation.summary,
+      rulesetVersion: result.manifest.rulesetVersion,
+      validationCapability: 'bounds_recomputed',
+    }
+    validationCapability = 'bounds_recomputed'
   }
 
   if (acceptedScore === undefined) {
@@ -87,6 +119,6 @@ export async function POST(request: NextRequest, context: { params: Promise<{ ru
     validationCapability,
     acceptedScore,
     acceptedMetrics,
+    receiptUrl: result?.submission_id ? `/results/${result.submission_id}/` : null,
   })
 }
-

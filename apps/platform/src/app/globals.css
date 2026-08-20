@@ -2909,6 +2909,113 @@ button {
   text-align: center;
 }
 
+.resultReceipt {
+  overflow: hidden;
+  border: 2px solid var(--ink);
+  border-radius: 30px;
+  background: var(--paper);
+  box-shadow: 14px 14px 0 var(--ink);
+}
+
+.resultReceipt > header,
+.resultReceipt > footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px 32px;
+}
+
+.resultReceipt > header {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.resultReceipt > header div {
+  display: grid;
+  gap: 4px;
+}
+
+.resultReceipt > header span,
+.resultReceiptFacts dt,
+.resultReceiptMetrics span,
+.resultReceipt > footer {
+  font: 800 0.72rem/1.2 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.resultReceipt > header strong {
+  font: 900 clamp(2.8rem, 9vw, 7rem) / 0.85 var(--font-display);
+}
+
+.resultReceiptFacts,
+.resultReceiptMetrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  padding: 30px 32px;
+  gap: 16px;
+}
+
+.resultReceiptFacts div,
+.resultReceiptMetrics div {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid color-mix(in srgb, var(--ink) 28%, transparent);
+  border-radius: 18px;
+}
+
+.resultReceiptFacts dd,
+.resultReceiptMetrics strong {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: clamp(1rem, 2vw, 1.45rem);
+}
+
+.resultReceiptMetrics {
+  padding-top: 0;
+}
+
+.resultReceipt > footer {
+  border-top: 1px solid color-mix(in srgb, var(--ink) 28%, transparent);
+}
+
+.resultReceipt > footer span {
+  overflow-wrap: anywhere;
+}
+
+.resultReceipt > footer a {
+  color: inherit;
+  text-underline-offset: 4px;
+}
+
+@media (max-width: 620px) {
+  .resultReceipt {
+    border-radius: 22px;
+    box-shadow: 8px 8px 0 var(--ink);
+  }
+
+  .resultReceipt > header,
+  .resultReceipt > footer {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 22px;
+  }
+
+  .resultReceiptFacts,
+  .resultReceiptMetrics {
+    grid-template-columns: 1fr;
+    padding: 22px;
+  }
+
+  .resultReceiptMetrics {
+    padding-top: 0;
+  }
+}
+
 .siteFooter {
   padding: 72px 0 38px;
   background: #0d110d;

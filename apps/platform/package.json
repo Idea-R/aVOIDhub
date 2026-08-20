@@ -13,6 +13,7 @@
     "test": "vitest --run"
   },
   "dependencies": {
+    "@avoid/tankavoid-contract": "1.0.0",
     "@avoid/wordavoid-contract": "1.0.0",
     "@supabase/ssr": "0.12.4",
     "@supabase/supabase-js": "2.112.3",

@@ -106,8 +106,8 @@ assert(
   "TankaVOID must not expose a playable route",
 );
 assert(
-  tank.score.scope === "none",
-  "TankaVOID must not imply a live leaderboard",
+  tank.score.scope === "platform" && tank.score.gameKey === "tankavoid",
+  "TankaVOID must stage only its canonical platform score boundary",
 );
 
 for (const id of ["bloomfall", "acrolis", "ttt3d"]) {

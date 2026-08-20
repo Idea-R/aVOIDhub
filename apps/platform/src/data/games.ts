@@ -38,7 +38,7 @@ export type Game = {
     scope: GameScoreScope;
     headline: string;
     copy: string;
-    gameKey?: "voidavoid" | "wreckavoid" | "wordavoid";
+    gameKey?: "voidavoid" | "wreckavoid" | "wordavoid" | "tankavoid";
   };
 };
 
@@ -263,11 +263,11 @@ export const originalGames: Game[] = [
     detailHref: "/games/tankavoid/",
     availability: "In development",
     statusNote:
-      "The recovered prototype is not a releasable game. The plan is a clean vertical-slice rebuild that keeps the directional-damage idea and leaves the sprawling prototype systems behind.",
+      "The clean rebuild now completes a deterministic five-wave run with directional armor, touch-candidate controls, and bounded platform receipts. Public Play remains held for physical-device and deployed rollback checks.",
     facts: [
-      { label: "V1 loop", value: "Five waves and one boss" },
+      { label: "V1 loop", value: "Five waves and one commander" },
       { label: "Core idea", value: "Front / side / rear armor" },
-      { label: "Launch", value: "No playable route yet" },
+      { label: "Launch", value: "Release review only" },
     ],
     highlights: [
       {
@@ -284,14 +284,15 @@ export const originalGames: Game[] = [
       },
     ],
     deviceSupport: [
-      "Keyboard and mouse planned",
-      "Touch controls planned",
-      "No public build yet",
+      "Keyboard and pointer verified",
+      "Touch release candidate",
+      "Public route still gated",
     ],
     score: {
-      scope: "none",
-      headline: "No board before there is a finished run.",
-      copy: "The hard-coded prototype samples are not a leaderboard. TankaVOID gets provisional platform scoring only after its playable V1 gate passes.",
+      scope: "platform",
+      gameKey: "tankavoid",
+      headline: "Five waves, one bounded provisional result.",
+      copy: "The platform recomputes the score from a tightly bounded terminal summary and a one-use run. That makes the result provisional—not replay-verified—and keeps old prototype samples off this board.",
     },
   },
 ];

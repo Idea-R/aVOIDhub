@@ -1,4 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  calculateTankaVOIDScore,
+  type TankaVOIDRunManifest,
+} from "@avoid/tankavoid-contract";
+import {
+  beginTankaVOIDRun,
+  createTankaVOIDEvidence,
+  finishTankaVOIDRun,
+  type TankaVOIDFinishResult,
+} from "./api/platformRuns";
 import { TouchControls } from "./TouchControls";
 import { GameRuntime } from "./game/GameRuntime";
 import { TANKAVOID_WAVES } from "./game/content";
@@ -19,6 +29,7 @@ const INITIAL_SNAPSHOT: RunSnapshot = {
   tick: 0,
   elapsedSeconds: 0,
   combatSeconds: 0,
+  combatTicks: 0,
   triggerPulls: 0,
   wave: 1,
   waveCount: TANKAVOID_WAVES.length,
@@ -60,6 +71,7 @@ const INITIAL_SNAPSHOT: RunSnapshot = {
     damageTaken: 0,
     armorRepaired: 0,
     enemiesDisabled: 0,
+    commanderDisabled: false,
     wavesCleared: 0,
   },
 };
@@ -173,6 +185,9 @@ function App() {
   const mainRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const runtimeRef = useRef<GameRuntime | null>(null);
+  const manifestRef = useRef<TankaVOIDRunManifest | null>(null);
+  const submittedRunRef = useRef<string | null>(null);
+  const launchGenerationRef = useRef(0);
   const dialogRef = useRef<HTMLElement>(null);
   const [snapshot, setSnapshot] = useState(INITIAL_SNAPSHOT);
   const [diagnostics, setDiagnostics] = useState(INITIAL_DIAGNOSTICS);
@@ -187,6 +202,14 @@ function App() {
   const [tipsVisible, setTipsVisible] = useState(
     () => !readStoredBoolean("tankavoid:tutorial-seen:v1", false),
   );
+  const [launching, setLaunching] = useState(false);
+  const [runPersistence, setRunPersistence] = useState<"platform" | "local">(
+    "local",
+  );
+  const [finishState, setFinishState] = useState<
+    TankaVOIDFinishResult | "saving" | null
+  >(null);
+  const [shareState, setShareState] = useState<"idle" | "copied">("idle");
   const smokeMode = useMemo(
     () =>
       typeof location !== "undefined" &&
@@ -267,20 +290,41 @@ function App() {
   }, [snapshot.phase]);
 
   useEffect(() => {
+    if (snapshot.phase !== "complete") return;
+    const manifest = manifestRef.current;
+    if (!manifest || submittedRunRef.current === manifest.runId) return;
+    const evidence = createTankaVOIDEvidence(manifest, snapshot);
+    if (!evidence) return;
+    submittedRunRef.current = manifest.runId;
+    setFinishState("saving");
+    void finishTankaVOIDRun(evidence).then((result) => {
+      if (manifestRef.current?.runId === manifest.runId) setFinishState(result);
+    });
+  }, [snapshot]);
+
+  useEffect(() => {
     if (snapshot.phase === "paused" || snapshot.phase === "complete")
       dialogRef.current?.focus({ preventScroll: true });
   }, [snapshot.phase]);
 
-  const start = () => {
+  const beginRun = async (restart: boolean) => {
+    const generation = ++launchGenerationRef.current;
     if (soundOn) void runtimeRef.current?.unlockAudio();
-    runtimeRef.current?.start(createRunSeed());
+    setLaunching(true);
+    setFinishState(null);
+    setShareState("idle");
+    const result = await beginTankaVOIDRun(createRunSeed());
+    if (generation !== launchGenerationRef.current) return;
+    manifestRef.current = result.manifest;
+    submittedRunRef.current = null;
+    setRunPersistence(result.persistence);
+    setLaunching(false);
+    if (restart) runtimeRef.current?.restart(result.manifest.seed);
+    else runtimeRef.current?.start(result.manifest.seed);
     requestAnimationFrame(() => canvasRef.current?.focus());
   };
-  const restart = () => {
-    if (soundOn) void runtimeRef.current?.unlockAudio();
-    runtimeRef.current?.restart(createRunSeed());
-    requestAnimationFrame(() => canvasRef.current?.focus());
-  };
+  const start = () => void beginRun(false);
+  const restart = () => void beginRun(true);
   const toggleSound = () => {
     const next = !soundOn;
     setSoundOn(next);
@@ -297,6 +341,32 @@ function App() {
   const showTips = () => {
     localStorage.setItem("tankavoid:tutorial-seen:v1", "false");
     setTipsVisible(true);
+  };
+  const evidence = manifestRef.current
+    ? createTankaVOIDEvidence(manifestRef.current, snapshot)
+    : null;
+  const localScore = evidence
+    ? calculateTankaVOIDScore(evidence.summary)
+    : null;
+  const savedReceipt =
+    finishState && finishState !== "saving" && finishState.status === "saved"
+      ? finishState.receiptUrl
+      : null;
+  const shareReceipt = async () => {
+    if (!savedReceipt) return;
+    const url = new URL(savedReceipt, location.origin).toString();
+    if (navigator.share) {
+      await navigator
+        .share({
+          title: "My TankaVOID run",
+          text: `I scored ${localScore?.toLocaleString()} in TankaVOID.`,
+          url,
+        })
+        .catch(() => undefined);
+      return;
+    }
+    await navigator.clipboard?.writeText(url);
+    setShareState("copied");
   };
 
   return (
@@ -340,7 +410,7 @@ function App() {
         <section className="tank-hud" aria-label="Run status">
           <div className="tank-hud__identity">
             <span>
-              T5 / WAVE {snapshot.wave} OF {snapshot.waveCount}
+              T6 / WAVE {snapshot.wave} OF {snapshot.waveCount}
             </span>
             <strong>{formatTime(snapshot.combatSeconds)}</strong>
           </div>
@@ -427,7 +497,7 @@ function App() {
       {snapshot.phase === "briefing" && (
         <section className="tank-briefing" aria-labelledby="tank-title">
           <div className="tank-briefing__copy">
-            <p className="tank-kicker">aVOID combat proof / T5</p>
+            <p className="tank-kicker">aVOID combat release candidate / T6</p>
             <h1 id="tank-title">
               Tanka<span>VOID</span>
             </h1>
@@ -437,8 +507,17 @@ function App() {
               Keep the strong plate toward the shot, use the barricades, and
               break the line before it pulls you apart.
             </p>
-            <button className="tank-primary" type="button" onClick={start}>
-              <span>Break all five waves</span>
+            <button
+              className="tank-primary"
+              type="button"
+              onClick={start}
+              disabled={launching}
+            >
+              <span>
+                {launching
+                  ? "Checking your platform session…"
+                  : "Break all five waves"}
+              </span>
               <small>
                 {touchMode
                   ? "Two thumbs / aim / release to fire"
@@ -463,8 +542,9 @@ function App() {
               </button>
             )}
             <p className="tank-boundary">
-              Local engineering build. No account, leaderboard, purchases, or
-              public Play route.
+              {runPersistence === "platform"
+                ? "Signed-in results use a one-use platform run. Public Play remains gated."
+                : "Guest play stays local. No account is required and no public Play route is exposed."}
             </p>
           </div>
           <div className="tank-briefing__plate" aria-label="Rebuild status">
@@ -562,9 +642,13 @@ function App() {
             aria-labelledby="complete-title"
             tabIndex={-1}
           >
-            <p className="tank-kicker">T5 five-wave result</p>
+            <p className="tank-kicker">T6 five-wave result</p>
             <h2 id="complete-title">{completionTitle(snapshot)}</h2>
             <div className="tank-result-grid">
+              <span>
+                <small>Run score</small>
+                <strong>{localScore?.toLocaleString() ?? "—"}</strong>
+              </span>
               <span>
                 <small>Waves</small>
                 <strong>
@@ -594,15 +678,45 @@ function App() {
                 <strong>{Math.round(snapshot.stats.armorRepaired)}</strong>
               </span>
             </div>
-            <p>
-              This remains an engineering result, not a platform score. The
-              wave, face, incidence, and damage record is deterministic and
-              local.
-            </p>
+            {finishState && (
+              <p className="tank-result-save" role="status" aria-live="polite">
+                {finishState === "saving" &&
+                  "Saving this result through the one-use platform run…"}
+                {finishState &&
+                  finishState !== "saving" &&
+                  finishState.status === "saved" &&
+                  "Saved as a provisional platform result. Its score math and bounds were recomputed by the server."}
+                {finishState &&
+                  finishState !== "saving" &&
+                  finishState.status === "local" &&
+                  "Local result kept. Sign in on aVOID before a future run if you want it on the board."}
+                {finishState &&
+                  finishState !== "saving" &&
+                  finishState.status === "rejected" &&
+                  "The platform declined this result. Your local result is still here."}
+                {finishState &&
+                  finishState !== "saving" &&
+                  finishState.status === "error" &&
+                  "The platform could not save this result. Your local result is still here."}
+              </p>
+            )}
             <div className="tank-dialog__actions">
-              <button className="tank-primary" type="button" onClick={restart}>
-                Run it again
+              <button
+                className="tank-primary"
+                type="button"
+                onClick={restart}
+                disabled={launching}
+              >
+                {launching ? "Checking session…" : "Run it again"}
               </button>
+              {savedReceipt && <a href={savedReceipt}>View saved receipt</a>}
+              {savedReceipt && (
+                <button type="button" onClick={() => void shareReceipt()}>
+                  {shareState === "copied"
+                    ? "Receipt copied"
+                    : "Share this run"}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => runtimeRef.current?.returnToBriefing()}

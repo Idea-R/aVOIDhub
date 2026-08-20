@@ -18,8 +18,11 @@ import { SharePageButton } from "@/components/SharePageButton";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { allGames, getGameById, type Game } from "@/data/games";
+import { isPlatformRuntimeConfigured } from "@/lib/env";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getRequestUser } from "@/lib/auth/request-user";
 
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 
 type ScoreRow = {
   id: string;
@@ -75,10 +78,60 @@ export async function generateMetadata({
   };
 }
 
-function getScoreSnapshot(): ScoreSnapshot {
-  // P3 owns the editorial surface, not the public leaderboard read model.
-  // P5 will replace this staged state with a restricted, moderation-aware view.
-  return emptySnapshot;
+async function getScoreSnapshot(game: Game): Promise<ScoreSnapshot> {
+  if (
+    game.id !== "tankavoid" ||
+    game.score.scope !== "platform" ||
+    !isPlatformRuntimeConfigured()
+  ) {
+    return emptySnapshot;
+  }
+  try {
+    const user = await getRequestUser();
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from("leaderboard_scores")
+      .select(
+        "id, player_name, score, verification_level, created_at, submission:score_submissions!inner(status, mode)",
+      )
+      .eq("game_key", "tankavoid")
+      .eq("submission.status", "accepted")
+      .eq("submission.mode", "five-wave")
+      .order("score", { ascending: false })
+      .order("created_at", { ascending: true })
+      .limit(10);
+    if (error) return { ...emptySnapshot, signedIn: Boolean(user) };
+    let personalBest: number | null = null;
+    if (user) {
+      const { data: best } = await admin
+        .from("leaderboard_scores")
+        .select("score, submission:score_submissions!inner(status, mode)")
+        .eq("game_key", "tankavoid")
+        .eq("user_id", user.id)
+        .eq("submission.status", "accepted")
+        .eq("submission.mode", "five-wave")
+        .order("score", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      personalBest = typeof best?.score === "number" ? best.score : null;
+    }
+    return {
+      scores: (data ?? []).map(
+        ({ id, player_name, score, verification_level, created_at }) => ({
+          id,
+          player_name,
+          score,
+          verification_level,
+          created_at,
+        }),
+      ) as ScoreRow[],
+      personalBest,
+      signedIn: Boolean(user),
+      unavailable: false,
+    };
+  } catch {
+    return emptySnapshot;
+  }
 }
 
 function getBoundary(game: Game) {
@@ -108,7 +161,7 @@ export default async function GameDetailPage({
   const game = getGameById((await params).slug);
   if (!game) notFound();
 
-  const scoreSnapshot = getScoreSnapshot();
+  const scoreSnapshot = await getScoreSnapshot(game);
   const boundary = getBoundary(game);
   const related = allGames.filter((item) => item.id !== game.id).slice(0, 3);
   const launchesAway = Boolean(game.playHref?.startsWith("http"));
@@ -183,7 +236,7 @@ export default async function GameDetailPage({
                 <Clock3 aria-hidden="true" />
                 <span>
                   <i>HANGAR STATUS</i>
-                  <strong>No playable build yet</strong>
+                  <strong>Release build held for final checks</strong>
                 </span>
               </div>
             )}

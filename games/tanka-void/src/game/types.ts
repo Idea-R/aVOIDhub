@@ -90,6 +90,7 @@ export interface CombatStatsSnapshot {
   damageTaken: number;
   armorRepaired: number;
   enemiesDisabled: number;
+  commanderDisabled: boolean;
   wavesCleared: number;
 }
 
@@ -101,6 +102,7 @@ export interface RunSnapshot {
   tick: number;
   elapsedSeconds: number;
   combatSeconds: number;
+  combatTicks: number;
   triggerPulls: number;
   wave: number;
   waveCount: number;

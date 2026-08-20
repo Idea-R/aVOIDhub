@@ -150,6 +150,7 @@ function createStats(): CombatStatsSnapshot {
     damageTaken: 0,
     armorRepaired: 0,
     enemiesDisabled: 0,
+    commanderDisabled: false,
     wavesCleared: 0,
   };
 }
@@ -318,6 +319,7 @@ export class TankSimulation {
       tick: this.tick,
       elapsedSeconds: this.tick * STEP_SECONDS,
       combatSeconds: this.combatTicks * STEP_SECONDS,
+      combatTicks: this.combatTicks,
       triggerPulls: this.triggerPulls,
       wave: this.wave,
       waveCount: TANKAVOID_WAVE_COUNT,
@@ -600,7 +602,7 @@ export class TankSimulation {
   private tankIntersection(
     start: WorldPoint,
     end: WorldPoint,
-    target: TankSnapshot,
+    target: TankSnapshot | EnemyState,
   ): WorldPoint | null {
     return segmentOrientedBoxIntersection(start, end, {
       center: { x: target.x, y: target.y },
@@ -651,7 +653,11 @@ export class TankSimulation {
       this.stats.hits += 1;
       this.stats.damageDealt += resolution.damage;
       if (resolution.outcome === "ricochet") this.stats.ricochets += 1;
-      if (!wasDisabled && target.disabled) this.stats.enemiesDisabled += 1;
+      if (!wasDisabled && target.disabled) {
+        this.stats.enemiesDisabled += 1;
+        if ("archetype" in target && target.archetype === "commander")
+          this.stats.commanderDisabled = true;
+      }
     } else this.stats.damageTaken += resolution.damage;
   }
 

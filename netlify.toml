@@ -63,6 +63,13 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
+# TankaVOID is assembled for release review but deliberately has no public
+# lowercase redirect or catalog Play action until T7 passes.
+[[headers]]
+  for = "/TankaVOID/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
 [[headers]]
   for = "/_next/static/*"
   [headers.values]

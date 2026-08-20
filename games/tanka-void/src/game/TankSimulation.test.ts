@@ -1,4 +1,9 @@
 import { describe, expect, it } from "vitest";
+import {
+  createTankaVOIDManifest,
+  validateTankaVOIDRun,
+} from "@avoid/tankavoid-contract";
+import { createTankaVOIDEvidence } from "../api/platformRuns";
 import { TANKAVOID_WAVES } from "./content";
 import { TankSimulation } from "./TankSimulation";
 import type { EnemySnapshot, InputSnapshot, RunSnapshot } from "./types";
@@ -169,10 +174,33 @@ describe("TankSimulation", () => {
       completionReason: "run-cleared",
       wave: 5,
       waveCount: 5,
-      stats: { wavesCleared: 5, enemiesDisabled: 9 },
+      stats: { wavesCleared: 5, enemiesDisabled: 9, commanderDisabled: true },
     });
     expect(campaign.snapshot.stats.armorRepaired).toBeGreaterThan(0);
     expect(campaign.snapshot.stats.armorRepaired).toBeLessThanOrEqual(112);
+  });
+
+  it("turns a natural five-wave terminal into a bounded server-recomputed result", () => {
+    const result = runNaturalCampaign(31).snapshot;
+    const manifest = createTankaVOIDManifest({
+      runId: "platform-run",
+      seed: result.seed,
+    });
+    const evidence = createTankaVOIDEvidence(manifest, result);
+    expect(evidence).not.toBeNull();
+    const validation = validateTankaVOIDRun(manifest, evidence);
+    if (!validation.ok)
+      throw new Error(`Natural run rejected: ${JSON.stringify(validation.errors)}`);
+    expect(validation).toMatchObject({
+      ok: true,
+      summary: {
+        completionReason: "run-cleared",
+        wavesCleared: 5,
+        enemiesDisabled: 9,
+        commanderDisabled: true,
+        combatTicks: expect.any(Number),
+      },
+    });
   });
 
   it("reaches the exact static roster in order without development tools", () => {

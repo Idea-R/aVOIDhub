@@ -196,6 +196,13 @@ button {
   transform: translate(0.28rem, 0.28rem);
   box-shadow: 0.12rem 0.12rem 0 #ff6c4a;
 }
+.tank-primary:disabled,
+.tank-dialog button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+  transform: none;
+  box-shadow: 0.24rem 0.24rem 0 #ff6c4a;
+}
 button:focus-visible {
   outline: 3px solid #f4f1df;
   outline-offset: 5px;
@@ -448,6 +455,31 @@ button:focus-visible {
 .tank-dialog button:not(.tank-primary) {
   background: #151711;
   color: #f4f1df;
+}
+.tank-dialog__actions a {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.9rem 1.1rem;
+  color: #151711;
+  background: #ff6c4a;
+  font-weight: 900;
+  text-decoration: none;
+  box-shadow: 0.32rem 0.32rem 0 #151711;
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease;
+}
+.tank-dialog__actions a:hover {
+  transform: translate(-0.16rem, -0.16rem);
+  box-shadow: 0.55rem 0.55rem 0 #151711;
+}
+.tank-dialog__actions a:focus-visible {
+  outline: 3px solid #151711;
+  outline-offset: 4px;
+}
+.tank-result-save {
+  min-height: 3rem;
+  font-weight: 700;
 }
 .tank-dialog .tank-setting-controls {
   margin-top: 1.2rem;
