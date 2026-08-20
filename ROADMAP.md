@@ -48,6 +48,7 @@ Move the live aVOIDgame.io rebuild through the phased V1 completion program: sec
 - Active game-repair draft PR: `https://github.com/Idea-R/aVOIDhub/pull/7`
 - Active WreckaVOID W2 branch: `codex/fix-wreckavoid-w2-responsive`
 - Active WreckaVOID W2 issue: `https://github.com/Idea-R/aVOIDhub/issues/8`
+- Active WreckaVOID W2 draft PR: `https://github.com/Idea-R/aVOIDhub/pull/9`
 - WreckaVOID W2 evidence: `docs/sprint-wreckavoid-w2.md`
 - WreckaVOID W0/W1 evidence: `docs/sprint-wreckavoid-w0-w1.md`
 - Program source of truth: `docs/V1-COMPLETION-PROGRAM.md`

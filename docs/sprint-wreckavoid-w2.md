@@ -4,6 +4,7 @@
 - **Branch:** `codex/fix-wreckavoid-w2-responsive`
 - **Base:** `codex/fix-wreckavoid-v1-baseline`
 - **Issue:** `https://github.com/Idea-R/aVOIDhub/issues/8`
+- **Draft PR:** `https://github.com/Idea-R/aVOIDhub/pull/9`
 - **Status:** local W2 exit gates complete; production and cross-engine release gates remain later work
 
 ## Outcome
