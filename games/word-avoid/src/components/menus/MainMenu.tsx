@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { Play, Trophy, Settings, Info, Zap, Clock, Hash } from 'lucide-react';
 import { ToggleLeft, ToggleRight } from 'lucide-react';
@@ -14,6 +14,9 @@ interface MainMenuProps {
   onStartGame: (mode: GameMode) => void;
   onShowSettings: () => void;
   onShowStats: () => void;
+  onShowHelp: () => void;
+  isStarting: boolean;
+  startMessage: string;
   className?: string;
 }
 
@@ -21,14 +24,15 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   onStartGame,
   onShowSettings,
   onShowStats,
+  onShowHelp,
+  isStarting,
+  startMessage,
   className = ''
 }) => {
-  const { stats, loadPlayerStats, capsMode, shiftMode, toggleCapsMode } = useGameStore();
-  const isInitialized = useAudioStore((state) => state.isInitialized);
-
-  useEffect(() => {
-    loadPlayerStats();
-  }, [loadPlayerStats]);
+  const { stats, localDataStatus, capsMode, shiftMode, toggleCapsMode } = useGameStore();
+  const audioStatus = useAudioStore((state) => state.status);
+  const audioStatusMessage = useAudioStore((state) => state.statusMessage);
+  const initializeAudio = useAudioStore((state) => state.initializeAudio);
 
   const gameModes = V1_MODE_CONTRACTS.map((mode) => ({
     ...mode,
@@ -149,9 +153,10 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                           size="sm"
                           onClick={() => onStartGame(mode.id)}
                           className="w-full"
+                          disabled={isStarting}
                         >
                           <Play className="w-4 h-4 mr-2" />
-                          Start Game
+                          {isStarting ? 'Preparing…' : 'Start Game'}
                         </NeonButton>
                       </div>
                     </div>
@@ -186,6 +191,11 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 ))}
               </ul>
             </GlassPanel>
+            {startMessage && (
+              <p className="mt-3 text-sm font-game-ui text-medium" role="status" aria-live="polite">
+                {startMessage}
+              </p>
+            )}
           </div>
 
           {/* Sidebar */}
@@ -200,6 +210,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 Your Stats
               </h3>
               <GlassPanel className="p-6">
+                {localDataStatus === 'migrated' && (
+                  <p className="mb-4 text-xs text-health-high" role="status">Your older local stats were upgraded safely.</p>
+                )}
+                {localDataStatus === 'recovered' && (
+                  <p className="mb-4 text-xs text-medium" role="status">Unreadable local data was ignored so the game could start cleanly.</p>
+                )}
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-text-secondary font-game-ui">Games Played</span>
@@ -257,7 +273,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               
               <NeonButton
                 variant="accent"
-                onClick={() => {/* Show help/tutorial */}}
+                onClick={onShowHelp}
                 className="w-full"
               >
                 <Info className="w-4 h-4 mr-2" />
@@ -274,14 +290,15 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               <GlassPanel className="p-4">
                 <div className="text-center">
                   <div className={`text-sm font-game-ui ${
-                    isInitialized ? 'text-health-high' : 'text-medium'
+                    audioStatus === 'ready' ? 'text-health-high' : audioStatus === 'unavailable' ? 'text-extreme' : 'text-medium'
                   }`}>
-                    Audio System: {isInitialized ? 'Ready' : 'Ready on input'}
+                    Audio: {audioStatus === 'ready' ? 'Ready' : audioStatus === 'unavailable' ? 'Silent mode' : 'Ready on input'}
                   </div>
-                  {!isInitialized && (
-                    <div className="text-xs text-text-muted mt-1">
-                      Click or press any key to enable audio
-                    </div>
+                  <div className="text-xs text-text-muted mt-1" role="status">{audioStatusMessage}</div>
+                  {audioStatus === 'unavailable' && (
+                    <button type="button" className="mt-3 text-xs font-bold text-avoid-accent underline underline-offset-4" onClick={() => void initializeAudio()}>
+                      Try audio again
+                    </button>
                   )}
                 </div>
               </GlassPanel>

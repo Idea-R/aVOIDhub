@@ -6,7 +6,7 @@ vi.mock('../api/platformRuns', async (importOriginal) => {
   return {
     ...actual,
     beginPlatformRun: vi.fn(),
-    finishPlatformRun: vi.fn().mockResolvedValue(false),
+    finishPlatformRun: vi.fn().mockResolvedValue({ status: 'local' }),
   };
 });
 
@@ -22,6 +22,7 @@ const manifest = createWordAvoidManifest({
 describe('game store baseline', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useGameStore.setState({ viewport: { width: 1280, height: 720 } });
     useGameStore.getState().resetGame();
   });
 
@@ -43,7 +44,7 @@ describe('game store baseline', () => {
       maxStreak: 0,
       charactersAttempted: 0,
       charactersCorrect: 0,
-      position: { x: 400, y: 300 }
+      position: { x: 640, y: 360 }
     });
   });
 
@@ -130,7 +131,7 @@ describe('game store baseline', () => {
   });
 
   it('spawns the same competitive prompt and angle from the same run seed', () => {
-    vi.stubGlobal('window', { innerWidth: 800, innerHeight: 600 });
+    useGameStore.getState().setViewport({ width: 800, height: 600 });
     useGameStore.getState().startGame('classic', manifest);
     useGameStore.getState().spawnWord();
 
@@ -148,7 +149,6 @@ describe('game store baseline', () => {
       sequence: 0,
       promptId: expected.promptId,
     });
-    vi.unstubAllGlobals();
   });
 
   it('records pauses without charging their wall time to active WPM', () => {
@@ -173,10 +173,64 @@ describe('game store baseline', () => {
     vi.useRealTimers();
   });
 
+  it('keeps manual and focus pauses independent and records only outer transitions', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-20T00:00:00Z'));
+    useGameStore.getState().startGame('classic', manifest);
+    vi.advanceTimersByTime(1_000);
+    useGameStore.getState().pauseGame('manual');
+    vi.advanceTimersByTime(500);
+    useGameStore.getState().pauseGame('focus');
+    useGameStore.getState().resumeGame('focus');
+
+    expect(useGameStore.getState()).toMatchObject({
+      isPaused: true,
+      pauseReasons: ['manual'],
+    });
+
+    vi.advanceTimersByTime(500);
+    useGameStore.getState().resumeGame('manual');
+    expect(useGameStore.getState()).toMatchObject({
+      isPaused: false,
+      pauseReasons: [],
+      totalPausedMs: 1_000,
+    });
+    expect(useGameStore.getState().runEvents).toEqual([
+      { type: 'pause', atMs: 1_000 },
+      { type: 'resume', atMs: 2_000 },
+    ]);
+    vi.useRealTimers();
+  });
+
+  it('re-centers live prompts when the owned viewport changes', () => {
+    useGameStore.getState().setViewport({ width: 800, height: 600 });
+    useGameStore.getState().startGame('classic', manifest);
+    useGameStore.getState().spawnWord();
+    const before = useGameStore.getState().words[0];
+
+    useGameStore.getState().setViewport({ width: 400, height: 700 });
+    const after = useGameStore.getState().words[0];
+    expect(useGameStore.getState().player.position).toEqual({ x: 200, y: 350 });
+    expect(after.position).toEqual({
+      x: 200 + Math.cos(before.angle) * before.distance,
+      y: 350 + Math.sin(before.angle) * before.distance,
+    });
+  });
+
+  it('does not count or submit an abandoned run', async () => {
+    useGameStore.getState().startGame('classic', manifest);
+    useGameStore.getState().endGame('quit');
+    await Promise.resolve();
+
+    expect(useGameStore.getState()).toMatchObject({ terminalReason: 'quit', submissionStatus: 'idle' });
+    expect(useGameStore.getState().stats.totalGames).toBe(0);
+    expect(finishPlatformRun).not.toHaveBeenCalled();
+  });
+
   it('finishes a health-ending run with evidence the shared validator recomputes', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-20T00:00:00Z'));
-    vi.stubGlobal('window', { innerWidth: 800, innerHeight: 600 });
+    useGameStore.getState().setViewport({ width: 800, height: 600 });
     useGameStore.getState().startGame('classic', manifest);
     useGameStore.getState().spawnWord();
     const completedPrompt = useGameStore.getState().words[0];
@@ -211,6 +265,5 @@ describe('game store baseline', () => {
     });
     expect(finishPlatformRun).toHaveBeenCalledOnce();
     vi.useRealTimers();
-    vi.unstubAllGlobals();
   });
 });

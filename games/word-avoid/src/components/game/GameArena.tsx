@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PlayerAvatar } from './PlayerAvatar';
 import { IncomingWord } from './IncomingWord';
@@ -7,12 +7,14 @@ import { GeometricChallenge } from './GeometricChallenge';
 import { ParticleSystem } from './ParticleSystem';
 import { useGameStore } from '../../stores/gameStore';
 import { useAudioStore } from '../../stores/audioStore';
+import { useMotionPreference } from '../../hooks/useMotionPreference';
 
 interface GameArenaProps {
   className?: string;
+  onRequestTypingFocus?: () => void;
 }
 
-export const GameArena: React.FC<GameArenaProps> = ({ className = '' }) => {
+export const GameArena: React.FC<GameArenaProps> = ({ className = '', onRequestTypingFocus }) => {
   const {
     player,
     words,
@@ -28,15 +30,39 @@ export const GameArena: React.FC<GameArenaProps> = ({ className = '' }) => {
     spawnDigitChar,
     spawnGeometricChallenge,
     spawnRate,
-    level
+    level,
+    viewport,
+    setViewport,
+    settings,
   } = useGameStore();
   
   const { updateMusicIntensity } = useAudioStore();
   const lastSpawnTime = useRef(0);
   const animationFrame = useRef<number>();
   const lastTime = useRef(Date.now());
+  const arenaRef = useRef<HTMLDivElement>(null);
+  const shouldReduceMotion = useMotionPreference();
   const wordCount = words?.length || 0;
   const playerHealth = player?.health || 0;
+
+  useLayoutEffect(() => {
+    const arena = arenaRef.current;
+    if (!arena) return;
+    const measure = () => {
+      const rect = arena.getBoundingClientRect();
+      setViewport({ width: rect.width, height: rect.height });
+    };
+    measure();
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure);
+    observer?.observe(arena);
+    window.addEventListener('resize', measure);
+    window.visualViewport?.addEventListener('resize', measure);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', measure);
+      window.visualViewport?.removeEventListener('resize', measure);
+    };
+  }, [setViewport]);
 
   // Game loop
   useEffect(() => {
@@ -94,10 +120,15 @@ export const GameArena: React.FC<GameArenaProps> = ({ className = '' }) => {
   }, [isPlaying]);
 
   // Calculate arena center
-  const arenaCenter = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+  const arenaCenter = { x: viewport.width / 2, y: viewport.height / 2 };
 
   return (
-    <div className={`relative w-full h-full overflow-hidden game-arena ${className}`}>
+    <div
+      ref={arenaRef}
+      className={`relative w-full h-full overflow-hidden game-arena ${className}`}
+      onClick={onRequestTypingFocus}
+      aria-hidden="true"
+    >
       {/* Background Grid */}
       <div className="absolute inset-0 opacity-20">
         <svg width="100%" height="100%" className="absolute inset-0">
@@ -116,7 +147,8 @@ export const GameArena: React.FC<GameArenaProps> = ({ className = '' }) => {
       </div>
 
       {/* Floating Background Shapes */}
-      <div className="floating-shapes absolute inset-0 overflow-hidden">
+      {settings.graphics.backgroundAnimation && (
+      <div className="floating-shapes absolute inset-0 overflow-hidden" data-motion="decorative">
         {[...Array(8)].map((_, i) => (
           <motion.div
             key={i}
@@ -129,7 +161,7 @@ export const GameArena: React.FC<GameArenaProps> = ({ className = '' }) => {
               left: `${20 + (i * 15)}%`,
               top: `${30 + (i % 3) * 20}%`
             }}
-            animate={{
+            animate={shouldReduceMotion ? undefined : {
               y: [-30, 30, -30],
               rotate: [0, 360],
               opacity: [0.1, 0.4, 0.1],
@@ -137,13 +169,14 @@ export const GameArena: React.FC<GameArenaProps> = ({ className = '' }) => {
             }}
             transition={{
               duration: 10 + i * 2,
-              repeat: Infinity,
+              repeat: shouldReduceMotion ? 0 : Infinity,
               ease: 'easeInOut',
               delay: i * 0.5
             }}
           />
         ))}
       </div>
+      )}
 
       {/* Level Indicator Rings */}
       <div className="absolute inset-0 pointer-events-none">
@@ -158,8 +191,8 @@ export const GameArena: React.FC<GameArenaProps> = ({ className = '' }) => {
               height: (200 + i * 60),
               borderColor: `rgba(0, 255, 136, ${0.1 + i * 0.05})`
             }}
-            animate={{ rotate: 360 }}
-            transition={{ duration: 20 + i * 5, repeat: Infinity, ease: 'linear' }}
+            animate={shouldReduceMotion ? undefined : { rotate: 360 }}
+            transition={{ duration: 20 + i * 5, repeat: shouldReduceMotion ? 0 : Infinity, ease: 'linear' }}
           />
         ))}
       </div>
@@ -174,13 +207,13 @@ export const GameArena: React.FC<GameArenaProps> = ({ className = '' }) => {
       >
         <motion.div 
           className="absolute inset-2 border border-avoid-primary/50 rounded-full"
-          animate={{ scale: [1, 1.1, 1] }}
-          transition={{ duration: 2, repeat: Infinity }}
+          animate={shouldReduceMotion ? undefined : { scale: [1, 1.1, 1] }}
+          transition={{ duration: 2, repeat: shouldReduceMotion ? 0 : Infinity }}
         />
         <motion.div 
           className="absolute top-1/2 left-1/2 w-2 h-2 -translate-x-1/2 -translate-y-1/2 bg-avoid-primary rounded-full"
-          animate={{ scale: [1, 1.3, 1] }}
-          transition={{ duration: 1, repeat: Infinity }}
+          animate={shouldReduceMotion ? undefined : { scale: [1, 1.3, 1] }}
+          transition={{ duration: 1, repeat: shouldReduceMotion ? 0 : Infinity }}
         />
       </div>
 
@@ -236,33 +269,18 @@ export const GameArena: React.FC<GameArenaProps> = ({ className = '' }) => {
           width: 150,
           height: 150
         }}
-        animate={{
+        animate={shouldReduceMotion ? {
+          opacity: words?.some(w => w.distance < 100) ? 0.35 : 0.1,
+          scale: 1,
+        } : {
           opacity: words?.some(w => w.distance < 100) ? [0.3, 0.7, 0.3] : 0.1,
           scale: words?.some(w => w.distance < 100) ? [1, 1.05, 1] : 1
         }}
         transition={{
           duration: 0.5,
-          repeat: words?.some(w => w.distance < 100) ? Infinity : 0
+          repeat: !shouldReduceMotion && words?.some(w => w.distance < 100) ? Infinity : 0
         }}
       />
-
-      {/* Game State Overlay */}
-      {isPaused && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center"
-        >
-          <div className="glass-panel p-8 text-center">
-            <h2 className="text-3xl font-game-display font-bold text-avoid-primary mb-4">
-              Game Paused
-            </h2>
-            <p className="text-text-secondary font-game-ui">
-              Press ESC to resume or click the pause button
-            </p>
-          </div>
-        </motion.div>
-      )}
     </div>
   );
 };

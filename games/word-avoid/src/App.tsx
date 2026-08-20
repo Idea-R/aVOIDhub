@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 import { MainMenu } from './components/menus/MainMenu';
 import { GameArena } from './components/game/GameArena';
 import { GameHUD } from './components/game/GameHUD';
@@ -8,13 +8,20 @@ import { SettingsMenu } from './components/menus/SettingsMenu';
 import { useGameStore } from './stores/gameStore';
 import { useAudioStore } from './stores/audioStore';
 import { useKeyboardInput } from './hooks/useKeyboardInput';
+import { useGameFocus } from './hooks/useGameFocus';
+import { useMotionPreference } from './hooks/useMotionPreference';
+import { TypingSurface } from './components/game/TypingSurface';
 import { beginPlatformRun, createLocalWordAvoidManifest } from './api/platformRuns';
 import type { GameMode } from './types/game';
 
-type AppState = 'menu' | 'playing' | 'gameOver' | 'settings' | 'stats';
+type AppState = 'menu' | 'playing' | 'gameOver' | 'settings' | 'stats' | 'help';
 
 function App() {
   const [appState, setAppState] = useState<AppState>('menu');
+  const [isStarting, setIsStarting] = useState(false);
+  const [startMessage, setStartMessage] = useState('');
+  const startRequestInFlight = useRef(false);
+  const startAttempt = useRef(0);
   
   const { 
     isPlaying, 
@@ -22,14 +29,28 @@ function App() {
     mode,
     screenShakeTrigger,
     settings,
+    stats,
     startGame, 
-    resetGame 
+    resetGame,
+    loadPlayerStats,
+    loadSettings,
   } = useGameStore();
   
-  const { startMusic, stopMusic } = useAudioStore();
+  const { startMusic, stopMusic, setMasterVolume, setMusicVolume, setSfxVolume } = useAudioStore();
+  const keyboard = useKeyboardInput();
+  const shouldReduceMotion = useMotionPreference();
   
-  // Initialize keyboard input handling
-  useKeyboardInput();
+  useGameFocus(keyboard.inputRef);
+
+  useEffect(() => {
+    void Promise.all([loadPlayerStats(), loadSettings()]);
+  }, [loadPlayerStats, loadSettings]);
+
+  useEffect(() => {
+    setMasterVolume(settings.audio.masterVolume);
+    setMusicVolume(settings.audio.musicVolume);
+    setSfxVolume(settings.audio.sfxVolume);
+  }, [setMasterVolume, setMusicVolume, setSfxVolume, settings.audio]);
 
   // Browser audio must begin from a real user gesture. Tone.js stays out of
   // the initial download and is loaded once on the first pointer or key input.
@@ -62,13 +83,35 @@ function App() {
   }, [isGameOver, appState, stopMusic]);
 
   const handleStartGame = async (mode: GameMode) => {
-    const manifest = await beginPlatformRun(mode) ?? createLocalWordAvoidManifest(mode);
-    startGame(mode, manifest);
-    setAppState('playing');
-    startMusic();
+    if (startRequestInFlight.current) return;
+    startRequestInFlight.current = true;
+    const attempt = ++startAttempt.current;
+    setIsStarting(true);
+    setStartMessage('Preparing a fresh run…');
+    try {
+      const manifest = await beginPlatformRun(mode) ?? createLocalWordAvoidManifest(mode);
+      if (attempt !== startAttempt.current) return;
+      if (!manifest) throw new Error('manifest_unavailable');
+      startGame(mode, manifest);
+      setAppState('playing');
+      setStartMessage('');
+      startMusic();
+    } catch {
+      if (attempt !== startAttempt.current) return;
+      setStartMessage('A fresh run could not be prepared. Try again.');
+    } finally {
+      if (attempt === startAttempt.current) {
+        startRequestInFlight.current = false;
+        setIsStarting(false);
+      }
+    }
   };
 
   const handleMainMenu = () => {
+    startAttempt.current += 1;
+    startRequestInFlight.current = false;
+    setIsStarting(false);
+    setStartMessage('');
     resetGame();
     setAppState('menu');
     stopMusic();
@@ -82,8 +125,16 @@ function App() {
     setAppState('stats');
   };
 
+  const handleShowHelp = () => {
+    setAppState('help');
+  };
+
   return (
-    <div className="min-h-screen bg-bg-primary text-text-primary overflow-hidden">
+    <MotionConfig reducedMotion={shouldReduceMotion ? 'always' : 'never'}>
+    <div
+      className="min-h-[100dvh] bg-bg-primary text-text-primary overflow-hidden"
+      data-reduced-motion={shouldReduceMotion ? 'true' : 'false'}
+    >
       <AnimatePresence mode="wait">
         {appState === 'menu' && (
           <motion.div
@@ -97,6 +148,9 @@ function App() {
               onStartGame={handleStartGame}
               onShowSettings={handleShowSettings}
               onShowStats={handleShowStats}
+              onShowHelp={handleShowHelp}
+              isStarting={isStarting}
+              startMessage={startMessage}
             />
           </motion.div>
         )}
@@ -118,10 +172,19 @@ function App() {
               x: { duration: 0.3, ease: "easeInOut" },
               y: { duration: 0.3, ease: "easeInOut" },
             }}
-            className="relative w-screen h-screen"
+            className="relative w-screen h-[100dvh]"
           >
-            <GameArena className="absolute inset-0" />
-            <GameHUD />
+            <GameArena className="absolute inset-0" onRequestTypingFocus={keyboard.focusInput} />
+            <GameHUD onMainMenu={handleMainMenu} />
+            <TypingSurface
+              inputRef={keyboard.inputRef}
+              isListening={keyboard.isListening}
+              onKeyDown={keyboard.handleKeyDown}
+              onInput={keyboard.handleInput}
+              onCompositionStart={keyboard.handleCompositionStart}
+              onCompositionEnd={keyboard.handleCompositionEnd}
+              onPaste={keyboard.handlePaste}
+            />
           </motion.div>
         )}
 
@@ -150,15 +213,54 @@ function App() {
               <h2 className="text-3xl font-game-display font-bold text-avoid-accent mb-6">
                 Statistics
               </h2>
-              <p className="text-text-secondary font-game-ui mb-8">
-                Detailed statistics panel coming soon! Basic stats are shown in the main menu.
+              <p className="text-text-secondary font-game-ui mb-6">
+                This is your guest history on this device. Platform records arrive with account activation.
               </p>
+              <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4 mb-8">
+                {[
+                  ['Games', stats.totalGames.toLocaleString()],
+                  ['Words', stats.totalWordsTyped.toLocaleString()],
+                  ['Characters', stats.totalCharactersTyped.toLocaleString()],
+                  ['Best WPM', stats.bestWPM.toString()],
+                  ['Best accuracy', `${stats.bestAccuracy}%`],
+                  ['Average accuracy', `${stats.averageAccuracy}%`],
+                  ['Longest streak', stats.longestStreak.toString()],
+                  ['Active minutes', Math.floor(stats.totalPlaytime / 60).toLocaleString()],
+                ].map(([label, value]) => (
+                  <div key={label} className="glass-panel p-4">
+                    <dt className="text-xs uppercase tracking-wider text-text-muted">{label}</dt>
+                    <dd className="mt-1 text-xl font-game-mono font-bold text-avoid-primary">{value}</dd>
+                  </div>
+                ))}
+              </dl>
               <button
                 onClick={() => setAppState('menu')}
                 className="neon-button px-6 py-3 bg-gradient-to-r from-avoid-accent to-avoid-primary text-white"
               >
                 Back to Menu
               </button>
+            </div>
+          </motion.div>
+        )}
+
+        {appState === 'help' && (
+          <motion.div
+            key="help"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -40 }}
+            className="min-h-[100dvh] flex items-center justify-center p-4 sm:p-8"
+          >
+            <div className="glass-panel p-6 sm:p-8 max-w-3xl w-full">
+              <p className="text-xs uppercase tracking-[0.2em] text-text-muted">Field manual</p>
+              <h2 className="mt-2 text-3xl font-game-display font-bold text-avoid-primary">Type the threat, not the interface.</h2>
+              <div className="mt-6 grid gap-4 sm:grid-cols-2 text-text-secondary">
+                <p><strong className="text-white">Desktop:</strong> the game focuses its dedicated typing field when a run starts. Tab reaches controls; click “Type here” to return.</p>
+                <p><strong className="text-white">Phone:</strong> tap “Type here” to open the software keyboard. One English letter at a time is accepted.</p>
+                <p><strong className="text-white">Pause:</strong> press Escape or use the pause control. Leaving the tab pauses without clearing a manual pause.</p>
+                <p><strong className="text-white">Competitive input:</strong> paste, IME composition, browser shortcuts, and modified keys are intentionally ignored.</p>
+              </div>
+              <button onClick={() => setAppState('menu')} className="neon-button mt-8 px-6 py-3">Back to Menu</button>
             </div>
           </motion.div>
         )}
@@ -170,11 +272,13 @@ function App() {
           <GameOverScreen
             onRestart={handleStartGame.bind(null, mode)}
             onMainMenu={handleMainMenu}
+            isStarting={isStarting}
           />
         )}
       </AnimatePresence>
 
     </div>
+    </MotionConfig>
   );
 }
 

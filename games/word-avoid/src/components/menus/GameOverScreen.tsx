@@ -1,22 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { RotateCcw, Home, Share2 } from 'lucide-react';
 import { GlassPanel } from '../ui/GlassPanel';
 import { NeonButton } from '../ui/NeonButton';
 import { useGameStore } from '../../stores/gameStore';
+import { FocusDialog } from '../ui/FocusDialog';
+import { useMotionPreference } from '../../hooks/useMotionPreference';
 
 interface GameOverScreenProps {
   onRestart: () => void;
   onMainMenu: () => void;
+  isStarting: boolean;
   className?: string;
 }
 
 export const GameOverScreen: React.FC<GameOverScreenProps> = ({
   onRestart,
   onMainMenu,
+  isStarting,
   className = ''
 }) => {
-  const { player, wordsTyped, mode, stats } = useGameStore();
+  const { player, wordsTyped, mode, terminalReason, submissionStatus, submissionMessage } = useGameStore();
+  const [shareStatus, setShareStatus] = useState('');
+  const shouldReduceMotion = useMotionPreference();
 
   const getPerformanceRating = () => {
     if (player.accuracy >= 95 && player.wpm >= 60) return { text: 'LEGENDARY', color: 'text-boss' };
@@ -36,35 +42,56 @@ export const GameOverScreen: React.FC<GameOverScreenProps> = ({
     { label: 'Best Streak', value: player.maxStreak.toString(), color: 'text-medium' }
   ];
 
-  const achievements = [
-    player.wpm > stats.bestWPM && 'New WPM Record!',
-    player.accuracy > stats.bestAccuracy && 'New Accuracy Record!',
-    player.maxStreak > stats.longestStreak && 'New Streak Record!',
+  const highlights = terminalReason === 'quit' ? [] : [
+    player.wpm >= 60 && '60+ WPM',
+    player.maxStreak >= 10 && 'Double-digit streak',
     player.score > 10000 && 'Score Master!',
-    player.accuracy === 100 && 'Perfect Accuracy!'
+    player.charactersAttempted > 0 && player.accuracy === 100 && 'Perfect Accuracy!'
   ].filter(Boolean);
 
+  const handleShare = async () => {
+    const text = `I scored ${player.score.toLocaleString()} in WORDaVOID with ${player.accuracy}% accuracy.`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'WORDaVOID result', text, url: window.location.href });
+        setShareStatus('Result shared.');
+        return;
+      }
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(`${text} ${window.location.href}`);
+        setShareStatus('Result copied to your clipboard.');
+        return;
+      }
+      setShareStatus('Sharing is not available in this browser.');
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        setShareStatus('Share cancelled.');
+      } else {
+        setShareStatus('Sharing failed. Your result is still safe here.');
+      }
+    }
+  };
+
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className={`fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-8 z-50 ${className}`}
+    <FocusDialog
+      labelledBy="wordavoid-result-title"
+      className={`fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 sm:p-8 z-50 overflow-y-auto ${className}`}
     >
       <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
+        initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.2, type: 'spring', stiffness: 300 }}
+        transition={{ delay: shouldReduceMotion ? 0 : 0.2, type: 'spring', stiffness: 300 }}
         className="w-full max-w-2xl"
       >
-        <GlassPanel className="p-8 text-center">
+        <GlassPanel className="p-5 sm:p-8 text-center">
           {/* Header */}
           <motion.div
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.4 }}
           >
-            <h1 className="text-4xl font-game-display font-black text-extreme mb-2">
-              GAME OVER
+            <h1 id="wordavoid-result-title" className="text-3xl sm:text-4xl font-game-display font-black text-extreme mb-2">
+              {terminalReason === 'quit' ? 'RUN ENDED' : 'GAME OVER'}
             </h1>
             <div className={`text-xl font-game-display font-bold ${rating.color} mb-6`}>
               {rating.text}
@@ -97,7 +124,7 @@ export const GameOverScreen: React.FC<GameOverScreenProps> = ({
           </motion.div>
 
           {/* Achievements */}
-          {achievements.length > 0 && (
+          {highlights.length > 0 && (
             <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -105,10 +132,10 @@ export const GameOverScreen: React.FC<GameOverScreenProps> = ({
               className="mb-8"
             >
               <h3 className="text-lg font-game-display font-bold text-avoid-primary mb-4">
-                🏆 New Achievements!
+                Run highlights
               </h3>
               <div className="space-y-2">
-                {achievements.map((achievement, index) => (
+                {highlights.map((achievement, index) => (
                   <motion.div
                     key={index}
                     initial={{ x: -20, opacity: 0 }}
@@ -125,6 +152,14 @@ export const GameOverScreen: React.FC<GameOverScreenProps> = ({
             </motion.div>
           )}
 
+          <p
+            className={`mb-6 text-sm ${submissionStatus === 'saved' ? 'text-health-high' : submissionStatus === 'rejected' || submissionStatus === 'error' ? 'text-medium' : 'text-text-secondary'}`}
+            role="status"
+            aria-live="polite"
+          >
+            {terminalReason === 'quit' ? 'Abandoned runs are not saved or submitted.' : submissionMessage || 'Finishing this run…'}
+          </p>
+
           {/* Action Buttons */}
           <motion.div
             initial={{ y: 20, opacity: 0 }}
@@ -136,9 +171,10 @@ export const GameOverScreen: React.FC<GameOverScreenProps> = ({
               variant="primary"
               onClick={onRestart}
               className="flex-1 min-w-[150px]"
+              disabled={isStarting}
             >
               <RotateCcw className="w-4 h-4 mr-2" />
-              Play Again
+              {isStarting ? 'Preparing…' : 'Play Again'}
             </NeonButton>
             
             <NeonButton
@@ -152,22 +188,15 @@ export const GameOverScreen: React.FC<GameOverScreenProps> = ({
             
             <NeonButton
               variant="accent"
-              onClick={() => {
-                // Share functionality
-                if (navigator.share) {
-                  navigator.share({
-                    title: 'WORDaVOID Score',
-                    text: `I just scored ${player.score.toLocaleString()} points in WORDaVOID with ${player.accuracy}% accuracy!`,
-                    url: window.location.href
-                  });
-                }
-              }}
+              onClick={() => void handleShare()}
               size="md"
+              disabled={terminalReason === 'quit'}
             >
               <Share2 className="w-4 h-4 mr-2" />
               Share
             </NeonButton>
           </motion.div>
+          {shareStatus && <p className="mt-4 text-sm text-avoid-accent" role="status" aria-live="polite">{shareStatus}</p>}
 
           {/* Mode Info */}
           <motion.div
@@ -180,6 +209,6 @@ export const GameOverScreen: React.FC<GameOverScreenProps> = ({
           </motion.div>
         </GlassPanel>
       </motion.div>
-    </motion.div>
+    </FocusDialog>
   );
 };

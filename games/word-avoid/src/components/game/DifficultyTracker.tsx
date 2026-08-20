@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { TrendingUp, Clock, Target, Zap } from 'lucide-react';
 import { useGameStore } from '../../stores/gameStore';
 import { difficultyConfigs } from '../../data/words';
+import { useMotionPreference } from '../../hooks/useMotionPreference';
 
 interface DifficultyTrackerProps {
   className?: string;
@@ -21,6 +22,7 @@ export const DifficultyTracker: React.FC<DifficultyTrackerProps> = ({ className 
   } = useGameStore();
 
   const difficultyConfig = difficultyConfigs[difficultyLevel];
+  const shouldReduceMotion = useMotionPreference();
   
   // Calculate time elapsed
   const getElapsedTime = () => {
@@ -84,8 +86,8 @@ export const DifficultyTracker: React.FC<DifficultyTrackerProps> = ({ className 
         {/* Active Time Tracking */}
         <div className="flex items-center space-x-3">
           <motion.div
-            animate={{ rotate: [0, 360] }}
-            transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
+            animate={shouldReduceMotion ? undefined : { rotate: [0, 360] }}
+            transition={{ duration: 60, repeat: shouldReduceMotion ? 0 : Infinity, ease: 'linear' }}
           >
             <Clock className="w-5 h-5 text-avoid-accent" />
           </motion.div>
@@ -93,8 +95,8 @@ export const DifficultyTracker: React.FC<DifficultyTrackerProps> = ({ className 
             <div className="text-xs text-text-secondary font-game-ui">Session Time</div>
             <motion.div 
               className="text-lg font-game-mono font-bold text-avoid-accent"
-              animate={{ scale: [1, 1.02, 1] }}
-              transition={{ duration: 1, repeat: Infinity }}
+              animate={shouldReduceMotion ? undefined : { scale: [1, 1.02, 1] }}
+              transition={{ duration: 1, repeat: shouldReduceMotion ? 0 : Infinity }}
             >
               {formatTime(elapsedTime)}
             </motion.div>
@@ -109,14 +111,14 @@ export const DifficultyTracker: React.FC<DifficultyTrackerProps> = ({ className 
             <motion.div 
               className="text-lg font-game-display font-bold"
               style={{ color: difficultyConfig.color }}
-              animate={{ 
+              animate={shouldReduceMotion ? undefined : {
                 textShadow: [
                   `0 0 5px ${difficultyConfig.color}40`,
                   `0 0 15px ${difficultyConfig.color}80`,
                   `0 0 5px ${difficultyConfig.color}40`
                 ]
               }}
-              transition={{ duration: 2, repeat: Infinity }}
+              transition={{ duration: 2, repeat: shouldReduceMotion ? 0 : Infinity }}
             >
               {difficultyConfig.name}
             </motion.div>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useMotionPreference } from '../../hooks/useMotionPreference';
 
 interface NeonButtonProps {
   children: React.ReactNode;
@@ -22,6 +23,7 @@ export const NeonButton: React.FC<NeonButtonProps> = ({
   glowIntensity = 'medium',
   ariaLabel
 }) => {
+  const shouldReduceMotion = useMotionPreference();
   const variants = {
     primary: 'bg-gradient-to-r from-avoid-primary to-avoid-accent text-bg-primary',
     secondary: 'bg-gradient-to-r from-avoid-secondary to-avoid-primary text-white',
@@ -55,14 +57,17 @@ export const NeonButton: React.FC<NeonButtonProps> = ({
       `}
       onClick={onClick}
       disabled={disabled}
-      whileHover={!disabled ? { scale: 1.05 } : {}}
-      whileTap={!disabled ? { scale: 0.95 } : {}}
+      whileHover={!disabled && !shouldReduceMotion ? { scale: 1.05 } : {}}
+      whileTap={!disabled && !shouldReduceMotion ? { scale: 0.95 } : {}}
       transition={{ type: 'spring', stiffness: 300, damping: 20 }}
     >
       <motion.span
         className="relative z-10 font-game-display font-bold"
         initial={false}
-        animate={{ 
+        animate={shouldReduceMotion ? {
+          scale: 1,
+          opacity: disabled ? 0.3 : 0.5,
+        } : {
           textShadow: disabled ? 'none' : '0 0 10px currentColor' 
         }}
       >
@@ -82,7 +87,7 @@ export const NeonButton: React.FC<NeonButtonProps> = ({
         }}
         transition={{
           duration: 2,
-          repeat: Infinity,
+          repeat: shouldReduceMotion ? 0 : Infinity,
           ease: 'easeInOut'
         }}
       />

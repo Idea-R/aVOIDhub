@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { ParticleEffect } from '../../types/game';
+import { useGameStore } from '../../stores/gameStore';
+import { useMotionPreference } from '../../hooks/useMotionPreference';
 
 interface ParticleSystemProps {
   className?: string;
@@ -8,12 +10,31 @@ interface ParticleSystemProps {
 
 export const ParticleSystem: React.FC<ParticleSystemProps> = ({ className = '' }) => {
   const [particles, setParticles] = useState<ParticleEffect[]>([]);
+  const timers = useRef(new Set<ReturnType<typeof setTimeout>>());
+  const particlesEnabled = useGameStore((state) => state.settings.graphics.particles);
+  const shouldReduceMotion = useMotionPreference();
+  const ambientParticles = useMemo(() => Array.from({ length: 24 }, (_, index) => ({
+    id: index,
+    left: (index * 37) % 100,
+    top: (index * 61) % 100,
+    duration: 4 + (index % 4),
+    delay: (index % 5) * 0.35,
+  })), []);
+
+  const schedule = useCallback((callback: () => void, delay: number) => {
+    const timer = setTimeout(() => {
+      timers.current.delete(timer);
+      callback();
+    }, delay);
+    timers.current.add(timer);
+  }, []);
 
   // Create explosion particles
-  const createExplosion = (x: number, y: number, wordLength: number = 5, color: string = '#00ff88') => {
+  const createExplosion = useCallback((x: number, y: number, wordLength: number = 5, color: string = '#00ff88') => {
+    if (!particlesEnabled) return;
     const newParticles: ParticleEffect[] = [];
     
-    const particleCount = Math.min(30, wordLength * 5); // More particles for longer words
+    const particleCount = shouldReduceMotion ? Math.min(4, wordLength) : Math.min(24, wordLength * 4);
     
     for (let i = 0; i < particleCount; i++) {
       const angle = (i / particleCount) * Math.PI * 2;
@@ -34,16 +55,17 @@ export const ParticleSystem: React.FC<ParticleSystemProps> = ({ className = '' }
       });
     }
     
-    setParticles(prev => [...prev, ...newParticles]);
+    setParticles(prev => [...prev.slice(-96), ...newParticles]);
     
     // Remove particles after animation
-    setTimeout(() => {
+    schedule(() => {
       setParticles(prev => prev.filter(p => !newParticles.some(np => np.id === p.id)));
-    }, 2500);
-  };
+    }, shouldReduceMotion ? 250 : 1_500);
+  }, [particlesEnabled, schedule, shouldReduceMotion]);
 
   // Create typing trail
-  const createTypingTrail = (x: number, y: number) => {
+  const createTypingTrail = useCallback((x: number, y: number) => {
+    if (!particlesEnabled || shouldReduceMotion) return;
     const trail: ParticleEffect = {
       id: `trail-${Date.now()}`,
       type: 'trail',
@@ -55,12 +77,12 @@ export const ParticleSystem: React.FC<ParticleSystemProps> = ({ className = '' }
       maxLife: 1
     };
     
-    setParticles(prev => [...prev, trail]);
+    setParticles(prev => [...prev.slice(-96), trail]);
     
-    setTimeout(() => {
+    schedule(() => {
       setParticles(prev => prev.filter(p => p.id !== trail.id));
     }, 800);
-  };
+  }, [particlesEnabled, schedule, shouldReduceMotion]);
 
   // Expose particle creation functions globally for other components
   useEffect(() => {
@@ -71,6 +93,11 @@ export const ParticleSystem: React.FC<ParticleSystemProps> = ({ className = '' }
       delete window.createExplosion;
       delete window.createTypingTrail;
     };
+  }, [createExplosion, createTypingTrail]);
+
+  useEffect(() => () => {
+    for (const timer of timers.current) clearTimeout(timer);
+    timers.current.clear();
   }, []);
 
   return (
@@ -94,7 +121,7 @@ export const ParticleSystem: React.FC<ParticleSystemProps> = ({ className = '' }
               x: 0,
               y: 0
             }}
-            animate={{
+            animate={shouldReduceMotion ? { opacity: 0 } : {
               scale: particle.type === 'explosion' ? [1, 0.5, 0] : [1, 1.5, 0],
               opacity: [1, 0.8, 0],
               x: particle.velocity.x * (particle.type === 'explosion' ? 1.5 : 1),
@@ -105,7 +132,7 @@ export const ParticleSystem: React.FC<ParticleSystemProps> = ({ className = '' }
               opacity: 0
             }}
             transition={{
-              duration: particle.type === 'explosion' ? 1.2 : 0.5,
+              duration: shouldReduceMotion ? 0.1 : particle.type === 'explosion' ? 1.2 : 0.5,
               ease: 'easeOut'
             }}
           />
@@ -113,16 +140,17 @@ export const ParticleSystem: React.FC<ParticleSystemProps> = ({ className = '' }
       </AnimatePresence>
       
       {/* Ambient Particles */}
-      <div className="absolute inset-0">
-        {[...Array(30)].map((_, i) => (
+      {particlesEnabled && !shouldReduceMotion && (
+      <div className="absolute inset-0" data-motion="decorative">
+        {ambientParticles.map((ambient) => (
           <motion.div
-            key={`ambient-${i}`}
+            key={`ambient-${ambient.id}`}
             className="absolute w-2 h-2 rounded-full"
             style={{
-              background: i % 3 === 0 ? '#00ff88' : i % 3 === 1 ? '#0088ff' : '#ff0066',
+              background: ambient.id % 3 === 0 ? '#00ff88' : ambient.id % 3 === 1 ? '#0088ff' : '#ff0066',
               opacity: 0.3,
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`
+              left: `${ambient.left}%`,
+              top: `${ambient.top}%`
             }}
             animate={{
               y: [-15, 15, -15],
@@ -130,14 +158,15 @@ export const ParticleSystem: React.FC<ParticleSystemProps> = ({ className = '' }
               scale: [0.5, 1.2, 0.5]
             }}
             transition={{
-              duration: 4 + Math.random() * 3,
+              duration: ambient.duration,
               repeat: Infinity,
-              delay: Math.random() * 2,
+              delay: ambient.delay,
               ease: 'easeInOut'
             }}
           />
         ))}
       </div>
+      )}
     </div>
   );
 };

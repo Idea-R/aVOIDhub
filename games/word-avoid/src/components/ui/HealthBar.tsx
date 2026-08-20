@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Heart, Shield } from 'lucide-react';
+import { useMotionPreference } from '../../hooks/useMotionPreference';
 
 interface HealthBarProps {
   health: number;
@@ -15,6 +16,7 @@ export const HealthBar: React.FC<HealthBarProps> = ({
   shield = 0,
   className = ''
 }) => {
+  const shouldReduceMotion = useMotionPreference();
   const healthPercentage = (health / maxHealth) * 100;
   const isLowHealth = healthPercentage < 30;
   const isCriticalHealth = healthPercentage < 15;
@@ -29,8 +31,8 @@ export const HealthBar: React.FC<HealthBarProps> = ({
     <div className={`flex items-center space-x-3 ${className}`}>
       {/* Health Icon */}
       <motion.div
-        animate={isCriticalHealth ? { scale: [1, 1.2, 1] } : { scale: 1 }}
-        transition={{ duration: 0.5, repeat: isCriticalHealth ? Infinity : 0 }}
+        animate={!shouldReduceMotion && isCriticalHealth ? { scale: [1, 1.2, 1] } : { scale: 1 }}
+        transition={{ duration: 0.5, repeat: !shouldReduceMotion && isCriticalHealth ? Infinity : 0 }}
       >
         <Heart 
           className={`w-6 h-6 ${isCriticalHealth ? 'text-extreme' : 'text-health-high'}`}
@@ -53,8 +55,8 @@ export const HealthBar: React.FC<HealthBarProps> = ({
           {isLowHealth && (
             <motion.div
               className="absolute inset-0 bg-extreme/40 rounded-full"
-              animate={{ opacity: [0, 0.5, 0] }}
-              transition={{ duration: 0.8, repeat: Infinity }}
+              animate={shouldReduceMotion ? { opacity: 0.3 } : { opacity: [0, 0.5, 0] }}
+              transition={{ duration: 0.8, repeat: shouldReduceMotion ? 0 : Infinity }}
             />
           )}
         </div>

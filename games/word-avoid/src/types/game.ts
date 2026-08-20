@@ -6,6 +6,17 @@ export type GameMode = 'classic' | 'timeAttack' | 'perfectRun' | 'dailyChallenge
 
 export type DifficultyLevel = 'easy' | 'normal' | 'expert' | 'insane';
 
+export type PauseReason = 'manual' | 'focus';
+
+export type LocalDataStatus = 'idle' | 'loaded' | 'migrated' | 'recovered';
+
+export type SubmissionStatus = 'idle' | 'saving' | 'saved' | 'local' | 'rejected' | 'error';
+
+export interface GameViewport {
+  width: number;
+  height: number;
+}
+
 export type SkillWordType = 'doubleLetter' | 'pinky' | 'ringFinger' | 'handCoordination' | 'awkwardCombo';
 
 export interface DigitAssaultChar {
@@ -80,7 +91,9 @@ export interface Player {
 export interface GameState {
   isPlaying: boolean;
   isPaused: boolean;
+  pauseReasons: PauseReason[];
   isGameOver: boolean;
+  terminalReason: import('@avoid/wordavoid-contract').WordAvoidTerminalReason | 'quit' | null;
   mode: GameMode;
   difficulty: Difficulty;
   timeRemaining?: number;
@@ -105,6 +118,10 @@ export interface GameState {
   runEvents: WordAvoidRunEvent[];
   pauseStartedAt: number | null;
   totalPausedMs: number;
+  viewport: GameViewport;
+  localDataStatus: LocalDataStatus;
+  submissionStatus: SubmissionStatus;
+  submissionMessage: string;
 }
 
 export interface GameStats {

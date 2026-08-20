@@ -12,6 +12,12 @@ type RunTicket = {
   manifest?: WordAvoidRunManifest;
 };
 
+export type FinishRunResult =
+  | { status: 'saved' }
+  | { status: 'local' }
+  | { status: 'rejected' }
+  | { status: 'error' };
+
 let currentRun: RunTicket | null = null;
 
 function platformUrl(path: string): string {
@@ -68,9 +74,9 @@ export async function beginPlatformRun(mode: string): Promise<WordAvoidRunManife
 export async function finishPlatformRun(
   summary: WordAvoidRunSummary,
   evidence: WordAvoidRunEvidence,
-): Promise<boolean> {
+): Promise<FinishRunResult> {
   const run = currentRun;
-  if (!run) return false;
+  if (!run) return { status: 'local' };
 
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const response = await authenticatedFetch(`/api/v1/runs/${run.runId}/finish`, {
@@ -83,13 +89,13 @@ export async function finishPlatformRun(
       }),
     }).catch(() => null);
     if (response?.ok) {
-      currentRun = null;
-      return true;
+      if (currentRun?.runId === run.runId) currentRun = null;
+      return { status: 'saved' };
     }
     if (response && response.status < 500) {
-      currentRun = null;
-      return false;
+      if (currentRun?.runId === run.runId) currentRun = null;
+      return { status: 'rejected' };
     }
   }
-  return false;
+  return { status: 'error' };
 }

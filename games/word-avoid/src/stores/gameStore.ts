@@ -1,5 +1,17 @@
 import { create } from 'zustand';
-import type { GameState, GameMode, Difficulty, Word, Player, GameStats, GameSettings, DifficultyLevel, DigitAssaultChar } from '../types/game';
+import type {
+  GameState,
+  GameMode,
+  Difficulty,
+  Word,
+  Player,
+  GameStats,
+  GameSettings,
+  DifficultyLevel,
+  DigitAssaultChar,
+  GameViewport,
+  PauseReason,
+} from '../types/game';
 import { getRandomWord, getRandomSkillWord, getRandomDigitChar, getDifficultyLevelByWPM, difficultyConfigs, getRandomGeometricPattern } from '../data/words';
 import { createLocalWordAvoidManifest, finishPlatformRun } from '../api/platformRuns';
 import { calculateAccuracy, calculateWordScore, calculateWpm, TIME_ATTACK_DURATION_MS } from '../contracts/v1';
@@ -13,14 +25,21 @@ import {
   type WordAvoidRunManifest,
   type WordAvoidTerminalReason,
 } from '@avoid/wordavoid-contract';
+import {
+  loadLocalSettings,
+  loadLocalStats,
+  saveLocalSettings,
+  saveLocalStats,
+} from '../lib/localProgress';
 
 interface GameStore extends GameState {
   // Actions
   startGame: (mode: GameMode, manifest?: WordAvoidRunManifest | null) => void;
-  pauseGame: () => void;
-  resumeGame: () => void;
+  pauseGame: (reason?: PauseReason) => void;
+  resumeGame: (reason?: PauseReason) => void;
   endGame: (reason?: WordAvoidTerminalReason | 'quit') => void;
   resetGame: () => void;
+  setViewport: (viewport: GameViewport) => void;
   
   // Word management
   spawnWord: () => void;
@@ -50,6 +69,7 @@ interface GameStore extends GameState {
   stats: GameStats;
   updateGameStats: () => void;
   loadPlayerStats: () => Promise<void>;
+  loadSettings: () => Promise<void>;
   savePlayerStats: () => Promise<void>;
   
   // Difficulty management
@@ -70,8 +90,10 @@ const initialPlayer: Player = {
   charactersCorrect: 0,
   accuracy: 100,
   wpm: 0,
-  position: { x: 0, y: 0 } // Will be set dynamically to screen center
+  position: { x: 640, y: 360 }
 };
+
+const initialViewport: GameViewport = { width: 1280, height: 720 };
 
 const initialSettings: GameSettings = {
   audio: {
@@ -130,11 +152,33 @@ function appendRunEvent(events: readonly WordAvoidRunEvent[], event: WordAvoidRu
   return [...events, event];
 }
 
+function normalizeViewport(viewport: GameViewport): GameViewport {
+  const width = Number.isFinite(viewport.width) ? Math.max(240, Math.round(viewport.width)) : initialViewport.width;
+  const height = Number.isFinite(viewport.height) ? Math.max(240, Math.round(viewport.height)) : initialViewport.height;
+  return { width, height };
+}
+
+function viewportCenter(viewport: GameViewport): { x: number; y: number } {
+  return { x: viewport.width / 2, y: viewport.height / 2 };
+}
+
+function mergeLocalStatus(current: GameState['localDataStatus'], next: GameState['localDataStatus']): GameState['localDataStatus'] {
+  const priority: Record<GameState['localDataStatus'], number> = {
+    idle: 0,
+    loaded: 1,
+    migrated: 2,
+    recovered: 3,
+  };
+  return priority[next] > priority[current] ? next : current;
+}
+
 export const useGameStore = create<GameStore>((set, get) => ({
   // Initial state
   isPlaying: false,
   isPaused: false,
+  pauseReasons: [],
   isGameOver: false,
+  terminalReason: null,
   mode: 'classic',
   difficulty: 'easy',
   timeRemaining: undefined,
@@ -159,6 +203,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
   runEvents: [],
   pauseStartedAt: null,
   totalPausedMs: 0,
+  viewport: initialViewport,
+  localDataStatus: 'idle',
+  submissionStatus: 'idle',
+  submissionMessage: '',
   settings: initialSettings,
   stats: initialStats,
 
@@ -166,16 +214,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
   startGame: (mode: GameMode, suppliedManifest = null) => {
     const now = Date.now();
     const manifest = suppliedManifest ?? createLocalWordAvoidManifest(mode);
+    const center = viewportCenter(get().viewport);
     set({
       isPlaying: true,
       isPaused: false,
+      pauseReasons: [],
       isGameOver: false,
+      terminalReason: null,
       mode,
       startTime: now,
       wordsTyped: 0,
       wordsSpawned: 0,
       words: [],
-      player: { ...initialPlayer },
+      player: { ...initialPlayer, position: center },
       level: 1,
       waveNumber: 1,
       skillType: mode === 'skillTraining' ? 'doubleLetter' : undefined,
@@ -188,29 +239,47 @@ export const useGameStore = create<GameStore>((set, get) => ({
       runEvents: [],
       pauseStartedAt: null,
       totalPausedMs: 0,
+      submissionStatus: 'idle',
+      submissionMessage: '',
       timeRemaining: mode === 'timeAttack' ? TIME_ATTACK_DURATION_MS : undefined
     });
   },
 
-  pauseGame: () => {
+  pauseGame: (reason = 'manual') => {
     const state = get();
-    if (!state.isPlaying || state.isPaused) return;
+    if (!state.isPlaying || state.pauseReasons.includes(reason)) return;
+    const pauseReasons = [...state.pauseReasons, reason];
+    if (state.isPaused) {
+      set({ pauseReasons });
+      return;
+    }
     const now = Date.now();
     const event: WordAvoidRunEvent = { type: 'pause', atMs: wallElapsedMs(state, now) };
     set({
       isPaused: true,
+      pauseReasons,
       pauseStartedAt: now,
       runEvents: state.runManifest ? appendRunEvent(state.runEvents, event) : state.runEvents,
     });
   },
   
-  resumeGame: () => {
+  resumeGame: (reason = 'manual') => {
     const state = get();
-    if (!state.isPlaying || !state.isPaused || state.pauseStartedAt === null) return;
+    if (!state.isPlaying || !state.pauseReasons.includes(reason)) return;
+    const pauseReasons = state.pauseReasons.filter((candidate) => candidate !== reason);
+    if (pauseReasons.length > 0) {
+      set({ pauseReasons });
+      return;
+    }
+    if (!state.isPaused || state.pauseStartedAt === null) {
+      set({ isPaused: false, pauseReasons: [], pauseStartedAt: null });
+      return;
+    }
     const now = Date.now();
     const event: WordAvoidRunEvent = { type: 'resume', atMs: wallElapsedMs(state, now) };
     set({
       isPaused: false,
+      pauseReasons: [],
       pauseStartedAt: null,
       totalPausedMs: state.totalPausedMs + Math.max(0, now - state.pauseStartedAt),
       runEvents: state.runManifest ? appendRunEvent(state.runEvents, event) : state.runEvents,
@@ -229,7 +298,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({
       isPlaying: false,
       isPaused: false,
+      pauseReasons: [],
       isGameOver: true,
+      terminalReason: reason,
       pauseStartedAt: null,
       totalPausedMs: state.totalPausedMs + currentPauseMs,
       runEvents: finishEvent && state.runManifest
@@ -237,14 +308,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
         : state.runEvents,
     });
     get().updateStats();
-    get().updateGameStats();
-    void get().savePlayerStats();
+    if (competitiveFinish) {
+      get().updateGameStats();
+      void get().savePlayerStats();
+    }
   },
   
-  resetGame: () => set({
+  resetGame: () => set((state) => ({
     isPlaying: false,
     isPaused: false,
+    pauseReasons: [],
     isGameOver: false,
+    terminalReason: null,
     wordsTyped: 0,
     wordsSpawned: 0,
     words: [],
@@ -261,15 +336,29 @@ export const useGameStore = create<GameStore>((set, get) => ({
     runEvents: [],
     pauseStartedAt: null,
     totalPausedMs: 0,
-    // Update player position to screen center
-    player: { 
-      ...initialPlayer, 
-      position: { 
-        x: typeof window !== 'undefined' ? window.innerWidth / 2 : 400, 
-        y: typeof window !== 'undefined' ? window.innerHeight / 2 : 300 
-      } 
-    }
-  }),
+    submissionStatus: 'idle',
+    submissionMessage: '',
+    player: { ...initialPlayer, position: viewportCenter(state.viewport) },
+  })),
+
+  setViewport: (nextViewport) => {
+    const viewport = normalizeViewport(nextViewport);
+    set((state) => {
+      if (state.viewport.width === viewport.width && state.viewport.height === viewport.height) return state;
+      const center = viewportCenter(viewport);
+      return {
+        viewport,
+        player: { ...state.player, position: center },
+        words: state.words.map((word) => ({
+          ...word,
+          position: {
+            x: center.x + Math.cos(word.angle) * word.distance,
+            y: center.y + Math.sin(word.angle) * word.distance,
+          },
+        })),
+      };
+    });
+  },
 
   // Word management
   spawnWord: () => {
@@ -315,9 +404,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       wordData = getRandomWord(difficulty);
     }
 
-    const spawnDistance = Math.min(window.innerWidth, window.innerHeight) * 0.45;
-    const centerX = window.innerWidth / 2;
-    const centerY = window.innerHeight / 2;
+    const spawnDistance = Math.min(state.viewport.width, state.viewport.height) * 0.45;
+    const { x: centerX, y: centerY } = viewportCenter(state.viewport);
     const spawnedAt = Date.now();
     const spawnWallMs = wallElapsedMs(state, spawnedAt);
     
@@ -373,9 +461,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     const char = getRandomDigitChar(state.capsMode, state.shiftMode);
     const angle = Math.random() * 2 * Math.PI;
-    const spawnDistance = Math.min(window.innerWidth, window.innerHeight) * 0.45;
-    const centerX = window.innerWidth / 2;
-    const centerY = window.innerHeight / 2;
+    const spawnDistance = Math.min(state.viewport.width, state.viewport.height) * 0.45;
+    const { x: centerX, y: centerY } = viewportCenter(state.viewport);
     
     const difficultyConfig = difficultyConfigs[state.difficultyLevel];
     const baseSpeed = 30;
@@ -417,9 +504,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     
     const pattern = getRandomGeometricPattern(patternDifficulty);
     const angle = Math.random() * 2 * Math.PI;
-    const spawnDistance = Math.min(window.innerWidth, window.innerHeight) * 0.4;
-    const centerX = window.innerWidth / 2;
-    const centerY = window.innerHeight / 2;
+    const spawnDistance = Math.min(state.viewport.width, state.viewport.height) * 0.4;
+    const { x: centerX, y: centerY } = viewportCenter(state.viewport);
     
     const newChallenge: GeometricChallenge = {
       id: `geometric-${Date.now()}-${Math.random()}`,
@@ -457,8 +543,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ timeRemaining: newTimeRemaining });
     }
     
-    const centerX = window.innerWidth / 2;
-    const centerY = window.innerHeight / 2;
+    const { x: centerX, y: centerY } = viewportCenter(state.viewport);
 
     const updatedWords = state.words.map(word => {
       if (!word.isActive) return word;
@@ -490,8 +575,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const state = get();
     if (!state.isPlaying || state.isPaused || state.mode !== 'digitAssault') return;
     
-    const centerX = window.innerWidth / 2;
-    const centerY = window.innerHeight / 2;
+    const { x: centerX, y: centerY } = viewportCenter(state.viewport);
 
     const updatedChars = state.digitChars.map(char => {
       if (!char.isActive) return char;
@@ -541,8 +625,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const state = get();
     if (!state.isPlaying || state.isPaused || state.mode !== 'geometricTyping') return;
     
-    const centerX = window.innerWidth / 2;
-    const centerY = window.innerHeight / 2;
+    const { x: centerX, y: centerY } = viewportCenter(state.viewport);
 
     const updatedChallenges = state.geometricChallenges.map(challenge => {
       if (challenge.completed) return challenge;
@@ -725,8 +808,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     
     if (matchingChars.length > 0) {
       // Choose the closest character
-      const centerX = window.innerWidth / 2;
-      const centerY = window.innerHeight / 2;
+      const { x: centerX, y: centerY } = viewportCenter(state.viewport);
       
       const targetChar = matchingChars.reduce((closest, char) => {
         const closestDist = Math.sqrt(
@@ -906,18 +988,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     get().updateStats();
     
-    // Auto-target next closest word after a brief delay
-    setTimeout(() => {
-      const currentState = get();
-      const remainingWords = currentState.words.filter(w => w.isActive);
-      
-      if (remainingWords.length > 0) {
-        const closestWord = remainingWords.reduce((closest, word) => 
-          word.distance < closest.distance ? word : closest
-        );
-        get().setCurrentTarget(closestWord.id);
-      }
-    }, 100);
+    const remainingWords = get().words.filter((candidate) => candidate.isActive);
+    if (remainingWords.length > 0) {
+      const closestWord = remainingWords.reduce((closest, candidate) =>
+        candidate.distance < closest.distance ? candidate : closest
+      );
+      get().setCurrentTarget(closestWord.id);
+    }
   },
   
   updateTimeRemaining: () => {
@@ -977,17 +1054,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
     
     // If this was the current target, find a new one
     if (word.isTyping) {
-      setTimeout(() => {
-        const currentState = get();
-        const remainingWords = currentState.words.filter(w => w.isActive);
-        
-        if (remainingWords.length > 0) {
-          const closestWord = remainingWords.reduce((closest, word) => 
-            word.distance < closest.distance ? word : closest
-          );
-          get().setCurrentTarget(closestWord.id);
-        }
-      }, 100);
+      const remainingWords = get().words.filter((candidate) => candidate.isActive);
+      if (remainingWords.length > 0) {
+        const closestWord = remainingWords.reduce((closest, candidate) =>
+          candidate.distance < closest.distance ? candidate : closest
+        );
+        get().setCurrentTarget(closestWord.id);
+      }
     }
   },
 
@@ -1039,12 +1112,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   updateSettings: (newSettings: Partial<GameSettings>) => {
-    set(state => ({
-      settings: {
-        ...state.settings,
-        ...newSettings
-      }
-    }));
+    const state = get();
+    const settings: GameSettings = {
+      audio: { ...state.settings.audio, ...newSettings.audio },
+      graphics: { ...state.settings.graphics, ...newSettings.graphics },
+      gameplay: { ...state.settings.gameplay, ...newSettings.gameplay },
+    };
+    const saved = typeof localStorage === 'undefined' || saveLocalSettings(localStorage, settings);
+    set({
+      settings,
+      localDataStatus: saved ? state.localDataStatus : 'recovered',
+    });
   },
 
   updateGameStats: () => {
@@ -1060,63 +1138,89 @@ export const useGameStore = create<GameStore>((set, get) => ({
         bestAccuracy: Math.max(prevState.stats.bestAccuracy, state.player.accuracy),
         totalCharactersTyped: prevState.stats.totalCharactersTyped + state.player.charactersCorrect,
         longestStreak: Math.max(prevState.stats.longestStreak, state.player.maxStreak),
-        totalPlaytime: prevState.stats.totalPlaytime + gameTime
+        totalPlaytime: prevState.stats.totalPlaytime + gameTime,
+        averageAccuracy: Math.round(
+          ((prevState.stats.averageAccuracy * prevState.stats.totalGames) + state.player.accuracy)
+          / (prevState.stats.totalGames + 1)
+        ),
+        improvementRate: Math.max(0, Math.round(state.player.accuracy - prevState.stats.averageAccuracy)),
       }
     }));
   },
 
   loadPlayerStats: async () => {
-    try {
-      // For now, use localStorage as fallback
-      if (typeof localStorage === 'undefined') return;
-      const savedStats = localStorage.getItem('wordavoid-stats');
-      if (savedStats) {
-        const stats = JSON.parse(savedStats);
-        set({ stats });
-      }
-      
-      // TODO: Implement Supabase loading when authentication is set up
-      // const { data, error } = await supabase
-      //   .from('player_stats')
-      //   .select('*')
-      //   .eq('user_id', 'placeholder-user-id')
-      //   .single();
-      
-      // if (data && !error) {
-      //   set({ stats: data });
-      // }
-    } catch (error) {
-      console.error('Failed to load player stats:', error);
-    }
+    if (typeof localStorage === 'undefined') return;
+    const state = get();
+    const result = loadLocalStats(localStorage, initialStats);
+    set({
+      stats: result.value,
+      localDataStatus: mergeLocalStatus(state.localDataStatus, result.status),
+    });
+  },
+
+  loadSettings: async () => {
+    if (typeof localStorage === 'undefined') return;
+    const state = get();
+    const result = loadLocalSettings(localStorage, initialSettings);
+    set({
+      settings: result.value,
+      localDataStatus: mergeLocalStatus(state.localDataStatus, result.status),
+    });
   },
 
   savePlayerStats: async () => {
+    const state = get();
+    const { stats, mode, runManifest } = state;
+    const localSaved = typeof localStorage === 'undefined' || saveLocalStats(localStorage, stats);
+    if (!localSaved) set({ localDataStatus: 'recovered' });
+
+    if (!runManifest || !isWordAvoidV1Mode(mode)) {
+      set({
+        submissionStatus: 'local',
+        submissionMessage: localSaved ? 'Saved on this device.' : 'This result could not be saved on this device.',
+      });
+      return;
+    }
+
+    const runId = runManifest.runId;
+    const evidence: WordAvoidRunEvidence = {
+      runId,
+      rulesetVersion: runManifest.rulesetVersion,
+      dictionaryVersion: runManifest.dictionaryVersion,
+      dictionaryHash: runManifest.dictionaryHash,
+      normalizationVersion: runManifest.normalizationVersion,
+      events: state.runEvents,
+    };
+    const validation = validateWordAvoidRun(runManifest, evidence);
+    if (!validation.ok) {
+      set({
+        submissionStatus: 'rejected',
+        submissionMessage: 'The run could not be validated. Your local history is still available.',
+      });
+      return;
+    }
+
+    set({ submissionStatus: 'saving', submissionMessage: 'Saving this run…' });
     try {
-      const state = get();
-      const { stats, mode } = state;
-
-      // Save to localStorage as fallback
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem('wordavoid-stats', JSON.stringify(stats));
-      }
-
-      if (!state.runManifest || !isWordAvoidV1Mode(mode)) return;
-      const evidence: WordAvoidRunEvidence = {
-        runId: state.runManifest.runId,
-        rulesetVersion: state.runManifest.rulesetVersion,
-        dictionaryVersion: state.runManifest.dictionaryVersion,
-        dictionaryHash: state.runManifest.dictionaryHash,
-        normalizationVersion: state.runManifest.normalizationVersion,
-        events: state.runEvents,
-      };
-      const validation = validateWordAvoidRun(state.runManifest, evidence);
-      if (!validation.ok) return;
-      await finishPlatformRun(validation.summary, {
+      const result = await finishPlatformRun(validation.summary, {
         ...evidence,
         summary: validation.summary,
       });
-    } catch (error) {
-      console.error('Failed to save player stats:', error);
+      if (get().runManifest?.runId !== runId) return;
+      const resultCopy = {
+        saved: ['saved', 'Saved to your platform run history.'],
+        local: ['local', 'Saved on this device. Sign in on the platform to publish future runs.'],
+        rejected: ['rejected', 'The platform rejected this run. Your local history is still available.'],
+        error: ['error', 'The platform could not be reached. Your local history is still available.'],
+      } as const;
+      const [submissionStatus, submissionMessage] = resultCopy[result.status];
+      set({ submissionStatus, submissionMessage });
+    } catch {
+      if (get().runManifest?.runId !== runId) return;
+      set({
+        submissionStatus: 'error',
+        submissionMessage: 'The platform could not be reached. Your local history is still available.',
+      });
     }
   },
   
