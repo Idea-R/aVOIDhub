@@ -3,8 +3,11 @@
 - Date: 2026-08-20
 - Issue: [#38](https://github.com/Idea-R/aVOIDhub/issues/38)
 - Draft review: [#39](https://github.com/Idea-R/aVOIDhub/pull/39)
+- Public review: [membership-review-39](https://membership-review-39--coruscating-squirrel-a47ad9.netlify.app/membership/)
 - Branch: `codex/feature-membership-creator-contract`
 - Runtime state: source and test-mode preparation only; no live charge, ad request, creator publication, or production migration
+
+The public review is a static feedback build. It deliberately keeps account access and checkout disabled; the full server/runtime acceptance gate remains separate.
 
 ## Product rule
 

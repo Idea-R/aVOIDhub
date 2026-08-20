@@ -180,8 +180,11 @@ Review the refined draft, then approve or request changes before the production 
 - Passed seven focused eligibility tests, platform type-check, the 52-assertion foundation verifier, and the complete 21-route Next production build.
 - Browser-verified the membership and creator-intake pages at 390 × 844 and 1440 × 900 with no horizontal overflow, visible overlap, or console warning/error.
 - Pushed commit `cadf7ca` and opened stacked draft PR `#39` above `security/platform-foundation-v1`; production remains unchanged.
+- Confirmed Netlify had not produced Git-driven previews for PR #37 or #39. A direct Windows Netlify runtime build reproduced the known adapter trace bug, resolving `@swc/helpers` above the worktree.
+- Published a deliberately static, non-production feedback deploy `6a8774281ba9d8a5d0370ddc` at `https://membership-review-39--coruscating-squirrel-a47ad9.netlify.app`; accounts, checkout, API routes, ads, and migrations remain inactive there.
+- Verified HTTP 200 for the review shell, membership, creator intake, and all three bundled games. Live browser checks confirmed the correct membership/creator copy, disabled transaction and application controls, no console warning/error, and no mobile overflow at 390 × 844.
 - No Supabase branch or migration execution, Stripe Product/Price, charge, AdSense request, creator publication, payout, DNS change, or production deploy occurred.
 
 ### Next action
 
-Verify draft PR #39's Git-driven preview. Test-mode Stripe lifecycle, cosmetic fulfillment, executable database acceptance, and AdSense activation remain later gated steps.
+Exercise test-mode Stripe subscription and cosmetic fulfillment plus executable database acceptance once the non-production resources are approved. AdSense activation remains a separate gated step.
