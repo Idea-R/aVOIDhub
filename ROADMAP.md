@@ -71,7 +71,7 @@ Move the live aVOIDgame.io rebuild through the phased V1 completion program: sec
 13. **V1 completion program — documentation complete and under review.** The detailed per-platform and per-title program, sprint sequence, effort ranges, dependencies, and acceptance gates live in `docs/V1-COMPLETION-PROGRAM.md` and draft PR #2.
 14. **Sprint 0 recoverability packet — complete; branch approval pending.** The live schema, grants, policies, functions, advisors, migration drift, auth/score consumers, environment ownership, rollback targets, branch cost, and legacy-data mapping are frozen in `docs/sprint-0-recoverability.md`. No production state changed.
 15. **Sprint 1 isolated foundation repair — local candidate complete; branch test approval pending.** The hardened migration, 50 pgTAP assertions, static verifier, and test plan are in draft PR #4. Creating the short-lived Supabase development branch remains cost-gated.
-16. **Sprint P3 game-detail architecture — local implementation complete.** A canonical eight-title registry, `/games/[slug]/` page system, catalog-to-detail navigation, honest score/account boundaries, stable hosted Play routes, independent-domain handoffs, sitemap coverage, and a repeatable catalog contract test are ready for draft review. TankaVOID remains intentionally non-playable.
+16. **Sprint P3 game-detail architecture — local implementation complete in draft PR #5.** A canonical eight-title registry, `/games/[slug]/` page system, catalog-to-detail navigation, honest score/account boundaries, stable hosted Play routes, independent-domain handoffs, sitemap coverage, and a repeatable catalog contract test are ready for review. TankaVOID remains intentionally non-playable.
 
 ## Current next action
 

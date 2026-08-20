@@ -40,6 +40,7 @@
 - Added `test:catalog`, which verifies all eight IDs and details, seven real play destinations, the three stable hosted routes, independent score boundaries, and TankaVOID's no-play contract.
 - Passed platform type-check and the complete Netlify platform/game build; the dependency audit remains at zero vulnerabilities.
 - Browser-verified all eight detail routes at tablet size, representative desktop and 390 px phone layouts, zero horizontal overflow, the external-domain target behavior, and TankaVOID's lack of a Play action.
+- Committed Sprint P3 as `eeaaadc`, pushed `codex/feature-game-detail-surfaces`, and opened stacked draft PR #5 against `security/sprint-0-recoverability`. Nothing was merged or deployed.
 
 ### Next action
 
