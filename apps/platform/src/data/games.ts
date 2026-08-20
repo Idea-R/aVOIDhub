@@ -7,6 +7,7 @@ export type Game = {
   description: string
   href?: string
   image?: string
+  imagePosition?: string
   status: GameStatus
   accent: string
   meta: string
@@ -76,6 +77,8 @@ export const relatedGames: Game[] = [
     eyebrow: 'Top-down shooter RPG',
     description: 'A harsher world with its own progression, identity, and home on the web.',
     href: 'https://bloomfall.io/',
+    image: '/games/bloomfall-live.webp',
+    imagePosition: 'center 31%',
     status: 'external',
     accent: '#ff6ea8',
     meta: 'Opens bloomfall.io',
@@ -86,6 +89,8 @@ export const relatedGames: Game[] = [
     eyebrow: 'Roguelike adventure',
     description: 'Choose a route, build a run, and explore a game world that lives beyond the aVOID ladder.',
     href: 'https://play.acrolis.io/',
+    image: '/games/acrolis-live.webp',
+    imagePosition: 'center 42%',
     status: 'external',
     accent: '#8fa6ff',
     meta: 'Opens play.acrolis.io',
@@ -96,6 +101,8 @@ export const relatedGames: Game[] = [
     eyebrow: 'Spatial strategy',
     description: 'The familiar grid gets another axis and enough room for your plans to go sideways.',
     href: 'https://ttt3d.app/',
+    image: '/games/ttt3d-live.webp',
+    imagePosition: 'center 46%',
     status: 'external',
     accent: '#f3b84b',
     meta: 'Opens ttt3d.app',

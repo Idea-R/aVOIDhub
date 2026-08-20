@@ -1,5 +1,11 @@
 import type { Metadata, Viewport } from 'next'
+import { SocialPresenceDock } from '@/components/SocialPresence'
 import './globals.css'
+
+const adsenseClient = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT?.trim()
+const verifiedAdsenseClient = adsenseClient && /^ca-pub-\d{16}$/.test(adsenseClient)
+  ? adsenseClient
+  : undefined
 
 const websiteSchema = {
   '@context': 'https://schema.org',
@@ -14,6 +20,7 @@ const websiteSchema = {
     sameAs: [
       'https://www.linkedin.com/company/ideas-realized',
       'https://www.facebook.com/ideasrealizedai',
+      'https://www.instagram.com/ideasrealized/',
       'https://twitter.com/Xentrilo',
     ],
   },
@@ -45,6 +52,9 @@ export const metadata: Metadata = {
     description: 'Play the aVOID originals and discover other games by Ideas Realized.',
     images: ['/avoid-hero.webp'],
   },
+  other: verifiedAdsenseClient
+    ? { 'google-adsense-account': verifiedAdsenseClient }
+    : undefined,
 }
 
 export const viewport: Viewport = {
@@ -60,6 +70,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
         />
         {children}
+        <SocialPresenceDock />
       </body>
     </html>
   )

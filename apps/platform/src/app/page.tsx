@@ -1,13 +1,14 @@
 import Image from 'next/image'
-import { ArrowDown, ArrowRight, BadgeCheck, Crown, Gamepad2, Heart, Trophy, UserRound } from 'lucide-react'
+import { ArrowDown, ArrowRight, BadgeCheck, Heart, Trophy, UserRound } from 'lucide-react'
 import { GameCard } from '@/components/GameCard'
 import { Reveal } from '@/components/Reveal'
+import { SiteFooter } from '@/components/SiteFooter'
 import { SiteHeader } from '@/components/SiteHeader'
 import { originalGames, relatedGames } from '@/data/games'
 
 const platformFeatures = [
   { icon: UserRound, title: 'One player profile', copy: 'A home for scores, favorites, badges, and the games you keep coming back to.' },
-  { icon: Trophy, title: 'Shared competition', copy: 'Verified leaderboards for aVOID-hosted games, with each game free to score differently.' },
+  { icon: Trophy, title: 'Shared competition', copy: 'Leaderboards that say what was checked, with each hosted game free to score differently.' },
   { icon: Heart, title: 'Follow the fun', copy: 'Like games, save favorites, and follow creators without turning the arcade into a feed.' },
 ]
 
@@ -103,7 +104,7 @@ export default function HomePage() {
             <p className="sectionIndex">/ 03 · the platform</p>
             <h2 id="platform-title">A better home for games that are <em>already fun.</em></h2>
             <p>We&apos;re building the connective tissue: profiles, reliable leaderboards, favorites, creator pages, and sensible hosting. The games stay the point.</p>
-            <div className="buildTag"><BadgeCheck size={16} /> Platform work is in planning, not pretending.</div>
+            <div className="buildTag"><BadgeCheck size={16} /> Profiles and honest scoreboards are taking shape now.</div>
           </Reveal>
           <div className="featureStack">
             {platformFeatures.map((feature, index) => {
@@ -122,24 +123,30 @@ export default function HomePage() {
 
       <section className="membershipSection" id="membership" aria-labelledby="membership-title">
         <div className="sectionFrame membershipCard">
-          <div className="membershipSeal" aria-hidden="true"><Crown /><span>FOUNDING<br />PLAYER</span></div>
-          <Reveal>
-            <p className="sectionIndex">/ 04 · soon, carefully</p>
-            <h2 id="membership-title">Cosmetics and membership—<br /><em>never pay-to-win.</em></h2>
-          </Reveal>
-          <p>Ad-free play, profile flair, early experiments, and a way to support new releases are on the table. Pricing and exact benefits are not announced yet.</p>
-          <span className="quietLabel">No checkout button until there is something worth buying.</span>
+          <div className="membershipCopy">
+            <Reveal>
+              <p className="sectionIndex">/ 04 · founding membership</p>
+              <h2 id="membership-title">Back the games.<br /><em>Keep the wins yours.</em></h2>
+            </Reveal>
+            <p>A Founding Player membership is for people who want fewer ads and more odd little games. It adds profile flair and early experiments. It never touches your score.</p>
+            <a className="membershipTicket" href="/membership/">
+              <span><i>FOUNDING ACCESS</i><strong>See what membership includes</strong></span>
+              <ArrowRight size={19} aria-hidden="true" />
+            </a>
+          </div>
+
+          <div className="membershipArtifact" aria-hidden="true">
+            <span className="artifactSlab artifactSlabBack" />
+            <span className="artifactSlab artifactSlabFront" />
+            <div className="medalImageWrap">
+              <Image src="/brand/founding-player-medal-v1.png" alt="" fill sizes="(max-width: 760px) 70vw, 430px" className="medalImage" />
+            </div>
+            <div className="foundingTag"><span>FOUNDING</span><strong>PLAYER</strong><i>NO PAY-TO-WIN</i></div>
+          </div>
         </div>
       </section>
 
-      <footer className="siteFooter">
-        <div className="sectionFrame footerGrid">
-          <div><span className="brand footerBrand"><span className="brandMark"><span>a</span>V</span><span className="brandWord"><span className="brandA">a</span><span className="brandVoid">VOID</span>game.io</span></span><p>Independent browser games from Ideas Realized.</p></div>
-          <div className="footerLinks"><span>Explore</span><a href="#games">Games</a><a href="#creators">Creators</a><a href="https://ideas-realized.com/" target="_blank" rel="noreferrer">Ideas Realized ↗</a></div>
-          <div className="footerLinks"><span>Social</span><a href="https://www.linkedin.com/company/ideas-realized" target="_blank" rel="noreferrer">LinkedIn ↗</a><a href="https://www.facebook.com/ideasrealizedai" target="_blank" rel="noreferrer">Facebook ↗</a><a href="https://twitter.com/Xentrilo" target="_blank" rel="noreferrer">X ↗</a></div>
-          <div className="footerNote"><Gamepad2 size={18} /><span>Built for keyboards, mice, touchscreens, and the occasional terrible decision.</span></div>
-        </div>
-      </footer>
+      <SiteFooter />
     </main>
   )
 }

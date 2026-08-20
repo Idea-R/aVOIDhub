@@ -2,13 +2,14 @@
 
 import { Menu, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { BrandLockup } from './BrandLockup'
 import { SplitCta } from './SplitCta'
 
 const navigation = [
-  { href: '#games', label: 'Games' },
-  { href: '#elsewhere', label: 'Elsewhere' },
-  { href: '#creators', label: 'Creators' },
-  { href: '#membership', label: 'Membership' },
+  { href: '/#games', label: 'Games' },
+  { href: '/leaderboards/', label: 'Scores' },
+  { href: '/creators/apply/', label: 'Creators' },
+  { href: '/membership/', label: 'Membership' },
 ]
 
 export function SiteHeader() {
@@ -25,9 +26,8 @@ export function SiteHeader() {
 
   return (
     <header className="siteHeader">
-      <a className="brand" href="#top" aria-label="aVOIDgame.io home">
-        <span className="brandMark"><span>a</span>V</span>
-        <span className="brandWord"><span className="brandA">a</span><span className="brandVoid">VOID</span>game.io</span>
+      <a className="brandLink" href="/#top" aria-label="aVOIDgame.io home">
+        <BrandLockup className="brandLockup" />
       </a>
 
       <nav className="desktopNav" aria-label="Primary navigation">
