@@ -1,5 +1,11 @@
 import { resolveArmorImpact } from "./combatMath";
-import { segmentOrientedBoxIntersection } from "./geometry";
+import {
+  resolveCircleFromBox,
+  segmentAxisAlignedBoxIntersection,
+  segmentBlockedByBox,
+  segmentOrientedBoxIntersection,
+  separateCircles,
+} from "./geometry";
 import { normalizeSeed } from "./random";
 import {
   FIXED_STEP_MS,
@@ -8,6 +14,9 @@ import {
   type CombatStatsSnapshot,
   type CombatantId,
   type CompletionReason,
+  type CoverSnapshot,
+  type CoverStrikeSnapshot,
+  type EncounterStage,
   type ImpactSnapshot,
   type InputSnapshot,
   type ProjectileSnapshot,
@@ -37,9 +46,34 @@ const SHELL_SPEED = 620;
 const SHELL_LIFETIME_TICKS = 132;
 const PROJECTILE_CAPACITY = 32;
 const IMPACT_HISTORY_CAPACITY = 8;
+const COVER_STRIKE_HISTORY_CAPACITY = 8;
+const COVER_CAPACITY = 4;
+const ENEMY_CAPACITY = 1;
+const PARTICLE_CAPACITY = 0;
+const DRAW_ITEM_CAPACITY = 56;
+const DEPLOYMENT_TICKS = 180;
+const RESOLUTION_HOLD_TICKS = 90;
 const TANK_HALF_WIDTH = 38;
 const TANK_HALF_HEIGHT = 28;
 const STEP_SECONDS = FIXED_STEP_MS / 1000;
+
+export const TANK_RADIUS = PLAYER_RADIUS;
+export const TANKAVOID_LIMITS = {
+  enemies: ENEMY_CAPACITY,
+  cover: COVER_CAPACITY,
+  projectiles: PROJECTILE_CAPACITY,
+  impacts: IMPACT_HISTORY_CAPACITY,
+  coverStrikes: COVER_STRIKE_HISTORY_CAPACITY,
+  particles: PARTICLE_CAPACITY,
+  drawItems: DRAW_ITEM_CAPACITY,
+} as const;
+
+export const TANKAVOID_COVER: readonly CoverSnapshot[] = [
+  { id: "north-west", x: 360, y: 110, width: 170, height: 120 },
+  { id: "north-east", x: 670, y: 110, width: 170, height: 120 },
+  { id: "south-west", x: 360, y: 490, width: 170, height: 120 },
+  { id: "south-east", x: 670, y: 490, width: 170, height: 120 },
+];
 
 interface ProjectileState extends ProjectileSnapshot {
   active: boolean;
@@ -119,6 +153,8 @@ function createProjectilePool(): ProjectileState[] {
 
 export class TankSimulation {
   private phase: RunPhase = "briefing";
+  private stage: EncounterStage = "deploying";
+  private stageTicksRemaining = 0;
   private seed = 1;
   private tick = 0;
   private triggerPulls = 0;
@@ -126,26 +162,32 @@ export class TankSimulation {
   private enemyFireCooldown = ENEMY_FIRE_INTERVAL_TICKS;
   private nextProjectileId = 1;
   private nextImpactId = 1;
+  private nextCoverStrikeId = 1;
   private completionReason: CompletionReason | undefined;
   private tank = this.initialPlayer();
   private enemy = this.initialEnemy();
   private readonly projectilePool = createProjectilePool();
   private impacts: ImpactSnapshot[] = [];
+  private coverStrikes: CoverStrikeSnapshot[] = [];
   private stats = createStats();
 
   start(seed: number): void {
     this.seed = normalizeSeed(seed);
     this.phase = "running";
+    this.stage = "deploying";
+    this.stageTicksRemaining = DEPLOYMENT_TICKS;
     this.tick = 0;
     this.triggerPulls = 0;
     this.playerFireCooldown = 0;
     this.enemyFireCooldown = ENEMY_FIRE_INTERVAL_TICKS;
     this.nextProjectileId = 1;
     this.nextImpactId = 1;
+    this.nextCoverStrikeId = 1;
     this.completionReason = undefined;
     this.tank = this.initialPlayer();
     this.enemy = this.initialEnemy();
     this.impacts = [];
+    this.coverStrikes = [];
     this.stats = createStats();
     this.clearProjectiles();
   }
@@ -161,6 +203,8 @@ export class TankSimulation {
   finish(reason: CompletionReason = "systems-check"): void {
     if (this.phase !== "running" && this.phase !== "paused") return;
     this.phase = "complete";
+    this.stage = "resolved";
+    this.stageTicksRemaining = 0;
     this.completionReason = reason;
     this.tank.speed = 0;
     this.enemy.speed = 0;
@@ -169,12 +213,15 @@ export class TankSimulation {
 
   returnToBriefing(): void {
     this.phase = "briefing";
+    this.stage = "deploying";
+    this.stageTicksRemaining = 0;
     this.tick = 0;
     this.triggerPulls = 0;
     this.completionReason = undefined;
     this.tank = this.initialPlayer();
     this.enemy = this.initialEnemy();
     this.impacts = [];
+    this.coverStrikes = [];
     this.stats = createStats();
     this.clearProjectiles();
   }
@@ -182,20 +229,38 @@ export class TankSimulation {
   step(input: InputSnapshot): void {
     if (this.phase !== "running") return;
 
+    if (this.stage === "deploying") {
+      this.tick += 1;
+      this.stageTicksRemaining = Math.max(0, this.stageTicksRemaining - 1);
+      if (this.stageTicksRemaining === 0) this.stage = "combat";
+      return;
+    }
+
+    if (this.stage === "resolved") {
+      this.tick += 1;
+      this.stageTicksRemaining = Math.max(0, this.stageTicksRemaining - 1);
+      if (this.stageTicksRemaining === 0)
+        this.finish(this.completionReason ?? "systems-check");
+      return;
+    }
+
     this.playerFireCooldown = Math.max(0, this.playerFireCooldown - 1);
     this.enemyFireCooldown = Math.max(0, this.enemyFireCooldown - 1);
     this.updatePlayer(input);
     this.updateEnemy();
+    this.resolveTankSeparation();
     this.updateProjectiles();
     this.tick += 1;
 
-    if (this.enemy.disabled) this.finish("enemy-disabled");
-    else if (this.tank.disabled) this.finish("player-disabled");
+    if (this.enemy.disabled) this.beginResolution("enemy-disabled");
+    else if (this.tank.disabled) this.beginResolution("player-disabled");
   }
 
   snapshot(): RunSnapshot {
     return {
       phase: this.phase,
+      stage: this.stage,
+      stageTicksRemaining: this.stageTicksRemaining,
       seed: this.seed,
       tick: this.tick,
       elapsedSeconds: this.tick * STEP_SECONDS,
@@ -214,9 +279,14 @@ export class TankSimulation {
           baseDamage: projectile.baseDamage,
           penetration: projectile.penetration,
         })),
+      cover: TANKAVOID_COVER.map((cover) => ({ ...cover })),
       impacts: this.impacts.map((impact) => ({
         ...impact,
         point: { ...impact.point },
+      })),
+      coverStrikes: this.coverStrikes.map((strike) => ({
+        ...strike,
+        point: { ...strike.point },
       })),
       stats: { ...this.stats },
       completionReason: this.completionReason,
@@ -225,6 +295,10 @@ export class TankSimulation {
 
   projectileCapacity(): number {
     return this.projectilePool.length;
+  }
+
+  limits(): typeof TANKAVOID_LIMITS {
+    return TANKAVOID_LIMITS;
   }
 
   private updatePlayer(input: InputSnapshot): void {
@@ -253,6 +327,7 @@ export class TankSimulation {
     this.tank.y +=
       Math.sin(this.tank.hullAngle) * this.tank.speed * STEP_SECONDS;
     this.clampTankToWorld(this.tank);
+    this.resolveTankCoverCollision(this.tank);
     this.tank.turretAngle = normalizeAngle(
       Math.atan2(input.aim.y - this.tank.y, input.aim.x - this.tank.x),
     );
@@ -279,7 +354,19 @@ export class TankSimulation {
     const playerPoint = { x: this.tank.x, y: this.tank.y };
     const enemyPoint = { x: this.enemy.x, y: this.enemy.y };
     const distance = distanceBetween(enemyPoint, playerPoint);
+    const hasLineOfSight = !TANKAVOID_COVER.some((cover) =>
+      segmentBlockedByBox(enemyPoint, playerPoint, cover),
+    );
+    const routePoint = hasLineOfSight
+      ? playerPoint
+      : Math.abs(this.enemy.y - WORLD_HEIGHT / 2) > 42
+        ? { x: this.enemy.x, y: WORLD_HEIGHT / 2 }
+        : { x: this.tank.x, y: WORLD_HEIGHT / 2 };
     const targetAngle = Math.atan2(
+      routePoint.y - this.enemy.y,
+      routePoint.x - this.enemy.x,
+    );
+    const aimAngle = Math.atan2(
       this.tank.y - this.enemy.y,
       this.tank.x - this.enemy.x,
     );
@@ -291,7 +378,7 @@ export class TankSimulation {
     );
     this.enemy.turretAngle = moveAngleToward(
       this.enemy.turretAngle,
-      targetAngle,
+      aimAngle,
       ENEMY_TURRET_RATE * STEP_SECONDS,
     );
     const targetSpeed =
@@ -310,11 +397,24 @@ export class TankSimulation {
     this.enemy.y +=
       Math.sin(this.enemy.hullAngle) * this.enemy.speed * STEP_SECONDS;
     this.clampTankToWorld(this.enemy);
+    this.resolveTankCoverCollision(this.enemy);
 
     const aimError = Math.abs(
-      normalizeAngle(targetAngle - this.enemy.turretAngle),
+      normalizeAngle(aimAngle - this.enemy.turretAngle),
     );
-    if (this.enemyFireCooldown === 0 && aimError <= 0.09 && distance <= 780) {
+    const canFire = !TANKAVOID_COVER.some((cover) =>
+      segmentBlockedByBox(
+        { x: this.enemy.x, y: this.enemy.y },
+        { x: this.tank.x, y: this.tank.y },
+        cover,
+      ),
+    );
+    if (
+      canFire &&
+      this.enemyFireCooldown === 0 &&
+      aimError <= 0.09 &&
+      distance <= 780
+    ) {
       if (
         this.spawnProjectile(
           "enemy",
@@ -340,22 +440,42 @@ export class TankSimulation {
       const targetId: CombatantId =
         projectile.owner === "player" ? "enemy" : "player";
       const target = targetId === "player" ? this.tank : this.enemy;
-      if (!target.disabled) {
-        const impactPoint = segmentOrientedBoxIntersection(
-          projectile.previousPosition,
-          projectile.position,
-          {
-            center: { x: target.x, y: target.y },
-            angle: target.hullAngle,
-            halfWidth: TANK_HALF_WIDTH,
-            halfHeight: TANK_HALF_HEIGHT,
-          },
+      const tankImpact = !target.disabled
+        ? segmentOrientedBoxIntersection(
+            projectile.previousPosition,
+            projectile.position,
+            {
+              center: { x: target.x, y: target.y },
+              angle: target.hullAngle,
+              halfWidth: TANK_HALF_WIDTH,
+              halfHeight: TANK_HALF_HEIGHT,
+            },
+          )
+        : null;
+      const coverImpact = this.findFirstCoverImpact(
+        projectile.previousPosition,
+        projectile.position,
+      );
+      const tankDistance = tankImpact
+        ? distanceBetween(projectile.previousPosition, tankImpact)
+        : Number.POSITIVE_INFINITY;
+      const coverDistance = coverImpact
+        ? distanceBetween(projectile.previousPosition, coverImpact.point)
+        : Number.POSITIVE_INFINITY;
+
+      if (coverImpact && coverDistance <= tankDistance) {
+        this.recordCoverStrike(
+          projectile,
+          coverImpact.cover,
+          coverImpact.point,
         );
-        if (impactPoint) {
-          this.applyImpact(projectile, targetId, target, impactPoint);
-          projectile.active = false;
-          continue;
-        }
+        projectile.active = false;
+        continue;
+      }
+      if (tankImpact) {
+        this.applyImpact(projectile, targetId, target, tankImpact);
+        projectile.active = false;
+        continue;
       }
 
       if (
@@ -443,6 +563,80 @@ export class TankSimulation {
 
   private clearProjectiles(): void {
     for (const projectile of this.projectilePool) projectile.active = false;
+  }
+
+  private beginResolution(
+    reason: Exclude<CompletionReason, "systems-check">,
+  ): void {
+    if (this.stage !== "combat") return;
+    this.stage = "resolved";
+    this.stageTicksRemaining = RESOLUTION_HOLD_TICKS;
+    this.completionReason = reason;
+    this.tank.speed = 0;
+    this.enemy.speed = 0;
+    this.clearProjectiles();
+  }
+
+  private findFirstCoverImpact(
+    start: WorldPoint,
+    end: WorldPoint,
+  ): { cover: CoverSnapshot; point: WorldPoint } | null {
+    let nearest: {
+      cover: CoverSnapshot;
+      point: WorldPoint;
+      distance: number;
+    } | null = null;
+    for (const cover of TANKAVOID_COVER) {
+      const point = segmentAxisAlignedBoxIntersection(start, end, cover);
+      if (!point) continue;
+      const distance = distanceBetween(start, point);
+      if (!nearest || distance < nearest.distance)
+        nearest = { cover, point, distance };
+    }
+    return nearest ? { cover: nearest.cover, point: nearest.point } : null;
+  }
+
+  private recordCoverStrike(
+    projectile: ProjectileState,
+    cover: CoverSnapshot,
+    point: WorldPoint,
+  ): void {
+    const strike: CoverStrikeSnapshot = {
+      id: this.nextCoverStrikeId,
+      tick: this.tick,
+      coverId: cover.id,
+      owner: projectile.owner,
+      point: { ...point },
+    };
+    this.nextCoverStrikeId += 1;
+    this.coverStrikes = [...this.coverStrikes, strike].slice(
+      -COVER_STRIKE_HISTORY_CAPACITY,
+    );
+  }
+
+  private resolveTankSeparation(): void {
+    const [player, enemy] = separateCircles(
+      this.tank,
+      this.enemy,
+      PLAYER_RADIUS,
+    );
+    this.tank.x = player.x;
+    this.tank.y = player.y;
+    this.enemy.x = enemy.x;
+    this.enemy.y = enemy.y;
+    this.resolveTankCoverCollision(this.tank);
+    this.resolveTankCoverCollision(this.enemy);
+    this.clampTankToWorld(this.tank);
+    this.clampTankToWorld(this.enemy);
+  }
+
+  private resolveTankCoverCollision(tank: TankSnapshot): void {
+    for (const cover of TANKAVOID_COVER) {
+      const resolved = resolveCircleFromBox(tank, PLAYER_RADIUS, cover);
+      if (resolved.x !== tank.x || resolved.y !== tank.y) tank.speed *= 0.28;
+      tank.x = resolved.x;
+      tank.y = resolved.y;
+    }
   }
 
   private clampTankToWorld(tank: TankSnapshot): void {

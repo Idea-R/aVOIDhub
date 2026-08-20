@@ -343,6 +343,9 @@ button:focus-visible {
 }
 .tank-dialog {
   width: min(100%, 42rem);
+  max-height: calc(100dvh - 2rem);
+  overflow-x: hidden;
+  overflow-y: auto;
   padding: clamp(1.4rem, 5vw, 3.5rem);
   color: #151711;
   background: #e1e2d1;

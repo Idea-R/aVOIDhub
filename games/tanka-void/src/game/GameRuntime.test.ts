@@ -64,6 +64,8 @@ class FakeLoop implements LoopPort {
       framePending: this.pending,
       simulationSteps: this.steps,
       droppedMilliseconds: 0,
+      maximumFrameDeltaMilliseconds: 16.7,
+      maximumStepsPerFrame: 5,
     };
   }
   advance(count: number): void {
@@ -79,7 +81,7 @@ describe("GameRuntime", () => {
   it("keeps one ownership boundary through twenty complete/restart cycles", () => {
     const input = new FakeInput();
     const viewport = new FakeViewport();
-    const renderer: RendererPort = { render: vi.fn() };
+    const renderer: RendererPort = { render: vi.fn(() => 7) };
     let loop: FakeLoop | undefined;
     const runtime = new GameRuntime(
       new TankSimulation(),
@@ -104,6 +106,14 @@ describe("GameRuntime", () => {
       inputListeners: 8,
       resizeObservers: 1,
       framePending: false,
+      activeEnemies: 1,
+      enemyCapacity: 1,
+      coverCount: 4,
+      coverCapacity: 4,
+      particleCount: 0,
+      particleCapacity: 0,
+      drawItems: 7,
+      drawItemCapacity: 56,
       destroyed: false,
     });
     runtime.destroy();

@@ -56,6 +56,11 @@ describe("FixedStepLoop", () => {
     scheduler.fire(0);
     scheduler.fire(250);
     expect(step).toHaveBeenCalledTimes(5);
+    expect(loop.diagnostics()).toMatchObject({
+      droppedMilliseconds: expect.any(Number),
+      maximumFrameDeltaMilliseconds: 250,
+      maximumStepsPerFrame: 5,
+    });
     expect(loop.diagnostics().droppedMilliseconds).toBeGreaterThan(0);
   });
 });

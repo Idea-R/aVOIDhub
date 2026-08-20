@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { GameRuntime } from "./game/GameRuntime";
 import { createRunSeed } from "./game/random";
+import { TANKAVOID_COVER } from "./game/TankSimulation";
 import {
   WORLD_HEIGHT,
   WORLD_WIDTH,
@@ -10,6 +11,8 @@ import {
 
 const INITIAL_SNAPSHOT: RunSnapshot = {
   phase: "briefing",
+  stage: "deploying",
+  stageTicksRemaining: 0,
   seed: 1,
   tick: 0,
   elapsedSeconds: 0,
@@ -35,7 +38,9 @@ const INITIAL_SNAPSHOT: RunSnapshot = {
     disabled: false,
   },
   projectiles: [],
+  cover: TANKAVOID_COVER.map((cover) => ({ ...cover })),
   impacts: [],
+  coverStrikes: [],
   stats: {
     shotsFired: 0,
     hits: 0,
@@ -54,9 +59,22 @@ const INITIAL_DIAGNOSTICS: RuntimeDiagnostics = {
   framePending: false,
   simulationSteps: 0,
   droppedMilliseconds: 0,
+  maximumFrameDeltaMilliseconds: 0,
+  maximumStepsPerFrame: 5,
   activeProjectiles: 0,
   projectileCapacity: 32,
+  activeEnemies: 1,
+  enemyCapacity: 1,
+  coverCount: 4,
+  coverCapacity: 4,
   impactHistory: 0,
+  impactHistoryCapacity: 8,
+  coverStrikeHistory: 0,
+  coverStrikeHistoryCapacity: 8,
+  particleCount: 0,
+  particleCapacity: 0,
+  drawItems: 0,
+  drawItemCapacity: 56,
   destroyed: false,
 };
 
@@ -82,7 +100,7 @@ function completionTitle(snapshot: RunSnapshot): string {
 function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const runtimeRef = useRef<GameRuntime | null>(null);
-  const primaryDialogActionRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLElement>(null);
   const [snapshot, setSnapshot] = useState(INITIAL_SNAPSHOT);
   const [diagnostics, setDiagnostics] = useState(INITIAL_DIAGNOSTICS);
   const smokeMode = useMemo(
@@ -102,7 +120,7 @@ function App() {
     });
     runtimeRef.current = runtime;
     if (import.meta.env.DEV) {
-      window.__TANKAVOID_T2__ = {
+      window.__TANKAVOID_T3__ = {
         snapshot: () => runtime.snapshot(),
         diagnostics: () => runtime.diagnostics(),
         start: (seed = createRunSeed()) => runtime.start(seed),
@@ -113,13 +131,13 @@ function App() {
     return () => {
       runtime.destroy();
       runtimeRef.current = null;
-      if (import.meta.env.DEV) delete window.__TANKAVOID_T2__;
+      if (import.meta.env.DEV) delete window.__TANKAVOID_T3__;
     };
   }, []);
 
   useEffect(() => {
     if (snapshot.phase === "paused" || snapshot.phase === "complete")
-      primaryDialogActionRef.current?.focus();
+      dialogRef.current?.focus({ preventScroll: true });
   }, [snapshot.phase]);
 
   const start = () => {
@@ -142,7 +160,15 @@ function App() {
       />
       <p className="tank-status" role="status" aria-live="polite">
         {snapshot.phase === "briefing" && "TankaVOID rebuild briefing."}
-        {snapshot.phase === "running" && "Proving-ground drill running."}
+        {snapshot.phase === "running" &&
+          snapshot.stage === "deploying" &&
+          "Tanks deploying."}
+        {snapshot.phase === "running" &&
+          snapshot.stage === "combat" &&
+          "Arena live."}
+        {snapshot.phase === "running" &&
+          snapshot.stage === "resolved" &&
+          "Final impact confirmed."}
         {snapshot.phase === "paused" && "Drill paused."}
         {snapshot.phase === "complete" && "Drill complete."}
       </p>
@@ -150,7 +176,7 @@ function App() {
       {snapshot.phase !== "briefing" && (
         <section className="tank-hud" aria-label="Run status">
           <div className="tank-hud__identity">
-            <span>T2 / DIRECTIONAL COMBAT</span>
+            <span>T3 / COVER ENCOUNTER</span>
             <strong>{formatTime(snapshot.elapsedSeconds)}</strong>
           </div>
           <div className="tank-hud__telemetry">
@@ -170,12 +196,14 @@ function App() {
             </span>
           </div>
           <div className="tank-hud__actions">
-            <button
-              type="button"
-              onClick={() => runtimeRef.current?.toggleManualPause()}
-            >
-              {snapshot.phase === "paused" ? "Resume drill" : "Pause drill"}
-            </button>
+            {(snapshot.stage === "combat" || snapshot.phase === "paused") && (
+              <button
+                type="button"
+                onClick={() => runtimeRef.current?.toggleManualPause()}
+              >
+                {snapshot.phase === "paused" ? "Resume drill" : "Pause drill"}
+              </button>
+            )}
             {smokeMode && snapshot.phase !== "complete" && (
               <button
                 type="button"
@@ -194,15 +222,15 @@ function App() {
       {snapshot.phase === "briefing" && (
         <section className="tank-briefing" aria-labelledby="tank-title">
           <div className="tank-briefing__copy">
-            <p className="tank-kicker">aVOID combat proof / T2</p>
+            <p className="tank-kicker">aVOID combat proof / T3</p>
             <h1 id="tank-title">
               Tanka<span>VOID</span>
             </h1>
             <p className="tank-thesis">Direction matters.</p>
             <p className="tank-lede">
               The front plate can take a punch. The rear cannot. Turn the hull,
-              aim the turret independently, and break one bruiser before it
-              finds your weak side.
+              aim the turret independently, use the barricades, and break one
+              bruiser before it finds your weak side.
             </p>
             <button className="tank-primary" type="button" onClick={start}>
               <span>Test the armor</span>
@@ -231,8 +259,8 @@ function App() {
               </li>
               <li>
                 <span>03</span>
-                <strong>Armor</strong>
-                <small>Front .55 / side .90 / rear 1.35</small>
+                <strong>Cover</strong>
+                <small>Hard stops for tracks and shells</small>
               </li>
             </ol>
             <div className="tank-briefing__readout">
@@ -249,10 +277,12 @@ function App() {
       {snapshot.phase === "paused" && (
         <div className="tank-dialog-backdrop">
           <section
+            ref={dialogRef}
             className="tank-dialog"
             role="dialog"
             aria-modal="true"
             aria-labelledby="pause-title"
+            tabIndex={-1}
           >
             <p className="tank-kicker">Systems held at tick {snapshot.tick}</p>
             <h2 id="pause-title">Drill paused.</h2>
@@ -262,7 +292,6 @@ function App() {
             </p>
             <div className="tank-dialog__actions">
               <button
-                ref={primaryDialogActionRef}
                 className="tank-primary"
                 type="button"
                 onClick={() => runtimeRef.current?.resume()}
@@ -283,12 +312,14 @@ function App() {
       {snapshot.phase === "complete" && (
         <div className="tank-dialog-backdrop">
           <section
+            ref={dialogRef}
             className="tank-dialog"
             role="dialog"
             aria-modal="true"
             aria-labelledby="complete-title"
+            tabIndex={-1}
           >
-            <p className="tank-kicker">T2 combat result</p>
+            <p className="tank-kicker">T3 combat result</p>
             <h2 id="complete-title">{completionTitle(snapshot)}</h2>
             <div className="tank-result-grid">
               <span>
@@ -311,12 +342,7 @@ function App() {
               face, incidence, and damage record is deterministic and local.
             </p>
             <div className="tank-dialog__actions">
-              <button
-                ref={primaryDialogActionRef}
-                className="tank-primary"
-                type="button"
-                onClick={restart}
-              >
+              <button className="tank-primary" type="button" onClick={restart}>
                 Run it again
               </button>
               <button
@@ -339,7 +365,15 @@ function App() {
           {diagnostics.resets} listeners:{diagnostics.inputListeners} resize:
           {diagnostics.resizeObservers} frame:{diagnostics.framePending ? 1 : 0}
           projectiles:{diagnostics.activeProjectiles}/
-          {diagnostics.projectileCapacity} impacts:{diagnostics.impactHistory}
+          {diagnostics.projectileCapacity} impacts:{diagnostics.impactHistory}/
+          {diagnostics.impactHistoryCapacity} cover:
+          {diagnostics.coverCount}/{diagnostics.coverCapacity} strikes:
+          {diagnostics.coverStrikeHistory}/
+          {diagnostics.coverStrikeHistoryCapacity} enemies:
+          {diagnostics.activeEnemies}/{diagnostics.enemyCapacity} draw:
+          {diagnostics.drawItems}/{diagnostics.drawItemCapacity} particles:
+          {diagnostics.particleCount}/{diagnostics.particleCapacity} maxdt:
+          {Math.round(diagnostics.maximumFrameDeltaMilliseconds)}
           tank:{Math.round(snapshot.tank.x)},{Math.round(snapshot.tank.y)}{" "}
           shots:
           {snapshot.stats.shotsFired} hits:{snapshot.stats.hits}
@@ -351,7 +385,7 @@ function App() {
 
 declare global {
   interface Window {
-    __TANKAVOID_T2__?: {
+    __TANKAVOID_T3__?: {
       snapshot(): RunSnapshot;
       diagnostics(): RuntimeDiagnostics;
       start(seed?: number): void;

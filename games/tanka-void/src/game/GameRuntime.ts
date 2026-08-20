@@ -34,7 +34,7 @@ export interface LoopPort {
 }
 
 export interface RendererPort {
-  render(snapshot: RunSnapshot, layout: ViewportLayout): void;
+  render(snapshot: RunSnapshot, layout: ViewportLayout): number;
 }
 
 export type LoopFactory = (step: () => void, render: () => void) => LoopPort;
@@ -45,6 +45,7 @@ export class GameRuntime {
   private starts = 0;
   private finishes = 0;
   private resets = 0;
+  private drawItems = 0;
   private destroyed = false;
 
   constructor(
@@ -99,7 +100,7 @@ export class GameRuntime {
     this.loop.pause();
     this.pauseReasons.clear();
     this.simulation.start(seed);
-    this.input.setEnabled(true);
+    this.input.setEnabled(false);
     this.starts += 1;
     this.loop.start();
     this.emit();
@@ -112,7 +113,12 @@ export class GameRuntime {
   }
 
   pause(reason: PauseReason): void {
-    if (this.destroyed || this.simulation.snapshot().phase !== "running")
+    const snapshot = this.simulation.snapshot();
+    if (
+      this.destroyed ||
+      snapshot.phase !== "running" ||
+      snapshot.stage !== "combat"
+    )
       return;
     this.pauseReasons.add(reason);
     this.simulation.pause();
@@ -126,14 +132,15 @@ export class GameRuntime {
     if (this.destroyed || this.simulation.snapshot().phase !== "paused") return;
     this.pauseReasons.clear();
     this.simulation.resume();
-    this.input.setEnabled(true);
+    this.input.setEnabled(this.simulation.snapshot().stage === "combat");
     this.loop.start();
     this.emit();
   }
 
   toggleManualPause(): void {
     const phase = this.simulation.snapshot().phase;
-    if (phase === "running") this.pause("manual");
+    if (phase === "running" && this.simulation.snapshot().stage === "combat")
+      this.pause("manual");
     else if (phase === "paused") this.resume();
   }
 
@@ -165,6 +172,8 @@ export class GameRuntime {
 
   diagnostics(): RuntimeDiagnostics {
     const loop = this.loop.diagnostics();
+    const snapshot = this.simulation.snapshot();
+    const limits = this.simulation.limits();
     return {
       starts: this.starts,
       finishes: this.finishes,
@@ -174,9 +183,22 @@ export class GameRuntime {
       framePending: loop.framePending,
       simulationSteps: loop.simulationSteps,
       droppedMilliseconds: loop.droppedMilliseconds,
-      activeProjectiles: this.simulation.snapshot().projectiles.length,
+      maximumFrameDeltaMilliseconds: loop.maximumFrameDeltaMilliseconds,
+      maximumStepsPerFrame: loop.maximumStepsPerFrame,
+      activeProjectiles: snapshot.projectiles.length,
       projectileCapacity: this.simulation.projectileCapacity(),
-      impactHistory: this.simulation.snapshot().impacts.length,
+      activeEnemies: snapshot.enemy.disabled ? 0 : 1,
+      enemyCapacity: limits.enemies,
+      coverCount: snapshot.cover.length,
+      coverCapacity: limits.cover,
+      impactHistory: snapshot.impacts.length,
+      impactHistoryCapacity: limits.impacts,
+      coverStrikeHistory: snapshot.coverStrikes.length,
+      coverStrikeHistoryCapacity: limits.coverStrikes,
+      particleCount: 0,
+      particleCapacity: limits.particles,
+      drawItems: this.drawItems,
+      drawItemCapacity: limits.drawItems,
       destroyed: this.destroyed,
     };
   }
@@ -191,12 +213,19 @@ export class GameRuntime {
   }
 
   render(): void {
-    this.renderer.render(this.simulation.snapshot(), this.viewport.getLayout());
+    this.drawItems = this.renderer.render(
+      this.simulation.snapshot(),
+      this.viewport.getLayout(),
+    );
   }
 
   private step(): void {
     this.simulation.step(this.input.snapshot());
-    if (this.simulation.snapshot().phase === "complete") {
+    const snapshot = this.simulation.snapshot();
+    this.input.setEnabled(
+      snapshot.phase === "running" && snapshot.stage === "combat",
+    );
+    if (snapshot.phase === "complete") {
       this.pauseReasons.clear();
       this.input.setEnabled(false);
       this.loop.pause();
@@ -205,7 +234,7 @@ export class GameRuntime {
       this.emit();
       return;
     }
-    if (this.simulation.snapshot().tick % 6 === 0) this.emit();
+    if (snapshot.tick % 6 === 0) this.emit();
   }
 
   private emit(): void {

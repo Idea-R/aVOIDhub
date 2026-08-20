@@ -2,6 +2,8 @@ import {
   WORLD_HEIGHT,
   WORLD_WIDTH,
   type CombatantId,
+  type CoverSnapshot,
+  type CoverStrikeSnapshot,
   type ImpactSnapshot,
   type ProjectileSnapshot,
   type RunSnapshot,
@@ -46,6 +48,26 @@ function drawArena(context: CanvasRenderingContext2D): void {
   context.font = "600 12px ui-monospace, monospace";
   context.letterSpacing = "2px";
   context.fillText("FACE THE HIT / BREAK THE LINE", 42, WORLD_HEIGHT - 42);
+}
+
+function drawCover(
+  context: CanvasRenderingContext2D,
+  cover: CoverSnapshot,
+): void {
+  context.save();
+  context.translate(cover.x, cover.y);
+  context.fillStyle = "#26291f";
+  context.strokeStyle = "#8c9d3d";
+  context.lineWidth = 5;
+  context.fillRect(0, 0, cover.width, cover.height);
+  context.strokeRect(0, 0, cover.width, cover.height);
+  context.fillStyle = "rgba(231, 255, 79, 0.08)";
+  for (let x = 14; x < cover.width; x += 28)
+    context.fillRect(x, 0, 8, cover.height);
+  context.fillStyle = "rgba(244, 241, 223, 0.55)";
+  context.font = "700 10px ui-monospace, monospace";
+  context.fillText(cover.id.toUpperCase(), 12, cover.height - 12);
+  context.restore();
 }
 
 function drawArmorGuide(
@@ -135,7 +157,7 @@ function drawTank(
   context.font = "700 10px ui-monospace, monospace";
   context.textAlign = "center";
   context.fillText(
-    team === "player" ? "YOU" : "BRUISER / T2",
+    team === "player" ? "YOU" : "BRUISER / T3",
     tank.x,
     tank.y - 65,
   );
@@ -226,10 +248,59 @@ function drawImpact(
   context.restore();
 }
 
+function drawCoverStrike(
+  context: CanvasRenderingContext2D,
+  strike: CoverStrikeSnapshot,
+  age: number,
+): void {
+  if (age > 48) return;
+  const progress = age / 48;
+  const radius = 8 + progress * 26;
+  context.save();
+  context.translate(strike.point.x, strike.point.y);
+  context.rotate(Math.PI / 4);
+  context.globalAlpha = Math.max(0.1, 1 - progress);
+  context.strokeStyle = TEAM_COLORS[strike.owner].edge;
+  context.lineWidth = 5;
+  context.strokeRect(-radius / 2, -radius / 2, radius, radius);
+  context.restore();
+}
+
+function drawStage(
+  context: CanvasRenderingContext2D,
+  snapshot: RunSnapshot,
+): void {
+  if (snapshot.stage === "combat" || snapshot.phase === "briefing") return;
+  context.save();
+  context.fillStyle = "rgba(8, 10, 8, 0.5)";
+  context.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+  context.textAlign = "center";
+  context.fillStyle = snapshot.stage === "deploying" ? "#e7ff4f" : "#ff6c4a";
+  context.font = "900 104px Impact, sans-serif";
+  const title =
+    snapshot.stage === "deploying"
+      ? String(Math.max(1, Math.ceil(snapshot.stageTicksRemaining / 60)))
+      : snapshot.completionReason === "enemy-disabled"
+        ? "LINE BROKEN"
+        : "HULL LOST";
+  context.fillText(title, WORLD_WIDTH / 2, WORLD_HEIGHT / 2);
+  context.fillStyle = "#f4f1df";
+  context.font = "700 16px ui-monospace, monospace";
+  context.fillText(
+    snapshot.stage === "deploying"
+      ? "HOLD / SYSTEMS ARMING"
+      : "IMPACT CONFIRMED / RESULT LOCKING",
+    WORLD_WIDTH / 2,
+    WORLD_HEIGHT / 2 + 46,
+  );
+  context.textAlign = "start";
+  context.restore();
+}
+
 export class TankRenderer {
   constructor(private readonly context: CanvasRenderingContext2D) {}
 
-  render(snapshot: RunSnapshot, layout: ViewportLayout): void {
+  render(snapshot: RunSnapshot, layout: ViewportLayout): number {
     const context = this.context;
     context.setTransform(1, 0, 0, 1, 0, 0);
     context.fillStyle = "#080a08";
@@ -243,11 +314,24 @@ export class TankRenderer {
       layout.offsetY * layout.dpr,
     );
     drawArena(context);
+    for (const cover of snapshot.cover) drawCover(context, cover);
     for (const projectile of snapshot.projectiles)
       drawProjectile(context, projectile);
     drawTank(context, snapshot.tank, "player");
     drawTank(context, snapshot.enemy, "enemy");
     for (const impact of snapshot.impacts)
       drawImpact(context, impact, snapshot.tick - impact.tick);
+    for (const strike of snapshot.coverStrikes)
+      drawCoverStrike(context, strike, snapshot.tick - strike.tick);
+    drawStage(context, snapshot);
+    return (
+      1 +
+      snapshot.cover.length +
+      snapshot.projectiles.length +
+      2 +
+      snapshot.impacts.length +
+      snapshot.coverStrikes.length +
+      (snapshot.stage === "combat" || snapshot.phase === "briefing" ? 0 : 1)
+    );
   }
 }

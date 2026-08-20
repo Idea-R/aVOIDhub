@@ -9,6 +9,8 @@ export interface LoopDiagnostics {
   framePending: boolean;
   simulationSteps: number;
   droppedMilliseconds: number;
+  maximumFrameDeltaMilliseconds: number;
+  maximumStepsPerFrame: number;
 }
 
 const browserScheduler: FrameScheduler = {
@@ -23,6 +25,7 @@ export class FixedStepLoop {
   private accumulator = 0;
   private simulationSteps = 0;
   private droppedMilliseconds = 0;
+  private maximumFrameDeltaMilliseconds = 0;
 
   constructor(
     private readonly step: () => void,
@@ -51,6 +54,7 @@ export class FixedStepLoop {
     this.pause();
     this.simulationSteps = 0;
     this.droppedMilliseconds = 0;
+    this.maximumFrameDeltaMilliseconds = 0;
   }
 
   diagnostics(): LoopDiagnostics {
@@ -58,6 +62,8 @@ export class FixedStepLoop {
       framePending: this.running,
       simulationSteps: this.simulationSteps,
       droppedMilliseconds: this.droppedMilliseconds,
+      maximumFrameDeltaMilliseconds: this.maximumFrameDeltaMilliseconds,
+      maximumStepsPerFrame: this.maximumStepsPerFrame,
     };
   }
 
@@ -73,6 +79,10 @@ export class FixedStepLoop {
     const elapsed = Math.max(
       0,
       Math.min(250, timestamp - this.previousTimestamp),
+    );
+    this.maximumFrameDeltaMilliseconds = Math.max(
+      this.maximumFrameDeltaMilliseconds,
+      elapsed,
     );
     this.previousTimestamp = timestamp;
     this.accumulator += elapsed;
