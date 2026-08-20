@@ -2,13 +2,17 @@
 
 Date: 2026-08-20
 
-Status: WD0 draft contract; source-enforced mode boundary, not yet a server-validated ruleset
+Status: WD1 release-candidate contract; deterministic source path complete, database execution and production activation pending
 
-Issue: [#12](https://github.com/Idea-R/aVOIDhub/issues/12)
+Issues: [#12](https://github.com/Idea-R/aVOIDhub/issues/12), [#14](https://github.com/Idea-R/aVOIDhub/issues/14)
 
-Ruleset identifier: `wordavoid-v1-draft.1`
+Ruleset identifier: `wordavoid-v1.0.0-rc.1`
 
 Dictionary identifier: `wordavoid-dictionary-2026-08-20`
+
+Dictionary SHA-256: `c479fbf36f13b30f471161b749055f257a486fc7c5706693d65f1a13a3350579`
+
+Detailed validation contract: [`wordavoid-validation-contract.md`](wordavoid-validation-contract.md)
 
 ## Product decision
 
@@ -45,18 +49,18 @@ Deferred modes must not appear on a competitive board, use the V1 ruleset identi
 - The run begins with 100 health, zero score, zero completed words, zero attempted characters, zero correct characters, zero active streak, and zero maximum streak.
 - Classic has no duration ceiling.
 - Time Attack starts with exactly `120000` ms remaining.
-- WD1 must replace local randomness with a server-issued run ID, seed, dictionary version, and ruleset version for ranked play.
+- Signed-in play now requests a server-generated run ID, seed, dictionary version/hash, normalization version, and ruleset version. Guest play uses the same contract with a local-only manifest and cannot place.
 
 ### Active play
 
 - One active printable key is one character attempt.
 - A character is correct only when it matches the next character of the selected active word under the V1 normalization rule.
-- The current source compares letters case-insensitively. WD1 must freeze punctuation, number, capitalization, Unicode normalization, and IME rules before ranking.
+- V1 input is Unicode-NFKC-normalized, lowercased, and accepted only when it is exactly one ASCII letter. Punctuation, numbers, spaces, emoji, multi-character strings, and IME/composition output are not competitive V1 evidence.
 - A correct character advances the selected word.
 - A wrong character resets progress on the selected word and ends its active targeting state.
 - A completed word disappears, awards score, increments the completed-word count, increments the active streak, and updates the maximum streak.
 - A missed word damages the player, removes the word, and resets only the active streak. The maximum streak survives.
-- Pause time must not reduce the Time Attack clock or count toward active duration. The current loop stops its delta updates while paused; WD3 must browser-test long pauses and tab throttling.
+- Pause time does not reduce the Time Attack clock or count toward response time, WPM, session time, or active duration. WD1 tests and browser smoke cover ordinary pauses; WD3 still owns long-background/tab-throttling and repeat-run hardening.
 
 ### End
 
@@ -64,12 +68,12 @@ Deferred modes must not appear on a competitive board, use the V1 ruleset identi
 - Time Attack ends when active time reaches 120,000 ms or health reaches zero, whichever occurs first.
 - A result includes mode, ruleset, dictionary, score, active duration, completed words, missed words, correct characters, attempted characters, maximum streak, WPM, and accuracy.
 - Guest results may be stored locally but are not a platform placement.
-- A signed-in result remains provisional until WD1 server recomputation accepts its evidence.
+- The WD1 server route recomputes signed-in evidence, but the prepared persistence transaction deliberately retains the `provisional` trust label until the isolated database matrix and promotion policy pass.
 - Restart repeats the same selected mode. WD0 repairs the old behavior that always restarted Classic.
 
-## Draft scoring contract
+## Versioned scoring contract
 
-The WD0 implementation extracts the existing common-word score into a pure function so its behavior can be tested before WD1 replaces ambient time and randomness.
+The shared contract package owns the common-word score so the game and server execute the same versioned function.
 
 For a completed word:
 
@@ -92,13 +96,13 @@ Word-difficulty multipliers:
 | Extreme | 3.0 |
 | Boss | 5.0 |
 
-The draft formula is now centralized in `src/contracts/v1.ts` and covered by unit tests. It is not yet ranked because the client still chooses words, angles, and timing with `Math.random()` and `Date.now()`.
+The formula is implemented in `@avoid/wordavoid-contract`; the game compatibility module re-exports it. Competitive words, angles, level, and difficulty now come from the deterministic manifest. Event timing remains browser-observed evidence and is bounded/replayed, not proof of human input.
 
 ### Damage and difficulty baseline
 
 The current common-word miss damage is 10/15/20/25/30 for easy/medium/hard/extreme/boss words. Word difficulty changes with level: easy through level 10, medium after 10, hard after 20, extreme after 30, and boss after 40. Spawn rate and speed also change from the higher of level-derived and WPM-derived difficulty tiers.
 
-WD1 must decide whether adaptive WPM can affect a competitive run. If it remains, the server must derive it from accepted evidence at the same event boundary. The client may not submit a difficulty tier as fact.
+Adaptive WPM may affect client presentation/movement, but it does not choose prompt difficulty or scoring difficulty. The validator derives prompt level/difficulty from sequence and derives WPM from accepted characters/time. The client cannot submit either tier as fact.
 
 ## Statistics contract
 
@@ -133,9 +137,9 @@ This replaces the old “completed words per minute” metric, which treated a t
 
 WD0 keeps the existing local-only totals. They are convenience history, not a ranked record. The persisted object is currently unversioned and needs a migration envelope in WD3. Platform personal bests and receipts belong to WD2 after the shared data foundation is exercised.
 
-## Ranked evidence required by WD1
+## WD1 deterministic evidence
 
-A ranked start response must bind:
+A signed-in start response binds:
 
 - authenticated user when present;
 - one-use run ID and secret ticket;
@@ -145,7 +149,7 @@ A ranked start response must bind:
 - deterministic seed or explicit word sequence;
 - server start time and allowed duration/expiry;
 - normalization version;
-- client build version.
+- a server-side expiry envelope. Client build version remains a WD2/observability addition.
 
 A finish request must provide ordered evidence sufficient to derive, not trust:
 
@@ -157,7 +161,7 @@ A finish request must provide ordered evidence sufficient to derive, not trust:
 - pause/resume intervals if pauses are allowed competitively;
 - terminal reason.
 
-The server must recompute score, correct/attempted characters, completed/missed words, active duration, WPM, accuracy, maximum streak, level, and difficulty. It must reject unknown prompts, impossible ordering/timing, changed rulesets, expired tickets, wrong users, and replayed finishes. A retry with the same idempotency key must return the same receipt.
+The server recomputes score, correct/attempted characters, completed/missed words, active duration, WPM, accuracy, maximum streak, level, difficulty, health, and terminal reason. It rejects unknown prompts, inconsistent ordering/timing, changed contracts, wrong users, bad tickets, expired tickets, and invalid terminal states. The prepared service-only transaction row-locks first finish and returns the same linked receipt for a later valid-ticket retry. Executable concurrency/read-back evidence remains gated on the isolated Supabase branch.
 
 ## Input and browser baseline
 
@@ -176,7 +180,7 @@ The server must recompute score, correct/attempted characters, completed/missed 
 
 Mobile visitors should still receive a readable menu and honest “physical keyboard required” message until a real software-keyboard bridge passes viewport and composition tests.
 
-## WD0 acceptance evidence
+## WD0/WD1 acceptance evidence
 
 - The source exposes one typed catalog for all eight named modes.
 - Only Classic and Time Attack render Start actions in the V1 menu.
@@ -187,12 +191,17 @@ Mobile visitors should still receive a readable menu and honest “physical keyb
 - Correct-character WPM is pure and tested.
 - Maximum streak survives a miss and is used by results/persistent stats.
 - Restart preserves the selected mode.
+- The generated dictionary, deterministic prompt stream, evidence schema, normalization, and validator are shared by game and platform.
+- Server recomputation and client tamper rejection are covered by focused tests.
+- The prepared persistence transaction is single-write and idempotent by receipt in source.
 - Type-check, lint, tests, build, browser matrix, bundle baseline, and full platform assembly are required before WD0 closes.
+
+WD1 evidence is in [`sprint-wordavoid-wd1.md`](sprint-wordavoid-wd1.md). Its source gate is complete; PostgreSQL execution and production activation are not.
 
 ## Explicitly deferred
 
-- Server-issued seeds and deterministic prompt ordering: WD1.
-- Server recomputation, tamper rejection, idempotency, and trust promotion: WD1.
+- Executable SQL concurrency, expiry, wrong-user, and retry read-back on the isolated Supabase branch.
+- Trust promotion beyond `provisional`; server recomputation alone does not establish human or bot-free play.
 - Platform session, personal best, boards, receipts, and canonical share: WD2.
 - Focusable typing bridge, software-keyboard decision, resize normalization, reduced motion, audio, share fallback, and repeat-run hardening: WD3.
 - Balance and production release/rollback: WD4.

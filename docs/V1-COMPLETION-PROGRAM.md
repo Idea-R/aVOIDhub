@@ -5,7 +5,7 @@
 - **Repository:** `C:\dev\aVOID-next` / `Idea-R/aVOIDhub`
 - **Production baseline:** `https://avoidgame.io` at merge commit `7cd9788`
 - **Program branch:** `codex/docs-v1-completion-program`
-- **Current execution branch:** `codex/fix-wordavoid-wd0-baseline` (stacked through WreckaVOID W5 on `security/platform-foundation-v1`)
+- **Current execution branch:** `codex/fix-wordavoid-wd1-validation` (stacked on WORDaVOID WD0 and the completed WreckaVOID slices)
 - **Related records:** [`ROADMAP.md`](../ROADMAP.md), [`WORKLOG.md`](../WORKLOG.md), [`DECISIONS.md`](../DECISIONS.md)
 
 ## 1. Why this document exists
@@ -54,6 +54,7 @@ It is intentionally stricter than “the page loads.” Every V1 definition incl
 - WreckaVOID W2 local gates are complete. Rendered-canvas viewport ownership, live portrait/landscape resize, minimum-playfield messaging, reason-aware pause/focus/help, concise onboarding, persistent procedural audio, reduced-motion particle suppression, compact phone results, 19 tests, and a post-change 20-restart smoke pass are recorded in `docs/sprint-wreckavoid-w2.md`.
 - WreckaVOID W5 local gates are complete. The active logo is 31.85 KB, the enforced initial-transfer budget passes at 168.4 KB, game-clock presentation and particles are bounded, no-env guest play is quiet, and one-owner modal/focus/viewport behavior passes 31 tests. Desktop/phone/landscape QA, 40 restart cycles, frame/heap samples, the full platform build, and mobile Lighthouse at 98/100/100/100 are recorded in `docs/sprint-wreckavoid-w5.md`. Production deploy and rollback proof remain release gates.
 - WORDaVOID WD0 local gates are complete. Classic Survival and two-minute Time Attack are now the only playable V1 modes; six duplicate/partial experiments are listed as unranked without Start controls. The draft score/stat contract is pure and tested, the 60% accuracy floor and terminal-current-streak result are repaired, stale out-of-root build artifacts are removed, and the four-viewport menu matrix passes without horizontal overflow. Evidence is in `docs/sprint-wordavoid-wd0.md`.
+- WORDaVOID WD1 is source-complete. A shared package freezes the 1,770-entry dictionary/hash, ruleset, normalization, deterministic prompt generator, scoring, and bounded event validator. The game emits replayable evidence; the platform reconstructs the manifest from stored server metadata and ignores client aggregates; and the prepared service transaction returns the original receipt on a valid retry. Automated checks, full assembly, and desktop/mobile browser smoke pass. Executable SQL/concurrency/read-back remains gated on the isolated Supabase branch, and accepted storage stays `provisional`; evidence is in `docs/sprint-wordavoid-wd1.md`.
 
 ### What is unsafe or misleading if activated today
 
@@ -469,7 +470,7 @@ A player chooses a clearly explained mode, begins with keyboard focus in the cor
 
 **Expected WORDaVOID effort after the shared platform foundation:** **12–20 focused engineering/QA days**. Allow **15–24 days** when the same lane owns the detail page, platform integration, statistics surface, and release support. It remains the strongest first `validated` title because its score can be recomputed.
 
-WD0 implementation evidence: [`wordavoid-v1-contract.md`](wordavoid-v1-contract.md) and [`sprint-wordavoid-wd0.md`](sprint-wordavoid-wd0.md). The local source gate is complete; server-issued deterministic evidence remains WD1.
+WD0/WD1 implementation evidence: [`wordavoid-v1-contract.md`](wordavoid-v1-contract.md), [`wordavoid-validation-contract.md`](wordavoid-validation-contract.md), [`sprint-wordavoid-wd0.md`](sprint-wordavoid-wd0.md), and [`sprint-wordavoid-wd1.md`](sprint-wordavoid-wd1.md). WD1's source gate is complete. SQL execution, concurrency/read-back, and production activation remain part of the approval-gated platform data exercise; `server_recomputed` capability does not promote a row beyond `provisional`.
 
 ### WORDaVOID V1 acceptance checklist
 

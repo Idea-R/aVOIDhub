@@ -231,3 +231,10 @@ Keep WreckaVOID’s fixed-step simulation authoritative while presenting its clo
 - Status: accepted for WD0
 
 Classic Survival and two-minute Time Attack are the WORDaVOID V1 modes. Perfect Run and Daily Challenge are duplicate Classic behavior; Wave Defense, Skill Training, Digit Assault, and Geometric Typing are partial experiments. Keep their source for later evaluation, but remove their Start actions and label them unranked until each has a versioned ruleset, statistics model, balance gate, and server-recomputable evidence. Competitive accuracy is correct characters divided by attempted characters with no motivational floor; WPM uses five correct characters per standardized word; best streak means the run maximum, not the terminal active streak.
+
+## D-034 — Share one WORDaVOID rules engine and separate recomputation from trust
+
+- Date: 2026-08-20
+- Status: accepted for WD1 source gate
+
+Generate competitive prompts from a server-created seed and sequence, and use one versioned workspace package for dictionary identity, normalization, prompt generation, scoring, and evidence replay in both game and platform. The browser may report ordered events but may not author accepted aggregates. A recomputed result advertises `server_recomputed` capability while remaining `provisional` until the isolated database exercise and an explicit anti-abuse/trust policy justify promotion. Valid ticket retries return the original receipt under the same row lock; they do not create a second score.
