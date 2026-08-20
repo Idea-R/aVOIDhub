@@ -2,6 +2,17 @@
 
 ## 2026-08-20
 
+- Corrected the pending platform-foundation migration against the frozen production baseline; the migration remains unapplied to Supabase.
+- Replaced the inherited all-table browser grants with a deny-by-default Data API surface. Browser roles retain public catalog/leaderboard reads, owner-scoped profile presentation updates, entitlement/application reads, and owner-scoped favorites only.
+- Removed all browser score writes on both canonical and legacy score tables, blocked browser access to manual backup, billing, webhook, run, and submission tables, and reserved run finalization and aggregate updates for `service_role`.
+- Preserved the 69-row production migration contract by reclassifying pre-foundation scores as `legacy`, clearing the untrusted `is_verified` flag, and adding a validated trust-consistency constraint rather than deleting history.
+- Made new profiles private by default and included the production-gated D-024 conversion of the 15 legacy public profiles to private until their owners opt in.
+- Replaced email-derived signup usernames with deterministic non-email handles, retained exactly one signup trigger, removed the score-insert aggregate and leaderboard-name-sync triggers, and fixed trigger-function search paths.
+- Added game-key and submission foreign keys, query-path indexes, ruleset versioning, one-use ticket validation, bounded JSON metrics, and service-only run finalization.
+- Added `supabase/tests/database/platform_foundation.sql` with 50 pgTAP assertions and `npm run test:foundation` as a fast local structural/security gate.
+- Added `docs/sprint-1-foundation-test-plan.md` with synthetic legacy fixtures, direct-write denial tests, one-use run replay tests, app compatibility checks, advisor deltas, rollback rules, and exact Sprint 1 exit evidence.
+- Passed the foundation verifier, Sprint 0 frozen-baseline verifier, Prettier, and Git whitespace checks. Docker Desktop and the Supabase CLI are not active locally, so executable SQL remains gated on the approved Supabase development branch.
+- Reinstalled the locked dependency graph with zero audit findings, passed the platform type-check, WORDaVOID regression test, and the complete staged VOIDaVOID/WreckaVOID/WORDaVOID plus Next.js production build. The root lint command remains red on pre-existing workspace debt: missing/broken shared and retired-hub ESLint configuration plus legacy TankaVOID, VOIDaVOID, and old `wreck-avoid` findings; those are catalog-game sprint gates rather than migration regressions.
 - Completed the sanitized Sprint 0 recoverability packet at `docs/sprint-0-recoverability.md` without changing production.
 - Captured the aVOID Supabase production baseline through read-only metadata and aggregate queries: six public tables, 29 live migrations, 17 public functions, three triggers, 22 security advisories, 17 performance advisories, 15 profiles, and 69 legacy scores.
 - Quantified migration drift: 22 live migration versions have no tracked SQL anywhere in the repository, while three tracked versions have not run in production.
@@ -34,7 +45,7 @@
 
 ### Next action
 
-Commit and push the approved platform candidate, verify the Git-driven Netlify runtime preview, then publish and verify production. Do not apply the score-locking migration separately from the platform and staged game deploy.
+Review the Sprint 1 migration and `docs/sprint-1-foundation-test-plan.md`, then approve or decline the 72-hour Supabase development branch at the last verified `$0.01344/hour` (about `$0.97`). Do not apply the score-locking migration separately from the platform and staged game deploy.
 
 ## 2026-08-19
 

@@ -41,6 +41,7 @@ Move the live aVOIDgame.io rebuild through the phased V1 completion program: sec
 - Repository worktree: `C:\dev\aVOID-next`
 - Active documentation branch: `codex/docs-v1-completion-program`
 - Active Sprint 0 branch: `security/sprint-0-recoverability`
+- Active Sprint 1 branch: `security/platform-foundation-v1`
 - Program source of truth: `docs/V1-COMPLETION-PROGRAM.md`
 - Sprint 0 evidence: `docs/sprint-0-recoverability.md`
 - Merged shell PR: `https://github.com/Idea-R/aVOIDhub/pull/1`
@@ -70,8 +71,8 @@ Move the live aVOIDgame.io rebuild through the phased V1 completion program: sec
 12. **Monetization activation — account gated.** Confirm Stripe products/prices and test webhook behavior; confirm the exact AdSense publisher ID, site status, CMP, and age treatment before any real charge or ad request.
 13. **V1 completion program — documentation complete and under review.** The detailed per-platform and per-title program, sprint sequence, effort ranges, dependencies, and acceptance gates live in `docs/V1-COMPLETION-PROGRAM.md` and draft PR #2.
 14. **Sprint 0 recoverability packet — complete; branch approval pending.** The live schema, grants, policies, functions, advisors, migration drift, auth/score consumers, environment ownership, rollback targets, branch cost, and legacy-data mapping are frozen in `docs/sprint-0-recoverability.md`. No production state changed.
-15. **Sprint 1 isolated foundation repair — next.** Correct the forward migration, create a 72-hour Supabase development branch after cost approval, and run the RLS/data/API test matrix against synthetic fixtures.
+15. **Sprint 1 isolated foundation repair — local gate complete; paid branch pending.** The forward migration now denies browser writes by default, makes profile publication explicit, preserves legacy scores without trusting their old verified flag, removes browser-era score triggers, adds ruleset/FK integrity, and ships 50 pgTAP assertions plus a static verifier. Create the 72-hour Supabase development branch only after cost approval, then run the documented data/API/advisor matrix against synthetic fixtures.
 
 ## Current next action
 
-Review `docs/sprint-0-recoverability.md` and approve or decline the proposed 72-hour Supabase development branch at the currently reported `$0.01344/hour` (about `$0.97` for 72 hours). Production data, secrets, Stripe, AdSense, DNS, and the production deploy remain untouched.
+Review `docs/sprint-1-foundation-test-plan.md` and approve or decline the proposed 72-hour Supabase development branch at the currently reported `$0.01344/hour` (about `$0.97` for 72 hours). The local migration and test harness are ready; production data, secrets, Stripe, AdSense, DNS, and the production deploy remain untouched.

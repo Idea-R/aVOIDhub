@@ -182,3 +182,17 @@ Use a Supabase development branch cloned from the production schema, synthetic d
 - Status: accepted
 
 Project records may contain environment variable names, exposure class, context, and owning service. They must not contain secret values, tokens, private keys, webhook secrets, database passwords, or copied Netlify environment exports. Release verification checks presence and scope in the owning service without pasting values into Git or review logs.
+
+## D-027 — Deny browser data writes unless the workflow is deliberately client-owned
+
+- Date: 2026-08-20
+- Status: accepted for the Sprint 1 foundation
+
+Revoke inherited table and function privileges from `anon` and `authenticated`, then grant back the smallest documented surface. Score, run, billing, webhook, entitlement mutation, creator application, and game submission writes belong to authenticated server routes. Profile presentation fields and owner-scoped favorites may remain direct client writes because both column grants and RLS constrain them. Manual backup tables have no browser access.
+
+## D-028 — Version every ranked ruleset
+
+- Date: 2026-08-20
+- Status: accepted for the Sprint 1 foundation
+
+Every new run session and score submission records a bounded ruleset version. The atomic finishing transaction copies game, mode, user, and ruleset identity from the locked server-created run rather than accepting those values from the finishing client. A leaderboard may compare results only within a compatibility rule defined by the game; a future balance or scoring change cannot silently share a ranking with an incompatible ruleset.

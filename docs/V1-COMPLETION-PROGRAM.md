@@ -5,6 +5,7 @@
 - **Repository:** `C:\dev\aVOID-next` / `Idea-R/aVOIDhub`
 - **Production baseline:** `https://avoidgame.io` at merge commit `7cd9788`
 - **Program branch:** `codex/docs-v1-completion-program`
+- **Current execution branch:** `security/platform-foundation-v1`
 - **Related records:** [`ROADMAP.md`](../ROADMAP.md), [`WORKLOG.md`](../WORKLOG.md), [`DECISIONS.md`](../DECISIONS.md)
 
 ## 1. Why this document exists
@@ -40,6 +41,14 @@ It is intentionally stricter than “the page loads.” Every V1 definition incl
 - Profile, entitlement, creator, Stripe, and run-ticket routes exist but depend on a coordinated database migration and server environment that have not been activated.
 - The WreckaVOID game-over submission ordering was repaired in source, but the secure score pipeline it calls is not active in production.
 - The AdSense verification and `ads.txt` route exist, but no publisher ID, consent system, ad runtime, or ad request is active.
+
+### Current execution status
+
+- P0 is complete in source: `docs/sprint-0-recoverability.md` and `supabase/audit/` freeze the production schema, grants, policies, functions, migration drift, aggregate row counts, restore target, ownership boundaries, and branch cost without exporting player rows or secrets.
+- P1 is locally prepared: the pending foundation migration now revokes inherited browser privileges, preserves old scores as untrusted legacy history, makes profile publication explicit, removes browser-era score side effects, and adds foreign-key/ruleset integrity.
+- `supabase/tests/database/platform_foundation.sql` contains 50 database assertions, and `npm run test:foundation` verifies the required migration shape locally.
+- Executable SQL, role, run-replay, signup, and advisor testing is still pending on the approval-gated Supabase development branch. Local preparation is not P1 completion.
+- The exact branch procedure and exit evidence are in `docs/sprint-1-foundation-test-plan.md`.
 
 ### What is unsafe or misleading if activated today
 

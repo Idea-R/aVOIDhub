@@ -123,6 +123,7 @@ create table if not exists public.game_run_sessions (
   user_id uuid not null references auth.users(id) on delete cascade,
   game_key text not null,
   mode text not null default 'default' check (char_length(mode) between 1 and 40),
+  ruleset_version text not null default 'v1',
   ticket_hash text not null check (ticket_hash ~ '^[a-f0-9]{64}$'),
   origin text,
   status text not null default 'started' check (status in ('started', 'finished', 'expired', 'rejected')),
@@ -142,6 +143,7 @@ create table if not exists public.score_submissions (
   user_id uuid not null references auth.users(id) on delete cascade,
   game_key text not null,
   mode text not null,
+  ruleset_version text not null default 'v1',
   score integer not null check (score >= 0),
   metrics jsonb not null default '{}'::jsonb,
   verification_level text not null default 'provisional' check (verification_level in ('provisional', 'validated', 'verified')),
@@ -150,13 +152,140 @@ create table if not exists public.score_submissions (
   created_at timestamptz not null default now()
 );
 
+alter table public.game_run_sessions
+  add column if not exists ruleset_version text not null default 'v1';
+alter table public.score_submissions
+  add column if not exists ruleset_version text not null default 'v1';
+
 alter table public.leaderboard_scores add column if not exists submission_id uuid;
 alter table public.leaderboard_scores add column if not exists verification_level text not null default 'legacy';
 alter table public.leaderboard_scores add column if not exists metadata jsonb not null default '{}'::jsonb;
 
+-- Every pre-foundation score is evidence of a historical play session, not proof of
+-- a validated run. Preserve all rows while removing the unsafe legacy verified flag.
+update public.leaderboard_scores
+set is_verified = false,
+    verification_level = 'legacy'
+where submission_id is null;
+
+alter table public.leaderboard_scores alter column is_verified set default false;
+alter table public.leaderboard_scores alter column is_verified set not null;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'public.leaderboard_scores'::regclass
+      and conname = 'leaderboard_scores_verification_level_check'
+  ) then
+    alter table public.leaderboard_scores
+      add constraint leaderboard_scores_verification_level_check
+      check (verification_level in ('legacy', 'provisional', 'validated', 'verified')) not valid;
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'public.leaderboard_scores'::regclass
+      and conname = 'leaderboard_scores_verified_consistency_check'
+  ) then
+    alter table public.leaderboard_scores
+      add constraint leaderboard_scores_verified_consistency_check
+      check (is_verified = (verification_level = 'verified')) not valid;
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'public.game_run_sessions'::regclass
+      and conname = 'game_run_sessions_ruleset_version_check'
+  ) then
+    alter table public.game_run_sessions
+      add constraint game_run_sessions_ruleset_version_check
+      check (ruleset_version ~ '^[a-zA-Z0-9._-]{1,40}$') not valid;
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'public.score_submissions'::regclass
+      and conname = 'score_submissions_ruleset_version_check'
+  ) then
+    alter table public.score_submissions
+      add constraint score_submissions_ruleset_version_check
+      check (ruleset_version ~ '^[a-zA-Z0-9._-]{1,40}$') not valid;
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'public.game_favorites'::regclass
+      and conname = 'game_favorites_game_key_fkey'
+  ) then
+    alter table public.game_favorites
+      add constraint game_favorites_game_key_fkey
+      foreign key (game_key) references public.games(game_key) on delete cascade not valid;
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'public.game_run_sessions'::regclass
+      and conname = 'game_run_sessions_game_key_fkey'
+  ) then
+    alter table public.game_run_sessions
+      add constraint game_run_sessions_game_key_fkey
+      foreign key (game_key) references public.games(game_key) on delete restrict not valid;
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'public.score_submissions'::regclass
+      and conname = 'score_submissions_game_key_fkey'
+  ) then
+    alter table public.score_submissions
+      add constraint score_submissions_game_key_fkey
+      foreign key (game_key) references public.games(game_key) on delete restrict not valid;
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'public.leaderboard_scores'::regclass
+      and conname = 'leaderboard_scores_submission_id_fkey'
+  ) then
+    alter table public.leaderboard_scores
+      add constraint leaderboard_scores_submission_id_fkey
+      foreign key (submission_id) references public.score_submissions(id) on delete restrict not valid;
+  end if;
+end;
+$$;
+
+alter table public.leaderboard_scores validate constraint leaderboard_scores_verification_level_check;
+alter table public.leaderboard_scores validate constraint leaderboard_scores_verified_consistency_check;
+alter table public.game_run_sessions validate constraint game_run_sessions_ruleset_version_check;
+alter table public.score_submissions validate constraint score_submissions_ruleset_version_check;
+alter table public.game_favorites validate constraint game_favorites_game_key_fkey;
+alter table public.game_run_sessions validate constraint game_run_sessions_game_key_fkey;
+alter table public.score_submissions validate constraint score_submissions_game_key_fkey;
+alter table public.leaderboard_scores validate constraint leaderboard_scores_submission_id_fkey;
+
 create unique index if not exists leaderboard_scores_submission_unique
   on public.leaderboard_scores(submission_id)
   where submission_id is not null;
+
+create index if not exists user_entitlements_entitlement_idx
+  on public.user_entitlements(entitlement_key);
+create index if not exists billing_subscriptions_user_idx
+  on public.billing_subscriptions(user_id);
+create index if not exists billing_subscriptions_plan_idx
+  on public.billing_subscriptions(plan_key);
+create index if not exists creator_applications_user_idx
+  on public.creator_applications(user_id, submitted_at desc);
+create index if not exists game_submissions_user_idx
+  on public.game_submissions(user_id, created_at desc);
+create index if not exists game_favorites_game_idx
+  on public.game_favorites(game_key);
+create index if not exists game_run_sessions_game_status_idx
+  on public.game_run_sessions(game_key, status, started_at desc);
+create index if not exists score_submissions_user_created_idx
+  on public.score_submissions(user_id, created_at desc);
+create index if not exists score_submissions_game_score_idx
+  on public.score_submissions(game_key, mode, score desc, created_at asc);
 
 insert into public.membership_plans (plan_key, name, audience) values
   ('player', 'Founding player', 'player'),
@@ -199,78 +328,199 @@ alter table public.game_favorites enable row level security;
 alter table public.game_run_sessions enable row level security;
 alter table public.score_submissions enable row level security;
 
-revoke all on public.billing_accounts, public.billing_subscriptions, public.stripe_webhook_events,
-  public.game_run_sessions, public.score_submissions from anon, authenticated;
-grant select on public.membership_plans, public.entitlement_definitions, public.plan_entitlements to anon, authenticated;
-grant select on public.user_entitlements to authenticated;
-grant select, insert, update on public.creator_applications, public.game_submissions to authenticated;
+-- Start from a deny-by-default Data API surface. Production currently grants all
+-- table privileges to both browser roles, including the two manual backup tables.
+revoke all on all tables in schema public from public, anon, authenticated;
+alter default privileges in schema public revoke all on tables from public, anon, authenticated;
+alter default privileges in schema public revoke execute on functions from public;
+
+grant select on public.games, public.leaderboard_scores to anon, authenticated;
+grant select on public.user_profiles to anon, authenticated;
+grant update (username, bio, cursor_color, social_links, is_public, display_name, avatar_url, country_code)
+  on public.user_profiles to authenticated;
+grant select on public.membership_plans, public.entitlement_definitions, public.plan_entitlements
+  to anon, authenticated;
+grant select on public.user_entitlements, public.creator_applications, public.game_submissions
+  to authenticated;
 grant select on public.creator_profiles to anon, authenticated;
 grant select, insert, delete on public.game_favorites to authenticated;
+grant all on public.membership_plans, public.entitlement_definitions,
+  public.plan_entitlements, public.user_entitlements, public.billing_accounts,
+  public.billing_subscriptions, public.stripe_webhook_events,
+  public.creator_applications, public.creator_profiles, public.game_submissions,
+  public.game_favorites, public.game_run_sessions, public.score_submissions,
+  public.games, public.leaderboard_scores, public.user_profiles, public.game_scores
+  to service_role;
 
-drop policy if exists "Membership plans are public" on public.membership_plans;
-create policy "Membership plans are public" on public.membership_plans for select using (is_active);
-drop policy if exists "Entitlement definitions are public" on public.entitlement_definitions;
-create policy "Entitlement definitions are public" on public.entitlement_definitions for select using (true);
-drop policy if exists "Plan entitlements are public" on public.plan_entitlements;
-create policy "Plan entitlements are public" on public.plan_entitlements for select using (true);
-drop policy if exists "Users read own entitlements" on public.user_entitlements;
+-- The server API owns application and submission mutations. Favorites remain the
+-- one low-risk direct client write and are constrained to the current user's row.
+do $$
+declare
+  policy_record record;
+begin
+  for policy_record in
+    select schemaname, tablename, policyname
+    from pg_policies
+    where schemaname = 'public'
+      and tablename in (
+        'games', 'leaderboard_scores', 'user_profiles', 'game_scores',
+        'leaderboard_scores_backup_manual', 'user_profiles_backup_manual',
+        'membership_plans', 'entitlement_definitions', 'plan_entitlements',
+        'user_entitlements', 'billing_accounts', 'billing_subscriptions',
+        'stripe_webhook_events', 'creator_applications', 'creator_profiles',
+        'game_submissions', 'game_favorites', 'game_run_sessions', 'score_submissions'
+      )
+  loop
+    execute format('drop policy %I on %I.%I', policy_record.policyname,
+      policy_record.schemaname, policy_record.tablename);
+  end loop;
+end;
+$$;
+
+create policy "Active games are public" on public.games
+  for select to anon, authenticated using (is_active is true);
+create policy "Leaderboard scores are public" on public.leaderboard_scores
+  for select to anon, authenticated using (true);
+create policy "Public or owned profiles are readable" on public.user_profiles
+  for select to anon, authenticated
+  using (is_public is true or (select auth.uid()) = id);
+create policy "Users update own profile presentation" on public.user_profiles
+  for update to authenticated
+  using ((select auth.uid()) = id)
+  with check ((select auth.uid()) = id);
+
+create policy "Membership plans are public" on public.membership_plans
+  for select to anon, authenticated using (is_active is true);
+create policy "Entitlement definitions are public" on public.entitlement_definitions
+  for select to anon, authenticated using (true);
+create policy "Plan entitlements are public" on public.plan_entitlements
+  for select to anon, authenticated using (true);
 create policy "Users read own entitlements" on public.user_entitlements
   for select to authenticated using ((select auth.uid()) = user_id);
-
-drop policy if exists "Users read own creator applications" on public.creator_applications;
 create policy "Users read own creator applications" on public.creator_applications
   for select to authenticated using ((select auth.uid()) = user_id);
-drop policy if exists "Users submit own creator applications" on public.creator_applications;
-create policy "Users submit own creator applications" on public.creator_applications
-  for insert to authenticated with check ((select auth.uid()) = user_id and status = 'pending');
-drop policy if exists "Users withdraw own creator applications" on public.creator_applications;
-create policy "Users withdraw own creator applications" on public.creator_applications
-  for update to authenticated
-  using ((select auth.uid()) = user_id and status = 'pending')
-  with check ((select auth.uid()) = user_id and status = 'withdrawn');
-
-drop policy if exists "Published creator profiles are public" on public.creator_profiles;
 create policy "Published creator profiles are public" on public.creator_profiles
-  for select using (is_published or (select auth.uid()) = user_id);
-
-drop policy if exists "Users read own game submissions" on public.game_submissions;
+  for select to anon, authenticated
+  using (is_published is true or (select auth.uid()) = user_id);
 create policy "Users read own game submissions" on public.game_submissions
   for select to authenticated using ((select auth.uid()) = user_id);
-drop policy if exists "Users create own game drafts" on public.game_submissions;
-create policy "Users create own game drafts" on public.game_submissions
-  for insert to authenticated with check ((select auth.uid()) = user_id and status in ('draft', 'submitted'));
-drop policy if exists "Users edit own game drafts" on public.game_submissions;
-create policy "Users edit own game drafts" on public.game_submissions
-  for update to authenticated
-  using ((select auth.uid()) = user_id and status in ('draft', 'changes_requested'))
-  with check ((select auth.uid()) = user_id and status in ('draft', 'submitted', 'withdrawn'));
-
-drop policy if exists "Users read own favorites" on public.game_favorites;
 create policy "Users read own favorites" on public.game_favorites
   for select to authenticated using ((select auth.uid()) = user_id);
-drop policy if exists "Users add own favorites" on public.game_favorites;
 create policy "Users add own favorites" on public.game_favorites
   for insert to authenticated with check ((select auth.uid()) = user_id);
-drop policy if exists "Users remove own favorites" on public.game_favorites;
 create policy "Users remove own favorites" on public.game_favorites
   for delete to authenticated using ((select auth.uid()) = user_id);
 
--- Remove the legacy browser-write path. The server RPC below becomes the only writer.
-drop policy if exists "Anyone can insert scores" on public.leaderboard_scores;
-drop policy if exists "Authenticated users can insert scores" on public.leaderboard_scores;
-drop policy if exists "Users can insert their own scores" on public.leaderboard_scores;
-drop policy if exists "Users can update own verified scores" on public.leaderboard_scores;
-revoke insert, update, delete on public.leaderboard_scores from anon, authenticated;
+-- Privacy-first profiles: new rows are private, and the 15 legacy rows are held
+-- private until their owners choose to publish them from the rebuilt profile UI.
+alter table public.user_profiles alter column is_public set default false;
 
--- Legacy profile clients may edit presentation fields, never billing or aggregate
--- statistics. VOIDaVOID's aggregate RPC remains available but can only target the
--- current user and is bounded because those values are browser-reported.
-revoke update on public.user_profiles from authenticated;
-grant update (username, bio, cursor_color, social_links, is_public, display_name, avatar_url, country_code)
-  on public.user_profiles to authenticated;
+-- Retire browser-era side effects before the new server-owned score path is used.
+drop trigger if exists trigger_update_user_stats_on_score_insert on public.leaderboard_scores;
+drop trigger if exists trigger_sync_leaderboard_player_name on public.user_profiles;
+drop trigger if exists update_user_profiles_updated_at on public.user_profiles;
+drop function if exists public.update_user_profile_stats();
+drop function if exists public.sync_leaderboard_player_name();
 
+update public.user_profiles set is_public = false where is_public is distinct from false;
+
+-- Remove every inherited or explicit Data API execute grant, then add back only the
+-- two service-role functions needed by the foundation workflow.
+revoke execute on all functions in schema public from public, anon, authenticated;
+
+create or replace function public.create_user_profile()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_display_name text;
+  v_username text;
+begin
+  v_display_name := coalesce(
+    nullif(btrim(new.raw_user_meta_data ->> 'display_name'), ''),
+    'Player'
+  );
+  v_display_name := left(v_display_name, 60);
+  v_username := 'player-' || left(replace(new.id::text, '-', ''), 20);
+
+  insert into public.user_profiles (
+    id, username, display_name, bio, cursor_color, social_links, is_public,
+    total_games_played, total_meteors_destroyed, total_survival_time,
+    created_at, updated_at
+  ) values (
+    new.id, v_username, v_display_name, null, '#06b6d4', '{}'::jsonb, false,
+    0, 0, 0, now(), now()
+  )
+  on conflict (id) do nothing;
+
+  return new;
+end;
+$$;
+
+create or replace function public.backfill_missing_profiles()
+returns integer
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_profiles_created integer;
+begin
+  insert into public.user_profiles (
+    id, username, display_name, bio, cursor_color, social_links, is_public,
+    total_games_played, total_meteors_destroyed, total_survival_time,
+    created_at, updated_at
+  )
+  select
+    au.id,
+    'player-' || left(replace(au.id::text, '-', ''), 20),
+    left(coalesce(nullif(btrim(au.raw_user_meta_data ->> 'display_name'), ''), 'Player'), 60),
+    null,
+    '#06b6d4',
+    '{}'::jsonb,
+    false,
+    0,
+    0,
+    0,
+    au.created_at,
+    now()
+  from auth.users as au
+  left join public.user_profiles as up on up.id = au.id
+  where up.id is null
+  on conflict (id) do nothing;
+
+  get diagnostics v_profiles_created = row_count;
+  return v_profiles_created;
+end;
+$$;
+
+create or replace function public.update_updated_at_column()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  new.updated_at := now();
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.create_user_profile();
+
+create trigger update_user_profiles_updated_at
+  before update on public.user_profiles
+  for each row execute function public.update_updated_at_column();
+
+drop function if exists public.update_game_statistics(
+  uuid, integer, integer, numeric, numeric, integer, integer, numeric, numeric
+);
 create or replace function public.update_game_statistics(
-  user_id uuid,
+  p_user_id uuid,
   games_increment integer default 0,
   meteors_increment integer default 0,
   survival_increment numeric default 0,
@@ -286,9 +536,6 @@ security definer
 set search_path = ''
 as $$
 begin
-  if (select auth.uid()) is distinct from $1 then
-    raise exception 'user_mismatch' using errcode = '42501';
-  end if;
   if games_increment not between 0 and 1
     or meteors_increment not between 0 and 100000
     or survival_increment not between 0 and 86400
@@ -310,13 +557,20 @@ begin
     best_game_time = greatest(coalesce(up.best_game_time, 0), current_survival_time),
     best_game_distance = greatest(coalesce(up.best_game_distance, 0), current_distance),
     updated_at = now()
-  where up.id = $1;
+  where up.id = p_user_id;
+
+  if not found then
+    raise exception 'profile_not_found' using errcode = 'P0002';
+  end if;
 end;
 $$;
 
-revoke all on function public.update_game_statistics(uuid, integer, integer, numeric, numeric, integer, integer, numeric, numeric) from public, anon;
-grant execute on function public.update_game_statistics(uuid, integer, integer, numeric, numeric, integer, integer, numeric, numeric) to authenticated;
 revoke all on function public.create_user_profile() from public, anon, authenticated;
+revoke all on function public.update_updated_at_column() from public, anon, authenticated;
+revoke all on function public.update_game_statistics(uuid, integer, integer, numeric, numeric, integer, integer, numeric, numeric)
+  from public, anon, authenticated;
+grant execute on function public.update_game_statistics(uuid, integer, integer, numeric, numeric, integer, integer, numeric, numeric)
+  to service_role;
 revoke all on function public.backfill_missing_profiles() from public, anon, authenticated;
 grant execute on function public.backfill_missing_profiles() to service_role;
 
@@ -341,6 +595,13 @@ begin
   if p_score < 0 or p_score > 2147483647 then
     raise exception 'score_out_of_range' using errcode = '22003';
   end if;
+  if jsonb_typeof(coalesce(p_metrics, '{}'::jsonb)) <> 'object'
+    or octet_length(coalesce(p_metrics, '{}'::jsonb)::text) > 8192 then
+    raise exception 'metrics_invalid' using errcode = '22023';
+  end if;
+  if p_ticket_hash !~ '^[a-f0-9]{64}$' then
+    raise exception 'invalid_run_ticket' using errcode = '28000';
+  end if;
 
   select * into v_run
   from public.game_run_sessions
@@ -354,7 +615,6 @@ begin
     raise exception 'run_already_consumed' using errcode = '23505';
   end if;
   if v_run.expires_at <= now() then
-    update public.game_run_sessions set status = 'expired' where id = p_run_id;
     raise exception 'run_expired' using errcode = '22023';
   end if;
   if v_run.ticket_hash <> p_ticket_hash then
@@ -362,22 +622,26 @@ begin
   end if;
 
   insert into public.score_submissions (
-    run_session_id, user_id, game_key, mode, score, metrics, verification_level, status
+    run_session_id, user_id, game_key, mode, ruleset_version, score, metrics,
+    verification_level, status
   ) values (
-    v_run.id, v_run.user_id, v_run.game_key, v_run.mode, p_score,
+    v_run.id, v_run.user_id, v_run.game_key, v_run.mode, v_run.ruleset_version, p_score,
     coalesce(p_metrics, '{}'::jsonb), 'provisional', 'accepted'
   ) returning id into v_submission_id;
 
-  select coalesce(nullif(username, ''), 'player') into v_player_name
+  select coalesce(nullif(display_name, ''), nullif(username, ''), 'player') into v_player_name
   from public.user_profiles where id = v_run.user_id;
-  v_player_name := coalesce(v_player_name, 'player');
+  v_player_name := left(coalesce(v_player_name, 'player'), 50);
 
   insert into public.leaderboard_scores (
     player_name, score, user_id, game_session_id, is_verified, game_key,
     submission_id, verification_level, metadata
   ) values (
     v_player_name, p_score, v_run.user_id, v_run.id::text, false, v_run.game_key,
-    v_submission_id, 'provisional', coalesce(p_metrics, '{}'::jsonb) || jsonb_build_object('mode', v_run.mode)
+    v_submission_id, 'provisional', coalesce(p_metrics, '{}'::jsonb) || jsonb_build_object(
+      'mode', v_run.mode,
+      'rulesetVersion', v_run.ruleset_version
+    )
   ) returning id into v_leaderboard_id;
 
   update public.game_run_sessions
