@@ -2,6 +2,7 @@
 
 - Date: 2026-08-20
 - Issue: [#38](https://github.com/Idea-R/aVOIDhub/issues/38)
+- Draft review: [#39](https://github.com/Idea-R/aVOIDhub/pull/39)
 - Branch: `codex/feature-membership-creator-contract`
 - Runtime state: source and test-mode preparation only; no live charge, ad request, creator publication, or production migration
 

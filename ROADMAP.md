@@ -45,6 +45,7 @@ Move the live aVOIDgame.io rebuild through the phased V1 completion program: sec
 - Active Sprint 1 draft PR: `https://github.com/Idea-R/aVOIDhub/pull/4`
 - Active membership/creator branch: `codex/feature-membership-creator-contract`
 - Active membership/creator issue: `https://github.com/Idea-R/aVOIDhub/issues/38`
+- Active membership/creator draft PR: `https://github.com/Idea-R/aVOIDhub/pull/39`
 - Membership/creator contract: `docs/membership-creator-v1.md`
 - Program source of truth: `docs/V1-COMPLETION-PROGRAM.md`
 - Sprint 0 evidence: `docs/sprint-0-recoverability.md`
@@ -76,8 +77,8 @@ Move the live aVOIDgame.io rebuild through the phased V1 completion program: sec
 13. **V1 completion program — documentation complete and under review.** The detailed per-platform and per-title program, sprint sequence, effort ranges, dependencies, and acceptance gates live in `docs/V1-COMPLETION-PROGRAM.md` and draft PR #2.
 14. **Sprint 0 recoverability packet — complete; branch approval pending.** The live schema, grants, policies, functions, advisors, migration drift, auth/score consumers, environment ownership, rollback targets, branch cost, and legacy-data mapping are frozen in `docs/sprint-0-recoverability.md`. No production state changed.
 15. **Sprint 1 isolated foundation repair — local gate complete; paid branch pending.** The forward migration now denies browser writes by default, makes profile publication explicit, preserves legacy scores without trusting their old verified flag, removes browser-era score triggers, adds ruleset/FK integrity, and ships 50 pgTAP assertions plus a static verifier. Create the 72-hour Supabase development branch only after cost approval, then run the documented data/API/advisor matrix against synthetic fixtures.
-16. **Player and Creator membership contract — local gate complete; review pending.** Core profile, favorite, play, and eligible leaderboard access remain free. Founding Player adds eligible-page ad suppression, identity, supporter cosmetics as games implement them, and selected experiments. Creator application stays free; private paid submission capacity requires both an approved application and an active Creator subscription. Payment cannot approve or publish. Tests, type-check, foundation verification, production build, and responsive browser QA pass. Test-mode billing, cosmetic fulfillment, ad suppression, and creator moderation remain separate executable gates.
+16. **Player and Creator membership contract — draft PR #39.** Core profile, favorite, play, and eligible leaderboard access remain free. Founding Player adds eligible-page ad suppression, identity, supporter cosmetics as games implement them, and selected experiments. Creator application stays free; private paid submission capacity requires both an approved application and an active Creator subscription. Payment cannot approve or publish. Tests, type-check, foundation verification, production build, and responsive browser QA pass. Test-mode billing, cosmetic fulfillment, ad suppression, and creator moderation remain separate executable gates.
 
 ## Current next action
 
-Publish issue #38 as a stacked draft review above the platform foundation, then verify its Git-driven preview. The paid Supabase branch, live Stripe Products/Prices, tax activation, AdSense, creator payouts, DNS, production data, and production deploy remain untouched.
+Verify draft PR #39's Git-driven preview. The paid Supabase branch, live Stripe Products/Prices, tax activation, AdSense, creator payouts, DNS, production data, and production deploy remain untouched.
