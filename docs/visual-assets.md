@@ -25,6 +25,13 @@ Captured at a desktop browser viewport on 2026-08-19 and converted to WebP witho
 
 Prompt summary: wide, text-free editorial arcade atmosphere using dimensional glass planes, teal and acid-lime orbital lines, one coral signal glow, halftone grain, and central negative space on a dark void field.
 
+## Code-native opening run
+
+- Mode: deterministic HTML/CSS/SVG-style shape construction; no new generated bitmap.
+- Usage: first-session landing-page intro with diagonal meteors, blocks, shards, player marker, rising scoreboard, impact rings, and page-reveal bloom.
+- Reason: the scene depends on responsive timing, crisp geometric shapes, reduced-motion behavior, and collision alignment across viewports. A fixed raster or video sequence would be heavier and less adaptable.
+- Controls: immediate skip button, Escape key, persistent replay control, and automatic reduced-motion bypass.
+
 ## Proposed meteor identity
 
 - Mode: built-in image generation with an existing aVOID meteor artwork reference, followed by deterministic transparency extraction after two generated PNGs baked a checkerboard into the image.

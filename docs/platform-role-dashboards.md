@@ -48,6 +48,14 @@ No dashboard control deletes data, publishes a game, deploys code, creates a cha
 - Converts the dashboard rail into a horizontal scrollable workspace switcher on phones.
 - Preserves the existing reduced-motion override and avoids animation-dependent meaning.
 
+### Opening run and creator-page rhythm
+
+- The directory landing page now includes a first-visit, session-scoped opening run: diagonal hazards cross a dimensional playfield while a small player marker dodges, the score climbs, and one final collision blooms into the page.
+- The sequence is code-native HTML/CSS with a small React timer controller. It adds no raster payload, exposes a persistent **Replay opening** control, can be skipped immediately or with Escape, and does not run when reduced motion is requested.
+- The scene lasts about 3.4 seconds and never gates repeat visits in the same browser session.
+- Creator intake spacing is intentionally hierarchical: 28–38 px between related workbench cards, 52–92 px before the requirements group, and 34–48 px before the final publication boundary note.
+- Creator panels and requirement cards use responsive tactile icon blocks instead of circular outline badges. The generated orbital field remains background atmosphere; all functional controls and decorative icons remain crisp HTML, CSS, and SVG.
+
 ## Activation checklist
 
 1. Configure the existing Supabase public and secret runtime variables in a non-production context.
@@ -69,6 +77,7 @@ Production role assignment, database migration, secrets, charges, and publicatio
 - All platform-owned routes remain within the viewport at tablet and phone widths
 - No visible interactive button below 40 × 40 CSS pixels at the phone breakpoint
 - No browser warning or error in the reviewed routes
+- Opening-run review at 1440 × 1000 and 390 × 844, including skip, replay, impact, score progression, zero horizontal overflow, and a reduced-motion bypass
 
 The legacy static-export command remains blocked by the pre-existing dynamic `/api/v1/runs/[runId]/finish` route under Next `output: export`. The production server build is the authoritative build gate for authenticated and API-backed pages.
 

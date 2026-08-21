@@ -215,3 +215,15 @@ Exercise test-mode Stripe subscription and cosmetic fulfillment plus executable 
 ### Next action
 
 Publish the branch as a draft PR and non-production Netlify runtime preview, then exercise authenticated player, creator, and admin paths against approved non-production Supabase fixtures before any production role assignment or migration.
+
+## 2026-08-20 — Creator rhythm and opening run
+
+- Reworked `/creators/apply/` around an explicit spacing hierarchy so the workflow cards, application form, requirements, and publication boundary no longer run together.
+- Added tactile lime, orange, and dark icon blocks to creator intake and requirements without introducing fixed-size bitmap controls.
+- Added a session-scoped landing-page opening run with falling meteors, shards, and blocks; a dodging player marker; rising score; final collision; and an impact-to-page reveal.
+- Added an always-available replay control plus skip, Escape, focus, and reduced-motion behavior. Repeat navigation in the same browser session does not replay automatically.
+- Browser-checked the new creator rhythm and opening sequence at 1440 × 1000 and 390 × 844 with no horizontal overflow.
+
+### Next action
+
+Publish the refreshed static feedback build on the existing draft PR, then collect reaction to the motion timing before adding game-specific intro variants.
