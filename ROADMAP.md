@@ -6,7 +6,7 @@ Updated: 2026-08-20
 
 ### Outcome
 
-Ship a production-ready rebuild of aVOIDgame.io that presents the verified catalog honestly, preserves every playable route, gives related Ideas Realized games a clear home, and creates a safe foundation for profiles, leaderboards, creator hosting, subscriptions, cosmetics, and tactful advertising.
+Move the live aVOIDgame.io rebuild through the phased V1 completion program: secure identity/data, first-party game detail pages, honest competition, and a separate acceptance gate for each hosted game.
 
 ### Success measures
 
@@ -17,6 +17,7 @@ Ship a production-ready rebuild of aVOIDgame.io that presents the verified catal
 - Desktop and mobile layouts pass visual, keyboard, reduced-motion, console, and basic performance checks.
 - Dependencies are current enough for a supportable production baseline, with breaking upgrades isolated and recorded.
 - Production is switched only after the preview and rollback path are verified.
+- The main platform and each game reach the V1 gates defined in `docs/V1-COMPLETION-PROGRAM.md`.
 
 ### In scope
 
@@ -25,8 +26,10 @@ Ship a production-ready rebuild of aVOIDgame.io that presents the verified catal
 - Dependency audit and safe upgrades for the new platform app.
 - Netlify configuration, draft deploy, route-preservation QA, and production handoff.
 - Supabase profiles, trust-labeled leaderboards, Stripe membership entitlements, creator intake, and their server-side security boundaries.
+- Phased repair and platform integration for WreckaVOID, WORDaVOID, and VOIDaVOID.
+- A deliberately narrow TankaVOID rebuild and an explicit FLIPSIDE ownership/integration decision.
 
-### Out of scope for the first live milestone
+### Out of scope for the completed shell milestone
 
 - Rewriting the individual playable games.
 - Finishing the TankaVOID game.
@@ -36,8 +39,23 @@ Ship a production-ready rebuild of aVOIDgame.io that presents the verified catal
 ### Source of truth
 
 - Repository worktree: `C:\dev\aVOID-next`
-- Branch: `codex/feature-next-platform-shell`
-- Draft PR: `https://github.com/Idea-R/aVOIDhub/pull/1`
+- Active documentation branch: `codex/docs-v1-completion-program`
+- Active Sprint 0 branch: `security/sprint-0-recoverability`
+- Active Sprint 1 branch: `security/platform-foundation-v1`
+- Active Sprint 1 draft PR: `https://github.com/Idea-R/aVOIDhub/pull/4`
+- Active membership/creator branch: `codex/feature-membership-creator-contract`
+- Active membership/creator issue: `https://github.com/Idea-R/aVOIDhub/issues/38`
+- Active membership/creator draft PR: `https://github.com/Idea-R/aVOIDhub/pull/39`
+- Active membership/creator public review: `https://membership-review-39--coruscating-squirrel-a47ad9.netlify.app/membership/`
+- Active role-dashboard branch: `codex/feature-platform-role-dashboards`
+- Active role-dashboard issue: `https://github.com/Idea-R/aVOIDhub/issues/40`
+- Active role-dashboard draft PR: `https://github.com/Idea-R/aVOIDhub/pull/41`
+- Active role-dashboard public review: `https://role-dashboard-review-41--coruscating-squirrel-a47ad9.netlify.app/`
+- Role-dashboard contract: `docs/platform-role-dashboards.md`
+- Membership/creator contract: `docs/membership-creator-v1.md`
+- Program source of truth: `docs/V1-COMPLETION-PROGRAM.md`
+- Sprint 0 evidence: `docs/sprint-0-recoverability.md`
+- Merged shell PR: `https://github.com/Idea-R/aVOIDhub/pull/1`
 - Git-driven preview: `https://deploy-preview-1--coruscating-squirrel-a47ad9.netlify.app`
 - Platform app: `apps/platform`
 - Production site: `https://avoidgame.io`
@@ -46,7 +64,7 @@ Ship a production-ready rebuild of aVOIDgame.io that presents the verified catal
 
 - Local research, implementation, tests, commits, dependency updates, and preview artifacts: proceed.
 - Netlify draft deploy: authorized by the current project charter.
-- Production deploy and merge of this reviewed candidate: approved on 2026-08-20. DNS changes, billing activation, ad activation, secrets, and data migrations remain separately gated.
+- The initial shell production rollout completed on 2026-08-20. Later production merges/deploys, DNS changes, billing activation, ad activation, secrets, paid resources, and data migrations remain gated by their sprint acceptance evidence and explicit approval.
 
 ## Milestones
 
@@ -55,14 +73,19 @@ Ship a production-ready rebuild of aVOIDgame.io that presents the verified catal
 3. **Dependency modernization — complete.** Updated the platform to Next 16.3.1 and React 19.2.8; moved compatible workspaces to Vite 8.2.1 while retaining WORDaVOID on its verified Vite 7/plugin 4 line; removed unused vulnerable dependencies; reconstructed VOIDaVOID's manifest; and cleared the complete npm audit.
 4. **Netlify preview — complete.** Linked the existing site, preserved the three bundled game routes, and deployed a Windows-safe draft export.
 5. **Preview verification — complete.** The refined shell, bundled games, local artwork, related domains, canonical metadata, application icon and manifest, complete same-origin sitemap, responsive layout, semantic structure, Tanka state, cache policy, native motion, accessibility, Lighthouse performance, and Git-driven Netlify Linux build are verified.
-6. **Production rollout — approved and in progress.** Push the reviewed candidate through a fresh Git-driven preview, preserve the rollback deploy, then verify the production switch route by route.
+6. **Production rollout — complete.** PR #1 merged at `7cd9788`; production deploy `6a86af420792ac00081b14a3` and the shell/game/legal routes were verified.
 7. **AdSense readiness — local foundation complete.** Truthful privacy and terms surfaces, domain-level verification support, consent and `ads.txt` gates, and directory-only placement rules are documented without activating ad requests. The correct account and publisher identifier remain external inputs.
 8. **Live-capture interaction refresh — preview complete.** Replaced the three external-game placeholders with direct first-party captures, added a restrained generated atmosphere layer, and gave cards and primary controls legible hover, press, focus, touch, and reduced-motion behavior.
 9. **Meteor identity and social presence — preview complete.** Established a proposed meteor mark rooted in the original aVOID game artwork, integrated it across platform identity surfaces, and adapted the Ideas Realized social rail into an aVOID-specific signal dock with a mobile footer fallback.
 10. **Platform foundation — local implementation complete.** Added passwordless accounts, editable public profiles, creator intake, private game submissions, trust-labeled leaderboards, one-use run tickets, Stripe Checkout/Portal/webhooks, and entitlement state. Updated WORDaVOID and WreckaVOID to stop direct score inserts; VOIDaVOID score carryover now fails closed until its full adapter exists.
 11. **Security migration — review gated.** The incremental migration closes the public score-write hole and adds RLS-protected platform tables, but must be tested on a Supabase development branch and deployed in lockstep with the platform and game adapters.
 12. **Monetization activation — account gated.** Confirm Stripe products/prices and test webhook behavior; confirm the exact AdSense publisher ID, site status, CMP, and age treatment before any real charge or ad request.
+13. **V1 completion program — documentation complete and under review.** The detailed per-platform and per-title program, sprint sequence, effort ranges, dependencies, and acceptance gates live in `docs/V1-COMPLETION-PROGRAM.md` and draft PR #2.
+14. **Sprint 0 recoverability packet — complete; branch approval pending.** The live schema, grants, policies, functions, advisors, migration drift, auth/score consumers, environment ownership, rollback targets, branch cost, and legacy-data mapping are frozen in `docs/sprint-0-recoverability.md`. No production state changed.
+15. **Sprint 1 isolated foundation repair — local gate complete; paid branch pending.** The forward migration now denies browser writes by default, makes profile publication explicit, preserves legacy scores without trusting their old verified flag, removes browser-era score triggers, adds ruleset/FK integrity, and ships 50 pgTAP assertions plus a static verifier. Create the 72-hour Supabase development branch only after cost approval, then run the documented data/API/advisor matrix against synthetic fixtures.
+16. **Player and Creator membership contract — draft PR #39 and public review ready.** Core profile, favorite, play, and eligible leaderboard access remain free. Founding Player adds eligible-page ad suppression, identity, supporter cosmetics as games implement them, and selected experiments. Creator application stays free; private paid submission capacity requires both an approved application and an active Creator subscription. Payment cannot approve or publish. Tests, type-check, foundation verification, production build, responsive browser QA, and the static public feedback build pass. Test-mode billing, cosmetic fulfillment, ad suppression, and creator moderation remain separate executable gates.
+17. **Role-aware platform workspaces — local implementation complete.** Added a branded passwordless signal gate, player deck, creator workflow, gated private build intake, and administrator control room. Admin authorization uses only server-controlled app metadata; review actions are whitelisted, same-origin, and do not publish, deploy, charge, grant, delete, or activate ads. Type-check, 19 tests, production build, and desktop/tablet/phone browser QA pass. Non-production runtime exercises, preview publication, and production activation remain pending.
 
 ## Current next action
 
-Commit and push the approved shell, verify a fresh Git-driven preview, and publish production without activating database, Stripe, or AdSense behavior. The coordinated migration and test-mode account flows remain the next gated platform milestone.
+Exercise the subscription and cosmetic lifecycle against Stripe test mode and a coordinated non-production database once those resources are approved. The paid Supabase branch, live Stripe Products/Prices, tax activation, AdSense, creator payouts, DNS, production data, and production deploy remain untouched.

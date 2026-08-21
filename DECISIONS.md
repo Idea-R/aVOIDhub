@@ -133,3 +133,89 @@ Creator applications and game submissions enter a private review queue. Profiles
 - Status: accepted
 
 Do not pin seals, badges, or decorative controls over responsive copy. Give prominent artifacts their own grid lane and let them stack naturally on small screens. Use asymmetrical collectible shapes, shallow perspective, tactile press depth, and transform-based motion with reduced-motion fallbacks instead of generic thin circular badges or disclaimer pills.
+
+## D-020 — Use separate platform detail and immersive play routes
+
+- Date: 2026-08-20
+- Status: proposed for V1 program review
+
+First-party catalog cards should open `/games/<slug>/` pages with controls, status, scores, personal best, favorites, share, and a clear Play action. Preserve the current immersive routes for bookmarks and focused play. External titles must state the destination domain and cannot imply shared account or leaderboard behavior.
+
+## D-021 — Give every title its own V1 gate
+
+- Date: 2026-08-20
+- Status: accepted as program structure
+
+Platform V1, full-catalog V1, and individual game V1 are separate milestones. WreckaVOID, WORDaVOID, VOIDaVOID, FLIPSIDE, and TankaVOID each carry their own current-state evidence, sprint sequence, trust boundary, effort range, and acceptance checks in `docs/V1-COMPLETION-PROGRAM.md`. A working URL does not satisfy a title’s V1 gate.
+
+## D-022 — Rebuild TankaVOID around the combat idea, not every prototype system
+
+- Date: 2026-08-20
+- Status: proposed for V1 program review
+
+Preserve the prototype in history, then build a clean fixed-step vertical slice around deliberate hull movement, turret aim, directional armor, impact angle, and readable damage. Do not make multiplayer, campaign progression, infantry, every pickup, or every prototype boss a V1 requirement.
+
+## D-023 — Treat every existing leaderboard row as legacy
+
+- Date: 2026-08-20
+- Status: accepted as the migration contract
+
+Preserve all 69 production score rows, but do not carry the client-era `is_verified` claim into V1 competition. The coordinated migration must set `verification_level = 'legacy'` and clear `is_verified` on every existing row. Legacy rows may appear only in surfaces that label them plainly and keep them separate from provisional, validated, and verified results.
+
+## D-024 — Make profile publication an explicit choice
+
+- Date: 2026-08-20
+- Status: proposed for production migration approval
+
+New profiles default to private. The 15 existing profiles are all public under a legacy default, which is not proof of an intentional privacy choice. The proposed migration preserves every profile but makes existing profiles private until their owners publish them. Grandfathering current visibility is the alternative and requires an explicit decision before production migration.
+
+## D-025 — Test the foundation on a short-lived paid database branch
+
+- Date: 2026-08-20
+- Status: proposed; cost approval required
+
+Use a Supabase development branch cloned from the production schema, synthetic data only, and a 72-hour initial lifetime. The current reported price is `$0.01344/hour`, or about `$0.97` for 72 hours. Do not create or extend the branch without confirming the current cost. Capture evidence and delete the branch after the test window unless an extension is approved.
+
+## D-026 — Record environment ownership without exporting secret values
+
+- Date: 2026-08-20
+- Status: accepted
+
+Project records may contain environment variable names, exposure class, context, and owning service. They must not contain secret values, tokens, private keys, webhook secrets, database passwords, or copied Netlify environment exports. Release verification checks presence and scope in the owning service without pasting values into Git or review logs.
+
+## D-027 — Deny browser data writes unless the workflow is deliberately client-owned
+
+- Date: 2026-08-20
+- Status: accepted for the Sprint 1 foundation
+
+Revoke inherited table and function privileges from `anon` and `authenticated`, then grant back the smallest documented surface. Score, run, billing, webhook, entitlement mutation, creator application, and game submission writes belong to authenticated server routes. Profile presentation fields and owner-scoped favorites may remain direct client writes because both column grants and RLS constrain them. Manual backup tables have no browser access.
+
+## D-028 — Version every ranked ruleset
+
+- Date: 2026-08-20
+- Status: accepted for the Sprint 1 foundation
+
+Every new run session and score submission records a bounded ruleset version. The atomic finishing transaction copies game, mode, user, and ruleset identity from the locked server-created run rather than accepting those values from the finishing client. A leaderboard may compare results only within a compatibility rule defined by the game; a future balance or scoring change cannot silently share a ranking with an incompatible ruleset.
+
+## D-029 — Separate creator approval from creator payment
+
+- Date: 2026-08-20
+- Status: accepted for the membership source gate
+
+Creator application is free. Human review establishes creator approval; Stripe establishes only subscription state. Private game submission and paid hosting capacity require both an approved application and an active Creator entitlement. Payment cannot create a creator profile, approve an application, publish a game, enable ads, or promise revenue sharing. Cancellation removes subscription-sourced capacity without deleting creator ownership, application, profile, submission, or review history.
+
+Free accounts retain core profiles, favorites, play, and eligible leaderboards. Founding Player and Creator plans may add ad-free eligible platform pages, noncompetitive identity/cosmetics, selected experiments, and reviewed creator capacity. No plan may change score, damage, armor, movement, ranked trust, or other competitive outcomes.
+
+## D-030 — Keep role selection out of the login surface
+
+- Date: 2026-08-20
+- Status: accepted
+
+Use one passwordless login for players, creators, and administrators. Player and creator status comes from owned platform records and entitlements. Administrator authority comes only from server-controlled Supabase Auth `app_metadata.platform_role`; never read `user_metadata`, a query parameter, a client-side switch, or a public profile field as admin authorization. Authenticated pages and every privileged route handler must verify the user independently.
+
+## D-031 — Make review approval operationally narrow
+
+- Date: 2026-08-20
+- Status: accepted
+
+The administrator control room may record bounded creator, game, and score-review transitions. A review approval does not publish a game, deploy code, create a Stripe charge, grant an entitlement, activate AdSense, or delete evidence. Those actions remain separate workflows with their own acceptance and production gates.

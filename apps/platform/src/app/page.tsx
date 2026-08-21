@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import { ArrowDown, ArrowRight, BadgeCheck, Heart, Trophy, UserRound } from 'lucide-react'
 import { GameCard } from '@/components/GameCard'
+import { ArcadeIntro, IntroReplayButton } from '@/components/ArcadeIntro'
 import { Reveal } from '@/components/Reveal'
 import { SiteFooter } from '@/components/SiteFooter'
 import { SiteHeader } from '@/components/SiteHeader'
@@ -15,6 +16,7 @@ const platformFeatures = [
 export default function HomePage() {
   return (
     <main id="top">
+      <ArcadeIntro />
       <SiteHeader />
 
       <aside className="signalRail sectionFrame" aria-label="Platform status">
@@ -22,6 +24,7 @@ export default function HomePage() {
         <span>Hosted <strong>04</strong></span>
         <span>Elsewhere <strong>03</strong></span>
         <span>Queued <strong>01</strong></span>
+        <IntroReplayButton />
         <span className="signalCode">AVD / ONLINE</span>
       </aside>
 
@@ -105,6 +108,10 @@ export default function HomePage() {
             <h2 id="platform-title">A better home for games that are <em>already fun.</em></h2>
             <p>We&apos;re building the connective tissue: profiles, reliable leaderboards, favorites, creator pages, and sensible hosting. The games stay the point.</p>
             <div className="buildTag"><BadgeCheck size={16} /> Profiles and honest scoreboards are taking shape now.</div>
+            <div className="platformAccessLinks">
+              <a href="/account/">Open your player deck <ArrowRight aria-hidden="true" /></a>
+              <a href="/creators/dashboard/">Creator workspace <ArrowRight aria-hidden="true" /></a>
+            </div>
           </Reveal>
           <div className="featureStack">
             {platformFeatures.map((feature, index) => {

@@ -1,11 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import { getSafeReturnPath } from '@/lib/auth/return-path'
 import { getSiteUrl } from '@/lib/env'
 import { createClient } from '@/lib/supabase/server'
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get('code')
-  const requestedNext = request.nextUrl.searchParams.get('next')
-  const next = requestedNext?.startsWith('/') ? requestedNext : '/account/'
+  const next = getSafeReturnPath(request.nextUrl.searchParams.get('next'))
 
   if (code) {
     const supabase = await createClient()

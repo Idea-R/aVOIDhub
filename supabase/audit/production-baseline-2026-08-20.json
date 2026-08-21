@@ -1,0 +1,338 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-08-20T08:40:25.082551Z",
+  "captureMethod": "Supabase MCP read-only metadata and aggregate SQL",
+  "privacy": "No player names, emails, user identifiers, tokens, billing identifiers, or row-level profile data",
+  "project": {
+    "name": "aVOID",
+    "ref": "jyuafqzjrzifqbgcqbnt",
+    "organization": "Idea/R",
+    "organizationPlan": "pro",
+    "region": "us-west-1",
+    "status": "ACTIVE_HEALTHY",
+    "postgresVersion": "17.4.1.041",
+    "databaseSizeBytes": 13855891,
+    "developmentBranchCount": 0,
+    "edgeFunctionCount": 0,
+    "scheduledBackupStatus": "dashboard-auth-required-not-verified",
+    "pitrStatus": "dashboard-auth-required-not-verified"
+  },
+  "branchCost": {
+    "amountUsd": 0.01344,
+    "recurrence": "hourly",
+    "approximateThirtyPointFourDayUsd": 9.81,
+    "approvalRequired": true
+  },
+  "migrations": {
+    "liveCount": 29,
+    "trackedUniqueCount": 10,
+    "liveVersions": [
+      "20250107120000",
+      "20250107121000",
+      "20250606080806",
+      "20250606191511",
+      "20250606191532",
+      "20250606193828",
+      "20250606215712",
+      "20250606221115",
+      "20250611030033",
+      "20250611030854",
+      "20250613010036",
+      "20250613010043",
+      "20250613010049",
+      "20250613010058",
+      "20250613010108",
+      "20250613010237",
+      "20250628112842",
+      "20250703043908",
+      "20250703043943",
+      "20250703044025",
+      "20250703045624",
+      "20250705090712",
+      "20250705090727",
+      "20250705090751",
+      "20250705090809",
+      "20250705092043",
+      "20250705092401",
+      "20250705094704",
+      "20260202071810"
+    ],
+    "liveMissingFromTracked": [
+      "20250107120000",
+      "20250107121000",
+      "20250611030033",
+      "20250611030854",
+      "20250613010036",
+      "20250613010043",
+      "20250613010049",
+      "20250613010058",
+      "20250613010108",
+      "20250613010237",
+      "20250703043908",
+      "20250703043943",
+      "20250703044025",
+      "20250703045624",
+      "20250705090712",
+      "20250705090727",
+      "20250705090751",
+      "20250705090809",
+      "20250705092043",
+      "20250705092401",
+      "20250705094704",
+      "20260202071810"
+    ],
+    "trackedMissingFromLive": [
+      "20250607070000",
+      "20250705173200",
+      "20260820064235"
+    ]
+  },
+  "publicSchema": {
+    "tableCount": 6,
+    "allTablesRlsEnabled": true,
+    "tables": [
+      { "name": "game_scores", "rows": 0 },
+      { "name": "games", "rows": 4 },
+      { "name": "leaderboard_scores", "rows": 69 },
+      { "name": "leaderboard_scores_backup_manual", "rows": 42 },
+      { "name": "user_profiles", "rows": 15 },
+      { "name": "user_profiles_backup_manual", "rows": 9 }
+    ],
+    "viewCount": 0,
+    "triggerCount": 3,
+    "functionCount": 17,
+    "fullTablePrivileges": {
+      "roles": ["anon", "authenticated", "service_role"],
+      "tables": [
+        "game_scores",
+        "games",
+        "leaderboard_scores",
+        "leaderboard_scores_backup_manual",
+        "user_profiles",
+        "user_profiles_backup_manual"
+      ],
+      "privileges": [
+        "DELETE",
+        "INSERT",
+        "REFERENCES",
+        "SELECT",
+        "TRIGGER",
+        "TRUNCATE",
+        "UPDATE"
+      ]
+    }
+  },
+  "policies": [
+    {
+      "table": "game_scores",
+      "name": "Users can insert own scores",
+      "command": "INSERT",
+      "roles": ["authenticated"],
+      "check": "auth.uid() = user_id"
+    },
+    {
+      "table": "game_scores",
+      "name": "Users can view all scores",
+      "command": "SELECT",
+      "roles": ["authenticated"],
+      "using": "true"
+    },
+    {
+      "table": "games",
+      "name": "Anyone can read games",
+      "command": "SELECT",
+      "roles": ["public"],
+      "using": "is_active = true"
+    },
+    {
+      "table": "leaderboard_scores",
+      "name": "Anyone can insert scores",
+      "command": "INSERT",
+      "roles": ["public"],
+      "check": "true"
+    },
+    {
+      "table": "leaderboard_scores",
+      "name": "Anyone can read leaderboard scores",
+      "command": "SELECT",
+      "roles": ["public"],
+      "using": "true"
+    },
+    {
+      "table": "leaderboard_scores",
+      "name": "Users can update own verified scores",
+      "command": "UPDATE",
+      "roles": ["authenticated"],
+      "using": "auth.uid() = user_id and is_verified = true",
+      "check": null
+    },
+    {
+      "table": "leaderboard_scores_backup_manual",
+      "name": "backup_tables_admin_only",
+      "command": "ALL",
+      "roles": ["public"],
+      "using": "auth.role() = service_role"
+    },
+    {
+      "table": "user_profiles",
+      "name": "Users can insert own profile",
+      "command": "INSERT",
+      "roles": ["authenticated"],
+      "check": "auth.uid() = id"
+    },
+    {
+      "table": "user_profiles",
+      "name": "Users can update own profile",
+      "command": "UPDATE",
+      "roles": ["authenticated"],
+      "using": "auth.uid() = id",
+      "check": null
+    },
+    {
+      "table": "user_profiles",
+      "name": "Users can view all profiles",
+      "command": "SELECT",
+      "roles": ["authenticated"],
+      "using": "true"
+    },
+    {
+      "table": "user_profiles",
+      "name": "unified_user_profile_policy",
+      "command": "ALL",
+      "roles": ["public"],
+      "using": "own row when authenticated or is_public = true",
+      "check": null
+    },
+    {
+      "table": "user_profiles_backup_manual",
+      "name": "backup_profiles_admin_only",
+      "command": "ALL",
+      "roles": ["public"],
+      "using": "auth.role() = service_role"
+    }
+  ],
+  "securityDefinerFunctions": [
+    {
+      "name": "backfill_missing_profiles",
+      "arguments": "",
+      "anonExecute": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "create_user_profile",
+      "arguments": "",
+      "anonExecute": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "get_user_leaderboard_position",
+      "arguments": "user_uuid uuid",
+      "anonExecute": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "get_user_score_history",
+      "arguments": "user_uuid uuid, limit_count integer",
+      "anonExecute": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "update_game_statistics",
+      "arguments": "user_id uuid, games_increment integer, meteors_increment integer, survival_increment numeric, distance_increment numeric, game_score integer, game_meteors integer, game_survival_time numeric, game_distance numeric",
+      "anonExecute": true,
+      "authenticatedExecute": true
+    }
+  ],
+  "advisors": {
+    "security": {
+      "total": 22,
+      "byRule": {
+        "function_search_path_mutable": 10,
+        "anon_security_definer_function_executable": 5,
+        "authenticated_security_definer_function_executable": 5,
+        "auth_leaked_password_protection": 1,
+        "vulnerable_postgres_version": 1
+      }
+    },
+    "performance": {
+      "total": 17,
+      "byRule": {
+        "auth_rls_initplan": 3,
+        "unused_index": 10,
+        "multiple_permissive_policies": 3,
+        "auth_db_connections_absolute": 1
+      }
+    }
+  },
+  "dataAggregates": {
+    "authUsers": 15,
+    "authIdentities": 15,
+    "profiles": {
+      "total": 15,
+      "public": 15,
+      "private": 0,
+      "proMembers": 1,
+      "stripeCustomerIds": 0
+    },
+    "scores": {
+      "total": 69,
+      "markedVerified": 48,
+      "guest": 32,
+      "duplicateSessionGroups": 0,
+      "missingProfileReferences": 0,
+      "byGame": [
+        {
+          "gameKey": "tankavoid",
+          "total": 3,
+          "markedVerified": 3,
+          "guest": 3,
+          "minimum": 6100,
+          "maximum": 8500
+        },
+        {
+          "gameKey": "voidavoid",
+          "total": 60,
+          "markedVerified": 39,
+          "guest": 23,
+          "minimum": 1,
+          "maximum": 19110
+        },
+        {
+          "gameKey": "wordavoid",
+          "total": 3,
+          "markedVerified": 3,
+          "guest": 3,
+          "minimum": 4100,
+          "maximum": 5200
+        },
+        {
+          "gameKey": "wreckavoid",
+          "total": 3,
+          "markedVerified": 3,
+          "guest": 3,
+          "minimum": 9875,
+          "maximum": 15420
+        }
+      ]
+    },
+    "manualBackups": {
+      "scoreRows": 42,
+      "scoreIdsAlsoLive": 42,
+      "profileRows": 9,
+      "profileIdsAlsoLive": 9
+    }
+  },
+  "classification": {
+    "allExistingLeaderboardScores": "legacy",
+    "existingIsVerifiedValue": "untrusted-client-era-flag",
+    "manualBackupTables": "duplicate-subsets-not-independent-restore-points",
+    "productionMigrationReadiness": "blocked-until-isolated-reconciliation-passes"
+  },
+  "remediationReferences": [
+    "https://supabase.com/docs/guides/database/database-advisors",
+    "https://supabase.com/docs/guides/database/postgres/row-level-security",
+    "https://supabase.com/docs/guides/local-development/testing/overview",
+    "https://supabase.com/docs/guides/platform/backups",
+    "https://supabase.com/docs/guides/platform/branching"
+  ]
+}

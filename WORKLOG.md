@@ -2,6 +2,32 @@
 
 ## 2026-08-20
 
+- Corrected the pending platform-foundation migration against the frozen production baseline; the migration remains unapplied to Supabase.
+- Replaced the inherited all-table browser grants with a deny-by-default Data API surface. Browser roles retain public catalog/leaderboard reads, owner-scoped profile presentation updates, entitlement/application reads, and owner-scoped favorites only.
+- Removed all browser score writes on both canonical and legacy score tables, blocked browser access to manual backup, billing, webhook, run, and submission tables, and reserved run finalization and aggregate updates for `service_role`.
+- Preserved the 69-row production migration contract by reclassifying pre-foundation scores as `legacy`, clearing the untrusted `is_verified` flag, and adding a validated trust-consistency constraint rather than deleting history.
+- Made new profiles private by default and included the production-gated D-024 conversion of the 15 legacy public profiles to private until their owners opt in.
+- Replaced email-derived signup usernames with deterministic non-email handles, retained exactly one signup trigger, removed the score-insert aggregate and leaderboard-name-sync triggers, and fixed trigger-function search paths.
+- Added game-key and submission foreign keys, query-path indexes, ruleset versioning, one-use ticket validation, bounded JSON metrics, and service-only run finalization.
+- Added `supabase/tests/database/platform_foundation.sql` with 50 pgTAP assertions and `npm run test:foundation` as a fast local structural/security gate.
+- Added `docs/sprint-1-foundation-test-plan.md` with synthetic legacy fixtures, direct-write denial tests, one-use run replay tests, app compatibility checks, advisor deltas, rollback rules, and exact Sprint 1 exit evidence.
+- Passed the foundation verifier, Sprint 0 frozen-baseline verifier, Prettier, and Git whitespace checks. Docker Desktop and the Supabase CLI are not active locally, so executable SQL remains gated on the approved Supabase development branch.
+- Reinstalled the locked dependency graph with zero audit findings, passed the platform type-check, WORDaVOID regression test, and the complete staged VOIDaVOID/WreckaVOID/WORDaVOID plus Next.js production build. The root lint command remains red on pre-existing workspace debt: missing/broken shared and retired-hub ESLint configuration plus legacy TankaVOID, VOIDaVOID, and old `wreck-avoid` findings; those are catalog-game sprint gates rather than migration regressions.
+- Published the isolated foundation work as stacked draft PR #4 (`security/platform-foundation-v1` into `security/sprint-0-recoverability`). The commit and pull request contain no production database mutation or secret value.
+- Completed the sanitized Sprint 0 recoverability packet at `docs/sprint-0-recoverability.md` without changing production.
+- Captured the aVOID Supabase production baseline through read-only metadata and aggregate queries: six public tables, 29 live migrations, 17 public functions, three triggers, 22 security advisories, 17 performance advisories, 15 profiles, and 69 legacy scores.
+- Quantified migration drift: 22 live migration versions have no tracked SQL anywhere in the repository, while three tracked versions have not run in production.
+- Confirmed all six public tables grant all table privileges to `anon`, `authenticated`, and `service_role`; five anonymous-executable `SECURITY DEFINER` functions and the permissive score policy remain live.
+- Classified every existing score as `legacy`, the old `is_verified` field as untrusted, all 15 profiles as public-by-default legacy state, and the manual backup tables as duplicate subsets rather than independent restore points.
+- Recorded the exact application rollback commit/deploy, platform/database ownership, independent-domain boundaries, required environment variable names/scopes, and the active auth/score consumers.
+- Added `supabase/audit/production-readonly-inventory.sql`, a sanitized frozen JSON baseline, and `supabase/audit/verify-baseline.mjs` so the packet can be checked without exporting player or secret data.
+- Supabase reported a development-branch price of `$0.01344/hour` (about `$0.97` for 72 hours). No branch was created; cost confirmation remains approval-gated.
+- Exact scheduled-backup/PITR readback remains a production gate because the connector does not expose backup records and the available browser session was not signed in to the Supabase dashboard.
+- Started the sustained aVOID V1 completion goal with `docs/V1-COMPLETION-PROGRAM.md` as its source of truth.
+- Drafted separate V1 definitions, scope boundaries, sprint sequences, effort ranges, dependencies, and acceptance gates for the main platform, WreckaVOID, WORDaVOID, VOIDaVOID, FLIPSIDE, TankaVOID, and the independent Ideas Realized directory titles.
+- Defined a 5-day evidence-based sprint model, separate platform/full-catalog gates, three bounded workstream lanes, approval boundaries, and Sprint 0 as a recoverability packet with no production changes.
+- Re-ran TankaVOID type-check and confirmed the prototype has dozens of incompatible engine/entity/system contracts; the program treats it as a narrow rebuild rather than a cosmetic repair.
+- Created `codex/docs-v1-completion-program` from the merged production `main` branch. No production, database, Netlify, Stripe, AdSense, or domain state changed in this documentation sprint.
 - Audited the live Supabase project and found that clients could insert arbitrary `leaderboard_scores`, including `is_verified = true`; several public `SECURITY DEFINER` functions and permissive policies also need hardening.
 - Audited VOIDaVOID, WreckaVOID, WORDaVOID, and the public FLIPSIDE bundle. Confirmed every current score path was browser-authored; WreckaVOID's intended submission was also skipped by its game-over state ordering.
 - Designed an incremental platform migration with explicit RLS/grants, membership and entitlement tables, private review queues, run sessions, score submissions, Stripe webhook idempotency, and a service-role-only atomic run-finishing function.
@@ -20,7 +46,7 @@
 
 ### Next action
 
-Commit and push the approved platform candidate, verify the Git-driven Netlify runtime preview, then publish and verify production. Do not apply the score-locking migration separately from the platform and staged game deploy.
+Review the Sprint 1 migration and `docs/sprint-1-foundation-test-plan.md`, then approve or decline the 72-hour Supabase development branch at the last verified `$0.01344/hour` (about `$0.97`). Do not apply the score-locking migration separately from the platform and staged game deploy.
 
 ## 2026-08-19
 
@@ -140,3 +166,64 @@ The production deploy and merge remain intentionally unchanged until the user re
 ### Next action
 
 Review the refined draft, then approve or request changes before the production deploy and merge.
+
+## 2026-08-20 — Player and Creator membership contract
+
+- Opened issue `#38` and created isolated branch `codex/feature-membership-creator-contract` from the exact reviewed platform-foundation head `f1976f2`.
+- Defined Free Player, Founding Player, and Creator offers in `docs/membership-creator-v1.md`, including cosmetic, advertising, subscription, hosting, and future payout boundaries.
+- Kept ordinary accounts, profiles, favorites, play, and eligible leaderboards free. Paid benefits remain comfort, identity, cosmetics, early access, and creator capacity—never score or gameplay power.
+- Made creator application free and separated review approval from subscription entitlement. Creator checkout and private game submission now require approved status; game submission additionally requires an active `creator.submit_game` entitlement.
+- Removed paid `creator.profile` from the plan mapping so payment cannot create approval or publication. Added the supporter-cosmetic entitlement promised by the Player offer.
+- Added focused pure eligibility tests plus database/static assertions that paid plans do not grant creator approval.
+- Rewrote membership and creator-intake copy around observable requirements, private review, hosting lanes, and honest live-vs-planned boundaries.
+- Consulted the current Supabase changelog before implementation. The Data API exposure change is already handled by explicit grants; current Node 22 and TypeScript versions satisfy the announced client-library requirements.
+- Passed seven focused eligibility tests, platform type-check, the 52-assertion foundation verifier, and the complete 21-route Next production build.
+- Browser-verified the membership and creator-intake pages at 390 × 844 and 1440 × 900 with no horizontal overflow, visible overlap, or console warning/error.
+- Pushed commit `cadf7ca` and opened stacked draft PR `#39` above `security/platform-foundation-v1`; production remains unchanged.
+- Confirmed Netlify had not produced Git-driven previews for PR #37 or #39. A direct Windows Netlify runtime build reproduced the known adapter trace bug, resolving `@swc/helpers` above the worktree.
+- Published a deliberately static, non-production feedback deploy `6a8774281ba9d8a5d0370ddc` at `https://membership-review-39--coruscating-squirrel-a47ad9.netlify.app`; accounts, checkout, API routes, ads, and migrations remain inactive there.
+- Verified HTTP 200 for the review shell, membership, creator intake, and all three bundled games. Live browser checks confirmed the correct membership/creator copy, disabled transaction and application controls, no console warning/error, and no mobile overflow at 390 × 844.
+- No Supabase branch or migration execution, Stripe Product/Price, charge, AdSense request, creator publication, payout, DNS change, or production deploy occurred.
+
+### Next action
+
+Exercise test-mode Stripe subscription and cosmetic fulfillment plus executable database acceptance once the non-production resources are approved. AdSense activation remains a separate gated step.
+
+## 2026-08-20 — Role-aware platform workspaces
+
+- Opened issue `#40` and created isolated branch `codex/feature-platform-role-dashboards` from the membership/creator contract head.
+- Rebuilt `/login/` as a branded signal gate with a validated local return path and one passwordless identity across player, creator, and admin surfaces.
+- Rebuilt `/account/` as a player deck for owned profile, accepted-run and favorite counts, entitlements, membership, creator state, and profile editing.
+- Added `/creators/dashboard/` with an explicit application → review → membership → private-submission sequence and owned submission inventory.
+- Gated `/creators/submit/` at the page boundary as well as the API boundary; only approved creators with an active `creator.submit_game` entitlement can reach the live form.
+- Added `/admin/` with creator, game, score-integrity, and membership signals plus real review controls.
+- Added `/api/admin/review` with same-origin enforcement, authenticated user validation, server-controlled app-metadata authorization, whitelisted transitions, and an optimistic concurrency check.
+- Kept review approval separate from publication, deploys, payments, entitlements, ads, and deletion.
+- Reused the existing generated orbital depth field as the common control-room atmosphere. Built responsive tactile controls in HTML/CSS instead of generating fixed-size button images.
+- Updated shared platform-page hero composition and global navigation so login, accounts, creator pages, membership, leaderboards, policy pages, and the new operations surfaces share the same identity.
+- Added 12 focused role, return-path, and admin-transition tests; the platform suite now passes 19 tests.
+- Passed platform type-check and the 24-route Next production build.
+- Browser-reviewed every platform-owned route at 768 × 900 and 390 × 844 with no horizontal overflow or undersized visible buttons. Visually reviewed login, account, creator, and admin surfaces at desktop and phone widths; no console warning or error was present.
+- The static-export review command remains blocked by the existing dynamic run-finish API and is not the correct build shape for authenticated server routes. Production remains unchanged.
+- Pushed commits `fdd6452` and `90a347f`, then opened stacked draft PR `#41` against the membership/creator contract branch.
+- The direct Windows Netlify runtime build reproduced the known `@swc/helpers` trace failure after the complete application build passed.
+- Built a temporary static feedback package with API, callback, dynamic player, and ads routes absent and all role surfaces forced into their explicit runtime-disconnected states.
+- Published non-production deploy `6a878bfb69cf762ff5930039` at `https://role-dashboard-review-41--coruscating-squirrel-a47ad9.netlify.app/`.
+- Verified HTTP 200 for the shell, login, account, creator application/workspace/submission, membership, leaderboards, admin, privacy, terms, and all three bundled game routes. Public mobile browser QA found no overflow or console warning/error.
+- Confirmed production remains deploy `6a86af420792ac00081b14a3`.
+
+### Next action
+
+Publish the branch as a draft PR and non-production Netlify runtime preview, then exercise authenticated player, creator, and admin paths against approved non-production Supabase fixtures before any production role assignment or migration.
+
+## 2026-08-20 — Creator rhythm and opening run
+
+- Reworked `/creators/apply/` around an explicit spacing hierarchy so the workflow cards, application form, requirements, and publication boundary no longer run together.
+- Added tactile lime, orange, and dark icon blocks to creator intake and requirements without introducing fixed-size bitmap controls.
+- Added a session-scoped landing-page opening run with falling meteors, shards, and blocks; a dodging player marker; rising score; final collision; and an impact-to-page reveal.
+- Added an always-available replay control plus skip, Escape, focus, and reduced-motion behavior. Repeat navigation in the same browser session does not replay automatically.
+- Browser-checked the new creator rhythm and opening sequence at 1440 × 1000 and 390 × 844 with no horizontal overflow.
+
+### Next action
+
+Publish the refreshed static feedback build on the existing draft PR, then collect reaction to the motion timing before adding game-specific intro variants.
