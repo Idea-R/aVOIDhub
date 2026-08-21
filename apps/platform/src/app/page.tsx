@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import { ArrowDown, ArrowRight, BadgeCheck, Heart, Trophy, UserRound } from 'lucide-react'
 import { GameCard } from '@/components/GameCard'
+import { ArcadeIntro, IntroReplayButton } from '@/components/ArcadeIntro'
 import { Reveal } from '@/components/Reveal'
 import { SiteFooter } from '@/components/SiteFooter'
 import { SiteHeader } from '@/components/SiteHeader'
@@ -15,6 +16,7 @@ const platformFeatures = [
 export default function HomePage() {
   return (
     <main id="top">
+      <ArcadeIntro />
       <SiteHeader />
 
       <aside className="signalRail sectionFrame" aria-label="Platform status">
@@ -22,6 +24,7 @@ export default function HomePage() {
         <span>Hosted <strong>04</strong></span>
         <span>Elsewhere <strong>03</strong></span>
         <span>Queued <strong>01</strong></span>
+        <IntroReplayButton />
         <span className="signalCode">AVD / ONLINE</span>
       </aside>
 

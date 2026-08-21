@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { BadgeCheck, Gamepad2, ScanSearch, ShieldCheck } from "lucide-react";
 import { CreatorApplicationForm } from "@/components/CreatorApplicationForm";
 import { PlatformPage } from "@/components/PlatformPage";
 import { isPlatformRuntimeConfigured } from "@/lib/env";
@@ -21,7 +22,15 @@ export default function CreatorApplyPage() {
       <div className="workspaceRibbon"><span>Already applied?</span><a href="/creators/dashboard/">Open your creator workspace →</a></div>
       <section className="platformDashboard creatorIntake">
         <article className="platformPanel">
-          <p className="panelLabel">How it works</p>
+          <div className="creatorPanelHeading">
+            <span className="creatorPanelIcon">
+              <Gamepad2 aria-hidden="true" />
+            </span>
+            <div>
+              <p className="panelLabel">How it works</p>
+              <strong>From first build to private review.</strong>
+            </div>
+          </div>
           <ol className="numberedList">
             <li>
               <strong>Apply free.</strong>
@@ -61,11 +70,21 @@ export default function CreatorApplyPage() {
           </ol>
         </article>
         <article className="platformPanel">
+          <div className="creatorPanelHeading creatorPanelHeadingForm">
+            <span className="creatorPanelIcon creatorPanelIconHot">
+              <ScanSearch aria-hidden="true" />
+            </span>
+            <div>
+              <p className="panelLabel">Your signal</p>
+              <strong>Give us enough to inspect.</strong>
+            </div>
+          </div>
           <CreatorApplicationForm enabled={isPlatformRuntimeConfigured()} />
         </article>
       </section>
-      <section className="planGrid">
+      <section className="planGrid creatorRequirements">
         <article className="platformPanel planCard">
+          <span className="requirementIcon"><BadgeCheck aria-hidden="true" /></span>
           <p className="panelLabel">Required</p>
           <h2>A build we can actually inspect</h2>
           <ul className="plainList">
@@ -78,6 +97,7 @@ export default function CreatorApplyPage() {
           </ul>
         </article>
         <article className="platformPanel planCard">
+          <span className="requirementIcon requirementIconDark"><ShieldCheck aria-hidden="true" /></span>
           <p className="panelLabel">For hosted games</p>
           <h2>A release that respects players</h2>
           <ul className="plainList">
