@@ -20,9 +20,9 @@ export default async function PlayerPage({ params }: { params: Promise<{ usernam
   const socials = (profile.social_links || {}) as Record<string, string>
 
   return (
-    <PlatformPage eyebrow="/ player profile" title={<>{profile.display_name || profile.username}<br /><em>@{profile.username}</em></>} intro={profile.bio || 'An aVOID player with an unfinished story.'}>
+    <PlatformPage eyebrow="/ player profile" title={<>{profile.display_name || profile.username}<br /><em>@{profile.username}</em></>} intro={profile.bio || 'This player has not written a bio yet.'}>
       <section className="platformPanel narrowPanel">
-        <p className="panelLabel">Outbound signals</p>
+        <p className="panelLabel">Links</p>
         <div className="profileLinks">
           {Object.entries(socials).map(([label, url]) => <a key={label} href={url} target="_blank" rel="noreferrer">{label}<ExternalLink size={15} /></a>)}
           {!Object.keys(socials).length && <span>No public social links yet.</span>}

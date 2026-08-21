@@ -20,7 +20,7 @@ export default function MembershipPage() {
           <em>Keep play fair.</em>
         </>
       }
-      intro="Core accounts, profiles, favorites, and eligible leaderboards stay free. Membership adds comfort, identity, and creator capacity—never a stronger tank or a better score."
+      intro="Accounts, profiles, favorites, and eligible leaderboards stay free. Membership adds fewer ads, profile extras, and creator tools. It never buys a stronger tank or a better score."
     >
       <section className="platformPanel narrowPanel">
         <p className="panelLabel">Free player</p>
@@ -28,8 +28,8 @@ export default function MembershipPage() {
         <p>
           Create a profile, save favorites, enter eligible leaderboards, and
           play every free release. If advertising is approved, free players may
-          see restrained display ads on calm platform pages—not over gameplay or
-          controls.
+          see a small number of ads on quiet platform pages. Ads never cover
+          gameplay or controls.
         </p>
       </section>
       <section className="planGrid">
@@ -54,7 +54,7 @@ export default function MembershipPage() {
               <CheckoutButton plan={key} enabled={enabled} />
               {!enabled && (
                 <span className="quietNote">
-                  Preview only—no charge can be created.
+                  Preview only. Checkout is not open yet.
                 </span>
               )}
             </article>

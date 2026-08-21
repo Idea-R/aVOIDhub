@@ -16,9 +16,9 @@ export default async function GameSubmitPage() {
   if (!isPlatformRuntimeConfigured()) {
     return (
       <PlatformPage eyebrow="/ private review queue" title={<>Submit the build.<br /><em>Not the hype.</em></>} intro="Give us a playable URL and the real hosting need. Nothing becomes public, monetized, or ranked until it passes review.">
-        <DashboardShell active="creator" role="CREATOR PREVIEW" name="Private submission" status="runtime disconnected">
+        <DashboardShell active="creator" role="CREATOR PREVIEW" name="Private submission" status="preview only">
           <div className="deckHeader"><div><p className="panelLabel">Build intake</p><h2>A clean handoff<br /><em>starts here.</em></h2></div><span className="deckStamp deckStampWarning"><LockKeyhole aria-hidden="true" /> Preview only</span></div>
-          <section className="submissionWorkbench"><div className="submissionWorkbenchNote"><ScanSearch aria-hidden="true" /><p className="panelLabel">What review means</p><h3>Playable first. Claims second.</h3><p>We inspect ownership, safety, controls, privacy, responsive behavior, score integrity, and the requested hosting lane. Approval still does not publish the game.</p></div><GameSubmissionForm enabled={false} /></section>
+          <section className="submissionWorkbench"><div className="submissionWorkbenchNote"><ScanSearch aria-hidden="true" /><p className="panelLabel">What review means</p><h3>Playable first. Claims second.</h3><p>We inspect ownership, safety, controls, privacy, responsive behavior, score integrity, and the hosting setup you chose. Approval still does not publish the game.</p></div><GameSubmissionForm enabled={false} /></section>
         </DashboardShell>
       </PlatformPage>
     )
@@ -32,9 +32,9 @@ export default async function GameSubmitPage() {
 
   return (
     <PlatformPage eyebrow="/ private review queue" title={<>Submit the build.<br /><em>Not the hype.</em></>} intro="Give us a playable URL and the real hosting need. Nothing becomes public, monetized, or ranked until it passes review.">
-      <DashboardShell active="creator" role="APPROVED CREATOR" name={userData.user.email?.split('@')[0] ?? 'Creator'} status="submission lane open" isAdmin={isPlatformAdmin(userData.user)}>
+      <DashboardShell active="creator" role="APPROVED CREATOR" name={userData.user.email?.split('@')[0] ?? 'Creator'} status="submissions open" isAdmin={isPlatformAdmin(userData.user)}>
         <div className="deckHeader"><div><p className="panelLabel">Build intake</p><h2>A clean handoff<br /><em>starts here.</em></h2></div><span className="deckStamp"><BadgeCheck aria-hidden="true" /> Eligible creator</span></div>
-        <section className="submissionWorkbench"><div className="submissionWorkbenchNote"><ScanSearch aria-hidden="true" /><p className="panelLabel">What review means</p><h3>Playable first. Claims second.</h3><p>We inspect ownership, safety, controls, privacy, responsive behavior, score integrity, and the requested hosting lane. Approval still does not publish the game.</p></div><GameSubmissionForm /></section>
+        <section className="submissionWorkbench"><div className="submissionWorkbenchNote"><ScanSearch aria-hidden="true" /><p className="panelLabel">What review means</p><h3>Playable first. Claims second.</h3><p>We inspect ownership, safety, controls, privacy, responsive behavior, score integrity, and the hosting setup you chose. Approval still does not publish the game.</p></div><GameSubmissionForm /></section>
       </DashboardShell>
     </PlatformPage>
   )

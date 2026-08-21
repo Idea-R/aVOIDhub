@@ -59,20 +59,20 @@ const gameActions: Record<string, Array<{ status: string; label: string }>> = {
 
 function PreviewControlRoom() {
   return (
-    <DashboardShell active="admin" role="ADMIN PREVIEW" name="Control room" status="runtime disconnected" isAdmin>
+    <DashboardShell active="admin" role="ADMIN PREVIEW" name="Control room" status="preview only" isAdmin>
       <div className="deckHeader">
         <div><p className="panelLabel">Operational preview</p><h2>The controls are designed.<br /><em>The keys stay server-side.</em></h2></div>
         <span className="deckStamp deckStampWarning"><AlertTriangle aria-hidden="true" /> Offline preview</span>
       </div>
       <div className="metricGrid">
-        <article><UsersRound aria-hidden="true" /><span>Creator queue</span><strong>—</strong><small>Connect runtime to load</small></article>
-        <article><Gamepad2 aria-hidden="true" /><span>Game reviews</span><strong>—</strong><small>No sample records shown</small></article>
-        <article><ShieldCheck aria-hidden="true" /><span>Score review</span><strong>—</strong><small>Verification queue</small></article>
-        <article><CircleDollarSign aria-hidden="true" /><span>Memberships</span><strong>—</strong><small>Billing is read-only here</small></article>
+        <article><UsersRound aria-hidden="true" /><span>Creator queue</span><strong>OFF</strong><small>Connect Supabase to load</small></article>
+        <article><Gamepad2 aria-hidden="true" /><span>Game reviews</span><strong>OFF</strong><small>No sample records shown</small></article>
+        <article><ShieldCheck aria-hidden="true" /><span>Score review</span><strong>OFF</strong><small>Connect the review queue</small></article>
+        <article><CircleDollarSign aria-hidden="true" /><span>Memberships</span><strong>OFF</strong><small>Billing stays read-only here</small></article>
       </div>
       <section className="emptyControlState">
         <RadioTower aria-hidden="true" />
-        <div><p className="panelLabel">Honest preview state</p><h3>No production data is loaded.</h3><p>When Supabase is connected, this route requires an authenticated user whose server-controlled app metadata contains the admin role.</p></div>
+        <div><p className="panelLabel">Preview data</p><h3>No production records are loaded.</h3><p>When Supabase is connected, only signed-in accounts with a server-assigned admin role can open this page.</p></div>
       </section>
     </DashboardShell>
   )

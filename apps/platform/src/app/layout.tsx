@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://avoidgame.io'),
   applicationName: 'aVOIDgame.io',
   title: {
-    default: 'aVOIDgame.io — Small games. Sharp ideas.',
+    default: 'aVOIDgame.io | Small games. Sharp ideas.',
     template: '%s | aVOIDgame.io',
   },
   description: 'Play the aVOID originals and discover other games by Ideas Realized.',
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
   },
   manifest: '/manifest.webmanifest',
   openGraph: {
-    title: 'aVOIDgame.io — Small games. Sharp ideas.',
+    title: 'aVOIDgame.io | Small games. Sharp ideas.',
     description: 'Play the aVOID originals and discover other games by Ideas Realized.',
     url: 'https://avoidgame.io',
     siteName: 'aVOIDgame.io',
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'aVOIDgame.io — Small games. Sharp ideas.',
+    title: 'aVOIDgame.io | Small games. Sharp ideas.',
     description: 'Play the aVOID originals and discover other games by Ideas Realized.',
     images: ['/avoid-hero.webp'],
   },

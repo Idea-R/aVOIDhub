@@ -50,8 +50,8 @@ export default async function LeaderboardsPage({ searchParams }: { searchParams:
       </nav>
       <section className="leaderboardPanel">
         <div className="leaderboardHead"><span>Rank / player</span><span>Trust</span><span>Score</span></div>
-        {unavailable && <p className="emptyState">The board is staged but not connected on this preview.</p>}
-        {!unavailable && !scores.length && <p className="emptyState">No accepted runs yet. The first honest score gets the loudest row.</p>}
+        {unavailable && <p className="emptyState">The leaderboard cannot reach Supabase right now.</p>}
+        {!unavailable && !scores.length && <p className="emptyState">No accepted runs yet. The first one takes the top row.</p>}
         {scores.map((row, index) => (
           <div className="leaderboardRow" key={row.id}>
             <span><i>{String(index + 1).padStart(2, '0')}</i><strong>{row.player_name}</strong></span>
