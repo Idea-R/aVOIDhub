@@ -2,14 +2,15 @@ import { notFound } from 'next/navigation'
 import { ExternalLink } from 'lucide-react'
 import { PlatformPage } from '@/components/PlatformPage'
 import { isPlatformRuntimeConfigured } from '@/lib/env'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
 
 export default async function PlayerPage({ params }: { params: Promise<{ username: string }> }) {
   if (!isPlatformRuntimeConfigured()) notFound()
   const { username } = await params
-  const { data: profile } = await createAdminClient()
+  const supabase = await createClient()
+  const { data: profile } = await supabase
     .from('user_profiles')
     .select('username, display_name, bio, social_links, created_at')
     .eq('username', username.toLowerCase())

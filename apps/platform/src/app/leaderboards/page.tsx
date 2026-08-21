@@ -2,12 +2,13 @@ import type { Metadata } from 'next'
 import { PlatformPage } from '@/components/PlatformPage'
 import { isPlatformRuntimeConfigured } from '@/lib/env'
 import { rankedGameRegistry, type RankedGameKey } from '@/lib/games/registry'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Leaderboards' }
 
 type ScoreRow = { id: string; player_name: string; score: number; game_key: string; verification_level: string; created_at: string }
+type LegacyScoreRow = Omit<ScoreRow, 'verification_level'> & { is_verified: boolean }
 
 export default async function LeaderboardsPage({ searchParams }: { searchParams: Promise<{ game?: string }> }) {
   const requested = (await searchParams).game
@@ -16,14 +17,30 @@ export default async function LeaderboardsPage({ searchParams }: { searchParams:
   let unavailable = !isPlatformRuntimeConfigured()
 
   if (!unavailable) {
-    const { data, error } = await createAdminClient()
+    const supabase = await createClient()
+    const currentResult = await supabase
       .from('leaderboard_scores')
       .select('id, player_name, score, game_key, verification_level, created_at')
       .eq('game_key', gameKey)
       .order('score', { ascending: false })
       .limit(50)
-    scores = (data ?? []) as ScoreRow[]
-    unavailable = Boolean(error)
+
+    if (!currentResult.error) {
+      scores = (currentResult.data ?? []) as ScoreRow[]
+    } else {
+      const legacyResult = await supabase
+        .from('leaderboard_scores')
+        .select('id, player_name, score, game_key, is_verified, created_at')
+        .eq('game_key', gameKey)
+        .order('score', { ascending: false })
+        .limit(50)
+
+      scores = ((legacyResult.data ?? []) as LegacyScoreRow[]).map(({ is_verified: _untrustedLegacyFlag, ...row }) => ({
+        ...row,
+        verification_level: 'legacy',
+      }))
+      unavailable = Boolean(legacyResult.error)
+    }
   }
 
   return (
