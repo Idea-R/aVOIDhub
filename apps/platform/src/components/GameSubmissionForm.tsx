@@ -66,7 +66,7 @@ export function GameSubmissionForm({ enabled = true }: { enabled?: boolean }) {
         rows={7}
         required
       />
-      <label htmlFor="requestedHosting">Requested lane</label>
+      <label htmlFor="requestedHosting">How should we host it?</label>
       <select
         id="requestedHosting"
         name="requestedHosting"
@@ -80,7 +80,7 @@ export function GameSubmissionForm({ enabled = true }: { enabled?: boolean }) {
         Submit private review
       </button>
       <p className="formStatus" aria-live="polite">
-        {status || (!enabled ? 'Preview only—submission requires a connected, eligible creator account.' : 'The build stays private until review is complete.')}
+        {status || (!enabled ? 'Preview only. Sign in with an approved creator account to submit a game.' : 'The build stays private until review is complete.')}
       </p>
     </form>
   );

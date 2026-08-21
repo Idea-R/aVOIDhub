@@ -30,7 +30,7 @@ type GameSubmission = {
 
 function CreatorPreview() {
   return (
-    <DashboardShell active="creator" role="CREATOR PREVIEW" name="Your studio" status="runtime disconnected">
+    <DashboardShell active="creator" role="CREATOR PREVIEW" name="Your studio" status="preview only">
       <div className="deckHeader">
         <div><p className="panelLabel">Creator bay</p><h2>From playable build<br /><em>to reviewed release.</em></h2></div>
         <span className="deckStamp deckStampWarning"><RadioTower aria-hidden="true" /> Preview mode</span>
@@ -41,7 +41,7 @@ function CreatorPreview() {
         <article><span>03</span><KeyRound aria-hidden="true" /><strong>Open tools</strong><p>Creator membership starts only after approval.</p></article>
         <article><span>04</span><Gamepad2 aria-hidden="true" /><strong>Submit privately</strong><p>Nothing publishes or monetizes itself.</p></article>
       </div>
-      <section className="emptyControlState"><CircleDashed aria-hidden="true" /><div><p className="panelLabel">No fabricated status</p><h3>Sign in on the connected runtime.</h3><p>Your real application, membership, and submission states appear here once account access is connected.</p></div></section>
+      <section className="emptyControlState"><CircleDashed aria-hidden="true" /><div><p className="panelLabel">Your real status</p><h3>Sign in to see where you stand.</h3><p>Your application, membership, and game submissions appear here after sign-in.</p></div></section>
     </DashboardShell>
   )
 }
@@ -49,7 +49,7 @@ function CreatorPreview() {
 export default async function CreatorDashboardPage() {
   if (!isPlatformRuntimeConfigured()) {
     return (
-      <PlatformPage eyebrow="/ creator workspace" title={<>Build it.<br /><em>Bring it in clean.</em></>} intro="A private route from first application to release-ready game—without selling approval or pretending review is instant.">
+      <PlatformPage eyebrow="/ creator workspace" title={<>Build it.<br /><em>Bring it in clean.</em></>} intro="Apply, pass review, and bring us a playable build. Payment never buys approval.">
         <CreatorPreview />
       </PlatformPage>
     )
@@ -76,23 +76,23 @@ export default async function CreatorDashboardPage() {
   const role = getPlatformRole({ user: userData.user, creatorApproved: approved })
 
   return (
-    <PlatformPage eyebrow="/ creator workspace" title={<>Build it.<br /><em>Bring it in clean.</em></>} intro="A private route from first application to release-ready game—without selling approval or pretending review is instant.">
-      <DashboardShell active="creator" role={role.toUpperCase()} name={name} status={canSubmit ? 'submission lane open' : 'requirements in progress'} isAdmin={isPlatformAdmin(userData.user)}>
+    <PlatformPage eyebrow="/ creator workspace" title={<>Build it.<br /><em>Bring it in clean.</em></>} intro="Apply, pass review, and bring us a playable build. Payment never buys approval.">
+      <DashboardShell active="creator" role={role.toUpperCase()} name={name} status={canSubmit ? 'submissions open' : 'setup in progress'} isAdmin={isPlatformAdmin(userData.user)}>
         <div className="deckHeader">
           <div><p className="panelLabel">Creator bay</p><h2>Your route to<br /><em>the directory.</em></h2></div>
-          <span className={`deckStamp ${canSubmit ? '' : 'deckStampWarning'}`}>{canSubmit ? <BadgeCheck aria-hidden="true" /> : <Clock3 aria-hidden="true" />}{canSubmit ? 'Tools unlocked' : 'Gates remain'}</span>
+          <span className={`deckStamp ${canSubmit ? '' : 'deckStampWarning'}`}>{canSubmit ? <BadgeCheck aria-hidden="true" /> : <Clock3 aria-hidden="true" />}{canSubmit ? 'Creator tools ready' : 'Setup incomplete'}</span>
         </div>
 
         <div className="creatorTrack" aria-label="Creator publishing sequence">
           <article data-state={application ? 'complete' : 'current'}><span>01</span><BadgeCheck aria-hidden="true" /><strong>Apply free</strong><p>{application ? `Application ${application.status.replaceAll('_', ' ')}.` : 'Share identity, ownership, and a reviewable build.'}</p></article>
           <article data-state={approved ? 'complete' : application ? 'current' : undefined}><span>02</span><Clock3 aria-hidden="true" /><strong>Pass review</strong><p>{approved ? 'Creator review approved.' : 'Approval follows a real ownership and quality review.'}</p></article>
           <article data-state={hasCreatorMembership ? 'complete' : approved ? 'current' : undefined}><span>03</span><KeyRound aria-hidden="true" /><strong>Open tools</strong><p>{hasCreatorMembership ? 'Creator membership is active.' : 'Subscribe only after approval.'}</p></article>
-          <article data-state={canSubmit ? 'current' : undefined}><span>04</span><Gamepad2 aria-hidden="true" /><strong>Submit privately</strong><p>{canSubmit ? 'Your private submission lane is open.' : 'Review and membership must both be active.'}</p></article>
+          <article data-state={canSubmit ? 'current' : undefined}><span>04</span><Gamepad2 aria-hidden="true" /><strong>Submit privately</strong><p>{canSubmit ? 'You can send us a private build.' : 'Review and membership must both be active.'}</p></article>
         </div>
 
         <section className="creatorCommandGrid">
           <article className="commandSlab commandSlabHot">
-            <p className="panelLabel">Next useful move</p>
+            <p className="panelLabel">What to do next</p>
             <h3>{!application ? 'Start the free application.' : !approved ? 'Watch the review state.' : !hasCreatorMembership ? 'Choose Creator membership.' : 'Send the next playable build.'}</h3>
             <p>{!application ? 'Payment is not part of applying.' : !approved ? 'A reviewer may ask for ownership or build details.' : !hasCreatorMembership ? 'Paid tools do not replace approval.' : 'The build stays private until the game review is complete.'}</p>
             <a className="primaryButton" href={!application ? '/creators/apply/' : !approved ? '#application-state' : !hasCreatorMembership ? '/membership/' : '/creators/submit/'}>{canSubmit ? 'Submit a game' : 'Continue the process'} <ArrowUpRight aria-hidden="true" /></a>
@@ -100,7 +100,7 @@ export default async function CreatorDashboardPage() {
           <article className="commandSlab" id="application-state">
             <p className="panelLabel">Application state</p>
             <strong className="commandValue">{application?.status.replaceAll('_', ' ') ?? 'not started'}</strong>
-            <dl className="signalLedger"><div><dt>Creator tools</dt><dd>{hasCreatorMembership ? 'active' : 'locked'}</dd></div><div><dt>Private submit</dt><dd>{canSubmit ? 'open' : 'held'}</dd></div><div><dt>Published games</dt><dd>review required</dd></div></dl>
+            <dl className="signalLedger"><div><dt>Creator tools</dt><dd>{hasCreatorMembership ? 'active' : 'locked'}</dd></div><div><dt>Private submissions</dt><dd>{canSubmit ? 'open' : 'held'}</dd></div><div><dt>Published games</dt><dd>review required</dd></div></dl>
           </article>
         </section>
 

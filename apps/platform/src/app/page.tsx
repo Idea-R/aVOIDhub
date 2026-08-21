@@ -106,8 +106,8 @@ export default function HomePage() {
           <Reveal className="platformIntro">
             <p className="sectionIndex">/ 03 · the platform</p>
             <h2 id="platform-title">A better home for games that are <em>already fun.</em></h2>
-            <p>We&apos;re building the connective tissue: profiles, reliable leaderboards, favorites, creator pages, and sensible hosting. The games stay the point.</p>
-            <div className="buildTag"><BadgeCheck size={16} /> Profiles and honest scoreboards are taking shape now.</div>
+            <p>We&apos;re tying the games together with player profiles, leaderboards people can trust, favorites, creator pages, and hosting that makes sense. The games are still the point.</p>
+            <div className="buildTag"><BadgeCheck size={16} /> Profiles are live. Older scores are clearly marked while verified scoring is rebuilt.</div>
             <div className="platformAccessLinks">
               <a href="/account/">Open your player deck <ArrowRight aria-hidden="true" /></a>
               <a href="/creators/dashboard/">Creator workspace <ArrowRight aria-hidden="true" /></a>
@@ -146,7 +146,7 @@ export default function HomePage() {
             <span className="artifactSlab artifactSlabBack" />
             <span className="artifactSlab artifactSlabFront" />
             <div className="medalImageWrap">
-              <Image src="/brand/founding-player-medal-v1.png" alt="" fill sizes="(max-width: 760px) 70vw, 430px" className="medalImage" />
+              <Image src="/brand/founding-player-medal-v2.png" alt="" fill sizes="(max-width: 760px) 70vw, 430px" className="medalImage" />
             </div>
             <div className="foundingTag"><span>FOUNDING</span><strong>PLAYER</strong><i>NO PAY-TO-WIN</i></div>
           </div>

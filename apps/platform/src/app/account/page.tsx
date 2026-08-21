@@ -15,17 +15,17 @@ export const metadata: Metadata = { title: 'Your player deck' }
 
 function AccountPreview() {
   return (
-    <DashboardShell active="overview" role="PLAYER PREVIEW" name="Your signal" status="runtime disconnected">
+    <DashboardShell active="overview" role="PLAYER PREVIEW" name="Your account" status="preview only">
       <div className="deckHeader">
-        <div><p className="panelLabel">Player deck</p><h2>The profile is ready.<br /><em>The data stays honest.</em></h2></div>
+        <div><p className="panelLabel">Player deck</p><h2>The design is ready.<br /><em>Your data comes after sign-in.</em></h2></div>
         <span className="deckStamp deckStampWarning"><RadioTower aria-hidden="true" /> Preview mode</span>
       </div>
       <div className="metricGrid metricGridThree">
-        <article><Trophy aria-hidden="true" /><span>Ranked runs</span><strong>—</strong><small>Connected account required</small></article>
-        <article><BookMarked aria-hidden="true" /><span>Favorites</span><strong>—</strong><small>No invented activity</small></article>
+        <article><Trophy aria-hidden="true" /><span>Ranked runs</span><strong>OFF</strong><small>Sign in to load your runs</small></article>
+        <article><BookMarked aria-hidden="true" /><span>Favorites</span><strong>OFF</strong><small>Sign in to load your games</small></article>
         <article><Sparkles aria-hidden="true" /><span>Membership</span><strong>FREE</strong><small>Cosmetics, never power</small></article>
       </div>
-      <section className="emptyControlState"><ShieldCheck aria-hidden="true" /><div><p className="panelLabel">Review-safe account</p><h3>No player data is loaded on this static preview.</h3><p>The connected runtime will show the signed-in player’s own profile, favorites, eligible runs, entitlements, and creator state.</p></div></section>
+      <section className="emptyControlState"><ShieldCheck aria-hidden="true" /><div><p className="panelLabel">Preview account</p><h3>No player data is loaded here.</h3><p>After sign-in, this page shows your profile, favorites, eligible runs, membership, and creator status.</p></div></section>
     </DashboardShell>
   )
 }
@@ -33,7 +33,7 @@ function AccountPreview() {
 export default async function AccountPage() {
   if (!isPlatformRuntimeConfigured()) {
     return (
-      <PlatformPage eyebrow="/ player identity" title={<>Your place<br /><em>in the arcade.</em></>} intro="Scores, saved games, membership, and creator access meet in one deliberately useful player deck.">
+      <PlatformPage eyebrow="/ player identity" title={<>Your place<br /><em>in the arcade.</em></>} intro="Your scores, saved games, membership, and creator tools all live here.">
         <AccountPreview />
       </PlatformPage>
     )
@@ -64,8 +64,8 @@ export default async function AccountPage() {
   const playerName = profile?.display_name || profile?.username || userData.user.email?.split('@')[0] || 'Player'
 
   return (
-    <PlatformPage eyebrow="/ player identity" title={<>Your place<br /><em>in the arcade.</em></>} intro="Scores, saved games, membership, and creator access meet in one deliberately useful player deck.">
-      <DashboardShell active="overview" role={role.toUpperCase()} name={playerName} status={canSubmitGame ? 'creator lane open' : hasAdFree ? 'ad-free signal' : 'free player'} isAdmin={isAdmin}>
+    <PlatformPage eyebrow="/ player identity" title={<>Your place<br /><em>in the arcade.</em></>} intro="Your scores, saved games, membership, and creator tools all live here.">
+      <DashboardShell active="overview" role={role.toUpperCase()} name={playerName} status={canSubmitGame ? 'creator tools ready' : hasAdFree ? 'ad-free member' : 'free player'} isAdmin={isAdmin}>
         <div className="deckHeader">
           <div><p className="panelLabel">Welcome back</p><h2>{playerName}<br /><em>is on the board.</em></h2></div>
           <span className="deckStamp"><BadgeCheck aria-hidden="true" /> Account verified</span>
@@ -87,8 +87,8 @@ export default async function AccountPage() {
 
           <article className="commandSlab commandSlabHot">
             <p className="panelLabel">Creator access</p>
-            <h3>{canSubmitGame ? 'Your private submission lane is open.' : creatorApproved ? 'Approval cleared. Tools are the next gate.' : creatorApplication ? `Application ${creatorApplication.status.replaceAll('_', ' ')}.` : 'Have a browser game worth playing?'}</h3>
-            <p>{canSubmitGame ? 'Send a playable build for private inspection.' : creatorApproved ? 'Creator membership unlocks submission and hosting tools.' : 'Apply free. Ownership and quality review happen before any paid creator tools.'}</p>
+            <h3>{canSubmitGame ? 'You can submit a game.' : creatorApproved ? 'You are approved. Creator membership opens the submission tools.' : creatorApplication ? `Application ${creatorApplication.status.replaceAll('_', ' ')}.` : 'Have a browser game worth playing?'}</h3>
+            <p>{canSubmitGame ? 'Send us a playable build for a private review.' : creatorApproved ? 'Membership opens the tools, but it never replaces approval.' : 'Applying is free. We check ownership and quality before paid creator tools become available.'}</p>
             <a className="primaryButton" href={canSubmitGame ? '/creators/submit/' : creatorApplication ? '/creators/dashboard/' : '/creators/apply/'}>{canSubmitGame ? 'Submit a game' : 'Open creator bay'} <ArrowUpRight aria-hidden="true" /></a>
           </article>
         </section>
