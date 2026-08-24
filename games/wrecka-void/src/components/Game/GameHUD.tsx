@@ -32,6 +32,9 @@ export function GameHUD({
 }: GameHUDProps) {
   const [hoveredUpgrade, setHoveredUpgrade] = useState<string | null>(null);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const elapsedSeconds = Math.floor(gameState.gameTime);
+  const timeLabel = `${Math.floor(elapsedSeconds / 60)}:${String(elapsedSeconds % 60).padStart(2, "0")}`;
+  const overtime = gameState.gameTime >= 600 && gameState.bossesDefeated < 3;
 
   const getActiveEffectIcons = () => {
     const icons = [];
@@ -251,7 +254,7 @@ export function GameHUD({
             </div>
           </div>
 
-          {/* Right: Score, Wave, Time */}
+          {/* Right: Score, Act, Wave, Time */}
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <div className="text-right">
               <div className="text-sm font-bold text-yellow-400">
@@ -261,11 +264,13 @@ export function GameHUD({
             </div>
             <div className="text-right">
               <div className="text-sm font-bold text-blue-400">
-                <span className="sm:hidden">W{gameState.wave}</span>
-                <span className="hidden sm:inline">Wave {gameState.wave}</span>
+                <span className="sm:hidden">A{gameState.act} · W{gameState.wave}</span>
+                <span className="hidden sm:inline">
+                  Act {gameState.act} · Wave {gameState.wave}
+                </span>
               </div>
-              <div className="text-xs text-gray-400">
-                {Math.floor(gameState.gameTime)}s
+              <div className={`text-xs ${overtime ? "font-bold text-orange-300" : "text-gray-400"}`}>
+                {overtime ? `OVERTIME ${timeLabel}` : timeLabel}
               </div>
             </div>
             <div className="hidden text-right lg:block">

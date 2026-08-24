@@ -1,5 +1,6 @@
 import { Enemy, Vector2, Projectile } from "../types/Game";
 import { PhysicsEngine } from "./PhysicsEngine";
+import type { WreckRunSnapshot } from "./WreckRunDirector";
 
 export class EnemyManager {
   private enemies: Enemy[] = [];
@@ -7,7 +8,6 @@ export class EnemyManager {
   private nextEnemyId = 0;
   private nextProjectileId = 0;
   private spawnTimer = 0;
-  private bossSpawnTimer = 0;
   private bossesSpawned = 0;
 
   spawnEnemy(
@@ -455,7 +455,7 @@ export class EnemyManager {
     }
   }
 
-  updateBossMinions(playerPos: Vector2): void {
+  updateBossMinions(playerPos: Vector2, maxOrdinaryEnemies: number): void {
     const currentTime = Date.now();
 
     this.enemies.forEach((enemy) => {
@@ -475,6 +475,10 @@ export class EnemyManager {
             : 2;
 
           for (let i = 0; i < minionCount; i++) {
+            const ordinaryEnemyCount = this.enemies.filter(
+              (candidate) => candidate.type !== "boss",
+            ).length;
+            if (ordinaryEnemyCount >= maxOrdinaryEnemies) break;
             const angle = (i / minionCount) * Math.PI * 2;
             const spawnDistance = enemy.size + 50;
             const spawnPos = {
@@ -543,7 +547,7 @@ export class EnemyManager {
     deltaTime: number,
     canvasWidth: number,
     canvasHeight: number,
-    wave: number,
+    encounter: WreckRunSnapshot,
     playerPos: Vector2,
   ): void {
     const dt = deltaTime / 1000;
@@ -556,27 +560,31 @@ export class EnemyManager {
 
     // Update spawn timer
     this.spawnTimer += deltaTime;
-    const spawnRate = Math.max(800 - wave * 80, 300);
+    const ordinaryEnemyCount = this.enemies.filter(
+      (enemy) => enemy.type !== "boss",
+    ).length;
 
-    if (this.spawnTimer >= spawnRate) {
-      this.spawnEnemy(canvasWidth, canvasHeight, wave, playerPos);
+    if (
+      this.spawnTimer >= encounter.spawnIntervalMs &&
+      ordinaryEnemyCount < encounter.maxOrdinaryEnemies
+    ) {
+      this.spawnEnemy(canvasWidth, canvasHeight, encounter.wave, playerPos);
       this.spawnTimer = 0;
     }
 
-    // Update boss spawn timer (every minute)
-    this.bossSpawnTimer += deltaTime;
-    const bossSpawnRate = 60000; // 60 seconds
-
-    if (this.bossSpawnTimer >= bossSpawnRate) {
+    if (encounter.shouldSpawnBoss && !this.hasActiveBoss()) {
       this.spawnBoss(canvasWidth, canvasHeight, playerPos);
-      this.bossSpawnTimer = 0;
     }
 
     // Update boss shooting
     this.updateBossShooting(playerPos);
 
     // Update boss minion spawning
-    this.updateBossMinions(playerPos);
+    this.updateBossMinions(playerPos, encounter.maxOrdinaryEnemies);
+
+    if (this.projectiles.length > encounter.maxProjectiles) {
+      this.projectiles = this.projectiles.slice(-encounter.maxProjectiles);
+    }
 
     // Update enemy positions and special behaviors
     this.enemies.forEach((enemy) => {
@@ -804,6 +812,10 @@ export class EnemyManager {
     return this.projectiles;
   }
 
+  hasActiveBoss(): boolean {
+    return this.enemies.some((enemy) => enemy.type === "boss" && enemy.health > 0);
+  }
+
   removeProjectiles(indices: number[]): void {
     indices.sort((a, b) => b - a);
     indices.forEach((index) => {
@@ -816,7 +828,6 @@ export class EnemyManager {
     this.enemies = [];
     this.projectiles = [];
     this.spawnTimer = 0;
-    this.bossSpawnTimer = 0;
     this.bossesSpawned = 0;
   }
 }

@@ -377,3 +377,10 @@ Preserve the chain and ball physics, but derive offensive damage from bounded im
 - Status: accepted working interpretation of the owner launch direction
 
 Treat WreckaVOID and TankaVOID as the first two hosted games to carry the platform from polished directory to complete product. Preserve guest play, difficult skill-based progression, ruleset-specific leaderboards, player profiles, noncompetitive cosmetics, and paid membership entitlements. Platform billing, creator hosting, and advertising remain shared services; none may change gameplay power or score trust. Integrate the complete stacked game work into current `main`, then finish data, device, deploy, rollback, balance, and live-service gates on one clean launch branch.
+
+## D-054 — Freeze the first Wreck Run candidate as a bounded three-boss ruleset
+
+- Date: 2026-08-23
+- Status: accepted for release-candidate testing
+
+Identify the finite mode as `wreck-run` and its first candidate as `wreck-run-v1.0.0-rc.1`. Advance one wave every 30 seconds to a 20-wave ceiling. Open boss checkpoints at 150, 330, and 600 seconds; the third boss defeat is victory, while time beyond ten minutes is final-boss overtime rather than a fourth act. Cap ordinary enemies at 18, 22, and 24 by act and projectiles at 36, 48, and 60. Reduce ordinary spawn pressure during boss phases. Award 10,000 points per cleared wave and 100,000 per broken boss so going farther dominates combat farming while enemy points still break close ties. Keep submitted results provisional and reject incoherent time, wave, boss, minimum progress score, outcome, mode, and ruleset combinations at the platform boundary.

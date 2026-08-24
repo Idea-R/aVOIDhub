@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { getRequestUser } from '@/lib/auth/request-user'
 import { validateWordAvoidFinish } from '@/lib/games/wordavoid'
 import { validateTankaVOIDFinish } from '@/lib/games/tankavoid'
+import { validateWreckAvoidFinish } from '@/lib/games/wreckavoid'
 import { hasAllowedWriteOrigin } from '@/lib/http/same-origin'
 import { isPlatformRuntimeConfigured } from '@/lib/env'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -91,6 +92,14 @@ export async function POST(request: NextRequest, context: { params: Promise<{ ru
       rulesetVersion: result.manifest.rulesetVersion,
       validationCapability: 'bounds_recomputed',
     }
+    validationCapability = 'bounds_recomputed'
+  }
+
+  if (run.game_key === 'wreckavoid') {
+    const result = validateWreckAvoidFinish(run, parsed.data.score, parsed.data.metrics)
+    if (!result) return NextResponse.json({ error: 'run_evidence_rejected' }, { status: 400 })
+    acceptedScore = result.score
+    acceptedMetrics = result.metrics
     validationCapability = 'bounds_recomputed'
   }
 

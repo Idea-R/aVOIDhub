@@ -5,6 +5,7 @@ import { getRequestUser } from '@/lib/auth/request-user'
 import { isRankedGameKey, rankedGameRegistry } from '@/lib/games/registry'
 import { wordAvoidValidationMetadata } from '@/lib/games/wordavoid'
 import { tankaVOIDValidationMetadata } from '@/lib/games/tankavoid'
+import { WRECKAVOID_MODE, WRECKAVOID_RULESET_VERSION } from '@/lib/games/wreckavoid'
 import { hasAllowedWriteOrigin } from '@/lib/http/same-origin'
 import { isPlatformRuntimeConfigured } from '@/lib/env'
 import { ensureUserProfile } from '@/lib/profiles/server'
@@ -41,6 +42,9 @@ export async function POST(request: NextRequest) {
   if (parsed.data.gameKey === 'tankavoid' && !isTankaVOIDMode(parsed.data.mode)) {
     return NextResponse.json({ error: 'unsupported_tankavoid_mode' }, { status: 400 })
   }
+  if (parsed.data.gameKey === 'wreckavoid' && parsed.data.mode !== WRECKAVOID_MODE) {
+    return NextResponse.json({ error: 'unsupported_wreckavoid_mode' }, { status: 400 })
+  }
   const origin = request.headers.get('origin')
   if (process.env.NODE_ENV === 'production' && origin && !game.allowedOrigins.some((allowed) => allowed === origin)) {
     return NextResponse.json({ error: 'game_origin_not_allowed' }, { status: 403 })
@@ -64,7 +68,9 @@ export async function POST(request: NextRequest) {
           ? WORDAVOID_RULESET_VERSION
           : parsed.data.gameKey === 'tankavoid'
             ? TANKAVOID_RULESET_VERSION
-            : 'v1',
+            : parsed.data.gameKey === 'wreckavoid'
+              ? WRECKAVOID_RULESET_VERSION
+              : 'v1',
       ticket_hash: ticketHash,
       origin,
       expires_at: expiresAt,

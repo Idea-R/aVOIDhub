@@ -1,4 +1,9 @@
 import { GameState } from "../types/Game";
+import {
+  WRECK_RUN_BOSS_BREAK_BONUS,
+  WRECK_RUN_WAVE_CLEAR_BONUS,
+  type WreckRunSnapshot,
+} from "./WreckRunDirector";
 
 const CLOCK_PRESENTATION_INTERVAL_SECONDS = 0.1;
 
@@ -11,6 +16,9 @@ export class GameStateManager {
     this.state = {
       score: 0,
       wave: 1,
+      act: 1,
+      bossesDefeated: 0,
+      runOutcome: "playing",
       health: 100,
       maxHealth: 100,
       gameTime: 0,
@@ -54,13 +62,30 @@ export class GameStateManager {
     this.setState({
       health: newHealth,
       isGameOver: newHealth <= 0,
+      runOutcome: newHealth <= 0 ? "defeat" : this.state.runOutcome,
     });
   }
 
-  updateWave(): void {
-    if (this.state.score > this.state.wave * 150) {
-      this.setState({ wave: this.state.wave + 1 });
-    }
+  syncEncounter(snapshot: Pick<WreckRunSnapshot, "act" | "wave">): void {
+    if (snapshot.act === this.state.act && snapshot.wave === this.state.wave) return;
+    const wavesCleared = Math.max(0, snapshot.wave - this.state.wave);
+    this.setState({
+      act: snapshot.act,
+      wave: snapshot.wave,
+      score: this.state.score + wavesCleared * WRECK_RUN_WAVE_CLEAR_BONUS,
+    });
+  }
+
+  recordBossDefeat(): void {
+    if (this.state.isGameOver) return;
+    const bossesDefeated = Math.min(3, this.state.bossesDefeated + 1);
+    this.setState({
+      bossesDefeated,
+      act: Math.min(3, bossesDefeated + 1) as 1 | 2 | 3,
+      score: this.state.score + WRECK_RUN_BOSS_BREAK_BONUS,
+      runOutcome: bossesDefeated === 3 ? "victory" : "playing",
+      isGameOver: bossesDefeated === 3,
+    });
   }
 
   updateGameTime(deltaTime: number): void {
@@ -88,6 +113,9 @@ export class GameStateManager {
     this.state = {
       score: 0,
       wave: 1,
+      act: 1,
+      bossesDefeated: 0,
+      runOutcome: "playing",
       health: 100,
       maxHealth: 100,
       gameTime: 0,

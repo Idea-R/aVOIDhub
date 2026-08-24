@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { PlatformPage } from '@/components/PlatformPage'
 import { isPlatformRuntimeConfigured } from '@/lib/env'
 import { rankedGameRegistry, type RankedGameKey } from '@/lib/games/registry'
+import { WRECKAVOID_RULESET_VERSION } from '@/lib/games/wreckavoid'
 import { createClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
@@ -18,20 +19,32 @@ export default async function LeaderboardsPage({ searchParams }: { searchParams:
 
   if (!unavailable) {
     const supabase = await createClient()
-    const currentResult = await supabase
+    let currentQuery = supabase
       .from('leaderboard_scores')
       .select('id, player_name, score, game_key, verification_level, created_at')
       .eq('game_key', gameKey)
+
+    if (gameKey === 'wreckavoid') {
+      currentQuery = currentQuery.contains('metadata', { rulesetVersion: WRECKAVOID_RULESET_VERSION })
+    }
+
+    const currentResult = await currentQuery
       .order('score', { ascending: false })
       .limit(50)
 
     if (!currentResult.error) {
       scores = (currentResult.data ?? []) as ScoreRow[]
     } else {
-      const legacyResult = await supabase
+      let legacyQuery = supabase
         .from('leaderboard_scores')
         .select('id, player_name, score, game_key, is_verified, created_at')
         .eq('game_key', gameKey)
+
+      if (gameKey === 'wreckavoid') {
+        legacyQuery = legacyQuery.contains('metadata', { rulesetVersion: WRECKAVOID_RULESET_VERSION })
+      }
+
+      const legacyResult = await legacyQuery
         .order('score', { ascending: false })
         .limit(50)
 
