@@ -219,3 +219,24 @@ Use one passwordless login for players, creators, and administrators. Player and
 - Status: accepted
 
 The administrator control room may record bounded creator, game, and score-review transitions. A review approval does not publish a game, deploy code, create a Stripe charge, grant an entitlement, activate AdSense, or delete evidence. Those actions remain separate workflows with their own acceptance and production gates.
+
+## D-032 — Give WreckaVOID a finite victory and a separate endless mode
+
+- Date: 2026-08-23
+- Status: proposed for WreckaVOID V1 review
+
+Ship a ten-minute, three-act Wreck Run with boss checkpoints and a real victory state. Preserve an optional Endless Yard for score chasing after the standard encounter model is stable. Do not require open-world maps, a story campaign, or multiplayer for V1. A finite run gives new players a learnable goal and makes balance measurable; the endless mode remains honestly endless rather than presenting infinity as an unbeatable campaign.
+
+## D-033 — Drive WreckaVOID difficulty through an encounter budget, not score
+
+- Date: 2026-08-23
+- Status: proposed for WreckaVOID V1 review
+
+Advance standard-run acts by time and boss completion. Use bounded population, projectile, movement, fire-rate, and minion budgets. Keep score as a result of skill rather than the clock that punishes skill with faster spawns. Every balance and scoring change receives a versioned ruleset so incompatible results do not silently share a leaderboard.
+
+## D-034 — Make wreck damage express impact quality
+
+- Date: 2026-08-23
+- Status: proposed for WreckaVOID V1 review
+
+Preserve the chain and ball physics, but derive offensive damage from bounded impact velocity or impulse plus meaningful upgrade multipliers and per-target cooldowns. Resolve death, points, and drops once by entity ID. Add bounded player hit recovery so contact cannot deal damage every frame. The game should reward a deliberate high-momentum wreck, not frame overlap or rounding accidents.
