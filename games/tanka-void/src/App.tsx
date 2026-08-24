@@ -580,7 +580,7 @@ function App() {
                   </>
                 ) : (
                   <>
-                    <a href="/login/?returnTo=%2Ftankavoid%2F">Sign in</a> to
+                    <a href="/login/?returnTo=%2FTankaVOID%2F">Sign in</a> to
                     load member cosmetics and save a public result.
                   </>
                 )}
