@@ -65,8 +65,9 @@ export default function StartScreen({
         </div>
 
         <p className="void-start__note">
-          Guest play is immediate. Sound is made locally after you enter the field—there is no track to
-          download. Results stay on this device and do not claim a platform placement.
+          Guest play is immediate. Sound is made in your browser after you enter the field, so there is no
+          soundtrack to download. Signed-in runs can earn a provisional platform placement when the score
+          service is online. Guest runs stay on this device.
         </p>
         {soundStatus === 'unavailable' && (
           <p className="void-start__notice" role="status">

@@ -9,8 +9,14 @@ export function hasAllowedWriteOrigin(request: NextRequest): boolean {
   if (process.env.NODE_ENV !== 'production') {
     allowed.add('http://localhost:3000')
     allowed.add('http://127.0.0.1:3000')
+    allowed.add('http://localhost:5173')
+    allowed.add('http://127.0.0.1:5173')
+    allowed.add('http://localhost:5174')
+    allowed.add('http://127.0.0.1:5174')
     allowed.add('http://localhost:5175')
     allowed.add('http://127.0.0.1:5175')
+    allowed.add('http://localhost:5176')
+    allowed.add('http://127.0.0.1:5176')
   }
 
   return allowed.has(origin)

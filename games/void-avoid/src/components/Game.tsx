@@ -8,9 +8,12 @@ import { VOIDAVOID_RULESET, type RunEvidenceSummary } from '../game/run/runEvide
 import { type SoundManager, type SoundStatus } from '../game/presentation/SoundManager';
 import type { MotionPreference } from '../game/presentation/preferences';
 import GameDialog from './GameDialog';
+import { beginPlatformRun, finishPlatformRun, localRunSeed, type FinishRunResult } from '../api/platformRuns';
+import type { VoidAvoidRunManifest } from '@avoid/voidavoid-contract';
 
 interface GameProps {
   autoStart?: boolean;
+  initialManifest: VoidAvoidRunManifest | null;
   onExit: () => void;
   sound: SoundManager;
   soundEnabled: boolean;
@@ -88,6 +91,7 @@ function readLocalBest(): number {
 
 export default function Game({
   autoStart = false,
+  initialManifest,
   onExit,
   sound,
   soundEnabled,
@@ -107,6 +111,9 @@ export default function Game({
   const [qaRefresh, setQaRefresh] = useState(0);
   const reducedMotionRef = useRef(reducedMotion);
   const previousSoundStateRef = useRef({ score: 0, charges: 0, isGameOver: false });
+  const nextSeedRef = useRef<number | null>(initialManifest?.seed ?? null);
+  const submittedRunRef = useRef<string | null>(null);
+  const [finishResult, setFinishResult] = useState<FinishRunResult | null>(null);
 
   reducedMotionRef.current = reducedMotion;
 
@@ -114,7 +121,11 @@ export default function Game({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const engine = new GameEngine(canvas);
+    const engine = new GameEngine(canvas, () => {
+      const seed = nextSeedRef.current ?? localRunSeed();
+      nextSeedRef.current = null;
+      return seed;
+    });
     engineRef.current = engine;
     engine.setReducedMotion(reducedMotionRef.current);
     engine.setStateUpdateCallback(setGameState);
@@ -170,6 +181,14 @@ export default function Game({
     }
   }, [gameState.isGameOver, gameState.score, localBest]);
 
+  useEffect(() => {
+    if (!gameState.isGameOver || submittedRunRef.current === gameState.run.code) return;
+    const evidence = engineRef.current?.getRunEvidence();
+    if (!evidence) return;
+    submittedRunRef.current = gameState.run.code;
+    void finishPlatformRun(evidence).then(setFinishResult);
+  }, [gameState.isGameOver, gameState.run.code]);
+
   const toggleManualPause = useCallback(() => {
     const engine = engineRef.current;
     if (!engine || gameState.isGameOver) return;
@@ -203,9 +222,12 @@ export default function Game({
     return () => window.removeEventListener('keydown', handleEscape);
   }, [closeControls, gameState.isGameOver, showHelp, toggleManualPause]);
 
-  const playAgain = useCallback(() => {
+  const playAgain = useCallback(async () => {
     setShowHelp(false);
     sound.play('start');
+    setFinishResult(null);
+    const manifest = await beginPlatformRun();
+    nextSeedRef.current = manifest?.seed ?? localRunSeed();
     engineRef.current?.resetGame();
     requestAnimationFrame(() => canvasRef.current?.focus({ preventScroll: true }));
   }, [sound]);
@@ -297,6 +319,7 @@ export default function Game({
           scoreBreakdown={gameState.scoreBreakdown}
           comboInfo={gameState.comboInfo}
           run={gameState.run}
+          finishResult={finishResult}
           onPlayAgain={playAgain}
           onExit={exitGame}
         />

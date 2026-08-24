@@ -137,6 +137,7 @@ button { font: inherit; cursor: pointer; }
 .void-launch,
 .void-hud button,
 .void-result__actions button,
+.void-result__actions a,
 .void-start__preferences button,
 .void-dialog-settings button,
 .void-audio-notice button {
@@ -165,17 +166,20 @@ button { font: inherit; cursor: pointer; }
 .void-launch:hover,
 .void-hud button:hover,
 .void-result__actions button:hover,
+.void-result__actions a:hover,
 .void-start__preferences button:hover,
 .void-dialog-settings button:hover,
 .void-audio-notice button:hover { transform: translate(-.18rem, -.18rem); box-shadow: .58rem .58rem 0 #ff5e40; }
 .void-launch:active,
 .void-hud button:active,
 .void-result__actions button:active,
+.void-result__actions a:active,
 .void-start__preferences button:active,
 .void-dialog-settings button:active,
 .void-audio-notice button:active { transform: translate(.25rem, .25rem); box-shadow: .1rem .1rem 0 #ff5e40; }
 
-button:focus-visible { outline: 3px solid #fff7df; outline-offset: 5px; }
+button:focus-visible,
+a:focus-visible { outline: 3px solid #fff7df; outline-offset: 5px; }
 .void-start__preferences {
   display: flex;
   flex-wrap: wrap;
@@ -235,10 +239,12 @@ button:focus-visible { outline: 3px solid #fff7df; outline-offset: 5px; }
 .void-hud__status strong { display: block; margin-top: .12rem; color: #d8fff7; font-variant-numeric: tabular-nums; }
 .void-hud__controls { display: flex; gap: .45rem; }
 .void-hud button,
-.void-result__actions button { padding: .68rem .78rem; box-shadow: .22rem .22rem 0 #ff5e40; font-size: .72rem; text-transform: uppercase; }
+.void-result__actions button,
+.void-result__actions a { padding: .68rem .78rem; box-shadow: .22rem .22rem 0 #ff5e40; font-size: .72rem; text-transform: uppercase; }
 .void-hud button:nth-child(2),
 .void-hud button:nth-child(3),
-.void-result__actions button:not(.void-launch) { color: #e6f1ed; background: rgba(5,12,18,.84); border: 1px solid rgba(255,255,255,.16); box-shadow: .22rem .22rem 0 rgba(112,234,215,.42); }
+.void-result__actions button:not(.void-launch),
+.void-result__actions a { color: #e6f1ed; background: rgba(5,12,18,.84); border: 1px solid rgba(255,255,255,.16); box-shadow: .22rem .22rem 0 rgba(112,234,215,.42); text-decoration: none; }
 
 .void-dialog-backdrop {
   position: absolute;
@@ -287,6 +293,7 @@ button:focus-visible { outline: 3px solid #fff7df; outline-offset: 5px; }
 .void-result__truth,
 .void-result__copy { color: #84918c; font-size: .76rem; line-height: 1.45; }
 .void-result__actions { display: flex; flex-wrap: wrap; align-items: center; gap: .7rem; margin-top: 1.2rem; }
+.void-result__actions a { display: inline-flex; align-items: center; min-height: 2.75rem; font-weight: 850; letter-spacing: .02em; }
 .void-result__actions .void-launch { min-width: 0; padding: .78rem 1rem; }
 
 @keyframes void-drift {

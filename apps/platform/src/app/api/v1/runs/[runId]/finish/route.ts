@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { z } from 'zod'
 import { getRequestUser } from '@/lib/auth/request-user'
 import { validateWordAvoidFinish } from '@/lib/games/wordavoid'
+import { validateVoidAvoidFinish } from '@/lib/games/voidavoid'
 import { validateTankaVOIDFinish } from '@/lib/games/tankavoid'
 import { validateWreckAvoidFinish } from '@/lib/games/wreckavoid'
 import { hasAllowedWriteOrigin } from '@/lib/http/same-origin'
@@ -66,6 +67,26 @@ export async function POST(request: NextRequest, context: { params: Promise<{ ru
       rulesetVersion: result.manifest.rulesetVersion,
       dictionaryVersion: result.manifest.dictionaryVersion,
       dictionaryHash: result.manifest.dictionaryHash,
+      validationCapability: 'server_recomputed',
+    }
+    validationCapability = 'server_recomputed'
+  }
+
+  if (run.game_key === 'voidavoid') {
+    const result = validateVoidAvoidFinish(run, parsed.data.evidence)
+    if (!result) return NextResponse.json({ error: 'run_manifest_invalid' }, { status: 400 })
+    if (!result.validation.valid) {
+      return NextResponse.json(
+        { error: 'run_evidence_rejected', reasons: result.validation.errors },
+        { status: 400 },
+      )
+    }
+    const durationTicks = (parsed.data.evidence as { durationTicks?: unknown }).durationTicks
+    acceptedScore = result.validation.recomputed.total
+    acceptedMetrics = {
+      ...result.validation.recomputed,
+      durationTicks: typeof durationTicks === 'number' ? durationTicks : null,
+      rulesetVersion: result.manifest.rulesetVersion,
       validationCapability: 'server_recomputed',
     }
     validationCapability = 'server_recomputed'

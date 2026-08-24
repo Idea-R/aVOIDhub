@@ -288,3 +288,23 @@ Publish the refreshed static feedback build on the existing draft PR, then colle
 ### Next action
 
 Publish the Git-driven deploy preview, then run the isolated Supabase and Stripe test canary after the short-lived development-branch cost is approved.
+
+## 2026-08-24 — Shared leaderboard source connection
+
+- Opened issue `#50` and created `codex/feature-shared-leaderboards` from exact production source `cd80a7c` in a clean worktree.
+- Added `@avoid/voidavoid-contract` so the game and platform share the V2 ruleset, seeded score replay, evidence types, score formulas, integrity check, and server manifest.
+- Extended VOIDaVOID evidence to record combo and perfect-knockback bonuses instead of failing if that scoring path becomes active.
+- Added a same-origin VOIDaVOID run adapter, server-issued seed, one-use ticket, platform finish retry, receipt status, and honest local fallback for guests.
+- Replaced WORDaVOID's game-owned Supabase bearer-token bridge with the platform cookie session.
+- Added server-side VOIDaVOID evidence replay that ignores the browser's claimed final score and derives accepted totals from the stored server seed.
+- Split WORDaVOID Classic and Time Attack board views, kept one best row per player per mode, and exposed hosted-game board previews and personal bests on every internal game detail page.
+- Rewrote board trust copy around `server replay`, `bounded`, and `provisional` without claiming verified anti-cheat.
+- Passed the VOID contract gate, VOIDaVOID release gate, WORDaVOID release gate, platform typecheck, and platform tests. npm audit reports zero vulnerabilities.
+- Passed the complete four-game, 30-route production assembly.
+- Browser-verified the leaderboard at 1440 × 900 and 390 × 844, including separate WORDaVOID mode controls, with no horizontal overflow or console warning/error.
+- Browser-verified VOIDaVOID guest start and result states at 390 × 844 and 844 × 390. The dialog stays inside the viewport, Play Again owns focus, and the result links now use the game's tactile control style.
+- No paid Supabase branch, production migration, Stripe resource, charge, AdSense request, secret, or production deploy changed during this source gate.
+
+### Next action
+
+Run the complete platform assembly and responsive browser pass, publish a Git-driven preview, and review the resulting VOIDaVOID result state plus all hosted board views. The paid isolated database rehearsal remains separately gated.

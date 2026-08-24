@@ -1,12 +1,22 @@
 import { ObjectPool } from '../utils/ObjectPool';
 import { ScoreText, createScoreText, resetScoreText, initializeScoreText } from '../entities/ScoreText';
+import {
+  calculateComboBonus,
+  calculateMeteorScore,
+  calculatePerfectKnockbackBonus,
+  calculateSurvivalScore,
+  type ScoreBreakdown,
+  type ScoreEvidenceEvent,
+} from '@avoid/voidavoid-contract';
 
-export interface ScoreBreakdown {
-  survival: number;
-  meteors: number;
-  combos: number;
-  total: number;
-}
+export type { ScoreBreakdown, ScoreEvidenceEvent } from '@avoid/voidavoid-contract';
+export {
+  calculateChainDetonationScore,
+  calculateComboBonus,
+  calculateMeteorScore,
+  calculatePerfectKnockbackBonus,
+  calculateSurvivalScore,
+} from '@avoid/voidavoid-contract';
 
 export interface ComboInfo {
   count: number;
@@ -15,49 +25,6 @@ export interface ComboInfo {
   highestCombo: number;
   streakMultiplier: number;
   consecutiveKnockbacks: number;
-}
-
-export type ScoreEvidenceEvent =
-  | { type: 'meteor'; isSuper: boolean; source: 'defense' | 'knockback' }
-  | { type: 'chain-fragment' }
-  | { type: 'chain-detonation'; meteorsDestroyed: number };
-
-export function calculateSurvivalScore(seconds: number): number {
-  return Math.floor(Math.max(0, seconds) * 5);
-}
-
-export function calculateMeteorScore(isSuper: boolean, randomUnit: number): number {
-  const clampedRandom = Math.min(0.999999, Math.max(0, randomUnit));
-  return (isSuper ? 15 : 5) + Math.floor(clampedRandom * (isSuper ? 16 : 11));
-}
-
-export function calculateComboBonus(comboCount: number, streakMultiplier: number): number {
-  let baseBonus = 0;
-  if (comboCount >= 15) baseBonus = 500;
-  else if (comboCount >= 12) baseBonus = 350;
-  else if (comboCount >= 10) baseBonus = 250;
-  else if (comboCount >= 8) baseBonus = 175;
-  else if (comboCount >= 6) baseBonus = 125;
-  else if (comboCount >= 5) baseBonus = 100;
-  else if (comboCount >= 4) baseBonus = 75;
-  else if (comboCount >= 3) baseBonus = 50;
-  return Math.floor(baseBonus * Math.max(1, streakMultiplier));
-}
-
-export function calculatePerfectKnockbackBonus(destroyedCount: number, streakMultiplier: number): number {
-  const baseBonus = destroyedCount >= 5 ? 50 : destroyedCount >= 4 ? 35 : destroyedCount >= 3 ? 25 : 0;
-  return Math.floor(baseBonus * Math.max(1, streakMultiplier));
-}
-
-export function calculateChainDetonationScore(meteorsDestroyed: number): number {
-  if (meteorsDestroyed <= 0) return 0;
-  const multiplier = meteorsDestroyed >= 20 ? 4
-    : meteorsDestroyed >= 15 ? 3
-      : meteorsDestroyed >= 10 ? 2.5
-        : meteorsDestroyed >= 5 ? 2
-          : meteorsDestroyed >= 3 ? 1.5
-            : 1;
-  return 250 + Math.floor(meteorsDestroyed * 30 * multiplier);
 }
 
 export class ScoreSystem {
@@ -175,6 +142,11 @@ export class ScoreSystem {
       const comboBonus = calculateComboBonus(this.comboInfo.count, this.comboInfo.streakMultiplier);
       this.comboScore += comboBonus;
       totalPoints += comboBonus;
+      this.onEvidenceEvent({
+        type: 'combo-bonus',
+        comboCount: this.comboInfo.count,
+        streakMultiplier: this.comboInfo.streakMultiplier,
+      });
       
       // Update highest combo
       if (this.comboInfo.count > this.comboInfo.highestCombo) {
@@ -193,6 +165,11 @@ export class ScoreSystem {
     if (perfectBonus > 0) {
       this.comboScore += perfectBonus;
       totalPoints += perfectBonus;
+      this.onEvidenceEvent({
+        type: 'perfect-bonus',
+        destroyedCount: destroyedMeteors.length,
+        streakMultiplier: this.comboInfo.streakMultiplier,
+      });
       
       // Show perfect bonus text
       const centerX = destroyedMeteors.reduce((sum, m) => sum + m.x, 0) / destroyedMeteors.length;

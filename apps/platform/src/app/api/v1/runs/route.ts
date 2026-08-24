@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { getRequestUser } from '@/lib/auth/request-user'
 import { isRankedGameKey, rankedGameRegistry } from '@/lib/games/registry'
 import { wordAvoidValidationMetadata } from '@/lib/games/wordavoid'
+import { voidAvoidValidationMetadata } from '@/lib/games/voidavoid'
 import { tankaVOIDValidationMetadata } from '@/lib/games/tankavoid'
 import { WRECKAVOID_MODE, WRECKAVOID_RULESET_VERSION } from '@/lib/games/wreckavoid'
 import { hasAllowedWriteOrigin } from '@/lib/http/same-origin'
@@ -12,6 +13,7 @@ import { ensureUserProfile } from '@/lib/profiles/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createWordAvoidManifest, isWordAvoidV1Mode, WORDAVOID_RULESET_VERSION } from '@avoid/wordavoid-contract'
 import { createTankaVOIDManifest, isTankaVOIDMode, TANKAVOID_RULESET_VERSION } from '@avoid/tankavoid-contract'
+import { createVoidAvoidManifest, VOIDAVOID_RULESET } from '@avoid/voidavoid-contract'
 
 const bodySchema = z.object({
   gameKey: z.string(),
@@ -45,6 +47,9 @@ export async function POST(request: NextRequest) {
   if (parsed.data.gameKey === 'wreckavoid' && parsed.data.mode !== WRECKAVOID_MODE) {
     return NextResponse.json({ error: 'unsupported_wreckavoid_mode' }, { status: 400 })
   }
+  if (parsed.data.gameKey === 'voidavoid' && parsed.data.mode !== 'endless') {
+    return NextResponse.json({ error: 'unsupported_voidavoid_mode' }, { status: 400 })
+  }
   const origin = request.headers.get('origin')
   if (process.env.NODE_ENV === 'production' && origin && !game.allowedOrigins.some((allowed) => allowed === origin)) {
     return NextResponse.json({ error: 'game_origin_not_allowed' }, { status: 403 })
@@ -54,8 +59,13 @@ export async function POST(request: NextRequest) {
   const ticket = randomBytes(32).toString('base64url')
   const ticketHash = createHash('sha256').update(ticket).digest('hex')
   const wordAvoidSeed = parsed.data.gameKey === 'wordavoid' ? randomBytes(18).toString('base64url') : null
+  const voidAvoidSeed = parsed.data.gameKey === 'voidavoid' ? randomBytes(4).readUInt32BE(0) : null
   const tankaVOIDSeed = parsed.data.gameKey === 'tankavoid' ? randomBytes(4).readUInt32BE(0) : null
-  const runLifetimeMs = parsed.data.gameKey === 'wordavoid' ? (parsed.data.mode === 'classic' ? 50 : 10) * 60 * 1000 : 20 * 60 * 1000
+  const runLifetimeMs = parsed.data.gameKey === 'wordavoid'
+    ? (parsed.data.mode === 'classic' ? 50 : 10) * 60 * 1000
+    : parsed.data.gameKey === 'voidavoid'
+      ? 2 * 60 * 60 * 1000
+      : 20 * 60 * 1000
   const expiresAt = new Date(Date.now() + runLifetimeMs).toISOString()
   const { data, error } = await createAdminClient()
     .from('game_run_sessions')
@@ -66,6 +76,8 @@ export async function POST(request: NextRequest) {
       ruleset_version:
         parsed.data.gameKey === 'wordavoid'
           ? WORDAVOID_RULESET_VERSION
+          : parsed.data.gameKey === 'voidavoid'
+            ? VOIDAVOID_RULESET
           : parsed.data.gameKey === 'tankavoid'
             ? TANKAVOID_RULESET_VERSION
             : parsed.data.gameKey === 'wreckavoid'
@@ -77,6 +89,7 @@ export async function POST(request: NextRequest) {
       client_metadata: {
         ...(parsed.data.metadata ?? {}),
         ...(wordAvoidSeed ? { wordavoidValidation: wordAvoidValidationMetadata(wordAvoidSeed) } : {}),
+        ...(voidAvoidSeed !== null ? { voidavoidValidation: voidAvoidValidationMetadata(voidAvoidSeed) } : {}),
         ...(tankaVOIDSeed !== null ? { tankavoidValidation: tankaVOIDValidationMetadata(tankaVOIDSeed) } : {}),
       },
     })
@@ -91,6 +104,8 @@ export async function POST(request: NextRequest) {
           seed: wordAvoidSeed,
           mode: parsed.data.mode,
         })
+      : voidAvoidSeed !== null && parsed.data.gameKey === 'voidavoid'
+        ? createVoidAvoidManifest(data.id, voidAvoidSeed)
       : tankaVOIDSeed !== null && parsed.data.gameKey === 'tankavoid' && isTankaVOIDMode(parsed.data.mode)
         ? createTankaVOIDManifest({
             runId: data.id,
@@ -108,6 +123,8 @@ export async function POST(request: NextRequest) {
       validationCapability:
         parsed.data.gameKey === 'wordavoid'
           ? 'server_recomputed'
+          : parsed.data.gameKey === 'voidavoid'
+            ? 'server_recomputed'
           : parsed.data.gameKey === 'tankavoid'
             ? 'bounds_recomputed'
             : 'bounds_only',

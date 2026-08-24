@@ -50,7 +50,7 @@ Power-up intervals are sampled once when a run begins and once after each spawn 
 
 ## Evidence envelope
 
-The canonical types and verifier live in `games/void-avoid/src/game/run/runEvidence.ts`.
+The canonical types and verifier live in `packages/voidavoid-contract`. The game-owned recorder lives in `games/void-avoid/src/game/run/runEvidence.ts`.
 
 Each completed envelope contains:
 
@@ -71,8 +71,10 @@ The integrity code catches accidental mutation and gives the player a compact ru
 | `meteor` | Draw once from the `score` stream, then apply the normal or super-meteor point formula; includes `defense` or `knockback` source for audit context |
 | `chain-fragment` | Add 10 meteor-category points |
 | `chain-detonation` | Recompute the documented completion bonus and meteor-count multiplier |
+| `combo-bonus` | Recompute the bonus from the recorded combo count and bounded streak multiplier |
+| `perfect-bonus` | Recompute the knockback bonus from the recorded destroyed count and bounded streak multiplier |
 
-Survival score is recomputed from `durationTicks / 60`. V2 currently records no combo event because the canonical play path does not call the dormant combo-scoring method. If that path is activated without extending the evidence vocabulary, verification fails instead of silently accepting the extra points.
+Survival score is recomputed from `durationTicks / 60`. The shared contract records combo and perfect-knockback bonuses explicitly, so activating the combo path cannot create an unexplained score category.
 
 ## Local verifier
 
@@ -104,13 +106,11 @@ A passing result receives a code shaped like `12AB34CD-89EF0123` and the status 
 
 ## V3 handoff
 
-V3 must not send this local envelope directly to a competitive board and call it validated. The platform adapter still needs to:
+V3 now issues the run seed and one-use ticket, replays the complete score evidence on the server, stores an idempotent provisional receipt, and connects the result to the platform board. It deliberately does not call that result verified. Remaining work is to:
 
-1. create a one-use run ticket and issue the seed/ruleset before the first playable tick;
-2. bind the ticket to the signed-in account when one exists, while preserving guest play;
-3. add bounded pointer/action evidence or an equivalent authoritative simulation strategy;
-4. run a server-side validator that ignores client totals and returns the accepted result;
-5. store an idempotent receipt and derive personal best, leaderboard placement, and share copy from that receipt;
-6. classify this score as `provisional` until the server proves more than score arithmetic.
+1. add bounded pointer/action evidence or an equivalent authoritative simulation strategy;
+2. exercise ticket expiry, retry, wrong-user, receipt, and read-back behavior on the isolated database branch;
+3. verify personal best and board placement with authenticated fixtures;
+4. keep the result `provisional` until the server proves more than score arithmetic.
 
-No production database, Supabase branch, profile, leaderboard, or deployment changed in V2.
+No production database or Supabase branch changed in this source pass.

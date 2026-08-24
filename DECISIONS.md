@@ -391,3 +391,12 @@ Identify the finite mode as `wreck-run` and its first candidate as `wreck-run-v1
 - Status: accepted for the first two launch games
 
 WreckaVOID and TankaVOID consume the platform's same-origin cookie session instead of creating game-specific login state. The platform returns owned profile identity and active entitlement keys; each game stores only the player's currently selected cosmetic. A locked or expired member selection falls back to the free look. Cosmetics may change rendering and presentation but never simulation, damage, movement, scoring, run evidence, or trust. Legacy game-owned auth, profile editing, and direct leaderboard reads are removed from the WreckaVOID release bundle rather than left as a second account system.
+
+## D-056 — Separate score replay capability from anti-cheat trust
+
+- Date: 2026-08-24
+- Status: accepted for the shared leaderboard source gate
+
+Use one platform session, one-use ticket, server-owned manifest, and server-derived accepted score for every hosted ranked run. Label a result `server replay` when deterministic evidence rebuilds the score and `bounded` when the server recomputes a narrower terminal summary. Store both as `provisional` until the platform proves the underlying player actions or simulation independently. Never translate a successful arithmetic replay into a `verified` claim.
+
+Keep modes separate and show one best accepted row per player per mode. Legacy rows may remain historical, but they cannot inherit a stronger trust label from old browser-authored flags.
