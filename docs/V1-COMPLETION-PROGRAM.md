@@ -280,6 +280,8 @@ A new visitor can browse without an account. A returning player can sign in once
 
 ## 8. WreckaVOID
 
+The detailed balance model, product shape, delivery charter, sprint evidence, and release checklist now live in [`games/wrecka-void/docs/V1-DELIVERY-PLAN.md`](../games/wrecka-void/docs/V1-DELIVERY-PLAN.md). This section remains the catalog-level gate; the game plan is the execution source for W0 through W7.
+
 ### Current state
 
 WreckaVOID is the best first repair target because it already has a recognizable home screen, gameplay loop, leaderboard screen, profile screen, support surface, game-over presentation, and share controls. It is also carrying the most obvious “old application inside the new platform” problem.

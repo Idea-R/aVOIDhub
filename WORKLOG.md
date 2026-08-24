@@ -1,5 +1,20 @@
 # aVOIDgame.io worklog
 
+## 2026-08-23
+
+- Audited the canonical `games/wrecka-void` source and the live production route as the first full game-repair target.
+- Recorded a live desktop guest run that started, moved, scored, collected a power-up, reached wave 3, and ended at 68 seconds with score 364 near the first boss transition.
+- Verified that the 390 px gameplay route has no page overflow but the 40 px HUD overlaps score, wave, time, help, and guest status; the input manager has no Pointer Events or touch path.
+- Quantified the current enemy curve: 1.39 spawns per second at wave 1, 2.5 at wave 5, and a 3.33-per-second floor from wave 7 onward, with no active population cap and unbounded speed growth.
+- Confirmed that ordinary enemies are advanced twice per frame, boss contact can apply 30 damage every frame, collision result indices are not de-duplicated, the pusher path reads a value before declaration, bosses accumulate every 60 seconds, and boss fire cooldown eventually reaches zero.
+- Confirmed that Vite production build passes, standalone TypeScript validation fails with engine and typing defects, lint reports 29 errors and three warnings, and WreckaVOID has no tests.
+- Added `games/wrecka-void/docs/V1-DELIVERY-PLAN.md` with a bounded V1 charter, ten-minute Wreck Run, optional Endless Yard, balance laboratory, measurable targets, W0 through W7 delivery sequence, effort range, and production acceptance checklist.
+- Kept gameplay code, production, Supabase, Netlify, authentication, score data, payments, advertising, and domain state unchanged during the planning pass.
+
+### Next action
+
+Start W0 locally: freeze the current values as a legacy ruleset, add seeded randomness and failing tests for the critical correctness defects, then create the first deterministic balance comparison before changing production rules.
+
 ## 2026-08-20
 
 - Corrected the pending platform-foundation migration against the frozen production baseline; the migration remains unapplied to Supabase.
