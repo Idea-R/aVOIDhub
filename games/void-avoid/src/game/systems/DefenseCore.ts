@@ -26,15 +26,23 @@ export class DefenseCore {
   
   // Meteor tracking for entry detection
   private meteorTrackers: Map<string, MeteorTracker> = new Map();
-  private lastActivationTime: number = 0;
+  private lastActivationTime: number | null = null;
+  private currentTime: number = 0;
   
   // Callbacks for effects
   onEffectTriggered: (type: 'destroy' | 'deflect', badgeX: number, badgeY: number, meteorX: number, meteorY: number) => void = () => {};
   onPlayerElimination: (badgeX: number, badgeY: number, playerX: number, playerY: number) => void = () => {};
 
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(
+    canvas: HTMLCanvasElement,
+    private readonly gameplayRandom: () => number,
+  ) {
     this.canvas = canvas;
     this.initializeBoltDefenseZone();
+  }
+
+  public update(deltaTime: number): void {
+    this.currentTime += deltaTime;
   }
 
   /**
@@ -76,7 +84,7 @@ export class DefenseCore {
   public processMeteorDefense(meteors: Meteor[]): DefenseResult {
     const destroyedMeteors: Meteor[] = [];
     const deflectedMeteors: Array<{ meteor: Meteor; newVx: number; newVy: number }> = [];
-    let playerInDangerZone = false;
+    const playerInDangerZone = false;
 
     for (const meteor of meteors) {
       if (!meteor.active) continue;
@@ -109,7 +117,7 @@ export class DefenseCore {
           // Trigger effects callback
           if (action === 'destroy' || action === 'deflect') {
             this.onEffectTriggered(action, zone.x, zone.y, meteor.x, meteor.y);
-            this.lastActivationTime = performance.now();
+            this.lastActivationTime = this.currentTime;
           }
           
           break; // Only process first zone hit
@@ -129,7 +137,8 @@ export class DefenseCore {
    */
   public checkPlayerCollision(playerX: number, playerY: number): boolean {
     // Only check collision if defense system has been recently activated
-    const timeSinceActivation = performance.now() - this.lastActivationTime;
+    if (this.lastActivationTime === null) return false;
+    const timeSinceActivation = this.currentTime - this.lastActivationTime;
     const isDefenseActive = timeSinceActivation < 1000; // Active for 1 second after activation
     
     if (!isDefenseActive) return false;
@@ -185,7 +194,7 @@ export class DefenseCore {
    */
   public cleanupOldTrackers(): void {
     // Remove trackers older than 5 seconds (meteors should be cleaned up by then)
-    for (const [id, tracker] of this.meteorTrackers.entries()) {
+    for (const id of this.meteorTrackers.keys()) {
       // Simple cleanup - remove trackers that haven't been updated recently
       // In a real implementation, you'd want to track last update time
       if (this.meteorTrackers.size > 100) { // Prevent memory leak
@@ -233,7 +242,7 @@ export class DefenseCore {
     
     if (magnitude === 0) {
       // If meteor is exactly at zone center, deflect in random direction
-      const angle = Math.random() * Math.PI * 2;
+      const angle = this.gameplayRandom() * Math.PI * 2;
       return {
         vx: Math.cos(angle) * 2,
         vy: Math.sin(angle) * 2
@@ -291,7 +300,8 @@ export class DefenseCore {
   public clear(): void {
     this.defenseZones.length = 0;
     this.meteorTrackers.clear();
-    this.lastActivationTime = 0;
+    this.lastActivationTime = null;
+    this.currentTime = 0;
     
     // Re-initialize default Bolt badge zone
     this.initializeBoltDefenseZone();
@@ -306,12 +316,14 @@ export class DefenseCore {
     lastActivation: number;
     isActive: boolean;
   } {
-    const timeSinceActivation = performance.now() - this.lastActivationTime;
+    const timeSinceActivation = this.lastActivationTime === null
+      ? Number.POSITIVE_INFINITY
+      : this.currentTime - this.lastActivationTime;
     
     return {
       defenseZones: this.defenseZones.length,
       trackedMeteors: this.meteorTrackers.size,
-      lastActivation: this.lastActivationTime,
+      lastActivation: this.lastActivationTime ?? -1,
       isActive: timeSinceActivation < 1000
     };
   }
@@ -320,7 +332,8 @@ export class DefenseCore {
    * Check if defense system is currently active
    */
   public isActive(): boolean {
-    const timeSinceActivation = performance.now() - this.lastActivationTime;
+    if (this.lastActivationTime === null) return false;
+    const timeSinceActivation = this.currentTime - this.lastActivationTime;
     return timeSinceActivation < 1000;
   }
 
@@ -328,6 +341,8 @@ export class DefenseCore {
    * Get time since last activation
    */
   public getTimeSinceActivation(): number {
-    return performance.now() - this.lastActivationTime;
+    return this.lastActivationTime === null
+      ? Number.POSITIVE_INFINITY
+      : this.currentTime - this.lastActivationTime;
   }
 }

@@ -1,8 +1,21 @@
+import type { WordAvoidRunEvent, WordAvoidRunManifest } from '@avoid/wordavoid-contract';
+
 export type Difficulty = 'easy' | 'medium' | 'hard' | 'extreme' | 'boss';
 
 export type GameMode = 'classic' | 'timeAttack' | 'perfectRun' | 'dailyChallenge' | 'waveDefense' | 'skillTraining' | 'digitAssault' | 'geometricTyping';
 
 export type DifficultyLevel = 'easy' | 'normal' | 'expert' | 'insane';
+
+export type PauseReason = 'manual' | 'focus';
+
+export type LocalDataStatus = 'idle' | 'loaded' | 'migrated' | 'recovered';
+
+export type SubmissionStatus = 'idle' | 'saving' | 'saved' | 'local' | 'rejected' | 'error';
+
+export interface GameViewport {
+  width: number;
+  height: number;
+}
 
 export type SkillWordType = 'doubleLetter' | 'pinky' | 'ringFinger' | 'handCoordination' | 'awkwardCombo';
 
@@ -36,6 +49,9 @@ export interface GeometricChallenge {
 
 export interface Word {
   id: string;
+  sequence: number;
+  promptId: string;
+  level: number;
   text: string;
   difficulty: Difficulty;
   category: string;
@@ -51,6 +67,8 @@ export interface Word {
   isTyping: boolean;
   typedChars: number;
   spawnTime: number;
+  spawnActiveMs: number;
+  completedActiveMs?: number;
 }
 
 export interface Player {
@@ -59,6 +77,9 @@ export interface Player {
   shield: number;
   score: number;
   streak: number;
+  maxStreak: number;
+  charactersAttempted: number;
+  charactersCorrect: number;
   accuracy: number;
   wpm: number;
   position: {
@@ -70,7 +91,9 @@ export interface Player {
 export interface GameState {
   isPlaying: boolean;
   isPaused: boolean;
+  pauseReasons: PauseReason[];
   isGameOver: boolean;
+  terminalReason: import('@avoid/wordavoid-contract').WordAvoidTerminalReason | 'quit' | null;
   mode: GameMode;
   difficulty: Difficulty;
   timeRemaining?: number;
@@ -91,6 +114,14 @@ export interface GameState {
   capsMode: boolean;
   shiftMode: boolean;
   geometricChallenges: GeometricChallenge[];
+  runManifest: WordAvoidRunManifest | null;
+  runEvents: WordAvoidRunEvent[];
+  pauseStartedAt: number | null;
+  totalPausedMs: number;
+  viewport: GameViewport;
+  localDataStatus: LocalDataStatus;
+  submissionStatus: SubmissionStatus;
+  submissionMessage: string;
 }
 
 export interface GameStats {

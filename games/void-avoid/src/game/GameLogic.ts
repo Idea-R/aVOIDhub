@@ -46,7 +46,13 @@ export class GameLogic {
   private meteorManager: MeteorManager;
   private trailManager: PlayerTrailManager;
 
-  constructor(canvas: HTMLCanvasElement, systems: GameSystems, settings: GameSettings) {
+  constructor(
+    canvas: HTMLCanvasElement,
+    systems: GameSystems,
+    settings: GameSettings,
+    worldRandom: () => number,
+    visualRandom: () => number = Math.random,
+  ) {
     this.canvas = canvas;
     this.systems = systems;
     this.settings = settings;
@@ -58,7 +64,13 @@ export class GameLogic {
     // Initialize managers
     this.statsManager = new GameStatsManager();
     this.stateManager = new GameStateManager();
-    this.meteorManager = new MeteorManager(canvas, systems.inputHandler, this.spatialGrid);
+    this.meteorManager = new MeteorManager(
+      canvas,
+      systems.inputHandler,
+      this.spatialGrid,
+      worldRandom,
+      visualRandom,
+    );
     this.trailManager = new PlayerTrailManager();
   }
 
@@ -75,7 +87,7 @@ export class GameLogic {
     if (this.stateManager.isGameOverState()) return;
     
     // Update game state
-    this.stateManager.updateGameTime(deltaTime);
+    this.stateManager.updateGameTime();
     const isGracePeriod = this.stateManager.updateGracePeriod();
     this.stateManager.updateKnockbackCooldown(deltaTime);
     this.stateManager.updatePlayerRingPhase(deltaTime, this.systems.powerUpManager.getCharges() > 0);
@@ -87,9 +99,10 @@ export class GameLogic {
     // Update systems
     this.systems.powerUpManager.update(this.stateManager.getGameTime(), deltaTime);
     this.systems.particleSystem.update(deltaTime);
-    this.systems.scoreSystem.update(deltaTime, performance.now());
+    const simulationTime = this.stateManager.getGameTime() * 1000;
+    this.systems.scoreSystem.update(deltaTime, simulationTime);
     this.systems.defenseSystem.update(deltaTime);
-    this.systems.chainDetonationManager.update(deltaTime, performance.now());
+    this.systems.chainDetonationManager.update(deltaTime, simulationTime);
     
     // Get player position
     const mousePos = this.systems.inputHandler.getMousePosition();
@@ -112,7 +125,7 @@ export class GameLogic {
     this.meteorManager.processDestroyedMeteors(defenseResult.destroyedMeteors);
     this.statsManager.incrementMeteorsDestroyed(defenseResult.destroyedMeteors.length);
     for (const meteor of defenseResult.destroyedMeteors) {
-      this.systems.scoreSystem.addMeteorScore(meteor.x, meteor.y, meteor.isSuper);
+      this.systems.scoreSystem.addMeteorScore(meteor.x, meteor.y, meteor.isSuper, 'defense');
     }
     
     // Handle deflected meteors
@@ -195,7 +208,7 @@ export class GameLogic {
     this.meteorManager.processDestroyedMeteors(destroyedMeteors);
     this.statsManager.incrementMeteorsDestroyed(destroyedMeteors.length);
     for (const meteor of destroyedMeteors) {
-      this.systems.scoreSystem.addMeteorScore(meteor.x, meteor.y, meteor.isSuper);
+      this.systems.scoreSystem.addMeteorScore(meteor.x, meteor.y, meteor.isSuper, 'knockback');
     }
   }
 
@@ -242,6 +255,10 @@ export class GameLogic {
     this.stateManager.setScreenShake(shake);
   }
 
+  setReducedMotion(enabled: boolean): void {
+    this.stateManager.setReducedMotion(enabled);
+  }
+
   getPlayerRingPhase(): number {
     return this.stateManager.getPlayerRingPhase();
   }
@@ -258,8 +275,17 @@ export class GameLogic {
     return this.meteorManager.getMeteorCount();
   }
 
+  getMeteorPoolSize(): number {
+    return this.meteorManager.getPoolSize();
+  }
+
   isGameOverState(): boolean {
     return this.stateManager.isGameOverState();
+  }
+
+  /** Development-only seam used by the repeat-run lifecycle smoke test. */
+  forceGameOverForTest(): void {
+    this.stateManager.triggerGameOver();
   }
 
   getSettings(): GameSettings {

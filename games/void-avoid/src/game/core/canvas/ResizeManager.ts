@@ -18,6 +18,7 @@ export class ResizeManager {
   private canvasConfig: CanvasConfig;
   private config: ResizeManagerConfig;
   private resizeObserver: ResizeObserver | null = null;
+  private orientationTimer: ReturnType<typeof setTimeout> | null = null;
   private state: CanvasState;
   private onResizeCallback: (state: CanvasState) => void = () => {};
 
@@ -37,7 +38,7 @@ export class ResizeManager {
       useResizeObserver: true,
       handleOrientationChange: true,
       orientationChangeDelay: 100,
-      logResizeEvents: true,
+      logResizeEvents: false,
       ...config
     };
 
@@ -58,12 +59,19 @@ export class ResizeManager {
 
     // Handle device orientation change
     if (this.config.handleOrientationChange) {
-      window.addEventListener('orientationchange', () => {
-        // Delay resize to ensure orientation change is complete
-        setTimeout(() => this.handleResize(), this.config.orientationChangeDelay);
-      });
+      window.addEventListener('orientationchange', this.handleOrientationChange);
     }
+
+    window.visualViewport?.addEventListener('resize', this.handleResize);
   }
+
+  private handleOrientationChange = (): void => {
+    if (this.orientationTimer) clearTimeout(this.orientationTimer);
+    this.orientationTimer = setTimeout(() => {
+      this.orientationTimer = null;
+      this.handleResize();
+    }, this.config.orientationChangeDelay);
+  };
 
   private handleResize = (): void => {
     const container = this.canvas.parentElement || document.body;
@@ -101,6 +109,22 @@ export class ResizeManager {
     // Update canvas size only if changed (avoid unnecessary redraws)
     if (this.canvas.width !== actualWidth || this.canvas.height !== actualHeight) {
       this.updateCanvasSize(displayWidth, displayHeight, actualWidth, actualHeight, pixelRatio, containerRect);
+    } else {
+      // CSS/layout can establish the same backing size before our first observation.
+      // Keep the authoritative state and dependent systems in sync even then.
+      this.state = {
+        ...this.state,
+        displayWidth,
+        displayHeight,
+        actualWidth,
+        actualHeight,
+        pixelRatio,
+        scaleX: actualWidth / displayWidth,
+        scaleY: actualHeight / displayHeight,
+        offsetX: (containerRect.width - displayWidth) / 2,
+        offsetY: (containerRect.height - displayHeight) / 2,
+      };
+      this.onResizeCallback({ ...this.state });
     }
   };
 
@@ -148,7 +172,7 @@ export class ResizeManager {
     }
     
     // Notify callback
-    this.onResizeCallback(this.state);
+    this.onResizeCallback({ ...this.state });
   }
 
   /**
@@ -223,7 +247,12 @@ export class ResizeManager {
     }
     
     if (this.config.handleOrientationChange) {
-      window.removeEventListener('orientationchange', this.handleResize);
+      window.removeEventListener('orientationchange', this.handleOrientationChange);
+    }
+    window.visualViewport?.removeEventListener('resize', this.handleResize);
+    if (this.orientationTimer) {
+      clearTimeout(this.orientationTimer);
+      this.orientationTimer = null;
     }
   }
-} 
+}

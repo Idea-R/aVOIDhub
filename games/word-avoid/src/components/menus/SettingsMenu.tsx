@@ -79,6 +79,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
             max="1"
             step="0.1"
             value={value}
+            aria-label={label}
             onChange={(e) => onChange(parseFloat(e.target.value))}
             className="w-full h-2 bg-bg-tertiary rounded-lg appearance-none cursor-pointer slider"
           />
@@ -132,16 +133,16 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
   );
 
   return (
-    <div className={`min-h-screen flex items-center justify-center p-8 ${className}`}>
+    <div className={`min-h-[100dvh] flex items-center justify-center p-4 sm:p-8 ${className}`}>
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3 }}
         className="w-full max-w-4xl"
       >
-        <GlassPanel className="p-8">
+        <GlassPanel className="p-5 sm:p-8">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
             <div className="flex items-center space-x-4">
               <Palette className="w-8 h-8 text-avoid-primary" />
               <h1 className="text-4xl font-game-display font-bold text-avoid-primary">
@@ -234,7 +235,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                 />
                 <ToggleSwitch
                   label="Reduced Motion"
-                  description="Minimize animations for accessibility"
+                  description="Minimize decorative motion; system preference is always honored"
                   value={settings.graphics.reducedMotion}
                   onChange={(value) => handleGraphicsChange('reducedMotion', value)}
                   icon={EyeOff}

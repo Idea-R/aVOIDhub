@@ -1,17 +1,12 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-project-ref.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key-here';
-
-// Validate environment variables in development
-if (import.meta.env.DEV) {
-  if (!import.meta.env.VITE_SUPABASE_URL) {
-    console.warn('⚠️ VITE_SUPABASE_URL not set - using fallback')
-  }
-  if (!import.meta.env.VITE_SUPABASE_ANON_KEY) {
-    console.warn('⚠️ VITE_SUPABASE_ANON_KEY not set - using fallback')
-  }
-}
+export const supabaseConfigured = Boolean(
+  import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY,
+);
+const supabaseUrl =
+  import.meta.env.VITE_SUPABASE_URL || "https://unconfigured.invalid";
+const supabaseAnonKey =
+  import.meta.env.VITE_SUPABASE_ANON_KEY || "unconfigured-anon-key";
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
@@ -42,13 +37,17 @@ export interface Database {
     Tables: {
       user_profiles: {
         Row: UserProfile;
-        Insert: Omit<UserProfile, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<UserProfile, 'id' | 'created_at' | 'updated_at'>>;
+        Insert: Omit<UserProfile, "id" | "created_at" | "updated_at">;
+        Update: Partial<
+          Omit<UserProfile, "id" | "created_at" | "updated_at">
+        >;
       };
       game_scores: {
         Row: GameScore;
-        Insert: Omit<GameScore, 'id' | 'created_at' | 'user_profile'>;
-        Update: Partial<Omit<GameScore, 'id' | 'created_at' | 'user_profile'>>;
+        Insert: Omit<GameScore, "id" | "created_at" | "user_profile">;
+        Update: Partial<
+          Omit<GameScore, "id" | "created_at" | "user_profile">
+        >;
       };
     };
   };

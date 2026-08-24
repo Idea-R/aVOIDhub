@@ -1,8 +1,11 @@
-import { GameState } from '../types/Game';
+import { GameState } from "../types/Game";
+
+const CLOCK_PRESENTATION_INTERVAL_SECONDS = 0.1;
 
 export class GameStateManager {
   private state: GameState;
   private listeners: ((state: GameState) => void)[] = [];
+  private lastClockNotification = 0;
 
   constructor() {
     this.state = {
@@ -23,6 +26,7 @@ export class GameStateManager {
 
   setState(updates: Partial<GameState>): void {
     this.state = { ...this.state, ...updates };
+    this.lastClockNotification = this.state.gameTime;
     this.notifyListeners();
   }
 
@@ -37,7 +41,8 @@ export class GameStateManager {
   }
 
   private notifyListeners(): void {
-    this.listeners.forEach(listener => listener(this.state));
+    const snapshot = { ...this.state };
+    this.listeners.forEach((listener) => listener(snapshot));
   }
 
   updateScore(points: number): void {
@@ -46,9 +51,9 @@ export class GameStateManager {
 
   updateHealth(damage: number): void {
     const newHealth = Math.max(0, this.state.health - damage);
-    this.setState({ 
+    this.setState({
       health: newHealth,
-      isGameOver: newHealth <= 0
+      isGameOver: newHealth <= 0,
     });
   }
 
@@ -60,7 +65,14 @@ export class GameStateManager {
 
   updateGameTime(deltaTime: number): void {
     if (!this.state.isPaused && !this.state.isGameOver) {
-      this.setState({ gameTime: this.state.gameTime + deltaTime / 1000 });
+      this.state.gameTime += deltaTime / 1000;
+      if (
+        this.state.gameTime - this.lastClockNotification >=
+        CLOCK_PRESENTATION_INTERVAL_SECONDS
+      ) {
+        this.lastClockNotification = this.state.gameTime;
+        this.notifyListeners();
+      }
     }
   }
 
@@ -83,6 +95,7 @@ export class GameStateManager {
       isPaused: false,
       isWindowFocused: true,
     };
+    this.lastClockNotification = 0;
     this.notifyListeners();
   }
 }

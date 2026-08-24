@@ -12,6 +12,8 @@ export const GameTimer: React.FC<GameTimerProps> = ({ className = '' }) => {
   const { 
     startTime, 
     isPlaying, 
+    pauseStartedAt,
+    totalPausedMs,
     timeRemaining, 
     mode,
     level,
@@ -23,7 +25,9 @@ export const GameTimer: React.FC<GameTimerProps> = ({ className = '' }) => {
 
   const getElapsedTime = () => {
     if (!isPlaying || !startTime) return 0;
-    return Date.now() - startTime;
+    const now = Date.now();
+    const currentPauseMs = pauseStartedAt === null ? 0 : Math.max(0, now - pauseStartedAt);
+    return Math.max(0, now - startTime - totalPausedMs - currentPauseMs);
   };
 
   const formatTime = (ms: number) => {

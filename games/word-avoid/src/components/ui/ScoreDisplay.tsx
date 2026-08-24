@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Zap } from 'lucide-react';
+import { useMotionPreference } from '../../hooks/useMotionPreference';
 
 interface ScoreDisplayProps {
   score: number;
@@ -25,6 +26,8 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
 }) => {
   const [previousScore, setPreviousScore] = useState(score);
   const [scorePopups, setScorePopups] = useState<ScorePopup[]>([]);
+  const timers = useRef(new Set<ReturnType<typeof setTimeout>>());
+  const shouldReduceMotion = useMotionPreference();
 
   useEffect(() => {
     if (score > previousScore) {
@@ -35,15 +38,22 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
         position: { x: Math.random() * 100, y: Math.random() * 50 }
       };
       
-      setScorePopups(prev => [...prev, popup]);
+      if (!shouldReduceMotion) setScorePopups(prev => [...prev.slice(-5), popup]);
       
       // Remove popup after animation
-      setTimeout(() => {
+      const timer = setTimeout(() => {
+        timers.current.delete(timer);
         setScorePopups(prev => prev.filter(p => p.id !== popup.id));
       }, 1000);
+      timers.current.add(timer);
     }
     setPreviousScore(score);
-  }, [score, previousScore]);
+  }, [score, previousScore, shouldReduceMotion]);
+
+  useEffect(() => () => {
+    for (const timer of timers.current) clearTimeout(timer);
+    timers.current.clear();
+  }, []);
 
   const formatScore = (num: number) => {
     return num.toLocaleString();
@@ -57,8 +67,8 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
           {/* Score */}
           <div className="flex items-center space-x-2">
             <motion.div
-              animate={{ rotate: [0, 10, -10, 0] }}
-              transition={{ duration: 2, repeat: Infinity }}
+              animate={shouldReduceMotion ? undefined : { rotate: [0, 10, -10, 0] }}
+              transition={{ duration: 2, repeat: shouldReduceMotion ? 0 : Infinity }}
             >
               <Trophy className="w-6 h-6 text-score" />
             </motion.div>
@@ -67,7 +77,7 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
               <motion.div
                 key={score}
                 initial={{ scale: 1 }}
-                animate={{ scale: [1, 1.1, 1] }}
+                animate={shouldReduceMotion ? undefined : { scale: [1, 1.1, 1] }}
                 transition={{ duration: 0.2 }}
                 className="text-2xl font-game-display font-bold text-score neon-text"
               >
@@ -79,11 +89,11 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
           {/* Streak */}
           <div className="flex items-center space-x-2">
             <motion.div
-              animate={streak > 5 ? { 
+              animate={!shouldReduceMotion && streak > 5 ? {
                 scale: [1, 1.2, 1],
                 rotate: [0, 5, -5, 0]
               } : {}}
-              transition={{ duration: 0.5, repeat: streak > 5 ? Infinity : 0 }}
+              transition={{ duration: 0.5, repeat: !shouldReduceMotion && streak > 5 ? Infinity : 0 }}
             >
               <Zap className={`w-6 h-6 ${streak > 0 ? 'text-avoid-primary' : 'text-text-muted'}`} />
             </motion.div>
@@ -91,7 +101,7 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
               <div className="text-xs text-text-secondary font-game-ui">Streak</div>
               <motion.div
                 key={streak}
-                animate={streak > 5 ? { 
+                animate={!shouldReduceMotion && streak > 5 ? {
                   scale: [1, 1.2, 1],
                   textShadow: ['0 0 5px currentColor', '0 0 15px currentColor', '0 0 5px currentColor']
                 } : { scale: 1 }}

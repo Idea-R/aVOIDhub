@@ -16,7 +16,6 @@ export class CollisionSystem {
   
   // Collision radii (squared for performance)
   private readonly PLAYER_RADIUS = 6;
-  private readonly PLAYER_RADIUS_SQUARED = this.PLAYER_RADIUS * this.PLAYER_RADIUS;
   
   // Knockback ranges (squared for performance)
   private readonly KNOCKBACK_DESTROY_RANGE = 150;

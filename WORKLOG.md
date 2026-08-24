@@ -1,5 +1,17 @@
 # aVOIDgame.io worklog
 
+## 2026-08-23 — launch integration
+
+- Merged the accepted WreckaVOID V1 charter through PR #45 at `d91932d`.
+- Audited every open pull request and found 17 older requests forming one intentional stack from game details through WreckaVOID, WORDaVOID, VOIDaVOID, and the TankaVOID release candidate.
+- Started clean integration branch `codex/feature-launch-wreck-tank` from current production `main`; preserved the dirty personal checkout at `C:\dev\aVOID` without stashing, resetting, or rewriting it.
+- Integrated the complete TankaVOID T7 tip, which contains the preceding game-repair stack, and retained the current platform membership, role-dashboard, public-read, artwork, and responsive-polish work while resolving overlap.
+- Recorded WreckaVOID and TankaVOID as the first launch pair. Gameplay power and ranked trust remain outside paid membership and cosmetics.
+
+### Next action
+
+Pass the full release matrix on the consolidated branch, publish its Git-driven preview, verify live-safe routes, merge the integration, close superseded stacked pull requests, and then exercise the isolated Supabase run-ticket/data matrix before enabling live leaderboard writes.
+
 ## 2026-08-23
 
 - Audited the canonical `games/wrecka-void` source and the live production route as the first full game-repair target.
