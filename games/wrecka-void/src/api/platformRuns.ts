@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { supabase, supabaseConfigured } from "../lib/supabase";
 
 type RunTicket = { runId: string; ticket: string };
 let currentRun: Promise<RunTicket | null> | null = null;
@@ -19,6 +19,10 @@ async function authenticatedFetch(path: string, init: RequestInit): Promise<Resp
 }
 
 export function beginPlatformRun(): void {
+  if (!supabaseConfigured) {
+    currentRun = Promise.resolve(null);
+    return;
+  }
   currentRun = (async () => {
     const response = await authenticatedFetch('/api/v1/runs', {
       method: 'POST',

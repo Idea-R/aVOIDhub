@@ -7,9 +7,6 @@ export class ChainDetonationRenderer {
   // Performance optimization properties
   private isMobile: boolean;
   private performanceMode: boolean;
-  private fragmentCache: Map<string, ImageData> = new Map();
-  private lastCacheTime: number = 0;
-  private readonly CACHE_DURATION = 100; // Cache for 100ms
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;

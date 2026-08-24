@@ -1,7 +1,6 @@
-import React from 'react';
-import { Trophy, Medal, Award, User, Clock, Zap } from 'lucide-react';
-import { GameScore } from '../../lib/supabase';
-import { useAuth } from '../../hooks/useAuth';
+import { Trophy, Medal, Award, User, Clock, Zap } from "lucide-react";
+import { GameScore } from "../../lib/supabase";
+import { useAuth } from "../../hooks/useAuth";
 
 interface LeaderboardTableProps {
   scores: GameScore[];
@@ -10,7 +9,7 @@ interface LeaderboardTableProps {
 
 export function LeaderboardTable({ scores, loading }: LeaderboardTableProps) {
   const { user } = useAuth();
-  
+
   const getRankIcon = (rank: number) => {
     switch (rank) {
       case 1:
@@ -20,14 +19,18 @@ export function LeaderboardTable({ scores, loading }: LeaderboardTableProps) {
       case 3:
         return <Award className="w-6 h-6 text-amber-600" />;
       default:
-        return <span className="w-6 h-6 flex items-center justify-center text-gray-400 font-bold">{rank}</span>;
+        return (
+          <span className="w-6 h-6 flex items-center justify-center text-gray-400 font-bold">
+            {rank}
+          </span>
+        );
     }
   };
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   if (loading) {
@@ -50,7 +53,9 @@ export function LeaderboardTable({ scores, loading }: LeaderboardTableProps) {
     return (
       <div className="bg-gray-800/50 rounded-lg p-8 text-center">
         <Trophy className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-        <h3 className="text-xl font-semibold text-gray-300 mb-2">No Scores Yet</h3>
+        <h3 className="text-xl font-semibold text-gray-300 mb-2">
+          No Scores Yet
+        </h3>
         <p className="text-gray-400 mb-4">Be the first to set a high score!</p>
         {!user && (
           <div className="bg-blue-900/20 border border-blue-600/30 rounded-lg p-4 max-w-md mx-auto">
@@ -73,12 +78,13 @@ export function LeaderboardTable({ scores, loading }: LeaderboardTableProps) {
         {!user && (
           <div className="mt-3 bg-blue-900/20 border border-blue-600/30 rounded-lg p-3">
             <p className="text-blue-300 text-sm">
-              <strong>Playing as guest:</strong> Your scores won't appear here. Sign in to compete!
+              <strong>Playing as guest:</strong> Your scores won't appear here.
+              Sign in to compete!
             </p>
           </div>
         )}
       </div>
-      
+
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead className="bg-gray-700/50">
@@ -105,7 +111,10 @@ export function LeaderboardTable({ scores, loading }: LeaderboardTableProps) {
           </thead>
           <tbody className="divide-y divide-gray-700">
             {scores.map((score, index) => (
-              <tr key={score.id} className="hover:bg-gray-700/30 transition-colors">
+              <tr
+                key={score.id}
+                className="hover:bg-gray-700/30 transition-colors"
+              >
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     {getRankIcon(index + 1)}
@@ -118,7 +127,7 @@ export function LeaderboardTable({ scores, loading }: LeaderboardTableProps) {
                     </div>
                     <div>
                       <div className="text-sm font-medium text-white">
-                        {score.user_profile?.username || 'Anonymous'}
+                        {score.user_profile?.username || "Anonymous"}
                       </div>
                       {score.user_profile?.bio && (
                         <div className="text-xs text-gray-400 truncate max-w-32">

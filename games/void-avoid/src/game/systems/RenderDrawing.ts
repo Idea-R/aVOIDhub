@@ -11,7 +11,7 @@ export class RenderDrawing {
   
   // Callbacks for external utilities
   onCreateGradient: (x: number, y: number, radius: number, color: string, isSuper?: boolean) => CanvasGradient = () => this.ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
-  onConvertColor: (hex: string, alpha: number) => string = (hex, alpha) => `rgba(0, 0, 0, ${alpha})`;
+  onConvertColor: (hex: string, alpha: number) => string = (_hex, alpha) => `rgba(0, 0, 0, ${alpha})`;
 
   constructor(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) {
     this.ctx = ctx;
@@ -332,7 +332,8 @@ export class RenderDrawing {
   /**
    * Draw knockback ring with multiple charge visualization
    */
-  private drawKnockbackRing(x: number, y: number, phase: number, cursorColor: string, ringIndex: number = 0, totalRings: number = 1): void {
+  private drawKnockbackRing(x: number, y: number, phase: number, cursorColor: string, ringIndex: number = 0, _totalRings: number = 1): void {
+    void _totalRings;
     // Multiple rings with different radii based on charge count
     const baseRadius = 15;
     const ringSpacing = 8;

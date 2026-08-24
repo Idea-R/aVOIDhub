@@ -137,9 +137,11 @@ Do not pin seals, badges, or decorative controls over responsive copy. Give prom
 ## D-020 — Use separate platform detail and immersive play routes
 
 - Date: 2026-08-20
-- Status: proposed for V1 program review
+- Status: accepted and implemented locally for Sprint P3
 
 First-party catalog cards should open `/games/<slug>/` pages with controls, status, scores, personal best, favorites, share, and a clear Play action. Preserve the current immersive routes for bookmarks and focused play. External titles must state the destination domain and cannot imply shared account or leaderboard behavior.
+
+The Sprint P3 implementation extends the detail surface to all eight catalog titles. TankaVOID is the deliberate exception to card navigation and Play: its directory card remains a noninteractive coming-soon artifact, while its direct detail URL documents the rebuild target without exposing a playable route. Favorites remain P4 work, and live personal-best/board reads remain subject to the P1/P5 data gates.
 
 ## D-021 — Give every title its own V1 gate
 
@@ -197,7 +199,135 @@ Revoke inherited table and function privileges from `anon` and `authenticated`, 
 
 Every new run session and score submission records a bounded ruleset version. The atomic finishing transaction copies game, mode, user, and ruleset identity from the locked server-created run rather than accepting those values from the finishing client. A leaderboard may compare results only within a compatibility rule defined by the game; a future balance or scoring change cannot silently share a ranking with an incompatible ruleset.
 
-## D-029 — Separate creator approval from creator payment
+## D-029 — Stabilize WreckaVOID before replacing its feel
+
+- Date: 2026-08-20
+- Status: accepted for W0/W1
+
+Keep `games/wrecka-void` as the canonical WreckaVOID runtime. Preserve its recognizable chain-and-ball play while replacing unsafe lifecycle ownership: one fixed-step simulation clock, one RAF owner, one enemy-physics owner, and one terminal finish transition per run. Pointer/touch support and a readable narrow HUD are baseline playability, not a later visual redesign. Do not call W1 complete until a deterministic browser harness proves 20 restart cycles without accumulating RAF callbacks, listeners, timers, or memory.
+
+## D-030 — Let rendered layout own WreckaVOID’s canvas
+
+- Date: 2026-08-20
+- Status: accepted for W2
+
+Size the gameplay bitmap from the rendered flex-owned canvas, not `window.innerHeight` arithmetic. Dynamic viewport changes, safe-area padding, orientation, CSS layout, and pointer bounds must converge on that measured rectangle. Below a 320 × 320 playfield, stop play behind a clear support message instead of compressing the HUD and interactions into an unreadable surface.
+
+## D-031 — Compose pause reasons and keep WreckaVOID audio local
+
+- Date: 2026-08-20
+- Status: accepted for W2
+
+Manual pause, help, and focus loss are independent reasons; clearing one reason cannot clear another. W2 audio is a small local feedback layer with a persistent mute choice, no score effect, and no platform entitlement. Reduced-motion preference may suppress decorative particles and sparks, but must not silently alter physics, scoring, enemy timing, or leaderboard rules.
+
+## D-032 — Bound presentation work and give every blocking surface one owner
+
+- Date: 2026-08-20
+- Status: accepted for W5
+
+Keep WreckaVOID’s fixed-step simulation authoritative while presenting its clock to React at a bounded cadence. Cap particle collections and reduce decorative density under the operating-system motion preference. Help, pause, exit, game-over, and unsupported-viewport states must each have one semantic/focus owner; opening one surface cannot expose a second modal behind it or clear another pause reason. Enforce the shipping transfer ceiling in code rather than relying on a one-time report.
+
+## D-033 — WORDaVOID V1 ships two honest modes before six experiments
+
+- Date: 2026-08-20
+- Status: accepted for WD0
+
+Classic Survival and two-minute Time Attack are the WORDaVOID V1 modes. Perfect Run and Daily Challenge are duplicate Classic behavior; Wave Defense, Skill Training, Digit Assault, and Geometric Typing are partial experiments. Keep their source for later evaluation, but remove their Start actions and label them unranked until each has a versioned ruleset, statistics model, balance gate, and server-recomputable evidence. Competitive accuracy is correct characters divided by attempted characters with no motivational floor; WPM uses five correct characters per standardized word; best streak means the run maximum, not the terminal active streak.
+
+## D-034 — Share one WORDaVOID rules engine and separate recomputation from trust
+
+- Date: 2026-08-20
+- Status: accepted for WD1 source gate
+
+Generate competitive prompts from a server-created seed and sequence, and use one versioned workspace package for dictionary identity, normalization, prompt generation, scoring, and evidence replay in both game and platform. The browser may report ordered events but may not author accepted aggregates. A recomputed result advertises `server_recomputed` capability while remaining `provisional` until the isolated database exercise and an explicit anti-abuse/trust policy justify promotion. Valid ticket retries return the original receipt under the same row lock; they do not create a second score.
+
+## D-035 — Give WORDaVOID one explicit typing and pause boundary
+
+- Date: 2026-08-20
+- Status: accepted for WD3
+
+Competitive letters belong only to a focusable typing surface; global keyboard ownership is limited to Escape. Browser shortcuts, controls, repeated keys, composition, paste, and characters outside the ASCII V1 contract cannot become evidence accidentally. Manual and focus-loss pauses are independent reasons, and one semantic dialog owns each blocking state. The rendered arena owns viewport dimensions, while system reduced motion is mandatory and may suppress decoration only. Browser-emulated mobile input is a release candidate, not physical-device certification.
+
+## D-036 — Isolate VOIDaVOID before making it competitive
+
+- Date: 2026-08-20
+- Status: accepted for V0/V1
+
+Keep the recognizable meteor, defense, pulse, fragment, and chain-detonation game, but define one canonical runtime graph before adding platform features. The local V1 build uses one fixed 60 Hz loop, one canvas Pointer Events owner, one resize owner, composed pause reasons, an explicit guest start, and local-only result truth. Historical auth, profile, leaderboard, audio, alternate engine, and performance experiments may remain in repository history but cannot compile into the release path. Use DPR 1 until every active system shares one logical-pixel model. Do not rank the current random score stream; seeded evidence and platform run receipts are later gates.
+
+## D-037 — Separate deterministic score evidence from client trust
+
+- Date: 2026-08-20
+- Status: accepted for V2
+
+Derive named world, power-up, chain, score, and defense streams from one recorded unsigned run seed. Cosmetic randomness stays outside those streams so performance and visual settings cannot change an outcome. Use the 60 Hz simulation tick for every gameplay timer and record bounded score events in tick order. A local verifier may call matching arithmetic `replayable-local`, but an unsigned browser envelope remains unranked and provisional. Only a server-issued ticket plus bounded input or authoritative simulation evidence can justify stronger trust in V3.
+
+## D-038 — Keep VOIDaVOID accessibility, sound, and motion outside the score contract
+
+- Date: 2026-08-20
+- Status: accepted for V4
+
+Use a small procedural Web Audio palette that starts only after a player gesture, persists mute, reports failure honestly, and owns exact voice/context teardown. The OS reduced-motion request is mandatory and may suppress particles, shake, shadows, trails, and decorative chain/defense work, but it cannot change gameplay streams, collisions, timing, scoring, or evidence. One semantic dialog owns each blocking state; score updates are not a continuous live region. Enforce central particle and shipping-transfer ceilings in code. Browser emulation, local FPS, and heap samples complete the local gate, while physical devices, deployed audits, production smoke, and rollback proof remain separate release evidence.
+
+## D-039 — Rebuild TankaVOID around directional combat, not prototype breadth
+
+- Date: 2026-08-20
+- Status: accepted for T0/T1
+
+Preserve both prototype histories, then remove the incompatible monorepo generations from the active graph. The stronger standalone tree is a mechanics reference, not a production base. Establish one seeded 60 Hz simulation, loop, input owner, resize owner, logical-pixel viewport, and exact lifecycle before porting combat. T2 must pass an impact vector into pure face/incidence/damage math; it cannot call a generic `takeDamage(damage)` path. TankaVOID remains Coming Soon until the narrow directional-combat loop, content, platform, device, deploy, and rollback gates pass.
+
+## D-040 — Let the struck plate and shell travel answer different questions
+
+- Date: 2026-08-20
+- Status: accepted for T2
+
+Swept collision supplies the impact point. The defender-center-to-impact direction selects front, left, right, or rear armor; inverse projectile travel is then compared with that plate's outward normal to determine penetration, glancing, or ricochet. Do not select both face and incidence from projectile travel: with four nearest faces that would cap incidence at 45° and make the frozen 50°/68° thresholds unreachable. Primary pointer-down is a queued action pulse rather than a transient level so a complete click between fixed ticks cannot disappear.
+
+## D-041 — Make T3 cover structural and the encounter states explicit
+
+- Date: 2026-08-20
+- Status: accepted for T3
+
+Use four indestructible barricades around a clear central lane. Tanks resolve as circles against cover and each other; shells resolve the nearest swept tank-or-cover intersection; and the bruiser cannot fire through a blocked sight line. Treat deployment, combat, and the final-impact hold as deterministic running substates rather than timers owned by React. Enforce one enemy, four cover pieces, 32 projectiles, eight tank impacts, eight cover strikes, zero particles, 56 logical renderer draw-items, five catch-up steps, and a 250 ms accepted frame-delta clamp. Do not add destructible scenery, debris, waves, touch, progression, or scoring to make this slice appear larger.
+
+## D-042 — Treat touch as a single-owner candidate until hardware proves it
+
+- Date: 2026-08-20
+- Status: accepted for T4; physical certification pending
+
+Route keyboard, pointer, drive-thumb, and aim-thumb state through one `InputController`. The left thumb owns throttle and hull turn; the right thumb owns aim and queues exactly one cannon shot when released. React may present labelled, responsive pads but cannot become a second gameplay-input owner. Audio is one gesture-created procedural context with eight bounded voices and exact silence on pause/result/teardown. System reduced motion is mandatory and neither motion nor sound may change simulation truth. Browser Pointer Events and responsive emulation can establish a release candidate, but only physical iOS and Android evidence can establish a public touch-support claim.
+
+## D-043 — Make T5 escalation behavioral, not feature breadth
+
+- Date: 2026-08-20
+- Status: accepted for T5
+
+Build one static five-wave manifest from four readable tank profiles: scout, bruiser, hunter, and final-wave commander. Escalation comes from speed, range, approach, crossfire, health, and coordinated composition—not mines, infantry, pickups, alternate weapons, upgrades, new arenas, or boss-only machinery. Keep deployment, clear holds, field repair, and results on simulation ticks; keep the seed limited to small spawn/orbit variation; and preserve fixed entity/render/audio/input ceilings. A fast pilot and a deliberate one-shot-every-two-seconds pilot must each clear ten seeds, while an idle player must still lose. These local facts do not create a platform score or trust claim.
+
+## D-044 — Recompute TankaVOID arithmetic without overstating browser trust
+
+- Date: 2026-08-20
+- Status: accepted for the T6 source gate; database execution pending
+
+Create each ranked attempt on the platform with a server-owned run id, unsigned seed, exact `five-wave` mode, and `tankavoid-v1-rules-1` identity. At natural completion, accept only a bounded terminal summary whose identity matches the stored manifest; reject impossible wave, kill, commander, shot, damage, repair, time, and hull combinations; and recompute the score on the server. The browser never supplies an authoritative score, user id, trust flag, game key, mode, or ruleset. This establishes the `bounds_recomputed` capability but remains `provisional`, because a browser can still fabricate plausible evidence. Do not use `verified` without independently reproducible simulation or replay evidence. Keep guest play complete, stage the full review build, and withhold the friendly Play route and catalog action until the database and T7 release gates pass.
+
+## D-045 — Treat five waves as Proving Grounds, not the ceiling of TankaVOID
+
+- Date: 2026-08-20
+- Status: accepted for product planning; expansion implementation not started
+
+Preserve the T0–T7 five-wave mode as the deterministic Proving Grounds ruleset: tutorial, browser demo, daily challenge, performance baseline, and ranked platform mode. The recovered prototype shows a broader original ambition—large scrolling terrain, survival waves, barracks, infantry, bosses, multiple weapons, mines, pickups, experience, and levels—but those disconnected systems do not become release scope merely because they exist.
+
+Plan a separately versioned Expedition mode around larger scrolling sorties, sector objectives, extraction decisions, tank buildcraft, and optional endless continuation. It receives its own mode, score/evidence contract, performance ceilings, progression rules, and acceptance train. Do not mutate `tankavoid-v1-rules-1`, delay the Proving Grounds review gate, or add multiplayer before the single-player sortie proves retention. Two-player cooperative sorties may be evaluated later; public PvP and persistent open-world infrastructure remain outside the approved scope.
+
+## D-046 — Require the intersection of data, device, deploy, and rollback evidence for public Tanka Play
+
+- Date: 2026-08-20
+- Status: accepted
+
+Local source, responsive browser emulation, and a review artifact are necessary but not sufficient to publish TankaVOID. The catalog can change from Coming Soon to Play only after the coordinated database matrix, physical iOS/Android checks for any claimed mobile support, Git-driven deployed-route smoke, and a verified rollback target all pass. A failure in one gate keeps the public route held without erasing the completed local candidate evidence.
+
+## D-047 — Separate creator approval from creator payment
 
 - Date: 2026-08-20
 - Status: accepted for the membership source gate
@@ -206,37 +336,44 @@ Creator application is free. Human review establishes creator approval; Stripe e
 
 Free accounts retain core profiles, favorites, play, and eligible leaderboards. Founding Player and Creator plans may add ad-free eligible platform pages, noncompetitive identity/cosmetics, selected experiments, and reviewed creator capacity. No plan may change score, damage, armor, movement, ranked trust, or other competitive outcomes.
 
-## D-030 — Keep role selection out of the login surface
+## D-048 — Keep role selection out of the login surface
 
 - Date: 2026-08-20
 - Status: accepted
 
 Use one passwordless login for players, creators, and administrators. Player and creator status comes from owned platform records and entitlements. Administrator authority comes only from server-controlled Supabase Auth `app_metadata.platform_role`; never read `user_metadata`, a query parameter, a client-side switch, or a public profile field as admin authorization. Authenticated pages and every privileged route handler must verify the user independently.
 
-## D-031 — Make review approval operationally narrow
+## D-049 — Make review approval operationally narrow
 
 - Date: 2026-08-20
 - Status: accepted
 
 The administrator control room may record bounded creator, game, and score-review transitions. A review approval does not publish a game, deploy code, create a Stripe charge, grant an entitlement, activate AdSense, or delete evidence. Those actions remain separate workflows with their own acceptance and production gates.
 
-## D-032 — Give WreckaVOID a finite victory and a separate endless mode
+## D-050 — Give WreckaVOID a finite victory and a separate endless mode
 
 - Date: 2026-08-23
-- Status: proposed for WreckaVOID V1 review
+- Status: accepted for WreckaVOID V1 execution
 
 Ship a ten-minute, three-act Wreck Run with boss checkpoints and a real victory state. Preserve an optional Endless Yard for score chasing after the standard encounter model is stable. Do not require open-world maps, a story campaign, or multiplayer for V1. A finite run gives new players a learnable goal and makes balance measurable; the endless mode remains honestly endless rather than presenting infinity as an unbeatable campaign.
 
-## D-033 — Drive WreckaVOID difficulty through an encounter budget, not score
+## D-051 — Drive WreckaVOID difficulty through an encounter budget, not score
 
 - Date: 2026-08-23
-- Status: proposed for WreckaVOID V1 review
+- Status: accepted for WreckaVOID V1 execution
 
 Advance standard-run acts by time and boss completion. Use bounded population, projectile, movement, fire-rate, and minion budgets. Keep score as a result of skill rather than the clock that punishes skill with faster spawns. Every balance and scoring change receives a versioned ruleset so incompatible results do not silently share a leaderboard.
 
-## D-034 — Make wreck damage express impact quality
+## D-052 — Make wreck damage express impact quality
 
 - Date: 2026-08-23
-- Status: proposed for WreckaVOID V1 review
+- Status: accepted for WreckaVOID V1 execution
 
 Preserve the chain and ball physics, but derive offensive damage from bounded impact velocity or impulse plus meaningful upgrade multipliers and per-target cooldowns. Resolve death, points, and drops once by entity ID. Add bounded player hit recovery so contact cannot deal damage every frame. The game should reward a deliberate high-momentum wreck, not frame overlap or rounding accidents.
+
+## D-053 — Launch WreckaVOID and TankaVOID as the first monetization-ready pair
+
+- Date: 2026-08-23
+- Status: accepted working interpretation of the owner launch direction
+
+Treat WreckaVOID and TankaVOID as the first two hosted games to carry the platform from polished directory to complete product. Preserve guest play, difficult skill-based progression, ruleset-specific leaderboards, player profiles, noncompetitive cosmetics, and paid membership entitlements. Platform billing, creator hosting, and advertising remain shared services; none may change gameplay power or score trust. Integrate the complete stacked game work into current `main`, then finish data, device, deploy, rollback, balance, and live-service gates on one clean launch branch.

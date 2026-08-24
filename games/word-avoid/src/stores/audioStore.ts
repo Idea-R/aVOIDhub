@@ -5,6 +5,8 @@ let audioInitialization: Promise<void> | null = null;
 
 interface AudioState {
   isInitialized: boolean;
+  status: 'idle' | 'initializing' | 'ready' | 'unavailable';
+  statusMessage: string;
   isPlaying: boolean;
   masterVolume: number;
   musicVolume: number;
@@ -40,10 +42,12 @@ interface AudioState {
 
 export const useAudioStore = create<AudioState>((set, get) => ({
   isInitialized: false,
+  status: 'idle',
+  statusMessage: 'Audio starts after your first interaction.',
   isPlaying: false,
-  masterVolume: 0,
-  musicVolume: 0,
-  sfxVolume: 0,
+  masterVolume: 0.7,
+  musicVolume: 0.5,
+  sfxVolume: 0.8,
   
   masterGain: null,
   musicGain: null,
@@ -67,6 +71,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
     }
 
     audioInitialization = (async () => {
+      set({ status: 'initializing', statusMessage: 'Starting audio…' });
       try {
         const Tone = await import('tone');
 
@@ -74,9 +79,10 @@ export const useAudioStore = create<AudioState>((set, get) => ({
         await Tone.start();
       
         // Create master gain nodes
-        const masterGain = new Tone.Gain(0).toDestination();
-        const musicGain = new Tone.Gain(0).connect(masterGain);
-        const sfxGain = new Tone.Gain(0).connect(masterGain);
+        const current = get();
+        const masterGain = new Tone.Gain(current.masterVolume).toDestination();
+        const musicGain = new Tone.Gain(current.musicVolume).connect(masterGain);
+        const sfxGain = new Tone.Gain(current.sfxVolume).connect(masterGain);
       
         // Create synthesizers for sound effects
         const keyPressSynth = new Tone.Synth({
@@ -102,6 +108,8 @@ export const useAudioStore = create<AudioState>((set, get) => ({
       
         set({
           isInitialized: true,
+          status: 'ready',
+          statusMessage: 'Audio ready.',
           masterGain,
           musicGain,
           sfxGain,
@@ -113,9 +121,12 @@ export const useAudioStore = create<AudioState>((set, get) => ({
           actionLayer
         });
       
-        console.log('Audio system initialized successfully');
-      } catch (error) {
-        console.error('Failed to initialize audio:', error);
+      } catch {
+        set({
+          isInitialized: false,
+          status: 'unavailable',
+          statusMessage: 'Audio is unavailable in this browser. Gameplay continues silently.',
+        });
       } finally {
         audioInitialization = null;
       }
@@ -125,27 +136,30 @@ export const useAudioStore = create<AudioState>((set, get) => ({
   },
 
   setMasterVolume: (volume: number) => {
+    const nextVolume = Math.max(0, Math.min(1, volume));
     const { masterGain } = get();
     if (masterGain) {
-      masterGain.gain.rampTo(volume, 0.1);
+      masterGain.gain.rampTo(nextVolume, 0.1);
     }
-    set({ masterVolume: volume });
+    set({ masterVolume: nextVolume });
   },
 
   setMusicVolume: (volume: number) => {
+    const nextVolume = Math.max(0, Math.min(1, volume));
     const { musicGain } = get();
     if (musicGain) {
-      musicGain.gain.value = volume;
+      musicGain.gain.value = nextVolume;
     }
-    set({ musicVolume: volume });
+    set({ musicVolume: nextVolume });
   },
 
   setSfxVolume: (volume: number) => {
+    const nextVolume = Math.max(0, Math.min(1, volume));
     const { sfxGain } = get();
     if (sfxGain) {
-      sfxGain.gain.rampTo(volume, 0.1);
+      sfxGain.gain.rampTo(nextVolume, 0.1);
     }
-    set({ sfxVolume: volume });
+    set({ sfxVolume: nextVolume });
   },
 
   playKeyPress: (key: string) => {

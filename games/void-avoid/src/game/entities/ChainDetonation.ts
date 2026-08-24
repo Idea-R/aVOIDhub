@@ -54,10 +54,17 @@ export class ChainDetonationManager {
   private minGameTimeBeforeSpawn: number = 10000; // No spawning for first 10 seconds
   private lastCheckTime: number = 0;
   private gameStartTime: number = 0; // Will be set when first update() is called
+  private simulationTime: number = 0;
 
-  constructor(private canvasWidth: number, private canvasHeight: number) {}
+  constructor(
+    private canvasWidth: number,
+    private canvasHeight: number,
+    private readonly gameplayRandom: () => number,
+    private readonly visualRandom: () => number = Math.random,
+  ) {}
 
   update(deltaTime: number, currentTime: number): void {
+    this.simulationTime = currentTime;
     // Initialize game start time on first update
     if (this.gameStartTime === 0) {
       this.gameStartTime = currentTime;
@@ -85,7 +92,7 @@ export class ChainDetonationManager {
       return;
     }
 
-    if (Math.random() < this.spawnChance) {
+    if (this.gameplayRandom() < this.spawnChance) {
       this.spawnChainDetonation(currentTime);
     }
   }
@@ -98,7 +105,7 @@ export class ChainDetonationManager {
     // Generate 4-6 fragment positions with dynamic difficulty scaling
     const gameTimeMinutes = (currentTime - this.gameStartTime) / 60000;
     const difficultyBonus = Math.min(Math.floor(gameTimeMinutes / 2), 2); // +1 fragment every 2 minutes, max +2
-    const baseCount = 4 + Math.floor(Math.random() * 3); // 4, 5, or 6 fragments
+    const baseCount = 4 + Math.floor(this.gameplayRandom() * 3); // 4, 5, or 6 fragments
     const fragmentCount = Math.min(baseCount + difficultyBonus, 6); // Cap at 6 total
     for (let i = 0; i < fragmentCount; i++) {
       let attempts = 0;
@@ -106,8 +113,10 @@ export class ChainDetonationManager {
       let x, y;
 
       while (!validPosition && attempts < 50) {
-        x = margin + Math.random() * (this.canvasWidth - margin * 2);
-        y = margin + Math.random() * (this.canvasHeight - margin * 2);
+        const horizontalSpan = Math.max(1, this.canvasWidth - margin * 2);
+        const verticalSpan = Math.max(1, this.canvasHeight - margin * 2);
+        x = Math.min(this.canvasWidth - 1, margin + this.gameplayRandom() * horizontalSpan);
+        y = Math.min(this.canvasHeight - 1, margin + this.gameplayRandom() * verticalSpan);
 
         // Check distance from other fragments
         validPosition = fragments.every(fragment => {
@@ -125,7 +134,7 @@ export class ChainDetonationManager {
           x: x!,
           y: y!,
           collected: false,
-          pulsePhase: Math.random() * Math.PI * 2,
+          pulsePhase: this.visualRandom() * Math.PI * 2,
           electricArcs: [],
           collectionEffect: {
             active: false,
@@ -142,8 +151,8 @@ export class ChainDetonationManager {
         if (index !== otherIndex) {
           fragment.electricArcs.push({
             targetId: otherFragment.id,
-            intensity: 0.5 + Math.random() * 0.5,
-            flickerPhase: Math.random() * Math.PI * 2
+            intensity: 0.5 + this.visualRandom() * 0.5,
+            flickerPhase: this.visualRandom() * Math.PI * 2
           });
         }
       });
@@ -156,7 +165,7 @@ export class ChainDetonationManager {
       timeRemaining: 5000, // 5 seconds - much more urgent!
       maxTime: 5000,
       collectedCount: 0,
-      totalFragments: fragmentCount,
+      totalFragments: fragments.length,
       screenEffect: {
         edgeGlow: 0,
         pulseIntensity: 0
@@ -173,7 +182,7 @@ export class ChainDetonationManager {
     };
 
     this.lastSpawnTime = currentTime;
-    console.log(`🔗 Chain Detonation spawned! Collect all ${fragmentCount} fragments within 5 seconds!`);
+    console.log(`🔗 Chain Detonation spawned! Collect all ${fragments.length} fragments within 5 seconds!`);
   }
 
   private updateActiveChain(deltaTime: number, currentTime: number): void {
@@ -324,7 +333,7 @@ export class ChainDetonationManager {
     // Create burst of purple particles
     for (let i = 0; i < 20; i++) {
       const angle = (Math.PI * 2 * i) / 20;
-      const speed = 3 + Math.random() * 4;
+      const speed = 3 + this.visualRandom() * 4;
       
       try {
         fragment.collectionEffect.particles.push({
@@ -333,7 +342,7 @@ export class ChainDetonationManager {
           vx: Math.cos(angle) * speed,
           vy: Math.sin(angle) * speed,
           alpha: 1,
-          life: 30 + Math.random() * 20
+          life: 30 + this.visualRandom() * 20
         });
       } catch (error) {
         console.warn('Error adding particle:', error);
@@ -367,7 +376,7 @@ export class ChainDetonationManager {
       const eventDetail = {
         centerX: this.canvasWidth / 2,
         centerY: this.canvasHeight / 2,
-        timestamp: performance.now()
+        timestamp: this.simulationTime
       };
       
       console.log('🔗🐛 DEBUG: Dispatching chainDetonationComplete event with detail:', eventDetail);
@@ -436,5 +445,6 @@ export class ChainDetonationManager {
     this.lastSpawnTime = 0;
     this.lastCheckTime = 0;
     this.gameStartTime = 0; // Will be re-initialized on next update
+    this.simulationTime = 0;
   }
 }

@@ -129,4 +129,4 @@ export class ChainRenderer {
       this.ctx.stroke();
     }
   }
-} 
+}

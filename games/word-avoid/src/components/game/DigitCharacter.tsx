@@ -1,6 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import type { DigitAssaultChar } from '../../types/game';
+import { useGameStore } from '../../stores/gameStore';
+import { useMotionPreference } from '../../hooks/useMotionPreference';
 
 interface DigitCharacterProps {
   char: DigitAssaultChar;
@@ -30,8 +32,10 @@ export const DigitCharacter: React.FC<DigitCharacterProps> = ({
   };
 
   const charColor = getCharColor();
-  const centerX = window.innerWidth / 2;
-  const centerY = window.innerHeight / 2;
+  const viewport = useGameStore((state) => state.viewport);
+  const shouldReduceMotion = useMotionPreference();
+  const centerX = viewport.width / 2;
+  const centerY = viewport.height / 2;
   const distance = Math.sqrt(
     Math.pow(centerX - char.position.x, 2) + 
     Math.pow(centerY - char.position.y, 2)
@@ -69,14 +73,14 @@ export const DigitCharacter: React.FC<DigitCharacterProps> = ({
           backgroundColor: `${charColor}20`,
           borderColor: `${charColor}60`
         }}
-        animate={isNearCenter ? {
+        animate={!shouldReduceMotion && isNearCenter ? {
           boxShadow: [
             `0 0 15px ${charColor}80`,
             `0 0 25px ${charColor}`,
             `0 0 15px ${charColor}80`
           ]
         } : {}}
-        transition={{ duration: 0.5, repeat: isNearCenter ? Infinity : 0 }}
+        transition={{ duration: 0.5, repeat: !shouldReduceMotion && isNearCenter ? Infinity : 0 }}
       >
         {/* Character Text */}
         <div 
@@ -100,13 +104,13 @@ export const DigitCharacter: React.FC<DigitCharacterProps> = ({
           background: `radial-gradient(circle, ${charColor}40 0%, transparent 70%)`,
           filter: 'blur(4px)'
         }}
-        animate={{
+        animate={shouldReduceMotion ? { opacity: 0.25 } : {
           scale: [1, 1.2, 1],
           opacity: [0.3, 0.6, 0.3]
         }}
         transition={{
           duration: 1,
-          repeat: Infinity,
+          repeat: shouldReduceMotion ? 0 : Infinity,
           ease: 'easeInOut'
         }}
       />
@@ -115,13 +119,13 @@ export const DigitCharacter: React.FC<DigitCharacterProps> = ({
       {isNearCenter && (
         <motion.div
           className="absolute -inset-3 border-2 border-extreme rounded-lg"
-          animate={{
+          animate={shouldReduceMotion ? { opacity: 1 } : {
             opacity: [0, 1, 0],
             scale: [1, 1.1, 1]
           }}
           transition={{
             duration: 0.3,
-            repeat: Infinity
+            repeat: shouldReduceMotion ? 0 : Infinity
           }}
         />
       )}

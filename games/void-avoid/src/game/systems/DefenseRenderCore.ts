@@ -13,8 +13,8 @@ interface ElectricRing {
 }
 
 interface EffectsData {
-  lightningBolts: any[];
-  electricParticles: any[];
+  lightningBolts: unknown[];
+  electricParticles: unknown[];
   electricRings: ElectricRing[];
   staticElectricityTimer: number;
 }
@@ -38,6 +38,7 @@ export class DefenseRenderCore {
   }
 
   public render(effectsData: EffectsData, defenseZones: DefenseZone[]): void {
+    void defenseZones;
     this.ctx.save();
     this.ctx.globalCompositeOperation = 'screen';
     
@@ -87,8 +88,6 @@ export class DefenseRenderCore {
     if (staticElectricityTimer <= 0) return;
     
     const intensity = staticElectricityTimer / 500; // Fade over 500ms
-    const time = performance.now() * 0.005;
-    
     this.ctx.save();
     this.ctx.globalAlpha = intensity * 0.3;
     

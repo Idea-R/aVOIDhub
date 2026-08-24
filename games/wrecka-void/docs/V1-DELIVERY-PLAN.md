@@ -56,6 +56,19 @@ Stop for explicit approval before:
 
 ## 4. Current evidence
 
+### Reentry correction after stacked work integration
+
+The first audit was performed against production `main` before the dormant WreckaVOID repair stack was reconciled. The integrated T7 game stack now contributes substantial completed work from earlier W0/W1, W2, and W5 branches:
+
+- one fixed-step simulation and animation owner;
+- removal of duplicate enemy advancement and the pusher crash;
+- bounded terminal completion and restart behavior;
+- Pointer Events, pointer capture, responsive canvas ownership, touch-safe controls, and a compact HUD;
+- composed pause/focus/help behavior, local procedural audio, reduced motion, semantic dialogs, and bounded particles;
+- 31 focused tests, clean TypeScript and lint gates, a passing production build, and a 200 KiB initial-transfer budget.
+
+Those repairs are now the baseline, not work to repeat. The remaining V1 center of gravity is the finite Wreck Run and encounter director, impact-driven damage and meaningful upgrades, platform identity/run receipts, ruleset-specific leaderboards, physical mobile confirmation, and deployed canary/rollback evidence. The W0 through W7 sequence below remains the product acceptance map; completed engineering pieces should be credited against their matching exits after the consolidated branch passes preview QA.
+
 ### Verified live behavior
 
 - The landing page and game route load in production.

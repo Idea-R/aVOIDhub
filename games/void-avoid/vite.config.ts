@@ -7,6 +7,7 @@ export default defineConfig({
   plugins: [react()],
   build: {
     outDir: '../../dist/VOIDaVOID',
+    emptyOutDir: true,
     rolldownOptions: {
       output: {
         minify: {

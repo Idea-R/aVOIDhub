@@ -1,5 +1,4 @@
-import React from 'react';
-import { GameEngine } from '../components/Game/GameEngine';
+import { GameEngine } from "../components/Game/GameEngine";
 
 interface GamePageProps {
   onNavigate: (page: string) => void;

@@ -1,350 +1,170 @@
 import { CanvasManager } from './core/CanvasManager';
 
-export interface KnockbackHandler {
-  (): void;
+export interface KnockbackHandler { (): void }
+
+export interface TapGesture {
+  duration: number;
+  distance: number;
+  elapsedSincePreviousTap: number;
+}
+
+export function isDoubleTapGesture(gesture: TapGesture): boolean {
+  return gesture.duration <= 220
+    && gesture.distance <= 48
+    && gesture.elapsedSincePreviousTap <= 320;
+}
+
+export interface InputDiagnostics {
+  attached: boolean;
+  listenerCount: number;
+  activePointerId: number | null;
+  pointerType: string;
 }
 
 export class InputHandler {
-  private canvas: HTMLCanvasElement;
-  private onKnockback: KnockbackHandler;
   private canvasManager: CanvasManager | null = null;
-  
-  // Mouse and touch position tracking
-  private mouseX: number = 0;
-  private mouseY: number = 0;
-  
-  // Touch tracking
-  private activeTouchId: number | null = null;
-  private isTouchDevice: boolean = false;
-  
-  // Double-click/tap detection
-  private lastClickTime: number = 0;
-  private clickCount: number = 0;
+  private mouseX = 0;
+  private mouseY = 0;
+  private activePointerId: number | null = null;
+  private pointerType = 'mouse';
+  private pointerStartTime = 0;
+  private pointerStartPosition = { x: 0, y: 0 };
+  private previousTapTime = Number.NEGATIVE_INFINITY;
+  private attached = false;
 
-  // Enhanced touch interaction properties
-  private touchStartTime: number = 0;
-  private touchStartPos: { x: number; y: number } = { x: 0, y: 0 };
-  private doubleTapTimeout: NodeJS.Timeout | null = null;
-  private hapticSupported: boolean = false;
-  private lastMoveUpdate: number = 0;
-  
-  // Touch gesture thresholds
-  private readonly DOUBLE_TAP_MAX_TIME = 300;
-  private readonly DOUBLE_TAP_MAX_DISTANCE = 50;
-  private readonly TOUCH_RESPONSE_DELAY = 16; // ~60fps response
-
-  constructor(canvas: HTMLCanvasElement, onKnockback: KnockbackHandler) {
-    this.canvas = canvas;
-    this.onKnockback = onKnockback;
-    
-    this.setupEventListeners();
-    this.initializeTouchOptimizations();
+  constructor(
+    private readonly canvas: HTMLCanvasElement,
+    private readonly onKnockback: KnockbackHandler,
+  ) {
+    this.attach();
   }
 
   setCanvasManager(canvasManager: CanvasManager): void {
     this.canvasManager = canvasManager;
+    this.centerPointer();
   }
 
-  private setupEventListeners(): void {
-    // Mouse events
-    window.addEventListener('mousemove', this.handleMouseMove);
-    window.addEventListener('dblclick', this.handleDoubleClick);
-    
-    // Touch events for mobile
-    window.addEventListener('touchstart', this.handleTouchStart);
-    window.addEventListener('touchmove', this.handleTouchMove);
-    window.addEventListener('touchend', this.handleTouchEnd);
+  private attach(): void {
+    if (this.attached) return;
+    this.canvas.addEventListener('pointermove', this.handlePointerMove);
+    this.canvas.addEventListener('pointerdown', this.handlePointerDown);
+    this.canvas.addEventListener('pointerup', this.handlePointerUp);
+    this.canvas.addEventListener('pointercancel', this.handlePointerCancel);
+    this.canvas.addEventListener('dblclick', this.handleDoubleClick);
+    this.attached = true;
   }
 
-  private initializeTouchOptimizations(): void {
-    // Check for haptic feedback support
-    this.hapticSupported = 'vibrate' in navigator;
-    
-    // Set up optimal touch event handling
-    const touchOptions = { passive: false, capture: true };
-    this.canvas.addEventListener('touchstart', this.handleTouchStart, touchOptions);
-    this.canvas.addEventListener('touchmove', this.handleTouchMove, touchOptions);
-    this.canvas.addEventListener('touchend', this.handleTouchEnd, touchOptions);
-    
-    console.log('🎮 Touch optimizations initialized:', {
-      hapticSupported: this.hapticSupported,
-      touchEventsActive: true
-    });
-  }
-
-  private triggerHapticFeedback(type: 'light' | 'medium' | 'heavy' = 'light'): void {
-    if (!this.hapticSupported) return;
-    
-    const patterns = {
-      light: [10],
-      medium: [20],
-      heavy: [50]
+  private mapPosition(clientX: number, clientY: number): { x: number; y: number } {
+    if (this.canvasManager) return this.canvasManager.screenToCanvas(clientX, clientY);
+    const rect = this.canvas.getBoundingClientRect();
+    const scaleX = rect.width > 0 ? this.canvas.width / rect.width : 1;
+    const scaleY = rect.height > 0 ? this.canvas.height / rect.height : 1;
+    return {
+      x: Math.max(0, Math.min(this.canvas.width, (clientX - rect.left) * scaleX)),
+      y: Math.max(0, Math.min(this.canvas.height, (clientY - rect.top) * scaleY)),
     };
-    
-    try {
-      navigator.vibrate(patterns[type]);
-    } catch (error) {
-      // Silently fail if haptic feedback isn't available
-    }
   }
 
-  private handleMouseMove = (e: MouseEvent) => {
-    if (this.isTouchDevice) return;
-    
-    if (this.canvasManager) {
-      // Use CanvasManager for proper coordinate mapping
-      const coords = this.canvasManager.screenToCanvas(e.clientX, e.clientY);
-      this.mouseX = coords.x;
-      this.mouseY = coords.y;
-    } else {
-      // Fallback to old method
-      const rect = this.canvas.getBoundingClientRect();
-      this.mouseX = e.clientX - rect.left;
-      this.mouseY = e.clientY - rect.top;
-    }
+  private updatePosition(event: PointerEvent): void {
+    const position = this.mapPosition(event.clientX, event.clientY);
+    this.mouseX = position.x;
+    this.mouseY = position.y;
+  }
+
+  private handlePointerMove = (event: PointerEvent): void => {
+    if (this.activePointerId !== null && event.pointerId !== this.activePointerId) return;
+    this.pointerType = event.pointerType || 'mouse';
+    this.updatePosition(event);
   };
 
-  private handleTouchStart = (e: TouchEvent) => {
-    e.preventDefault(); // Prevent scrolling and other default behaviors
-    this.isTouchDevice = true;
-    
-    // Use the first touch if no active touch
-    if (this.activeTouchId === null && e.touches.length > 0) {
-      const touch = e.touches[0];
-      this.activeTouchId = touch.identifier;
-      this.touchStartTime = Date.now();
-      
-      // Use our enhanced coordinate mapping
-      this.updateTouchPosition(touch.clientX, touch.clientY);
-      this.touchStartPos = { x: this.mouseX, y: this.mouseY };
-      
-      // Light haptic feedback on touch start
-      this.triggerHapticFeedback('light');
-    }
+  private handlePointerDown = (event: PointerEvent): void => {
+    if (this.activePointerId !== null) return;
+    this.activePointerId = event.pointerId;
+    this.pointerType = event.pointerType || 'mouse';
+    this.pointerStartTime = performance.now();
+    this.updatePosition(event);
+    this.pointerStartPosition = { x: this.mouseX, y: this.mouseY };
+    try { this.canvas.setPointerCapture?.(event.pointerId); } catch { /* optional */ }
   };
 
-  private handleTouchMove = (e: TouchEvent) => {
-    e.preventDefault(); // Prevent scrolling
-    this.isTouchDevice = true;
-    
-    // Find the active touch among current touches
-    if (this.activeTouchId !== null) {
-      for (let i = 0; i < e.touches.length; i++) {
-        const touch = e.touches[i];
-        if (touch.identifier === this.activeTouchId) {
-          // Throttle touch move updates for better performance
-          const now = Date.now();
-          if (now - this.lastMoveUpdate < this.TOUCH_RESPONSE_DELAY) {
-            return;
-          }
-          this.lastMoveUpdate = now;
-          
-          // Use our enhanced coordinate mapping
-          this.updateTouchPosition(touch.clientX, touch.clientY);
-          break;
-        }
+  private handlePointerUp = (event: PointerEvent): void => {
+    if (event.pointerId !== this.activePointerId) return;
+    this.updatePosition(event);
+    if (this.pointerType === 'touch' || this.pointerType === 'pen') {
+      const now = performance.now();
+      const distance = Math.hypot(
+        this.mouseX - this.pointerStartPosition.x,
+        this.mouseY - this.pointerStartPosition.y,
+      );
+      if (isDoubleTapGesture({
+        duration: now - this.pointerStartTime,
+        distance,
+        elapsedSincePreviousTap: now - this.previousTapTime,
+      })) {
+        this.previousTapTime = Number.NEGATIVE_INFINITY;
+        this.onKnockback();
+        if ('vibrate' in navigator) navigator.vibrate?.(25);
+      } else if (now - this.pointerStartTime <= 220 && distance <= 48) {
+        this.previousTapTime = now;
       }
     }
+    this.releasePointer(event.pointerId);
   };
 
-  private handleDoubleClick = (e: MouseEvent) => {
-    if (this.isTouchDevice) return;
+  private handlePointerCancel = (event: PointerEvent): void => {
+    if (event.pointerId === this.activePointerId) this.releasePointer(event.pointerId);
+  };
+
+  private handleDoubleClick = (event: MouseEvent): void => {
+    if (this.pointerType === 'touch' || this.pointerType === 'pen') return;
+    event.preventDefault();
     this.onKnockback();
   };
 
-  private handleTouchEnd = (e: TouchEvent) => {
-    e.preventDefault();
-    this.isTouchDevice = true;
-    
-    // Check if our active touch ended
-    let activeTouchEnded = false;
-    if (this.activeTouchId !== null) {
-      activeTouchEnded = true;
-      // Check if the active touch is still in the remaining touches
-      for (let i = 0; i < e.touches.length; i++) {
-        if (e.touches[i].identifier === this.activeTouchId) {
-          activeTouchEnded = false;
-          break;
-        }
-      }
-    }
-    
-    // Handle enhanced double-tap gesture for knockback
-    if (activeTouchEnded) {
-      const now = Date.now();
-      const touchDuration = now - this.touchStartTime;
-      
-      // Calculate touch distance for gesture validation
-      const currentPos = this.getLastTouchPosition(e);
-      const touchDistance = this.calculateDistance(this.touchStartPos, currentPos);
-      
-      // Enhanced double-tap detection with distance validation
-      if (touchDuration < 200 && touchDistance < this.DOUBLE_TAP_MAX_DISTANCE) {
-        if (this.doubleTapTimeout) {
-          // Second tap detected within time window
-          clearTimeout(this.doubleTapTimeout);
-          this.doubleTapTimeout = null;
-          
-          // Trigger knockback with haptic feedback
-          this.triggerHapticFeedback('heavy');
-          this.onKnockback();
-          console.log('🎮 Double-tap knockback activated');
-        } else {
-          // First tap - start timeout
-          this.doubleTapTimeout = setTimeout(() => {
-            this.doubleTapTimeout = null;
-          }, this.DOUBLE_TAP_MAX_TIME);
-        }
-      }
-      
-      // Clear active touch and switch to next available touch
-      this.activeTouchId = null;
-      
-      if (e.touches.length > 0) {
-        const touch = e.touches[0];
-        this.activeTouchId = touch.identifier;
-        
-        if (this.canvasManager) {
-          const coords = this.canvasManager.screenToCanvas(touch.clientX, touch.clientY);
-          this.mouseX = coords.x;
-          this.mouseY = coords.y;
-        } else {
-          const rect = this.canvas.getBoundingClientRect();
-          this.mouseX = touch.clientX - rect.left;
-          this.mouseY = touch.clientY - rect.top;
-        }
-      }
-    }
-  };
-
-  private getLastTouchPosition(e: TouchEvent): { x: number; y: number } {
-    if (e.changedTouches.length > 0) {
-      const touch = e.changedTouches[0];
-      if (this.canvasManager) {
-        return this.canvasManager.screenToCanvas(touch.clientX, touch.clientY);
-      } else {
-        const rect = this.canvas.getBoundingClientRect();
-        return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
-      }
-    }
-    return { x: this.mouseX, y: this.mouseY };
+  private releasePointer(pointerId: number): void {
+    try {
+      if (this.canvas.hasPointerCapture?.(pointerId)) this.canvas.releasePointerCapture(pointerId);
+    } catch { /* the browser may already have released it */ }
+    this.activePointerId = null;
   }
 
-  private calculateDistance(pos1: { x: number; y: number }, pos2: { x: number; y: number }): number {
-    const dx = pos2.x - pos1.x;
-    const dy = pos2.y - pos1.y;
-    return Math.sqrt(dx * dx + dy * dy);
+  private centerPointer(): void {
+    const state = this.canvasManager?.getState();
+    this.mouseX = (state?.displayWidth || this.canvas.width) / 2;
+    this.mouseY = (state?.displayHeight || this.canvas.height) / 2;
   }
 
-  private updateTouchPosition(clientX: number, clientY: number): void {
-    if (this.canvasManager) {
-      // Use CanvasManager for proper coordinate mapping
-      const coords = this.canvasManager.screenToCanvas(clientX, clientY);
-      this.mouseX = coords.x;
-      this.mouseY = coords.y;
-    } else {
-      // Enhanced fallback with mobile optimization
-      const coords = this.getAccurateCanvasCoordinates(clientX, clientY);
-      this.mouseX = coords.x;
-      this.mouseY = coords.y;
-    }
-    
-    // Debug logging for mobile debugging (can be removed in production)
-    if (this.isTouchDevice && window.location.search.includes('debug')) {
-      console.log(`👆 Touch: screen(${clientX.toFixed(1)}, ${clientY.toFixed(1)}) → canvas(${this.mouseX.toFixed(1)}, ${this.mouseY.toFixed(1)})`);
-    }
-  }
-
-  private getAccurateCanvasCoordinates(clientX: number, clientY: number): { x: number; y: number } {
-    const rect = this.canvas.getBoundingClientRect();
-    
-    // Account for CSS transforms and scaling - Enhanced for mobile
-    const canvasStyle = window.getComputedStyle(this.canvas);
-    const transform = canvasStyle.transform;
-    
-    // Get the actual canvas dimensions
-    const canvasWidth = this.canvas.width;
-    const canvasHeight = this.canvas.height;
-    const displayWidth = rect.width;
-    const displayHeight = rect.height;
-    
-    // Calculate scale factors with device pixel ratio
-    const scaleX = canvasWidth / displayWidth;
-    const scaleY = canvasHeight / displayHeight;
-    
-    // Get position relative to canvas with viewport offset compensation
-    let relativeX = clientX - rect.left;
-    let relativeY = clientY - rect.top;
-    
-    // Mobile-specific adjustments for safe areas and dynamic viewport
-    if (this.isTouchDevice) {
-      // Account for mobile browser UI changes (address bar, etc.)
-      const visualViewport = window.visualViewport;
-      if (visualViewport) {
-        const viewportScale = visualViewport.scale || 1;
-        relativeX = relativeX / viewportScale;
-        relativeY = relativeY / viewportScale;
-      }
-      
-      // Compensate for safe area insets if available
-      const computedStyle = window.getComputedStyle(document.documentElement);
-      const safeAreaTop = parseInt(computedStyle.getPropertyValue('--safe-area-inset-top').replace('px', '')) || 0;
-      const safeAreaLeft = parseInt(computedStyle.getPropertyValue('--safe-area-inset-left').replace('px', '')) || 0;
-      
-      relativeY -= safeAreaTop;
-      relativeX -= safeAreaLeft;
-    }
-    
-    // Account for any CSS transforms (particularly important for mobile)
-    if (transform && transform !== 'none') {
-      try {
-        const matrix = new DOMMatrix(transform);
-        const point = new DOMPoint(relativeX, relativeY);
-        const transformed = point.matrixTransform(matrix.inverse());
-        relativeX = transformed.x;
-        relativeY = transformed.y;
-      } catch (e) {
-        // Fallback if DOMMatrix is not supported or fails
-        console.warn('⚠️ Transform calculation failed, using basic coordinates');
-      }
-    }
-    
-    // Apply scaling to get canvas coordinates
-    const canvasX = relativeX * scaleX;
-    const canvasY = relativeY * scaleY;
-    
-    // Ensure coordinates are within canvas bounds
-    const clampedX = Math.max(0, Math.min(canvasX, canvasWidth));
-    const clampedY = Math.max(0, Math.min(canvasY, canvasHeight));
-    
-    return { x: clampedX, y: clampedY };
-  }
-
-  // Public interface methods
   getMousePosition(): { x: number; y: number } {
     return { x: this.mouseX, y: this.mouseY };
   }
 
   getIsTouchDevice(): boolean {
-    return this.isTouchDevice;
+    return this.pointerType === 'touch' || this.pointerType === 'pen';
   }
 
-  // Reset method to fix cursor position bug after game reset
   reset(): void {
-    this.mouseX = 0;
-    this.mouseY = 0;
-    this.activeTouchId = null;
-    this.clickCount = 0;
-    this.lastClickTime = 0;
-    console.log('🎮 InputHandler reset - cursor position cleared');
+    this.activePointerId = null;
+    this.previousTapTime = Number.NEGATIVE_INFINITY;
+    this.centerPointer();
   }
 
-  // Cleanup method to remove event listeners
+  getDiagnostics(): InputDiagnostics {
+    return {
+      attached: this.attached,
+      listenerCount: this.attached ? 5 : 0,
+      activePointerId: this.activePointerId,
+      pointerType: this.pointerType,
+    };
+  }
+
   cleanup(): void {
-    window.removeEventListener('mousemove', this.handleMouseMove);
-    window.removeEventListener('dblclick', this.handleDoubleClick);
-    window.removeEventListener('touchstart', this.handleTouchStart);
-    window.removeEventListener('touchmove', this.handleTouchMove);
-    window.removeEventListener('touchend', this.handleTouchEnd);
+    if (!this.attached) return;
+    this.canvas.removeEventListener('pointermove', this.handlePointerMove);
+    this.canvas.removeEventListener('pointerdown', this.handlePointerDown);
+    this.canvas.removeEventListener('pointerup', this.handlePointerUp);
+    this.canvas.removeEventListener('pointercancel', this.handlePointerCancel);
+    this.canvas.removeEventListener('dblclick', this.handleDoubleClick);
+    this.attached = false;
+    this.activePointerId = null;
   }
 }

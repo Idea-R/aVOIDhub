@@ -17,6 +17,49 @@ export interface ComboInfo {
   consecutiveKnockbacks: number;
 }
 
+export type ScoreEvidenceEvent =
+  | { type: 'meteor'; isSuper: boolean; source: 'defense' | 'knockback' }
+  | { type: 'chain-fragment' }
+  | { type: 'chain-detonation'; meteorsDestroyed: number };
+
+export function calculateSurvivalScore(seconds: number): number {
+  return Math.floor(Math.max(0, seconds) * 5);
+}
+
+export function calculateMeteorScore(isSuper: boolean, randomUnit: number): number {
+  const clampedRandom = Math.min(0.999999, Math.max(0, randomUnit));
+  return (isSuper ? 15 : 5) + Math.floor(clampedRandom * (isSuper ? 16 : 11));
+}
+
+export function calculateComboBonus(comboCount: number, streakMultiplier: number): number {
+  let baseBonus = 0;
+  if (comboCount >= 15) baseBonus = 500;
+  else if (comboCount >= 12) baseBonus = 350;
+  else if (comboCount >= 10) baseBonus = 250;
+  else if (comboCount >= 8) baseBonus = 175;
+  else if (comboCount >= 6) baseBonus = 125;
+  else if (comboCount >= 5) baseBonus = 100;
+  else if (comboCount >= 4) baseBonus = 75;
+  else if (comboCount >= 3) baseBonus = 50;
+  return Math.floor(baseBonus * Math.max(1, streakMultiplier));
+}
+
+export function calculatePerfectKnockbackBonus(destroyedCount: number, streakMultiplier: number): number {
+  const baseBonus = destroyedCount >= 5 ? 50 : destroyedCount >= 4 ? 35 : destroyedCount >= 3 ? 25 : 0;
+  return Math.floor(baseBonus * Math.max(1, streakMultiplier));
+}
+
+export function calculateChainDetonationScore(meteorsDestroyed: number): number {
+  if (meteorsDestroyed <= 0) return 0;
+  const multiplier = meteorsDestroyed >= 20 ? 4
+    : meteorsDestroyed >= 15 ? 3
+      : meteorsDestroyed >= 10 ? 2.5
+        : meteorsDestroyed >= 5 ? 2
+          : meteorsDestroyed >= 3 ? 1.5
+            : 1;
+  return 250 + Math.floor(meteorsDestroyed * 30 * multiplier);
+}
+
 export class ScoreSystem {
   private scoreTextPool: ObjectPool<ScoreText>;
   private activeScoreTexts: ScoreText[] = [];
@@ -39,11 +82,14 @@ export class ScoreSystem {
   
   private readonly COMBO_TIMEOUT = 3000; // Increased to 3 seconds for more forgiving combo timing
 
-  constructor() {
+  constructor(
+    private readonly random: () => number,
+    private readonly onEvidenceEvent: (event: ScoreEvidenceEvent) => void = () => {},
+  ) {
     this.scoreTextPool = new ObjectPool(createScoreText, resetScoreText, 5, this.maxScoreTexts);
   }
 
-  update(deltaTime: number, currentTime: number): void {
+  update(_deltaTime: number, currentTime: number): void {
     // Update combo timeout with streak decay
     if (this.comboInfo.isActive && currentTime - this.comboInfo.lastKnockbackTime > this.COMBO_TIMEOUT) {
       this.resetCombo();
@@ -73,10 +119,13 @@ export class ScoreSystem {
   }
 
   // Meteor destruction scoring
-  addMeteorScore(x: number, y: number, isSuper: boolean): number {
-    const basePoints = isSuper ? 15 : 5;
-    const randomBonus = isSuper ? Math.floor(Math.random() * 16) : Math.floor(Math.random() * 11); // 0-15 for super, 0-10 for regular
-    const points = basePoints + randomBonus;
+  addMeteorScore(
+    x: number,
+    y: number,
+    isSuper: boolean,
+    source: 'defense' | 'knockback' = 'defense',
+  ): number {
+    const points = calculateMeteorScore(isSuper, this.random());
     
     this.meteorScore += points;
     
@@ -84,6 +133,7 @@ export class ScoreSystem {
     const color = isSuper ? '#ffd700' : '#06b6d4'; // Gold for super, cyan for regular
     const fontSize = isSuper ? 20 : 16;
     this.createScoreText(x, y, `+${points}`, color, fontSize, isSuper ? 'super' : 'regular');
+    this.onEvidenceEvent({ type: 'meteor', isSuper, source });
     
     return points;
   }
@@ -97,7 +147,7 @@ export class ScoreSystem {
     
     // Calculate individual meteor scores
     for (const meteor of destroyedMeteors) {
-      const points = this.addMeteorScore(meteor.x, meteor.y, meteor.isSuper);
+      const points = this.addMeteorScore(meteor.x, meteor.y, meteor.isSuper, 'knockback');
       meteorPoints += points;
     }
     
@@ -122,7 +172,7 @@ export class ScoreSystem {
     
     // Enhanced combo bonuses - now much more rewarding
     if (this.comboInfo.count >= 3) { // Lowered threshold from 5 to 3
-      const comboBonus = this.calculateComboBonus(this.comboInfo.count, this.comboInfo.streakMultiplier);
+      const comboBonus = calculateComboBonus(this.comboInfo.count, this.comboInfo.streakMultiplier);
       this.comboScore += comboBonus;
       totalPoints += comboBonus;
       
@@ -139,7 +189,7 @@ export class ScoreSystem {
     }
     
     // Enhanced perfect knockback bonus
-    const perfectBonus = this.checkPerfectKnockback(destroyedMeteors.length, this.comboInfo.streakMultiplier);
+    const perfectBonus = calculatePerfectKnockbackBonus(destroyedMeteors.length, this.comboInfo.streakMultiplier);
     if (perfectBonus > 0) {
       this.comboScore += perfectBonus;
       totalPoints += perfectBonus;
@@ -167,33 +217,6 @@ export class ScoreSystem {
     } else {
       this.comboInfo.streakMultiplier = 1.0; // Beginner level
     }
-  }
-
-  private calculateComboBonus(comboCount: number, streakMultiplier: number): number {
-    let baseBonus = 0;
-    
-    // Much higher base bonuses
-    if (comboCount >= 15) baseBonus = 500;
-    else if (comboCount >= 12) baseBonus = 350;
-    else if (comboCount >= 10) baseBonus = 250;
-    else if (comboCount >= 8) baseBonus = 175;
-    else if (comboCount >= 6) baseBonus = 125;
-    else if (comboCount >= 5) baseBonus = 100;
-    else if (comboCount >= 4) baseBonus = 75;
-    else if (comboCount >= 3) baseBonus = 50;
-    
-    // Apply streak multiplier
-    return Math.floor(baseBonus * streakMultiplier);
-  }
-
-  private checkPerfectKnockback(destroyedCount: number, streakMultiplier: number): number {
-    // Enhanced perfect bonus with streak scaling
-    let baseBonus = 0;
-    if (destroyedCount >= 5) baseBonus = 50;
-    else if (destroyedCount >= 4) baseBonus = 35;
-    else if (destroyedCount >= 3) baseBonus = 25;
-    
-    return Math.floor(baseBonus * streakMultiplier);
   }
 
   private createEnhancedComboText(x: number, y: number, comboCount: number, bonus: number, streakMultiplier: number, consecutiveKnockbacks: number): void {
@@ -250,7 +273,7 @@ export class ScoreSystem {
 
   // Survival scoring
   updateSurvivalScore(gameTime: number): void {
-    this.survivalScore = Math.floor(gameTime * 5);
+    this.survivalScore = calculateSurvivalScore(gameTime);
   }
 
   // Public getters
@@ -307,6 +330,7 @@ export class ScoreSystem {
     
     // Create floating score text
     this.createScoreText(x, y, `+${points}`, '#9d4edd', 16, 'regular');
+    this.onEvidenceEvent({ type: 'chain-fragment' });
     
     return points;
   }
@@ -346,6 +370,7 @@ export class ScoreSystem {
     
     // Add to meteor score category
     this.meteorScore += totalPoints;
+    this.onEvidenceEvent({ type: 'chain-detonation', meteorsDestroyed });
     
     // Create dramatic score display
     this.createScoreText(centerX, centerY - 40, `CHAIN DETONATION!`, '#9d4edd', 32, 'combo');
@@ -362,7 +387,7 @@ export class ScoreSystem {
     return totalPoints;
   }
 
-  addChainDetonationScore(totalPoints: number, meteorsDestroyed: number, centerX: number, centerY: number): number {
+  addChainDetonationScore(totalPoints: number, _meteorsDestroyed: number, centerX: number, centerY: number): number {
     this.meteorScore += totalPoints;
     
     // Create dramatic score text

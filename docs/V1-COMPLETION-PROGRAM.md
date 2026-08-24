@@ -5,7 +5,7 @@
 - **Repository:** `C:\dev\aVOID-next` / `Idea-R/aVOIDhub`
 - **Production baseline:** `https://avoidgame.io` at merge commit `7cd9788`
 - **Program branch:** `codex/docs-v1-completion-program`
-- **Current execution branch:** `security/platform-foundation-v1`
+- **Current execution branch:** `codex/tankavoid-t7-release-hardening` (stacked on the exact TankaVOID T6 head; issue #36)
 - **Related records:** [`ROADMAP.md`](../ROADMAP.md), [`WORKLOG.md`](../WORKLOG.md), [`DECISIONS.md`](../DECISIONS.md)
 
 ## 1. Why this document exists
@@ -49,6 +49,23 @@ It is intentionally stricter than “the page loads.” Every V1 definition incl
 - `supabase/tests/database/platform_foundation.sql` contains 50 database assertions, and `npm run test:foundation` verifies the required migration shape locally.
 - Executable SQL, role, run-replay, signup, and advisor testing is still pending on the approval-gated Supabase development branch. Local preparation is not P1 completion.
 - The exact branch procedure and exit evidence are in `docs/sprint-1-foundation-test-plan.md`.
+- P3 is source-complete in draft PR #5: all eight catalog slugs have responsive platform detail routes and honest first-party/external launch boundaries without pretending the dormant leaderboard backend is live.
+- WreckaVOID W0/W1 local gates are complete. Standalone typecheck, lint, 14 focused tests, production build, and desktop/mobile browser play pass after repairing the pusher crash, duplicate enemy updates, lifecycle ownership, terminal finish gate, pointer scaling, and narrow HUD controls. Forty deterministic terminal/restart cycles held one RAF owner, one input owner, zero deferred timers, one finish per run, and no positive measured heap trend; evidence is in `docs/sprint-wreckavoid-w0-w1.md`.
+- WreckaVOID W2 local gates are complete. Rendered-canvas viewport ownership, live portrait/landscape resize, minimum-playfield messaging, reason-aware pause/focus/help, concise onboarding, persistent procedural audio, reduced-motion particle suppression, compact phone results, 19 tests, and a post-change 20-restart smoke pass are recorded in `docs/sprint-wreckavoid-w2.md`.
+- WreckaVOID W5 local gates are complete. The active logo is 31.85 KB, the enforced initial-transfer budget passes at 168.4 KB, game-clock presentation and particles are bounded, no-env guest play is quiet, and one-owner modal/focus/viewport behavior passes 31 tests. Desktop/phone/landscape QA, 40 restart cycles, frame/heap samples, the full platform build, and mobile Lighthouse at 98/100/100/100 are recorded in `docs/sprint-wreckavoid-w5.md`. Production deploy and rollback proof remain release gates.
+- WORDaVOID WD0 local gates are complete. Classic Survival and two-minute Time Attack are now the only playable V1 modes; six duplicate/partial experiments are listed as unranked without Start controls. The draft score/stat contract is pure and tested, the 60% accuracy floor and terminal-current-streak result are repaired, stale out-of-root build artifacts are removed, and the four-viewport menu matrix passes without horizontal overflow. Evidence is in `docs/sprint-wordavoid-wd0.md`.
+- WORDaVOID WD1 is source-complete. A shared package freezes the 1,770-entry dictionary/hash, ruleset, normalization, deterministic prompt generator, scoring, and bounded event validator. The game emits replayable evidence; the platform reconstructs the manifest from stored server metadata and ignores client aggregates; and the prepared service transaction returns the original receipt on a valid retry. Automated checks, full assembly, and desktop/mobile browser smoke pass. Executable SQL/concurrency/read-back remains gated on the isolated Supabase branch, and accepted storage stays `provisional`; evidence is in `docs/sprint-wordavoid-wd1.md`.
+- WORDaVOID WD3 is source- and local-browser-complete. An owned typing surface replaces global character capture; focus/manual pauses compose; the rendered arena owns resize/orientation; reduced motion and audio failure are truthful; local progress is versioned and recoverable; abandon, share, and repeat-run transitions are explicit. Typecheck, zero-warning lint, 33 tests, standalone/full-platform builds, desktop/narrow/landscape browser checks, and a 20-cycle restart soak pass. Physical iOS/Android sign-off and production deploy remain release gates; evidence is in `docs/sprint-wordavoid-wd3.md`.
+- VOIDaVOID V0 and the local V1 runtime gate are complete. The 51-file canonical graph established one fixed-step loop, one Pointer Events owner, one resize owner, reason-aware pause, explicit start/results/replay, local-only score truth, and no active game-local auth/profile/leaderboard/audio path. Nine focused tests, zero-warning lint, standalone/full-platform builds, desktop/portrait/landscape QA, and a 30-cycle finish/restart soak passed that gate; evidence is in `docs/voidavoid-v0-v1-contract.md` and `docs/sprint-voidavoid-v0-v1.md`.
+- VOIDaVOID V2 is local-source and browser complete. Named streams now seed every score-affecting meteor, power-up, chain, score-roll, and defense fallback decision; gameplay timers use the 60 Hz simulation clock; and a bounded tick-ordered envelope independently recomputes each final score. Twenty-two tests, standalone/full-platform builds, three responsive browser sizes, and a 20-cycle evidence soak pass. The result is honestly labeled `replayable-local`, not server validated; evidence is in `docs/voidavoid-v2-evidence-contract.md` and `docs/sprint-voidavoid-v2.md`.
+- VOIDaVOID V4 is local-source and browser complete. Gesture-only procedural audio, persisted preferences, system-aware reduced motion, semantic focus-owned dialogs, central particle bounds, a repaired FPS sampler, and an enforced transfer/audio budget pass 30 tests and five responsive browser sizes. Twenty repeat cycles retain one context, five pointer listeners, bounded particles, zero terminal voices/frames, and a decreasing raw heap sample. Physical devices, a formal deployed audit, deployment, and rollback remain release gates; evidence is in `docs/voidavoid-v4-experience-contract.md` and `docs/sprint-voidavoid-v4.md`.
+- TankaVOID T0/T1 is source- and local-browser-complete in draft PR #25. The 78-error monorepo generation and the stronger dirty standalone prototype are preserved, inventoried, and replaced in the active graph by one seeded fixed-step proving ground with one input owner, one resize owner, explicit run states, headless tests, and an enforced 54,130-byte initial-transfer result. Twenty browser cycles retain one canvas, eight listeners, one observer, and no terminal frame. Directional combat, enemies, touch, scoring, platform integration, and any public route remain T2–T7; evidence is in `docs/tankavoid-v1-contract.md` and `docs/sprint-tankavoid-t0-t1.md`.
+- TankaVOID T2 is source- and local-browser-complete in draft PR #27. One player and one deterministic bruiser now exchange pooled swept shells through pure impact-point face selection and incidence-based penetration, glancing, or ricochet math. Twenty-one tests, a 57,331-byte transfer result, a live six-shot enemy disable, a natural player-disable path, responsive QA, pause focus, and a 20-cycle ownership soak pass. Touch, a complete arena/loop, content expansion, scoring, platform integration, and any public route remain T3–T7; evidence is in `docs/sprint-tankavoid-t2.md`.
+- TankaVOID T3 is source- and local-browser-complete in draft PR #29. Four fixed barricades, nearest swept tank/cover hits, tank separation, line-of-sight-aware bruiser routing, deterministic deployment/result holds, and explicit entity/render/frame ceilings pass 28 tests, a 59,208-byte transfer result, six responsive sizes, and ten pointer-driven six-hit wins. Evidence is in `docs/sprint-tankavoid-t3.md`.
+- TankaVOID T4 is source- and emulated-browser-complete in draft PR #31. One input owner now supports an intentional two-thumb candidate; one gesture-owned procedural audio context, persisted sound/motion choices, system reduced motion, first-run coaching, responsive settings, and exact pause/teardown pass 33 tests and a 62,857-byte transfer result. Five real Pointer Events touch-path wins and a six-size active matrix pass, but physical iOS/Android evidence is still absent, so mobile remains a release candidate rather than a support claim. Evidence is in `docs/sprint-tankavoid-t4.md`.
+- TankaVOID T5 is source- and local-browser-complete. Four fixed behavior profiles now form nine hostiles across five versioned waves, ending with a commander/scout/hunter pressure event. Tick-owned deployment, clear holds, field repair, result metrics, bounded multi-target collision, and a deliberate two-second fire-cadence balance gate pass 39 tests, the 64,753-byte transfer gate, full platform assembly, six active responsive sizes, pause/focus checks, and a quiet browser log. TankaVOID remains Coming Soon; T6 owns platform/session/result integration and T7 still owns physical devices, final tuning, deployed smoke, and rollback. Evidence is in `docs/sprint-tankavoid-t5.md`.
+- TankaVOID T6 is source- and local-browser-complete in draft PR #35. A shared contract now freezes server-created run identity, bounded terminal evidence, server-recomputed provisional scoring, idempotent finish, accepted-only board/personal-best reads, and private-safe receipts. Contract/game/platform tests, foundation assertions, full assembly, and responsive browser checks pass. The coordinated Supabase transaction has not run, so no accepted Tanka result is live; evidence is in `docs/sprint-tankavoid-t6.md`.
+- TankaVOID T7 is locally release-candidate complete on issue #36. One root command and Linux pull-request workflow now own the complete release gate; cumulative frame diagnostics, procedural arena depth, responsive portrait/landscape/desktop checks, pause/focus, reduced motion, muted audio, and a 21-start/20-reset soak pass with a 16.7 ms average, 17 ms maximum, zero long frames, and zero dropped simulation time. A Windows-local Netlify adapter error prevented upload after the application build, so Git-driven preview smoke and rollback evidence remain open. Physical iOS/Android and database evidence also remain open; evidence is in `docs/sprint-tankavoid-t7.md`.
 
 ### What is unsafe or misleading if activated today
 
@@ -153,7 +170,7 @@ The complete program is not a two-week cleanup. For the platform and hosted firs
 
 ### Current state
 
-The platform is a Next.js 16 App Router application in [`apps/platform`](../apps/platform). The production shell is live and responsive. The current cards in [`src/data/games.ts`](../apps/platform/src/data/games.ts) still send hosted games directly to their immersive routes. Account, leaderboard, creator, membership, privacy, and terms surfaces exist.
+The platform is a Next.js 16 App Router application in [`apps/platform`](../apps/platform). The production shell is live and responsive. Sprint P3 now has a local canonical registry in [`src/data/games.ts`](../apps/platform/src/data/games.ts) and an eight-title [`/games/[slug]/`](../apps/platform/src/app/games/[slug]/page.tsx) page system. Playable catalog cards open those detail pages before a distinct Play or outbound handoff; TankaVOID remains intentionally noninteractive in the directory. The implementation has passed local build, type, catalog-contract, and responsive browser checks, but it has not been merged or deployed. Account, leaderboard, creator, membership, privacy, and terms surfaces also exist.
 
 The new account flow is not active in production. [`src/lib/env.ts`](../apps/platform/src/lib/env.ts) requires a publishable Supabase configuration, and [`src/components/AuthForm.tsx`](../apps/platform/src/components/AuthForm.tsx) disables submission when it is absent. The current form is email OTP only. The hosted games still contain their own older auth implementations.
 
@@ -171,7 +188,7 @@ Of the 69 historical primary score rows, 48 are currently marked `is_verified = 
 
 Production records 29 migrations while the repository root contains only three migration files. The database therefore cannot be reproduced from the current root history. The staged foundation migration closes important score-write paths, but it assumes legacy objects already exist, leaves unsafe historical `user_profiles` policies in place, and mixes direct client grants with admin-client application routes. It must be reconciled rather than applied unchanged.
 
-Other release gaps are concrete: `/games/wreckavoid/` currently returns 404; the platform package has no unit/integration/E2E test scripts; favorites exist only as proposed schema; the global header has no signed-in state; creator review/admin surfaces do not exist; and the 20-minute run-ticket expiry is unsuitable for an unbounded survival run unless renewal or game-specific duration rules are added.
+Other release gaps are concrete: production still returns 404 for `/games/wreckavoid/` until the P3 branch is reviewed and released; the platform has a catalog contract test but no broader unit/integration/E2E suite; favorites exist only as proposed schema; the global header has no signed-in state; creator review/admin surfaces do not exist; and the 20-minute run-ticket expiry is unsuitable for an unbounded survival run unless renewal or game-specific duration rules are added. The P3 board preview is intentionally not the final P5 public read model.
 
 ### Platform V1 experience
 
@@ -262,6 +279,8 @@ A new visitor can browse without an account. A returning player can sign in once
 | P8     | Consent and directory-only AdSense canary readiness                                     |    M | Privacy decisions, exact publisher ID, site Ready state | CMP/opt-out QA, paid no-request proof, spacing/CLS checks; no gameplay ads                         |
 | P9     | Platform release hardening                                                              |    L | P0–P8 applicable V1 scope                               | CI green, accessibility/performance/browser matrix, backups, rollback, production smoke test       |
 
+**P3 implementation note (2026-08-20):** the page system, typed boundaries, catalog navigation, SEO coverage, and responsive layouts are complete on `codex/feature-game-detail-surfaces`. All eight routes render at tablet size with unique metadata and no horizontal overflow; hosted Play routes, external-domain handoffs, and TankaVOID's no-play state are covered by `npm run test:catalog --workspace=@avoid/platform`. Live personal-best/leaderboard behavior remains P1/P5-dependent, and production release remains a separate approval gate.
+
 **Expected platform effort:** approximately **47–76 focused engineering days** (roughly 9–15 solo sprint-weeks), excluding approval delays, SMTP/OAuth ownership, Stripe/AdSense account review, and major surprises in the live schema. Two disciplined lanes may reduce elapsed time to 6–10 weeks, but schema/auth and release gates remain serial.
 
 ### Platform V1 acceptance checklist
@@ -290,17 +309,17 @@ The game lives in [`games/wrecka-void`](../games/wrecka-void). [`src/App.tsx`](.
 
 Historically, WreckaVOID wrote to a separate empty `game_scores` table. The intended game-over submission was skipped because state changed before the next guarded loop could submit. The current source branch contains a one-shot ordering correction and a platform run adapter, but production cannot complete that path until the platform auth/run backend is active.
 
-### Confirmed release blockers
+### Baseline blockers and current repair status
 
-- [`src/game/CollisionDetection.ts`](../games/wrecka-void/src/game/CollisionDetection.ts) uses a pusher collision’s `damage` value before that value is declared, creating a real temporal-dead-zone crash when the path runs.
-- The game loop publishes React state every frame, and the animation callback/effect depend on that changing state. This can repeatedly cancel and recreate the RAF loop rather than keeping one stable simulation owner.
-- Delta time is capped rather than processed through a fixed-step accumulator, so slow devices can change simulation and scoring behavior.
-- [`src/game/InputManager.ts`](../games/wrecka-void/src/game/InputManager.ts) handles mouse/keyboard only. Canvas size is based on `window.innerHeight` rather than dynamic viewport/safe-area ownership.
+- The pusher temporal-dead-zone crash is repaired and covered by focused damage/destruction tests on the active W0/W1 branch.
+- The changing-state RAF loop is replaced by one stable owner reading current dependencies through refs. A deterministic 20-restart browser/memory proof is still required before W1 closes.
+- Variable capped delta time is replaced by a bounded fixed-step accumulator with 30/60/120 Hz equivalence tests.
+- Input now uses scaled Pointer Events, pointer capture, and `touch-action: none`; the mobile HUD has named pause/help actions. Orientation, safe-area, and browser-chrome resize coverage remain W2 work.
 - Google auth redirects to `/game`, but the application has no matching routed page and production is mounted under the WreckaVOID path.
 - Score finish failure collapses to an apparent success state; players cannot tell saved, rejected, expired, guest, offline, or unavailable apart.
 - `games/wreck-avoid` and `games/wrecka-void` contain near-duplicate source trees. Only the latter is staged into production.
 - There is no game audio system and essentially no ARIA/focus behavior.
-- Vite build passes, but standalone type-check fails with real engine/type defects; lint currently reports 29 errors and three warnings; there are no tests.
+- The canonical game now passes Vite build, standalone TypeScript, ESLint with zero warnings, and 14 focused tests. Full browser death/restart, retained boss/projectile/second-chain paths, and long-run performance coverage remain open.
 - A roughly 1.5 MB logo is shipped in the current build and should not block first play.
 
 ### WreckaVOID V1 experience
@@ -374,7 +393,7 @@ A guest opens the platform WreckaVOID page, understands the controls, launches q
 - [ ] Share uses a canonical result URL.
 - [ ] Build, lint, focused tests, browser smoke, performance, accessibility, and deployed-route checks pass.
 - [ ] The pusher, boss, projectile, second-chain, and every retained power-up path run without console exceptions.
-- [ ] Twenty restarts do not increase RAF loop or event-listener counts.
+- [x] Twenty restarts do not increase RAF loop or event-listener counts. (W0/W1 local evidence: 40 cycles.)
 
 ### Explicitly later
 
@@ -389,11 +408,13 @@ A guest opens the platform WreckaVOID page, understands the controls, launches q
 
 WORDaVOID lives in [`games/word-avoid`](../games/word-avoid) and is the strongest candidate for the platform’s first genuinely validated leaderboard. Its Zustand game store in [`src/stores/gameStore.ts`](../games/word-avoid/src/stores/gameStore.ts) owns the run lifecycle, typing statistics, and result dispatch. The game already has mode selection, result presentation, local statistics, audio, animations, and a native Web Share action.
 
-The application has more modern React/UI dependencies than the other originals, but it is sensitive to toolchain changes: newer React plugin generations compiled successfully and then rendered a blank application. The verified line remains Vite 7.3.6 with React plugin 4.7. Its Tone audio and Supabase leaderboard clients were deferred behind user action to reduce initial JavaScript. The legacy lint debt was cleared, but the current automated test coverage is still only a narrow store regression.
+The application has more modern React/UI dependencies than the other originals, but it is sensitive to toolchain changes: newer React plugin generations compiled successfully and then rendered a blank application. The verified line remains Vite 7.3.6 with React plugin 4.7. Its Tone audio and Supabase leaderboard clients remain deferred behind user action. WD3 expands the focused suite to 33 tests and verifies the runtime across desktop, narrow portrait, and short landscape layouts.
 
 Historical score payloads trusted browser-authored WPM, accuracy, words typed, mode, and level. The current source contains a platform run adapter, but a `validated` tier requires a server-issued word/ruleset seed and server recomputation rather than accepting those fields as facts.
 
-### Confirmed release blockers
+### Baseline blockers and current disposition
+
+The list below records the audited starting defects. WD0 resolved the first three mode/stat defects; WD3 resolved the input, resize, reduced-motion, audio-state, local-history, and repeat-run defects in source. Platform identity, executable score persistence, canonical receipts, physical-device sign-off, bundle work, and deployment remain open.
 
 - The menu advertises eight modes, but `perfectRun` and `dailyChallenge` have no distinct store behavior and currently fall through to Classic semantics.
 - Accuracy is derived from spawned words rather than character attempts/mistakes and is artificially floored at 60 percent. It is not a valid competitive accuracy metric.
@@ -466,9 +487,11 @@ A player chooses a clearly explained mode, begins with keyboard focus in the cor
 
 **Expected WORDaVOID effort after the shared platform foundation:** **12–20 focused engineering/QA days**. Allow **15–24 days** when the same lane owns the detail page, platform integration, statistics surface, and release support. It remains the strongest first `validated` title because its score can be recomputed.
 
+WD0/WD1/WD3 implementation evidence: [`wordavoid-v1-contract.md`](wordavoid-v1-contract.md), [`wordavoid-validation-contract.md`](wordavoid-validation-contract.md), [`sprint-wordavoid-wd0.md`](sprint-wordavoid-wd0.md), [`sprint-wordavoid-wd1.md`](sprint-wordavoid-wd1.md), and [`sprint-wordavoid-wd3.md`](sprint-wordavoid-wd3.md). WD1's source gate is complete. SQL execution, concurrency/read-back, and production activation remain part of the approval-gated platform data exercise; `server_recomputed` capability does not promote a row beyond `provisional`. WD3 passes local source/browser gates, with physical iOS/Android and deployed-route checks still reserved for release.
+
 ### WORDaVOID V1 acceptance checklist
 
-- [ ] Every included mode has a versioned scoring and word-generation contract.
+- [x] Every included mode has a versioned scoring and word-generation contract.
 - [ ] The server can reproduce every accepted aggregate from submitted evidence.
 - [ ] Tampered, expired, reused, or inconsistent runs are rejected without blocking play.
 - [ ] Keyboard focus, pause, restart, audio, reduced motion, and supported mobile-keyboard behavior pass.
@@ -476,8 +499,8 @@ A player chooses a clearly explained mode, begins with keyboard focus in the cor
 - [ ] The game page and mode-specific boards work across target viewports.
 - [ ] Share provides a canonical receipt and copy fallback.
 - [ ] Type-check, lint, unit/property/store tests, build, live-runtime, and deployed-route checks pass.
-- [ ] Accuracy can honestly fall below 60 percent and “best streak” is the true maximum.
-- [ ] Unsupported modes cannot masquerade as distinct finished modes.
+- [x] Accuracy can honestly fall below 60 percent and “best streak” is the true maximum.
+- [x] Unsupported modes cannot masquerade as distinct finished modes.
 
 ### Explicitly later
 
@@ -494,20 +517,18 @@ VOIDaVOID lives in [`games/void-avoid`](../games/void-avoid) and carries the ori
 
 Score generation includes client-side randomness, so identical inputs cannot currently reproduce a run. Normal signed-in game-over submission was also incomplete: much of the direct write behavior centered on carrying a guest score through sign-up rather than finishing every authenticated run consistently.
 
-### Confirmed release blockers
+V0/V1 repair update: the shipping graph is now explicitly rooted at `src/main.tsx`; historical alternate apps and engines are excluded from canonical compilation. The active shell is guest-first and local-score only. It has one fixed-step loop, one canvas Pointer Events handler, one resize manager, composed pause reasons, exact teardown, and an honest result surface. The full frozen behavior and scoring contract is in [`voidavoid-v0-v1-contract.md`](voidavoid-v0-v1-contract.md).
 
-- Multiple generations of engine, loop, input, resize, performance, and application code remain compiled together. The active React path uses `game/core/GameEngine`, while stale alternate engines and a duplicate app still fail type/lint gates.
-- Vite build passes, but standalone type-check fails across active and stale code; lint currently reports 173 errors and ten warnings; there are no tests.
-- Score submission is deliberately disabled and returns failure, while game-over/account copy still promises “verified leaderboard,” “Sign Up & Save Score,” and “Verified Player.”
-- Guest result UI calculates where an unsaved score might rank and presents it as “You placed,” which is not a recorded placement.
-- Email/password, mock/offline credentials, recovery, password change, and separate auth subscription logic remain inside the game. The auth-state subscription is not retained for cleanup.
-- Touch handlers are attached to both window and canvas, while cleanup removes only the window registrations. Gestures can double-fire and canvas listeners leak.
-- Game-loop blur/focus/visibility listeners have a cleanup method, but the active engine stop path does not call it.
-- Simulation consumes raw frame delta; competitive behavior is unproven across 30/60/120 Hz and throttled tabs.
-- Accessibility and reduced-motion support are absent, and the system cursor is hidden across UI layers where modal/button interaction still occurs.
-- Production music depends on external blob URLs while local fallback audio assets are effectively absent.
-- The root app initializes old auth and auto-starts play after roughly half a second, while an unused alternate app defines a different pre-game flow.
-- A roughly 1.57 MB art asset remains in the play build.
+### Confirmed V3–V4 release blockers
+
+- World and score decisions are seeded and score arithmetic is locally replayable, but pointer/collision legitimacy is not yet server-replayable.
+- Ruleset `voidavoid-v2` is canonical in the game, but it is not yet shared with a platform validator or issued by a server run ticket.
+- No one-use platform run adapter, accepted receipt, personal-best query, or data-backed detail-page board exists.
+- Historical alternate source remains in the repository outside the canonical graph and still needs an archive/removal decision.
+- Local procedural audio is active only after a player gesture and is teardown-safe; physical-device and deployed audio behavior remain uncertified.
+- DPR-2 rendering is not claimed until every system uses one logical-pixel coordinate model.
+- Browser-emulated pointer/phone checks are not physical iOS/Android certification.
+- Production deploy, rollback, frame/heap device evidence, and deployed accessibility/performance audits remain open.
 
 ### VOIDaVOID V1 experience
 
@@ -566,20 +587,22 @@ A player launches the original meteor-avoidance game, immediately understands cu
 | V3     | Platform session, run adapter, detail page, personal best, receipt share |    L | No direct writes; guest/signed-in/failure paths; `/games/voidavoid/` pass    |
 | V4     | Visual/audio/accessibility/performance and release hardening             |    L | Browser/device matrix, frame/memory report, CI and deployed smoke            |
 
+V0, the local V1 runtime gate, V2 deterministic score evidence, and the local V4 hardening gate completed on 2026-08-20. V3 remains server/data gated; physical-device, deployed audit, production smoke, and rollback evidence remain V4 release gates.
+
 **Expected VOIDaVOID effort after the shared platform foundation:** **20–35 focused engineering/QA days**. The largest uncertainty is whether the active engine can be isolated and made deterministic without changing the game’s feel.
 
 ### VOIDaVOID V1 acceptance checklist
 
-- [ ] The scoring, difficulty, randomness, and terminal-state contracts are written and versioned.
-- [ ] Repeated runs do not accumulate frames, listeners, audio, or stale state.
+- [x] The scoring, difficulty, randomness, and terminal-state contracts are written and versioned for ruleset `voidavoid-v2`; score evidence independently recomputes local totals.
+- [x] Thirty repeated finish/restart cycles held one frame owner, five input listeners, and one-for-one start/finish/reset counts; audio is outside the active graph.
 - [ ] Pointer and claimed touch behavior pass target devices and orientations.
-- [ ] No game-specific login/profile flow remains in the play path.
-- [ ] No browser inserts or promotes leaderboard rows directly.
-- [ ] Score trust matches actual server evidence.
+- [x] No game-specific login/profile flow remains in the canonical play path.
+- [x] The canonical play path does not insert or promote leaderboard rows.
+- [x] Current score trust is labeled local and unranked; no platform placement is claimed.
 - [ ] The detail page, personal best, board, receipt share, and stable play route work.
 - [ ] Build, lint, focused tests, browser smoke, performance, accessibility, and deployment checks pass.
-- [ ] The source tree has exactly one active engine, loop, input owner, auth path, and score path.
-- [ ] Double tap triggers exactly one action and twenty route/replay cycles do not grow listeners, timers, audio, canvases, or RAF loops.
+- [x] The canonical 51-file graph has one active engine boundary, loop, input owner, and local score path; historical alternates are excluded and documented.
+- [x] Double tap triggers exactly one action; twenty replay cycles retain five pointer listeners, one audio context, bounded particles, zero terminal voices/frames, and a decreasing raw heap sample.
 
 ### Explicitly later
 
@@ -659,13 +682,15 @@ Directory V1 may ship before integrated V1. The platform must not hold the rest 
 
 ### Current state
 
-The monorepo TankaVOID lives in [`games/tanka-void`](../games/tanka-void), but it is not a buildable game. The prototype contains a canvas engine, player/enemy/boss tank classes, infantry, projectiles, landmines, power-ups, terrain, particles, audio, experience, keyboard/mouse handling, and early touch controls. It also contains incompatible generations of APIs wired together in [`src/core/Game.ts`](../games/tanka-void/src/core/Game.ts), while its React `App.tsx` is still a placeholder.
+T0–T7 replaced the active monorepo package with a buildable directional-combat release candidate. It now has one seeded 60 Hz simulation, one loop, one unified keyboard/pointer/touch input owner, one responsive logical-pixel viewport, pure face/incidence/damage math, five deterministic waves, four enemy behaviors, tactical cover, bounded pooled combat, procedural audio, system-aware motion, first-run coaching, optional platform run/receipt integration, and enforced input/audio/entity/render/frame ceilings. The complete release command passes 43 game tests plus shared contract, platform, catalog, foundation, bundle, and full-assembly gates. A 21-start/20-reset browser soak retained the written ownership ceilings with zero long frames or dropped simulation time. The build is staged only as a review artifact and remains Coming Soon; physical-device, database, deployed-preview, and rollback gates are still open.
 
-The current type check fails with dozens of contract errors: missing entity methods, incompatible update/reset signatures, inconsistent collision shapes, missing particle and experience methods, and unfinished power-up behavior. This is not lint debt around an otherwise releasable loop. It is a prototype whose systems do not agree on the game contract.
+The replaced monorepo generation failed with 78 TypeScript errors across incompatible entity, collision, update/reset, input, particle, experience, and power-up contracts. Its source remains recoverable through Git history rather than compiling beside the rebuild.
 
 There is a better standalone prototype at `C:\dev\TankAVOIDz`, remote `Idea-R/TankaVOID`, on `feat/get-game-working` with substantial uncommitted work. It nearly type-checks and contains a usable canvas loop, waves, camera, score, keyboard/mouse/joystick/touch input, directional front/side/rear armor, weapons, enemies, bosses, mines, power-ups, terrain, and particles. It is the mechanics salvage candidate, not the production runtime.
 
-The strongest original idea—directional damage, armor angle, deliberate tank movement, and satisfying impacts—is still disconnected. `Tank.takeDamage` can accept an impact angle, but the projectile collision path currently calls it with damage alone; no demonstrated ricochet contract exists. Its leaderboard is hard-coded sample HTML, its last `dist` predates current source changes, and it has no auth, backend, score security, tests, or production deployment.
+The original prototype left its strongest idea disconnected: `Tank.takeDamage` accepted an optional angle while projectile collision omitted it. T2 replaces that path rather than repairing it. Every impact now carries a swept collision point and normalized travel vector into pure plate/incidence math, with no generic damage-only call. The prototype's hard-coded leaderboard, stale distribution build, and absent backend remain rejected rather than ported.
+
+T0 froze that standalone dirty tree in a checksummed source archive plus a full Git bundle before any rebuild work. The exact recovery record, salvage/reject decisions, `tankavoid-v1-rules-1` score boundary, and T2 face/incidence/damage rules are in [`tankavoid-v1-contract.md`](tankavoid-v1-contract.md). No prototype module is directly ported until isolated tests justify it.
 
 ### TankaVOID V1 experience
 
@@ -737,18 +762,20 @@ TankaVOID V1 is a focused top-down survival/arena game:
 
 **Expected TankaVOID effort:** **4–6 engineering weeks plus 1–2 weeks of feel, art, and QA iteration** for the narrow V1 above. A playable vertical slice should appear in the first week. Attempting to rehabilitate every prototype system or add multiplayer would move it beyond this range.
 
+T0–T7 implementation evidence: [`tankavoid-v1-contract.md`](tankavoid-v1-contract.md), [`sprint-tankavoid-t0-t1.md`](sprint-tankavoid-t0-t1.md), [`sprint-tankavoid-t2.md`](sprint-tankavoid-t2.md), [`sprint-tankavoid-t3.md`](sprint-tankavoid-t3.md), [`sprint-tankavoid-t4.md`](sprint-tankavoid-t4.md), [`sprint-tankavoid-t5.md`](sprint-tankavoid-t5.md), [`sprint-tankavoid-t6.md`](sprint-tankavoid-t6.md), and [`sprint-tankavoid-t7.md`](sprint-tankavoid-t7.md). The bounded five-wave build is the release candidate and future Proving Grounds mode. A larger scrolling Expedition/survival mode is a separately approved product expansion, not an excuse to weaken this release gate.
+
 ### TankaVOID V1 acceptance checklist
 
-- [ ] A new clean build passes type-check, lint, tests, and production build.
-- [ ] Directional armor and impact angle materially change damage and are understandable during play.
-- [ ] Shallow-angle hits consistently deflect or reduce penetration under the written rule set.
-- [ ] The full start/play/death/restart loop remains stable across repeated runs.
+- [x] A new clean T1 build passes type-check, lint, tests, production build, source budgets, and a responsive local-browser/repeat-run gate.
+- [x] Directional armor and impact angle materially change damage and are understandable during play.
+- [x] Shallow-angle hits consistently deflect or reduce penetration under the written rule set.
+- [x] Ten natural browser encounters complete without stale loops, owners, projectiles, frames, or viewport overflow.
 - [ ] The supported input/device claim is backed by actual device evidence.
-- [ ] The V1 enemy/content list is complete without reintroducing prototype sprawl.
-- [ ] Score has a versioned contract and an honest trust tier.
-- [ ] Detail page, Play, personal best, board, and receipt work.
+- [x] The V1 enemy/content list is complete without reintroducing prototype sprawl.
+- [x] Score has a versioned contract and an honest trust tier in source; executable database acceptance remains open.
+- [x] Detail page, provisional personal best, accepted-only board, and receipt work in source/local review. Public Play remains intentionally held.
 - [ ] Performance, accessibility, browser/device, deployment, and rollback gates pass.
-- [ ] Five complete waves and the V1 boss/final pressure event are reachable without development tools.
+- [x] Five complete waves and the V1 boss/final pressure event are reachable without development tools.
 
 ## 13. Independent Ideas Realized games
 

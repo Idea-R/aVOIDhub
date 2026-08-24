@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import type { Word } from '../../types/game';
 import { getDifficultyColor } from '../../data/words';
+import { useMotionPreference } from '../../hooks/useMotionPreference';
 
 interface IncomingWordProps {
   word: Word;
@@ -17,6 +18,7 @@ export const IncomingWord: React.FC<IncomingWordProps> = ({
   const isCurrentTarget = word.isTyping;
   const typedText = word.text.slice(0, word.typedChars);
   const remainingText = word.text.slice(word.typedChars);
+  const shouldReduceMotion = useMotionPreference();
 
   return (
     <motion.div
@@ -50,7 +52,7 @@ export const IncomingWord: React.FC<IncomingWordProps> = ({
         style={{
           backgroundColor: isCurrentTarget ? `${difficultyColor}40` : `${difficultyColor}20`
         }}
-        animate={isCurrentTarget ? {
+        animate={shouldReduceMotion ? {} : isCurrentTarget ? {
           boxShadow: [
             `0 0 15px ${difficultyColor}80`,
             `0 0 25px ${difficultyColor}`,
@@ -63,7 +65,7 @@ export const IncomingWord: React.FC<IncomingWordProps> = ({
             `0 0 10px ${difficultyColor}60`
           ]
         } : {}}
-        transition={{ duration: 0.5, repeat: (isCurrentTarget || isNearCenter) ? Infinity : 0 }}
+        transition={{ duration: 0.5, repeat: !shouldReduceMotion && (isCurrentTarget || isNearCenter) ? Infinity : 0 }}
       >
         {/* Word Text */}
         <div className={`font-game-mono font-bold ${isCurrentTarget ? 'text-xl' : 'text-lg'} flex`}>
@@ -73,7 +75,7 @@ export const IncomingWord: React.FC<IncomingWordProps> = ({
               className="text-health-high"
               style={{ textShadow: '0 0 8px currentColor' }}
               initial={{ scale: 1 }}
-              animate={{ scale: [1, 1.1, 1] }}
+              animate={shouldReduceMotion ? undefined : { scale: [1, 1.1, 1] }}
               transition={{ duration: 0.2 }}
             >
               {typedText}
@@ -102,7 +104,7 @@ export const IncomingWord: React.FC<IncomingWordProps> = ({
         {/* Difficulty Indicator */}
         <div 
           className={`absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${
-            isCurrentTarget ? 'animate-pulse' : ''
+            isCurrentTarget && !shouldReduceMotion ? 'animate-pulse' : ''
           }`}
           style={{ backgroundColor: difficultyColor }}
         />
@@ -115,13 +117,13 @@ export const IncomingWord: React.FC<IncomingWordProps> = ({
           background: `radial-gradient(circle, ${difficultyColor}40 0%, transparent 70%)`,
           filter: 'blur(4px)'
         }}
-        animate={{
+        animate={shouldReduceMotion ? { opacity: 0.25 } : {
           scale: [1, 1.2, 1],
           opacity: [0.3, 0.6, 0.3]
         }}
         transition={{
           duration: 1,
-          repeat: Infinity,
+          repeat: shouldReduceMotion ? 0 : Infinity,
           ease: 'easeInOut'
         }}
       />
@@ -130,13 +132,13 @@ export const IncomingWord: React.FC<IncomingWordProps> = ({
       {isNearCenter && (
         <motion.div
           className="absolute -inset-3 border-2 border-extreme rounded-lg"
-          animate={{
+          animate={shouldReduceMotion ? { opacity: 1 } : {
             opacity: [0, 1, 0],
             scale: [1, 1.1, 1]
           }}
           transition={{
             duration: 0.3,
-            repeat: Infinity
+            repeat: shouldReduceMotion ? 0 : Infinity
           }}
         />
       )}
@@ -145,13 +147,13 @@ export const IncomingWord: React.FC<IncomingWordProps> = ({
       {isCurrentTarget && (
         <motion.div
           className="absolute -inset-4 border-2 border-avoid-primary rounded-lg"
-          animate={{
+          animate={shouldReduceMotion ? { opacity: 0.8 } : {
             opacity: [0.3, 0.8, 0.3],
             scale: [1, 1.05, 1]
           }}
           transition={{
             duration: 1,
-            repeat: Infinity
+            repeat: shouldReduceMotion ? 0 : Infinity
           }}
         />
       )}

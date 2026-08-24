@@ -22,20 +22,11 @@ export class SpatialGrid {
     return `${x},${y}`;
   }
 
-  private getCellCoords(worldX: number, worldY: number): { x: number; y: number } {
-    return {
-      x: Math.floor(worldX / this.cellSize),
-      y: Math.floor(worldY / this.cellSize)
-    };
-  }
-
   clear(): void {
     this.grid.clear();
   }
 
   insert(obj: GridObject): void {
-    const { x, y } = this.getCellCoords(obj.x, obj.y);
-    
     // Insert into multiple cells if object spans across them
     const radius = obj.radius;
     const minX = Math.max(0, Math.floor((obj.x - radius) / this.cellSize));

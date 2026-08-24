@@ -17,6 +17,12 @@ export const rankedGameRegistry = {
     maxScore: 2_000_000_000,
     trust: 'provisional',
   },
+  tankavoid: {
+    name: 'TankaVOID',
+    allowedOrigins: ['https://avoidgame.io'],
+    maxScore: 5_770,
+    trust: 'provisional',
+  },
 } as const
 
 export type RankedGameKey = keyof typeof rankedGameRegistry
@@ -24,4 +30,3 @@ export type RankedGameKey = keyof typeof rankedGameRegistry
 export function isRankedGameKey(value: unknown): value is RankedGameKey {
   return typeof value === 'string' && value in rankedGameRegistry
 }
-

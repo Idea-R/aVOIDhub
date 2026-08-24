@@ -591,6 +591,7 @@ declare
   v_run public.game_run_sessions%rowtype;
   v_submission_id uuid;
   v_leaderboard_id uuid;
+  v_verification_level text;
   v_player_name text;
 begin
   if p_score < 0 or p_score > 2147483647 then
@@ -612,16 +613,30 @@ begin
   if not found or v_run.user_id <> p_user_id then
     raise exception 'run_not_found' using errcode = 'P0002';
   end if;
+  if v_run.ticket_hash <> p_ticket_hash then
+    raise exception 'invalid_run_ticket' using errcode = '28000';
+  end if;
+  if v_run.status = 'finished' then
+    select submission.id, leaderboard.id, submission.verification_level
+    into v_submission_id, v_leaderboard_id, v_verification_level
+    from public.score_submissions as submission
+    join public.leaderboard_scores as leaderboard
+      on leaderboard.submission_id = submission.id
+    where submission.run_session_id = v_run.id;
+
+    if not found then
+      raise exception 'run_receipt_incomplete' using errcode = 'P0002';
+    end if;
+
+    return query select v_submission_id, v_leaderboard_id, v_verification_level;
+    return;
+  end if;
   if v_run.status <> 'started' then
     raise exception 'run_already_consumed' using errcode = '23505';
   end if;
   if v_run.expires_at <= now() then
     raise exception 'run_expired' using errcode = '22023';
   end if;
-  if v_run.ticket_hash <> p_ticket_hash then
-    raise exception 'invalid_run_ticket' using errcode = '28000';
-  end if;
-
   insert into public.score_submissions (
     run_session_id, user_id, game_key, mode, ruleset_version, score, metrics,
     verification_level, status
@@ -657,4 +672,4 @@ revoke all on function public.finish_provisional_run(uuid, uuid, text, integer, 
 grant execute on function public.finish_provisional_run(uuid, uuid, text, integer, jsonb) to service_role;
 
 comment on function public.finish_provisional_run(uuid, uuid, text, integer, jsonb) is
-  'Consumes a server-issued one-use run ticket and records a provisional score. Service role only.';
+  'Consumes a server-issued one-use run ticket and returns the same provisional receipt on an authenticated retry. Service role only.';

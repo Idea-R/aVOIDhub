@@ -1,12 +1,6 @@
-/**
- * CanvasManager - Orchestrates canvas management through specialized modules
- * Provides a unified API while delegating to focused sub-managers
- */
-
-import { CanvasCore, CanvasCoreConfig } from './canvas/CanvasCore';
-import { ZoomPrevention, ZoomPreventionConfig } from './canvas/ZoomPrevention';
-import { CoordinateMapper, CoordinateMapperConfig } from './canvas/CoordinateMapper';
-import { ResizeManager, ResizeManagerConfig } from './canvas/ResizeManager';
+import { CanvasCore, type CanvasCoreConfig } from './canvas/CanvasCore';
+import { CoordinateMapper, type CoordinateMapperConfig } from './canvas/CoordinateMapper';
+import { ResizeManager, type ResizeManagerConfig } from './canvas/ResizeManager';
 
 export interface CanvasConfig {
   preventZoom: boolean;
@@ -33,60 +27,40 @@ export interface CanvasState {
 
 export interface CanvasManagerConfig {
   core?: Partial<CanvasCoreConfig>;
-  zoomPrevention?: Partial<ZoomPreventionConfig>;
   coordinateMapper?: Partial<CoordinateMapperConfig>;
   resizeManager?: Partial<ResizeManagerConfig>;
 }
 
+/** Single resize and coordinate owner. Browser zoom remains available for accessibility. */
 export class CanvasManager {
-  private canvas: HTMLCanvasElement;
-  private ctx: CanvasRenderingContext2D;
+  private readonly canvasCore: CanvasCore;
+  private readonly coordinateMapper: CoordinateMapper;
+  private readonly resizeManager: ResizeManager;
   private config: CanvasConfig;
 
-  // Specialized managers
-  private canvasCore: CanvasCore;
-  private zoomPrevention: ZoomPrevention;
-  private coordinateMapper: CoordinateMapper;
-  private resizeManager: ResizeManager;
-
   constructor(
-    canvas: HTMLCanvasElement, 
+    canvas: HTMLCanvasElement,
     config: Partial<CanvasConfig> = {},
-    moduleConfig: CanvasManagerConfig = {}
+    moduleConfig: CanvasManagerConfig = {},
   ) {
-    this.canvas = canvas;
     const context = canvas.getContext('2d');
     if (!context) throw new Error('Could not get 2D canvas context');
-    this.ctx = context;
-
-    // Default configuration
     this.config = {
-      preventZoom: true,
-      handleDevicePixelRatio: true,
+      preventZoom: false,
+      handleDevicePixelRatio: false,
       maintainAspectRatio: false,
-      minWidth: 320,
-      minHeight: 240,
+      minWidth: 1,
+      minHeight: 1,
       maxWidth: 3840,
       maxHeight: 2160,
-      ...config
+      ...config,
     };
-
-    // Initialize specialized managers
-    this.canvasCore = new CanvasCore(this.canvas, this.config, moduleConfig.core);
-    
-    this.zoomPrevention = new ZoomPrevention(this.canvas, {
-      enabled: this.config.preventZoom,
-      ...moduleConfig.zoomPrevention
+    this.canvasCore = new CanvasCore(canvas, this.config, moduleConfig.core);
+    this.coordinateMapper = new CoordinateMapper(canvas, context, {
+      enableZoomCorrection: false,
+      ...moduleConfig.coordinateMapper,
     });
-    
-    this.coordinateMapper = new CoordinateMapper(
-      this.canvas, 
-      this.ctx, 
-      moduleConfig.coordinateMapper
-    );
-
-    // Initial state for ResizeManager
-    const initialState: CanvasState = {
+    this.resizeManager = new ResizeManager(canvas, context, this.config, {
       displayWidth: 0,
       displayHeight: 0,
       actualWidth: 0,
@@ -96,153 +70,38 @@ export class CanvasManager {
       scaleY: 1,
       offsetX: 0,
       offsetY: 0,
-      browserZoom: 1
-    };
-
-    this.resizeManager = new ResizeManager(
-      this.canvas,
-      this.ctx,
-      this.config,
-      initialState,
-      moduleConfig.resizeManager
-    );
-
-    // Connect zoom detection to state updates
-    this.setupZoomStateUpdates();
-    
-    // Force initial resize
+      browserZoom: 1,
+    }, moduleConfig.resizeManager);
     this.resizeManager.forceResize();
   }
 
-  private setupZoomStateUpdates(): void {
-    // Update browser zoom in state when it changes
-    this.resizeManager.onResize((state) => {
-      const browserZoom = this.zoomPrevention.getBrowserZoom();
-      if (state.browserZoom !== browserZoom) {
-        this.resizeManager.updateState({ browserZoom });
-      }
-    });
-  }
-
-  /**
-   * Convert screen coordinates to canvas coordinates
-   */
   screenToCanvas(screenX: number, screenY: number): { x: number; y: number } {
     return this.coordinateMapper.screenToCanvas(screenX, screenY, this.resizeManager.getState());
   }
 
-  /**
-   * Alternative coordinate mapping using DOMMatrix
-   */
-  screenToCanvasAdvanced(screenX: number, screenY: number): { x: number; y: number } {
-    return this.coordinateMapper.screenToCanvasAdvanced(screenX, screenY, this.resizeManager.getState());
-  }
-
-  /**
-   * Convert canvas coordinates to screen coordinates
-   */
   canvasToScreen(canvasX: number, canvasY: number): { x: number; y: number } {
     return this.coordinateMapper.canvasToScreen(canvasX, canvasY, this.resizeManager.getState());
   }
 
-  /**
-   * Check if coordinates are within canvas bounds
-   */
   isInBounds(x: number, y: number): boolean {
     return this.coordinateMapper.isInBounds(x, y, this.resizeManager.getState());
   }
 
-  /**
-   * Get current canvas state
-   */
-  getState(): CanvasState {
-    return this.resizeManager.getState();
-  }
+  getState(): CanvasState { return this.resizeManager.getState(); }
+  getGameDimensions(): { width: number; height: number } { return this.resizeManager.getGameDimensions(); }
+  getBrowserZoom(): number { return 1; }
+  updateBrowserZoom(): void { /* browser zoom is intentionally not intercepted */ }
+  onResize(callback: (state: CanvasState) => void): void { this.resizeManager.onResize(callback); }
+  forceResize(): void { this.resizeManager.forceResize(); }
 
-  /**
-   * Get game-safe canvas dimensions
-   */
-  getGameDimensions(): { width: number; height: number } {
-    return this.resizeManager.getGameDimensions();
-  }
-
-  /**
-   * Get current browser zoom level
-   */
-  getBrowserZoom(): number {
-    return this.zoomPrevention.getBrowserZoom();
-  }
-
-  /**
-   * Force update browser zoom detection
-   */
-  updateBrowserZoom(): void {
-    this.zoomPrevention.updateBrowserZoom();
-    const browserZoom = this.zoomPrevention.getBrowserZoom();
-    this.resizeManager.updateState({ browserZoom });
-  }
-
-  /**
-   * Set resize callback
-   */
-  onResize(callback: (state: CanvasState) => void): void {
-    this.resizeManager.onResize(callback);
-  }
-
-  /**
-   * Force a resize check
-   */
-  forceResize(): void {
-    this.zoomPrevention.updateBrowserZoom();
-    this.resizeManager.forceResize();
-  }
-
-  /**
-   * Update canvas configuration
-   */
   updateConfig(config: Partial<CanvasConfig>): void {
-    this.config = { ...this.config, ...config };
+    this.config = { ...this.config, ...config, preventZoom: false };
     this.canvasCore.updateCanvasConfig(this.config);
     this.resizeManager.updateCanvasConfig(this.config);
-    this.zoomPrevention.setEnabled(this.config.preventZoom);
   }
 
-  /**
-   * Update module configurations
-   */
-  updateModuleConfig(moduleConfig: CanvasManagerConfig): void {
-    if (moduleConfig.core) {
-      this.canvasCore.updateCoreConfig(moduleConfig.core);
-    }
-    if (moduleConfig.zoomPrevention) {
-      this.zoomPrevention.setEnabled(moduleConfig.zoomPrevention.enabled ?? true);
-    }
-    if (moduleConfig.coordinateMapper) {
-      this.coordinateMapper.updateConfig(moduleConfig.coordinateMapper);
-    }
-    if (moduleConfig.resizeManager) {
-      this.resizeManager.updateConfig(moduleConfig.resizeManager);
-    }
-  }
-
-  /**
-   * Get access to specialized managers (for advanced use cases)
-   */
-  getManagers() {
-    return {
-      core: this.canvasCore,
-      zoomPrevention: this.zoomPrevention,
-      coordinateMapper: this.coordinateMapper,
-      resizeManager: this.resizeManager
-    };
-  }
-
-  /**
-   * Cleanup all resources
-   */
   cleanup(): void {
     this.canvasCore.cleanup();
-    this.zoomPrevention.cleanup();
     this.resizeManager.cleanup();
   }
-} 
+}

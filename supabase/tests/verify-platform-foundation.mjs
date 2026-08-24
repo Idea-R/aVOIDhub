@@ -42,6 +42,9 @@ const requiredMigrationFragments = [
   "octet_length(coalesce(p_metrics, '{}'::jsonb)::text) > 8192",
   "('cosmetics.supporter', 'Receive supporter cosmetics in games that implement them.')",
   "('creator.submit_game', 'Use paid submission capacity after creator approval.')",
+  "if v_run.status = 'finished' then",
+  "where submission.run_session_id = v_run.id;",
+  "return query select v_submission_id, v_leaderboard_id, v_verification_level;",
 ];
 
 for (const fragment of requiredMigrationFragments) {

@@ -9,8 +9,10 @@ apps/platform/out/
 apps/platform/public/VOIDaVOID/
 apps/platform/public/WreckaVOID/
 apps/platform/public/WORDaVOID/
+apps/platform/public/TankaVOID/
 dist/VOIDaVOID/
 dist/WORDaVOID/
+dist/TankaVOID/
 
 # Logs
 logs

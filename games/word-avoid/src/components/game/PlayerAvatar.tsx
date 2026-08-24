@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Shield } from 'lucide-react';
 import type { Player } from '../../types/game';
+import { useMotionPreference } from '../../hooks/useMotionPreference';
 
 interface PlayerAvatarProps {
   player: Player;
@@ -17,13 +18,14 @@ export const PlayerAvatar: React.FC<PlayerAvatarProps> = ({
   const isLowHealth = player.health < 30;
   const hasShield = player.shield > 0;
   const hasStreak = player.streak > 5;
+  const shouldReduceMotion = useMotionPreference();
 
   return (
     <div className={`relative ${className}`}>
       {/* Main Avatar Circle */}
       <motion.div
         className="relative w-20 h-20 rounded-full border-4 border-avoid-primary bg-gradient-to-br from-avoid-primary/30 to-avoid-accent/30 backdrop-blur-sm"
-        animate={isGameActive ? {
+        animate={isGameActive && !shouldReduceMotion ? {
           scale: isLowHealth ? [1, 1.1, 1] : 1,
           borderColor: isLowHealth ? ['#00ff88', '#ef4444', '#00ff88'] : '#00ff88',
           boxShadow: [
@@ -34,7 +36,7 @@ export const PlayerAvatar: React.FC<PlayerAvatarProps> = ({
         } : {}}
         transition={{
           duration: isLowHealth ? 0.5 : 2,
-          repeat: isGameActive ? Infinity : 0,
+          repeat: isGameActive && !shouldReduceMotion ? Infinity : 0,
           ease: 'easeInOut'
         }}
       >
@@ -42,11 +44,11 @@ export const PlayerAvatar: React.FC<PlayerAvatarProps> = ({
         <motion.div
           className="absolute inset-3 rounded-full bg-gradient-to-br from-avoid-primary to-avoid-accent"
           animate={{
-            rotate: isGameActive ? 360 : 0
+            rotate: isGameActive && !shouldReduceMotion ? 360 : 0
           }}
           transition={{
             duration: 4,
-            repeat: isGameActive ? Infinity : 0,
+            repeat: isGameActive && !shouldReduceMotion ? Infinity : 0,
             ease: 'linear'
           }}
         />
@@ -54,8 +56,8 @@ export const PlayerAvatar: React.FC<PlayerAvatarProps> = ({
         {/* Center Dot */}
         <motion.div 
           className="absolute inset-1/2 w-3 h-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white"
-          animate={{ scale: [1, 1.2, 1] }}
-          transition={{ duration: 1.5, repeat: Infinity }}
+          animate={shouldReduceMotion ? undefined : { scale: [1, 1.2, 1] }}
+          transition={{ duration: 1.5, repeat: shouldReduceMotion ? 0 : Infinity }}
         />
       </motion.div>
 
@@ -66,13 +68,13 @@ export const PlayerAvatar: React.FC<PlayerAvatarProps> = ({
           animate={{ 
             scale: 1, 
             rotate: 0,
-            opacity: [0.7, 1, 0.7]
+            opacity: shouldReduceMotion ? 1 : [0.7, 1, 0.7]
           }}
           exit={{ scale: 0, rotate: 180 }}
           transition={{
             scale: { duration: 0.3 },
             rotate: { duration: 0.3 },
-            opacity: { duration: 1, repeat: Infinity }
+            opacity: { duration: 1, repeat: shouldReduceMotion ? 0 : Infinity }
           }}
           className="absolute -inset-2 rounded-full border-2 border-avoid-accent bg-avoid-accent/10"
         >
@@ -84,12 +86,10 @@ export const PlayerAvatar: React.FC<PlayerAvatarProps> = ({
       {hasStreak && (
         <motion.div
           className="absolute -inset-6"
-          animate={{
-            rotate: 360
-          }}
+          animate={shouldReduceMotion ? undefined : { rotate: 360 }}
           transition={{
             duration: 2,
-            repeat: Infinity,
+            repeat: shouldReduceMotion ? 0 : Infinity,
             ease: 'linear'
           }}
         >
@@ -103,13 +103,13 @@ export const PlayerAvatar: React.FC<PlayerAvatarProps> = ({
                 transformOrigin: '0 0',
                 transform: `rotate(${i * 45}deg) translateX(32px) translateY(-50%)`
               }}
-              animate={{
+              animate={shouldReduceMotion ? undefined : {
                 scale: [0.5, 2, 0.5],
                 opacity: [0.3, 1, 0.3]
               }}
               transition={{
                 duration: 1,
-                repeat: Infinity,
+                repeat: shouldReduceMotion ? 0 : Infinity,
                 delay: i * 0.125
               }}
             />

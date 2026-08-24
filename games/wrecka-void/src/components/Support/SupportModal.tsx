@@ -1,5 +1,4 @@
-import React from 'react';
-import { X, Heart, Twitter, DollarSign } from 'lucide-react';
+import { X, Heart, Twitter, DollarSign } from "lucide-react";
 
 interface SupportModalProps {
   isOpen: boolean;
@@ -23,14 +22,18 @@ export function SupportModal({ isOpen, onClose }: SupportModalProps) {
           <div className="w-16 h-16 bg-pink-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
             <Heart className="w-8 h-8 text-pink-400" />
           </div>
-          <h2 className="text-3xl font-bold text-white mb-2">Thanks for Playing!</h2>
+          <h2 className="text-3xl font-bold text-white mb-2">
+            Thanks for Playing!
+          </h2>
           <p className="text-gray-300">I hope you liked it.</p>
         </div>
 
         <div className="space-y-4 mb-6">
           <p className="text-gray-300 text-center">
-            If you really like this game, there's going to be many more aVOID games coming out in the coming days. 
-            Stay tuned for a lot of fun, and if you feel so inclined, feel free to support us so we can keep working on these.
+            If you really like this game, there's going to be many more aVOID
+            games coming out in the coming days. Stay tuned for a lot of fun,
+            and if you feel so inclined, feel free to support us so we can keep
+            working on these.
           </p>
         </div>
 
