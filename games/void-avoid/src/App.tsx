@@ -8,9 +8,12 @@ import {
   writePlayerPreferences,
   type MotionPreference,
 } from './game/presentation/preferences';
+import { beginPlatformRun } from './api/platformRuns';
+import type { VoidAvoidRunManifest } from '@avoid/voidavoid-contract';
 
 function App() {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [runManifest, setRunManifest] = useState<VoidAvoidRunManifest | null>(null);
   const [preferences, setPreferences] = useState(readPlayerPreferences);
   const [systemRequestsReducedMotion, setSystemRequestsReducedMotion] = useState(false);
   const soundRef = useRef<SoundManager | null>(null);
@@ -46,6 +49,7 @@ function App() {
       setSoundStatus(status);
       if (status === 'ready') sound.play('start');
     }
+    setRunManifest(await beginPlatformRun());
     setIsPlaying(true);
   }, [preferences.soundEnabled, sound]);
 
@@ -67,6 +71,7 @@ function App() {
       {isPlaying ? (
         <Game
           autoStart
+          initialManifest={runManifest}
           sound={sound}
           soundEnabled={preferences.soundEnabled}
           soundStatus={soundStatus}

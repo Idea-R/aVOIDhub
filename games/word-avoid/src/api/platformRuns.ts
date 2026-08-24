@@ -26,17 +26,11 @@ function platformUrl(path: string): string {
 }
 
 async function authenticatedFetch(path: string, init: RequestInit): Promise<Response | null> {
-  const { supabase, supabaseConfigured } = await import('../lib/supabase');
-  if (!supabaseConfigured) return null;
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-  if (!token) return null;
-
   return fetch(platformUrl(path), {
     ...init,
+    credentials: 'include',
     headers: {
       'content-type': 'application/json',
-      authorization: `Bearer ${token}`,
       ...init.headers,
     },
   });

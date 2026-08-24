@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { ComboInfo, ScoreBreakdown } from '../game/systems/ScoreSystem';
 import type { RunEvidenceSummary } from '../game/run/runEvidence';
 import GameDialog from './GameDialog';
+import type { FinishRunResult } from '../api/platformRuns';
 
 interface GameOverScreenProps {
   score: number;
@@ -9,7 +10,8 @@ interface GameOverScreenProps {
   scoreBreakdown: ScoreBreakdown;
   comboInfo: ComboInfo;
   run: RunEvidenceSummary;
-  onPlayAgain: () => void;
+  finishResult: FinishRunResult | null;
+  onPlayAgain: () => void | Promise<void>;
   onExit: () => void;
 }
 
@@ -19,6 +21,7 @@ export default function GameOverScreen({
   scoreBreakdown,
   comboInfo,
   run,
+  finishResult,
   onPlayAgain,
   onExit,
 }: GameOverScreenProps) {
@@ -69,9 +72,17 @@ export default function GameOverScreen({
         </dl>
 
         <p id="void-result-truth" className="void-result__truth" data-run-status={run.status}>
-          {run.status === 'replayable-local'
-            ? <>Local run <strong>{run.code}</strong> replayed its score evidence cleanly. It is still unranked.</>
-            : <>Local run evidence did not pass its replay check. No placement was claimed.</>}
+          {run.status !== 'replayable-local'
+            ? <>Run evidence did not pass its replay check. No placement was claimed.</>
+            : finishResult?.status === 'saved'
+              ? <>Run <strong>{run.code}</strong> was replayed by the platform and placed provisionally.</>
+              : finishResult?.status === 'rejected'
+                ? <>The platform rejected run <strong>{run.code}</strong>. No placement was claimed.</>
+                : finishResult?.status === 'error'
+                  ? <>Run <strong>{run.code}</strong> is safe locally, but the platform could not save it yet.</>
+                  : finishResult?.status === 'local'
+                    ? <>Local run <strong>{run.code}</strong> replayed cleanly. Sign in on aVOIDgame.io to place future runs.</>
+                    : <>Run <strong>{run.code}</strong> replayed locally. Checking your platform placement.</>}
         </p>
 
         <div className="void-result__actions">
@@ -84,6 +95,10 @@ export default function GameOverScreen({
           <button type="button" onClick={onExit}>
             Main menu
           </button>
+          {finishResult?.status === 'saved' && finishResult.receiptUrl && (
+            <a href={finishResult.receiptUrl}>View receipt</a>
+          )}
+          <a href="/leaderboards/?game=voidavoid">Leaderboard</a>
         </div>
         <p className="void-result__copy" role="status">
           {copyStatus}

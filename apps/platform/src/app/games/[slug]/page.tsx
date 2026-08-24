@@ -26,9 +26,11 @@ export const dynamic = "force-dynamic";
 
 type ScoreRow = {
   id: string;
+  user_id: string | null;
   player_name: string;
   score: number;
   verification_level: string;
+  metadata: Record<string, unknown>;
   created_at: string;
 };
 
@@ -80,8 +82,8 @@ export async function generateMetadata({
 
 async function getScoreSnapshot(game: Game): Promise<ScoreSnapshot> {
   if (
-    game.id !== "tankavoid" ||
     game.score.scope !== "platform" ||
+    !game.score.gameKey ||
     !isPlatformRuntimeConfigured()
   ) {
     return emptySnapshot;
@@ -89,39 +91,51 @@ async function getScoreSnapshot(game: Game): Promise<ScoreSnapshot> {
   try {
     const user = await getRequestUser();
     const admin = createAdminClient();
+    const modeByGame = {
+      voidavoid: "endless",
+      wreckavoid: "wreck-run",
+      wordavoid: "classic",
+      tankavoid: "five-wave",
+    } as const;
+    const gameKey = game.score.gameKey;
+    const mode = modeByGame[gameKey];
     const { data, error } = await admin
       .from("leaderboard_scores")
       .select(
-        "id, player_name, score, verification_level, created_at, submission:score_submissions!inner(status, mode)",
+        "id, user_id, player_name, score, verification_level, metadata, created_at, submission:score_submissions!inner(status, mode)",
       )
-      .eq("game_key", "tankavoid")
+      .eq("game_key", gameKey)
       .eq("submission.status", "accepted")
-      .eq("submission.mode", "five-wave")
+      .eq("submission.mode", mode)
       .order("score", { ascending: false })
       .order("created_at", { ascending: true })
-      .limit(10);
+      .limit(50);
     if (error) return { ...emptySnapshot, signedIn: Boolean(user) };
     let personalBest: number | null = null;
     if (user) {
       const { data: best } = await admin
         .from("leaderboard_scores")
         .select("score, submission:score_submissions!inner(status, mode)")
-        .eq("game_key", "tankavoid")
+        .eq("game_key", gameKey)
         .eq("user_id", user.id)
         .eq("submission.status", "accepted")
-        .eq("submission.mode", "five-wave")
+        .eq("submission.mode", mode)
         .order("score", { ascending: false })
         .limit(1)
         .maybeSingle();
       personalBest = typeof best?.score === "number" ? best.score : null;
     }
     return {
-      scores: (data ?? []).map(
-        ({ id, player_name, score, verification_level, created_at }) => ({
+      scores: (data ?? []).filter((row, index, rows) =>
+        rows.findIndex((candidate) => (candidate.user_id ?? candidate.player_name) === (row.user_id ?? row.player_name)) === index,
+      ).slice(0, 10).map(
+        ({ id, user_id, player_name, score, verification_level, metadata, created_at }) => ({
           id,
+          user_id,
           player_name,
           score,
           verification_level,
+          metadata: (metadata ?? {}) as Record<string, unknown>,
           created_at,
         }),
       ) as ScoreRow[],
@@ -396,7 +410,11 @@ export default async function GameDetailPage({
                   {row.player_name}
                 </span>
                 <em className={`trustPill trust-${row.verification_level}`}>
-                  {row.verification_level}
+                  {row.metadata.validationCapability === "server_recomputed"
+                    ? "server replay"
+                    : row.metadata.validationCapability === "bounds_recomputed"
+                      ? "bounded"
+                      : row.verification_level}
                 </em>
                 <strong>{row.score.toLocaleString()}</strong>
               </div>

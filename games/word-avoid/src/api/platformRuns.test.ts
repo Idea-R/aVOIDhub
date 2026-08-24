@@ -1,15 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createWordAvoidManifest, type WordAvoidRunEvidence, type WordAvoidRunSummary } from '@avoid/wordavoid-contract';
 
-vi.mock('../lib/supabase', () => ({
-  supabaseConfigured: true,
-  supabase: {
-    auth: {
-      getSession: vi.fn().mockResolvedValue({ data: { session: { access_token: 'test-token' } } }),
-    },
-  },
-}));
-
 import { beginPlatformRun, finishPlatformRun } from './platformRuns';
 
 const manifest = createWordAvoidManifest({
@@ -62,6 +53,8 @@ describe('platform run retry boundary', () => {
     expect(await beginPlatformRun('classic')).toEqual(manifest);
     expect(await finishPlatformRun(summary, evidence)).toEqual({ status: 'saved' });
     expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ credentials: 'include' });
+    expect(fetchMock.mock.calls[0][1]?.headers).not.toHaveProperty('authorization');
     expect(fetchMock.mock.calls[1][0]).toBe(fetchMock.mock.calls[2][0]);
     expect(fetchMock.mock.calls[1][1]?.body).toBe(fetchMock.mock.calls[2][1]?.body);
   });

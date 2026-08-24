@@ -29,6 +29,7 @@
     "src/game/systems/ScoreSystem.test.ts",
     "src/game/run/seededRandom.test.ts",
     "src/game/run/runEvidence.test.ts",
+    "src/api/platformRuns.test.ts",
     "src/game/run/gameplayRandom.test.ts",
     "src/game/managers/MeteorManager.test.ts",
     "src/game/presentation/preferences.test.ts",

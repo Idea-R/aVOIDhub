@@ -63,7 +63,7 @@ export const originalGames: Game[] = [
     destination: "avoidgame.io/voidavoid",
     availability: "Playable now",
     statusNote:
-      "The current game is live. Platform sign-in and secure new-run submission stay staged until the shared data foundation passes its branch rehearsal.",
+      "The game is live. Signed-in runs now use a server seed and platform replay path in source. Ranked saving stays staged until the shared database rehearsal passes.",
     facts: [
       { label: "Move", value: "Mouse or touch drag" },
       { label: "Knockback", value: "Double-click or double-tap when charged" },
@@ -87,8 +87,8 @@ export const originalGames: Game[] = [
     score: {
       scope: "platform",
       gameKey: "voidavoid",
-      headline: "Old scores remain history, not proof.",
-      copy: "The existing board is being preserved as legacy data. New results will not be promoted beyond the evidence the platform actually checks.",
+      headline: "New runs bring receipts.",
+      copy: "The platform rebuilds the score from the recorded run. It still calls the result provisional because a browser replay is not complete anti-cheat proof.",
     },
   },
   {
@@ -163,7 +163,7 @@ export const originalGames: Game[] = [
     destination: "avoidgame.io/wordavoid",
     availability: "Playable now",
     statusNote:
-      "The game is live, builds cleanly, and already has the strongest test baseline of the hosted set. Its secure result path activates with the shared foundation.",
+      "The game is live and its secure result path is ready in source. Ranked saving activates after the shared database rehearsal.",
     facts: [
       { label: "Input", value: "Physical keyboard" },
       { label: "Pause", value: "Escape" },
@@ -191,8 +191,8 @@ export const originalGames: Game[] = [
     score: {
       scope: "platform",
       gameKey: "wordavoid",
-      headline: "The best candidate for validated results.",
-      copy: "Its discrete keystroke stream can support stronger server checks than a free-form physics game. It still starts provisional until that validator is finished.",
+      headline: "Every accepted word is replayed.",
+      copy: "The platform rebuilds each prompt, keystroke, score, accuracy result, and speed result. The board still says provisional while anti-cheat remains browser-based.",
     },
   },
   {
