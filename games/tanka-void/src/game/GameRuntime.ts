@@ -15,6 +15,7 @@ import type {
   RunSnapshot,
   ViewportLayout,
 } from "./types";
+import type { TankCosmeticId } from "../api/playerContext";
 
 export interface InputPort {
   attach(): void;
@@ -40,6 +41,7 @@ export interface LoopPort {
 
 export interface RendererPort {
   render(snapshot: RunSnapshot, layout: ViewportLayout): number;
+  setPlayerCosmetic?(cosmetic: TankCosmeticId): void;
 }
 
 export type LoopFactory = (step: () => void, render: () => void) => LoopPort;
@@ -195,6 +197,11 @@ export class GameRuntime {
   setAudioMuted(muted: boolean): void {
     this.audio.setMuted(muted);
     this.emit();
+  }
+
+  setPlayerCosmetic(cosmetic: TankCosmeticId): void {
+    this.renderer.setPlayerCosmetic?.(cosmetic);
+    this.render();
   }
 
   diagnostics(): RuntimeDiagnostics {

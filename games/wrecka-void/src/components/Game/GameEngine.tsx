@@ -1,6 +1,5 @@
 import { useRef, useEffect, useState, useCallback } from "react";
-import { useAuth } from "../../hooks/useAuth";
-import { useLeaderboard } from "../../hooks/useLeaderboard";
+import { usePlatformPlayer } from "../../hooks/usePlatformPlayer";
 import { PowerUpManager } from "./PowerUpManager";
 import { PowerUp, PlayerUpgrades, ActiveEffects } from "../../types/PowerUps";
 import {
@@ -24,7 +23,7 @@ import { FrameMonitor } from "../../game/FrameMonitor";
 import { getWreckRunSnapshot } from "../../game/WreckRunDirector";
 import { GameHUD } from "./GameHUD";
 import { GameOverlays } from "./GameOverlays";
-import { beginPlatformRun } from "../../api/platformRuns";
+import { beginPlatformRun, finishPlatformRun } from "../../api/platformRuns";
 
 interface GameEngineProps {
   onNavigate: (page: string) => void;
@@ -36,8 +35,7 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
     new URLSearchParams(window.location.search).has("smoke");
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>();
-  const { user } = useAuth();
-  const { submitScore } = useLeaderboard();
+  const { player: user, cosmetic } = usePlatformPlayer();
 
   // Game managers
   const gameStateRef = useRef<GameStateManager>(new GameStateManager());
@@ -112,14 +110,10 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
   const canvasSizeRef = useRef(canvasSize);
   const playerUpgradesRef = useRef(playerUpgrades);
   const activeEffectsRef = useRef(activeEffects);
-  const userRef = useRef(user);
-  const submitScoreRef = useRef(submitScore);
 
   canvasSizeRef.current = canvasSize;
   playerUpgradesRef.current = playerUpgrades;
   activeEffectsRef.current = activeEffects;
-  userRef.current = user;
-  submitScoreRef.current = submitScore;
   showHelpRef.current = showHelp;
   reducedMotionRef.current = reducedMotion;
 
@@ -731,6 +725,7 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
       inputManager.isMouseDown(),
       activeEffectsRef.current,
       playerUpgradesRef.current,
+      cosmetic,
     );
 
     // Draw second chain if available
@@ -747,6 +742,7 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
       playerRef.current,
       DEFAULT_GAME_CONFIG.playerSize,
       activeEffects,
+      cosmetic,
     );
 
     const currentBallRadius =
@@ -755,6 +751,7 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
       ballRef.current,
       currentBallRadius,
       activeEffectsRef.current,
+      cosmetic,
     );
     renderer.drawEnemies(enemyManagerRef.current.getEnemies());
     renderer.drawMouseCursor(inputManager.getMousePosition());
@@ -770,15 +767,13 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
 
     lifecycleCountersRef.current.finishTransitions += 1;
     soundManagerRef.current.gameOver();
-    if (userRef.current?.id) {
-      void submitScoreRef.current(
-        finalState.score,
-        finalState.wave,
-        finalState.gameTime,
-        finalState.bossesDefeated,
-        finalState.runOutcome,
-      );
-    }
+    void finishPlatformRun(
+      finalState.score,
+      finalState.wave,
+      finalState.gameTime,
+      finalState.bossesDefeated,
+      finalState.runOutcome,
+    );
   };
 
   finishCurrentRunRef.current = finishCurrentRun;
@@ -896,7 +891,12 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
   };
 
   const forceVictoryForSmoke = () => {
-    gameStateRef.current.setState({ score: 190_000, gameTime: 600, wave: 20, act: 3 });
+    gameStateRef.current.setState({
+      score: 190_000,
+      gameTime: 600,
+      wave: 20,
+      act: 3,
+    });
     gameStateRef.current.recordBossDefeat();
     gameStateRef.current.recordBossDefeat();
     gameStateRef.current.recordBossDefeat();
@@ -908,9 +908,15 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
       !smokeMode ||
       smokeVictoryAppliedRef.current ||
       new URLSearchParams(window.location.search).get("smoke") !== "victory"
-    ) return;
+    )
+      return;
     smokeVictoryAppliedRef.current = true;
-    gameStateRef.current.setState({ score: 190_000, gameTime: 600, wave: 20, act: 3 });
+    gameStateRef.current.setState({
+      score: 190_000,
+      gameTime: 600,
+      wave: 20,
+      act: 3,
+    });
     gameStateRef.current.recordBossDefeat();
     gameStateRef.current.recordBossDefeat();
     gameStateRef.current.recordBossDefeat();
@@ -943,10 +949,7 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
   useEffect(() => {
     if (!viewportReady) return;
     gameStateRef.current.setState({
-      isPaused: pauseControllerRef.current.set(
-        "viewport",
-        !viewportSupported,
-      ),
+      isPaused: pauseControllerRef.current.set("viewport", !viewportSupported),
     });
   }, [viewportReady, viewportSupported]);
 
@@ -1088,8 +1091,8 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
             {" · motion "}
             {reducedMotion ? "reduced" : "standard"}
             {" · frame avg/p95/max "}
-            {frameSample.averageMs.toFixed(1)}/
-            {frameSample.p95Ms.toFixed(1)}/{frameSample.maxMs.toFixed(1)}ms
+            {frameSample.averageMs.toFixed(1)}/{frameSample.p95Ms.toFixed(1)}/
+            {frameSample.maxMs.toFixed(1)}ms
             {" · long "}
             {frameSample.longFrames}
             {heapUsage !== undefined && (

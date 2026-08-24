@@ -145,6 +145,110 @@ button {
   font-size: clamp(0.95rem, 1.5vw, 1.18rem);
   line-height: 1.55;
 }
+.tank-cosmetics {
+  width: min(100%, 35rem);
+  margin: 0 0 1.45rem;
+  padding: 0.85rem 0 0;
+  border-top: 1px solid rgba(244, 241, 223, 0.22);
+}
+.tank-cosmetics__heading {
+  display: flex;
+  gap: 1rem;
+  align-items: end;
+  justify-content: space-between;
+  margin-bottom: 0.65rem;
+}
+.tank-cosmetics__heading div {
+  display: grid;
+  gap: 0.15rem;
+}
+.tank-cosmetics__heading span,
+.tank-cosmetics__account {
+  color: #8e9685;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.56rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.tank-cosmetics__heading strong {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+}
+.tank-cosmetics a {
+  color: #e7ff4f;
+  font-weight: 800;
+  text-underline-offset: 0.22rem;
+}
+.tank-cosmetics__heading > a {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.tank-cosmetics__options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+.tank-cosmetic {
+  display: grid;
+  grid-template-columns: 0.7rem 1fr;
+  gap: 0.12rem 0.65rem;
+  min-width: 0;
+  padding: 0.72rem 0.8rem;
+  color: #f4f1df;
+  background: rgba(21, 23, 17, 0.82);
+  border: 1px solid rgba(244, 241, 223, 0.2);
+  text-align: left;
+  cursor: pointer;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 0.7rem) 0,
+    100% 0.7rem,
+    100% 100%,
+    0 100%
+  );
+  transition:
+    transform 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+.tank-cosmetic > span {
+  grid-row: 1 / 3;
+  width: 0.7rem;
+  min-height: 2.2rem;
+  background: linear-gradient(#e7ff4f, #8c9d3d);
+}
+.tank-cosmetic--founder-meteor > span {
+  background: linear-gradient(#ff7957, #148f88);
+}
+.tank-cosmetic strong {
+  overflow: hidden;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.tank-cosmetic small {
+  color: #8e9685;
+  font-size: 0.6rem;
+  line-height: 1.35;
+}
+.tank-cosmetic:hover:not(:disabled),
+.tank-cosmetic[aria-pressed="true"] {
+  transform: translate(-0.16rem, -0.16rem);
+  border-color: #e7ff4f;
+  box-shadow: 0.3rem 0.3rem 0 #ff6c4a;
+}
+.tank-cosmetic:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+.tank-cosmetics__account {
+  margin: 0.65rem 0 0;
+  line-height: 1.5;
+}
 .tank-primary,
 .tank-dialog button,
 .tank-hud button {
@@ -204,6 +308,10 @@ button {
   box-shadow: 0.24rem 0.24rem 0 #ff6c4a;
 }
 button:focus-visible {
+  outline: 3px solid #f4f1df;
+  outline-offset: 5px;
+}
+.tank-cosmetics a:focus-visible {
   outline: 3px solid #f4f1df;
   outline-offset: 5px;
 }
@@ -651,6 +759,26 @@ button:focus-visible {
   background: #080a08;
   font-size: 0.55rem;
 }
+@media (max-height: 950px) and (min-width: 841px) {
+  .tank-briefing {
+    padding: 1.5rem clamp(1.8rem, 3vw, 3rem);
+  }
+  .tank-briefing h1 {
+    font-size: clamp(4.6rem, 8.5vw, 7rem);
+  }
+  .tank-thesis {
+    margin: 0.8rem 0 0.5rem;
+    font-size: clamp(2rem, 3.5vw, 2.8rem);
+  }
+  .tank-lede {
+    margin-bottom: 0.85rem;
+    line-height: 1.45;
+  }
+  .tank-cosmetics {
+    margin-bottom: 0.75rem;
+    padding-top: 0.6rem;
+  }
+}
 @media (max-width: 840px) {
   .tank-briefing {
     grid-template-columns: 1fr;
@@ -719,6 +847,9 @@ button:focus-visible {
   .tank-lede {
     font-size: 0.88rem;
   }
+  .tank-cosmetics__options {
+    grid-template-columns: 1fr;
+  }
   .tank-hud {
     gap: 0.45rem;
   }
@@ -763,6 +894,12 @@ button:focus-visible {
   .tank-lede {
     margin-bottom: 1rem;
     font-size: 0.78rem;
+  }
+  .tank-cosmetics {
+    margin-bottom: 0.85rem;
+  }
+  .tank-cosmetics__account {
+    display: none;
   }
   .tank-boundary {
     display: none;

@@ -384,3 +384,10 @@ Treat WreckaVOID and TankaVOID as the first two hosted games to carry the platfo
 - Status: accepted for release-candidate testing
 
 Identify the finite mode as `wreck-run` and its first candidate as `wreck-run-v1.0.0-rc.1`. Advance one wave every 30 seconds to a 20-wave ceiling. Open boss checkpoints at 150, 330, and 600 seconds; the third boss defeat is victory, while time beyond ten minutes is final-boss overtime rather than a fourth act. Cap ordinary enemies at 18, 22, and 24 by act and projectiles at 36, 48, and 60. Reduce ordinary spawn pressure during boss phases. Award 10,000 points per cleared wave and 100,000 per broken boss so going farther dominates combat farming while enemy points still break close ties. Keep submitted results provisional and reject incoherent time, wave, boss, minimum progress score, outcome, mode, and ruleset combinations at the platform boundary.
+
+## D-055 — Give hosted games one platform session and server-derived cosmetic unlocks
+
+- Date: 2026-08-23
+- Status: accepted for the first two launch games
+
+WreckaVOID and TankaVOID consume the platform's same-origin cookie session instead of creating game-specific login state. The platform returns owned profile identity and active entitlement keys; each game stores only the player's currently selected cosmetic. A locked or expired member selection falls back to the free look. Cosmetics may change rendering and presentation but never simulation, damage, movement, scoring, run evidence, or trust. Legacy game-owned auth, profile editing, and direct leaderboard reads are removed from the WreckaVOID release bundle rather than left as a second account system.

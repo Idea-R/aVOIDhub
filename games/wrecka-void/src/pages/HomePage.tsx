@@ -13,8 +13,7 @@ import {
   Heart,
   Twitter,
 } from "lucide-react";
-import { useAuth } from "../hooks/useAuth";
-import { AuthModal } from "../components/Auth/AuthModal";
+import { usePlatformPlayer } from "../hooks/usePlatformPlayer";
 import { SupportModal } from "../components/Support/SupportModal";
 import logoImage from "../assets/wreckavoid-logo.webp";
 
@@ -23,8 +22,12 @@ interface HomePageProps {
 }
 
 export function HomePage({ onNavigate }: HomePageProps) {
-  const { user } = useAuth();
-  const [showAuthModal, setShowAuthModal] = useState(false);
+  const {
+    player: user,
+    cosmetics,
+    cosmetic,
+    selectCosmetic,
+  } = usePlatformPlayer();
   const [showSupportModal, setShowSupportModal] = useState(false);
 
   return (
@@ -38,7 +41,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
 
       <div className="relative z-10 container mx-auto px-4 py-8">
         {/* Header */}
-        <header className="flex justify-between items-center mb-16">
+        <header className="mb-12 flex flex-col items-center justify-between gap-3 sm:mb-16 sm:flex-row sm:gap-6">
           <div className="flex shrink-0 items-center">
             <img
               src={logoImage}
@@ -50,39 +53,39 @@ export function HomePage({ onNavigate }: HomePageProps) {
             />
           </div>
 
-          <nav className="flex items-center space-x-4">
+          <nav className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:flex sm:w-auto sm:gap-4">
             {user ? (
               <>
-                <button
-                  onClick={() => onNavigate("leaderboard")}
-                  className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-black font-bold rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg"
+                <a
+                  href="/leaderboards/?game=wreckavoid"
+                  className="flex min-w-0 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-yellow-500 to-yellow-600 px-4 py-3 font-bold text-black shadow-lg transition-all duration-200 hover:scale-105 hover:from-yellow-400 hover:to-yellow-500 sm:px-6"
                 >
                   <Trophy className="w-5 h-5 text-yellow-900" />
                   <span>Leaderboard</span>
-                </button>
-                <button
-                  onClick={() => onNavigate("profile")}
-                  className="flex items-center space-x-2 px-4 py-2 text-gray-300 hover:text-white transition-colors"
+                </a>
+                <a
+                  href="/account/"
+                  className="flex items-center justify-center gap-2 px-3 py-2 text-gray-300 transition-colors hover:text-white sm:px-4"
                 >
                   <User className="w-5 h-5" />
                   <span>Profile</span>
-                </button>
+                </a>
               </>
             ) : (
               <>
-                <button
-                  onClick={() => onNavigate("leaderboard")}
-                  className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-black font-bold rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg"
+                <a
+                  href="/leaderboards/?game=wreckavoid"
+                  className="flex min-w-0 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-yellow-500 to-yellow-600 px-4 py-3 font-bold text-black shadow-lg transition-all duration-200 hover:scale-105 hover:from-yellow-400 hover:to-yellow-500 sm:px-6"
                 >
                   <Trophy className="w-5 h-5 text-yellow-900" />
                   <span>Leaderboard</span>
-                </button>
-                <button
-                  onClick={() => setShowAuthModal(true)}
-                  className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-400 hover:to-blue-500 text-white font-bold rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg"
+                </a>
+                <a
+                  href="/login/?returnTo=%2Fwreckavoid%2F"
+                  className="rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-3 text-center font-bold text-white shadow-lg transition-all duration-200 hover:scale-105 hover:from-blue-400 hover:to-blue-500 sm:px-6"
                 >
                   Sign In
-                </button>
+                </a>
               </>
             )}
           </nav>
@@ -90,7 +93,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
 
         {/* Hero Section */}
         <div className="max-w-4xl mx-auto text-center mb-16">
-          <h2 className="text-6xl font-bold text-white mb-6 leading-tight">
+          <h2 className="mb-6 text-5xl font-bold leading-tight text-white sm:text-6xl">
             Swing Your Way to
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400">
               {" "}
@@ -124,7 +127,9 @@ export function HomePage({ onNavigate }: HomePageProps) {
                   Your scores won't be saved to the leaderboard
                 </p>
                 <button
-                  onClick={() => setShowAuthModal(true)}
+                  onClick={() =>
+                    (window.location.href = "/login/?returnTo=%2Fwreckavoid%2F")
+                  }
                   className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-400 hover:to-blue-500 text-white font-semibold text-sm rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md"
                 >
                   Sign In to Save Scores
@@ -132,6 +137,68 @@ export function HomePage({ onNavigate }: HomePageProps) {
               </div>
             )}
           </div>
+
+          <section
+            className="mx-auto mt-8 max-w-2xl border-y border-white/15 py-5"
+            aria-label="Wrecking rig cosmetics"
+          >
+            <div className="mb-3 flex items-end justify-between gap-4 text-left">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-300">
+                  Wrecking rig
+                </p>
+                <h3 className="mt-1 text-xl font-black text-white">
+                  Pick the metal you bring into the yard.
+                </h3>
+              </div>
+              <a
+                href="/membership/"
+                className="shrink-0 text-xs font-bold text-orange-300 hover:text-orange-200"
+              >
+                Membership
+              </a>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {(
+                cosmetics?.wreckavoid ?? [
+                  {
+                    id: "standard" as const,
+                    name: "Yard steel",
+                    description: "The original cold-steel wrecking rig.",
+                    unlocked: true,
+                  },
+                  {
+                    id: "founder-ember" as const,
+                    name: "Founder ember",
+                    description:
+                      "A supporter cosmetic loaded from your platform membership.",
+                    unlocked: false,
+                  },
+                ]
+              ).map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  disabled={!option.unlocked}
+                  aria-pressed={cosmetic === option.id}
+                  onClick={() => selectCosmetic(option.id)}
+                  className={`group relative overflow-hidden border px-4 py-3 text-left transition-all ${cosmetic === option.id ? "-translate-y-1 border-cyan-300 bg-cyan-300/15 shadow-[0_6px_0_#0f766e]" : "border-white/15 bg-gray-950/55 hover:border-orange-300"} disabled:cursor-not-allowed disabled:opacity-45`}
+                >
+                  <span
+                    className={`absolute inset-y-0 left-0 w-2 ${option.id === "founder-ember" ? "bg-gradient-to-b from-orange-400 to-cyan-400" : "bg-gray-500"}`}
+                  />
+                  <strong className="block pl-2 text-sm text-white">
+                    {option.name}
+                  </strong>
+                  <small className="mt-1 block pl-2 text-xs leading-5 text-gray-400">
+                    {option.unlocked
+                      ? option.description
+                      : "Founding Player unlock"}
+                  </small>
+                </button>
+              ))}
+            </div>
+          </section>
         </div>
 
         {/* Features Grid */}
@@ -167,11 +234,11 @@ export function HomePage({ onNavigate }: HomePageProps) {
               <Play className="w-6 h-6 text-yellow-400" />
             </div>
             <h3 className="text-xl font-semibold text-white mb-3">
-              Endless Survival
+              A Run You Can Finish
             </h3>
             <p className="text-gray-400">
-              Face increasingly challenging waves of enemies in this endless
-              survival experience.
+              Break twenty timed waves and three boss checkpoints. Ten minutes
+              gets you to the final fight; the last boss decides the run.
             </p>
           </div>
         </div>
@@ -272,7 +339,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
             <div>
               <h4 className="text-white font-bold mb-3">WreckaVOID</h4>
               <p className="text-gray-400 text-sm mb-3">
-                An aVOID game by MadXent
+                An aVOID game by Ideas Realized
               </p>
               <p className="text-gray-400 text-xs">
                 Like the game? Want more of it? Support the creator.
@@ -341,7 +408,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
           {/* Bottom Bar */}
           <div className="border-t border-gray-700 mt-8 pt-6 text-center">
             <p className="text-gray-400 text-sm">
-              © 2025 MadXent. All rights reserved. |
+              © 2026 Ideas Realized. All rights reserved. |
               <span className="text-purple-400 ml-1">
                 More aVOID games coming soon!
               </span>
@@ -350,10 +417,6 @@ export function HomePage({ onNavigate }: HomePageProps) {
         </div>
       </footer>
 
-      <AuthModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-      />
       <SupportModal
         isOpen={showSupportModal}
         onClose={() => setShowSupportModal(false)}

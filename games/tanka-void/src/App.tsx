@@ -13,6 +13,7 @@ import { TouchControls } from "./TouchControls";
 import { GameRuntime } from "./game/GameRuntime";
 import { TANKAVOID_WAVES } from "./game/content";
 import { createRunSeed } from "./game/random";
+import { usePlatformPlayer } from "./usePlatformPlayer";
 import { TANKAVOID_COVER } from "./game/TankSimulation";
 import {
   WORLD_HEIGHT,
@@ -111,6 +112,21 @@ const INITIAL_DIAGNOSTICS: RuntimeDiagnostics = {
   audioVoiceCapacity: 8,
   destroyed: false,
 };
+
+const TANK_COSMETIC_FALLBACK = [
+  {
+    id: "standard" as const,
+    name: "Field lime",
+    description: "The Proving Grounds issue paint.",
+    unlocked: true,
+  },
+  {
+    id: "founder-meteor" as const,
+    name: "Founder meteor",
+    description: "Teal armor, ember trim, and a founder mark on the turret.",
+    unlocked: false,
+  },
+];
 
 function readStoredBoolean(key: string, fallback: boolean): boolean {
   if (typeof localStorage === "undefined") return fallback;
@@ -213,6 +229,13 @@ function App() {
     TankaVOIDFinishResult | "saving" | null
   >(null);
   const [shareState, setShareState] = useState<"idle" | "copied">("idle");
+  const {
+    player,
+    cosmetics,
+    cosmetic,
+    loading: playerLoading,
+    selectCosmetic,
+  } = usePlatformPlayer();
   const smokeMode = useMemo(
     () =>
       typeof location !== "undefined" &&
@@ -285,6 +308,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem("tankavoid:motion:v1", String(userReducedMotion));
   }, [userReducedMotion]);
+
+  useEffect(() => {
+    runtimeRef.current?.setPlayerCosmetic(cosmetic);
+  }, [cosmetic]);
 
   useEffect(() => {
     if (snapshot.phase !== "complete") return;
@@ -510,6 +537,55 @@ function App() {
               Keep the strong plate toward the shot, use the barricades, and
               break the line before it pulls you apart.
             </p>
+            <section
+              className="tank-cosmetics"
+              aria-label="TankaVOID armor cosmetics"
+            >
+              <div className="tank-cosmetics__heading">
+                <div>
+                  <span>Armor locker</span>
+                  <strong>Choose your field paint.</strong>
+                </div>
+                <a href="/membership/">Membership</a>
+              </div>
+              <div className="tank-cosmetics__options">
+                {(cosmetics?.tankavoid ?? TANK_COSMETIC_FALLBACK).map(
+                  (option) => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      className={`tank-cosmetic tank-cosmetic--${option.id}`}
+                      aria-pressed={cosmetic === option.id}
+                      disabled={!option.unlocked}
+                      onClick={() => selectCosmetic(option.id)}
+                    >
+                      <span aria-hidden="true" />
+                      <strong>{option.name}</strong>
+                      <small>
+                        {option.unlocked
+                          ? option.description
+                          : "Founding Player unlock"}
+                      </small>
+                    </button>
+                  ),
+                )}
+              </div>
+              <p className="tank-cosmetics__account">
+                {playerLoading ? (
+                  "Checking your platform locker…"
+                ) : player ? (
+                  <>
+                    Locker synced for {player.displayName}.{" "}
+                    <a href="/account/">Open account</a>
+                  </>
+                ) : (
+                  <>
+                    <a href="/login/?returnTo=%2FTankaVOID%2F">Sign in</a> to
+                    load member cosmetics and save a public result.
+                  </>
+                )}
+              </p>
+            </section>
             <button
               className="tank-primary"
               type="button"

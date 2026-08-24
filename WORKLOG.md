@@ -271,3 +271,20 @@ Publish the branch as a draft PR and non-production Netlify runtime preview, the
 ### Next action
 
 Publish the refreshed static feedback build on the existing draft PR, then collect reaction to the motion timing before adding game-specific intro variants.
+
+## 2026-08-23 — Shared identity and first member cosmetics
+
+- Opened issue `#48` and implemented the slice on `codex/feature-launch-entitlements` from the exact production source.
+- Added a server-owned player context for profile identity, active entitlements, and per-game cosmetic unlocks.
+- Replaced WreckaVOID's competing browser-local Supabase login with the platform's cookie-backed passwordless session and platform account/leaderboard routes.
+- Removed WreckaVOID's obsolete auth modal, password/Google forms, direct profile editor, direct leaderboard reader, and Supabase client dependency from the release surface.
+- Added free and Founding Player cosmetic selectors to WreckaVOID and TankaVOID. Both member looks are backed by `cosmetics.supporter` and are render-only.
+- Kept guest play complete. Locked or expired member selections fall back to the standard look.
+- Improved the WreckaVOID phone header and hero sizing and tightened the TankaVOID desktop-height composition so every briefing control remains inside a 1440 × 900 viewport.
+- Passed 30 platform tests, 37 Wreck tests, 44 Tank tests, 52 foundation assertions, both game release gates, and the complete four-game/30-route platform build.
+- Browser-verified desktop, phone, and short-landscape layouts plus live mobile game launch for both titles with no horizontal overflow or console warning/error.
+- No production schema, Stripe resource, charge, AdSense request, secret, or public Tanka route changed.
+
+### Next action
+
+Publish the Git-driven deploy preview, then run the isolated Supabase and Stripe test canary after the short-lived development-branch cost is approved.
