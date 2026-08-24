@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { ArrowRight, ArrowUpRight, Clock3, Play } from 'lucide-react'
+import { ArrowUpRight, Clock3, Play } from 'lucide-react'
 import type { CSSProperties, PointerEvent } from 'react'
 import type { Game } from '@/data/games'
 
@@ -63,10 +63,6 @@ export function GameCard({ game, index, compact = false }: GameCardProps) {
         <p>{game.eyebrow}</p>
         <h3>{game.title}</h3>
         <span className="gameDescription">{game.description}</span>
-        <span className="gameAction" aria-hidden="true">
-          {game.status === 'soon' ? 'Hold position' : game.status === 'external' ? 'Visit game' : 'Launch game'}
-          {game.status === 'soon' ? <Clock3 /> : <ArrowRight />}
-        </span>
       </div>
     </>
   )

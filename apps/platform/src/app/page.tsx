@@ -80,7 +80,8 @@ export default function HomePage() {
             <span>01 queued</span>
             <span className="telemetryRule" aria-hidden="true" />
           </div>
-          <div className="originalGrid">
+          <p className="railHint" aria-hidden="true"><span>Swipe for more</span><i /><ArrowRight /></p>
+          <div className="originalGrid" role="region" aria-label="Hosted aVOID games">
             {originalGames.map((game, index) => <GameCard key={game.id} game={game} index={index} />)}
           </div>
         </div>
@@ -95,7 +96,8 @@ export default function HomePage() {
               <p>These games have their own worlds and their own domains. They do not share the aVOID leaderboard.</p>
             </div>
           </Reveal>
-          <div className="relatedRail">
+          <p className="railHint railHintDark" aria-hidden="true"><span>Swipe for more</span><i /><ArrowRight /></p>
+          <div className="relatedRail" role="region" aria-label="Other games by Ideas Realized">
             {relatedGames.map((game, index) => <GameCard key={game.id} game={game} index={index} compact />)}
           </div>
         </div>
