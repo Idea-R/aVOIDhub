@@ -5,6 +5,8 @@ import {
   GameScore,
 } from "../lib/supabase";
 import { finishPlatformRun } from "../api/platformRuns";
+import type { GameState } from "../types/Game";
+import { WRECK_RUN_RULESET_VERSION } from "../game/WreckRunDirector";
 
 export function useLeaderboard() {
   const [scores, setScores] = useState<GameScore[]>([]);
@@ -22,6 +24,7 @@ export function useLeaderboard() {
         .from('leaderboard_scores')
         .select('id, user_id, player_name, score, metadata, created_at')
         .eq('game_key', 'wreckavoid')
+        .contains('metadata', { rulesetVersion: WRECK_RUN_RULESET_VERSION })
         .order('score', { ascending: false })
         .limit(50);
 
@@ -58,9 +61,21 @@ export function useLeaderboard() {
     fetchLeaderboard();
   }, []);
 
-  const submitScore = async (score: number, wave: number, survivalTime: number) => {
+  const submitScore = async (
+    score: number,
+    wave: number,
+    survivalTime: number,
+    bossesDefeated: number,
+    outcome: GameState["runOutcome"],
+  ) => {
     try {
-      const accepted = await finishPlatformRun(score, wave, survivalTime);
+      const accepted = await finishPlatformRun(
+        score,
+        wave,
+        survivalTime,
+        bossesDefeated,
+        outcome,
+      );
       await fetchLeaderboard();
       return { data: accepted ? { score, wave, survival_time: survivalTime } : null, error: null };
     } catch (error) {

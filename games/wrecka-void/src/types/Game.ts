@@ -6,6 +6,9 @@ export interface Vector2 {
 export interface GameState {
   score: number;
   wave: number;
+  act: 1 | 2 | 3;
+  bossesDefeated: number;
+  runOutcome: 'playing' | 'defeat' | 'victory';
   health: number;
   maxHealth: number;
   gameTime: number;

@@ -21,6 +21,7 @@ import { RunCompletionGate } from "../../game/RunCompletionGate";
 import { PauseController } from "../../game/PauseController";
 import { SoundManager } from "../../game/SoundManager";
 import { FrameMonitor } from "../../game/FrameMonitor";
+import { getWreckRunSnapshot } from "../../game/WreckRunDirector";
 import { GameHUD } from "./GameHUD";
 import { GameOverlays } from "./GameOverlays";
 import { beginPlatformRun } from "../../api/platformRuns";
@@ -86,6 +87,7 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
   const clockRef = useRef(new FixedStepClock());
   const frameMonitorRef = useRef(new FrameMonitor());
   const runCompletionRef = useRef(new RunCompletionGate());
+  const smokeVictoryAppliedRef = useRef(false);
   const pauseControllerRef = useRef(new PauseController());
   const toggleManualPauseRef = useRef<() => void>(() => undefined);
   const toggleHelpRef = useRef<() => void>(() => undefined);
@@ -473,6 +475,12 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
     const effects = activeEffectsRef.current;
     const size = canvasSizeRef.current;
     const state = gameStateRef.current.getState();
+    const encounter = getWreckRunSnapshot(
+      state.gameTime,
+      state.bossesDefeated,
+      enemyManagerRef.current.hasActiveBoss(),
+    );
+    gameStateRef.current.syncEncounter(encounter);
     updateActiveEffects();
 
     const inputManager = inputManagerRef.current;
@@ -552,7 +560,7 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
       dt,
       size.width,
       size.height,
-      state.wave,
+      encounter,
       playerRef.current,
     );
     particleSystemRef.current.update(dt);
@@ -560,7 +568,7 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
       dt,
       size.width,
       size.height,
-      state.wave,
+      encounter.wave,
       upgrades,
     );
 
@@ -671,10 +679,12 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
 
     // Remove destroyed enemies
     const allDestroyedEnemies = [
-      ...ballCollisions.destroyedEnemies,
-      ...chainCollisions.destroyedEnemies,
-      ...secondChainCollisions.destroyedEnemies,
-      ...playerCollisions.hitEnemies,
+      ...new Set([
+        ...ballCollisions.destroyedEnemies,
+        ...chainCollisions.destroyedEnemies,
+        ...secondChainCollisions.destroyedEnemies,
+        ...playerCollisions.hitEnemies,
+      ]),
     ];
 
     // Check for boss defeats and spawn power-ups before removing enemies
@@ -687,6 +697,7 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
             destroyedEnemy.pos,
             upgrades,
           );
+          gameStateRef.current.recordBossDefeat();
         }
       }
     });
@@ -764,6 +775,8 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
         finalState.score,
         finalState.wave,
         finalState.gameTime,
+        finalState.bossesDefeated,
+        finalState.runOutcome,
       );
     }
   };
@@ -787,7 +800,6 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
           if (frameState.isPaused || frameState.isGameOver) return;
 
           gameStateRef.current.updateGameTime(deltaTime);
-          gameStateRef.current.updateWave();
           updatePhysicsRef.current(deltaTime);
           checkCollisionsRef.current();
 
@@ -882,6 +894,28 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
     gameStateRef.current.updateHealth(state.health);
     finishCurrentRunRef.current();
   };
+
+  const forceVictoryForSmoke = () => {
+    gameStateRef.current.setState({ score: 190_000, gameTime: 600, wave: 20, act: 3 });
+    gameStateRef.current.recordBossDefeat();
+    gameStateRef.current.recordBossDefeat();
+    gameStateRef.current.recordBossDefeat();
+    finishCurrentRunRef.current();
+  };
+
+  useEffect(() => {
+    if (
+      !smokeMode ||
+      smokeVictoryAppliedRef.current ||
+      new URLSearchParams(window.location.search).get("smoke") !== "victory"
+    ) return;
+    smokeVictoryAppliedRef.current = true;
+    gameStateRef.current.setState({ score: 190_000, gameTime: 600, wave: 20, act: 3 });
+    gameStateRef.current.recordBossDefeat();
+    gameStateRef.current.recordBossDefeat();
+    gameStateRef.current.recordBossDefeat();
+    finishCurrentRunRef.current();
+  }, [smokeMode]);
 
   const setFocusPauseForSmoke = (active: boolean) => {
     gameStateRef.current.setWindowFocus(!active);
@@ -1016,6 +1050,13 @@ export function GameEngine({ onNavigate }: GameEngineProps) {
             className="pointer-events-auto rounded bg-cyan-700 px-2 py-1 font-semibold text-white"
           >
             Force game over
+          </button>
+          <button
+            type="button"
+            onClick={forceVictoryForSmoke}
+            className="pointer-events-auto ml-1 rounded bg-emerald-700 px-2 py-1 font-semibold text-white"
+          >
+            Force victory
           </button>
           <button
             type="button"

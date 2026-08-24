@@ -1,5 +1,22 @@
 # aVOIDgame.io worklog
 
+## 2026-08-23 — finite Wreck Run candidate
+
+- Replaced WreckaVOID's score-driven wave escalation and unbounded minute-boss loop with the versioned `wreck-run-v1.0.0-rc.1` encounter director.
+- Set a ten-minute, twenty-wave run with boss checkpoints at 150, 330, and 600 seconds, followed by final-boss overtime only when needed.
+- Added act-level ordinary-enemy and projectile caps plus reduced ordinary pressure during boss phases. Strong scoring no longer accelerates the spawn clock.
+- Added 10,000 points per cleared wave and 100,000 per broken boss so going farther outranks combat farming while enemy points still settle close runs.
+- Added exact boss tracking, a third-boss victory transition, victory-specific result and sharing copy, act/wave HUD state, and an overtime clock.
+- De-duplicated destroyed-enemy indices before boss rewards and terminal progression so one boss cannot count twice from overlapping collision paths.
+- Started and finished platform runs as `wreck-run`; attached the exact ruleset to accepted metrics; excluded legacy survival scores from the new game and platform boards.
+- Added server-side coherence checks for mode, ruleset, score, wave, survival time, boss count, and victory/defeat outcome. This improves provisional integrity without overstating browser evidence as verified.
+- Passed 37 WreckaVOID tests, 28 platform tests, both type-checks, WreckaVOID lint/build/budget gates, and the complete 29-route Netlify production build.
+- Browser-verified the victory state at 1440 × 900 and 390 × 844. Both surfaces showed `Wreck Run Complete`, wave 20, and three of three bosses with no overflow; the development lifecycle held one finish transition.
+
+### Next action
+
+Publish a Git-driven preview for real-play balance feedback, then run the shared Supabase ticket and leaderboard matrix in an approved isolated branch before enabling live authenticated submissions.
+
 ## 2026-08-23 — launch integration
 
 - Merged the accepted WreckaVOID V1 charter through PR #45 at `d91932d`.

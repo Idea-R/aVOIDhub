@@ -34,17 +34,17 @@ export function GameOverlays({
     const minutes = Math.floor(gameState.gameTime / 60);
     const seconds = Math.floor(gameState.gameTime % 60);
     const timeText = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
-    const bossesKilled = Math.floor(gameState.wave / 10); // Rough estimate based on boss spawn rate
+    const won = gameState.runOutcome === "victory";
 
-    return `🎮 Just survived ${timeText} in WreckaVOID! 
+    return `🎮 ${won ? "I cleared Wreck Run" : `I survived ${timeText}`} in WreckaVOID!
 
 📊 Final Stats:
 • Score: ${gameState.score.toLocaleString()}
 • Wave: ${gameState.wave}
-• Bosses Defeated: ${bossesKilled}
+• Bosses Defeated: ${gameState.bossesDefeated}/3
 • Survival Time: ${timeText}
 
-💪 Join the aVOID Game Leaderboards! Sign up and prove your worth!
+Think you can go farther? Meet me on the aVOID leaderboard.
 
 #WreckaVOID #Gaming #Leaderboard`;
   };
@@ -106,7 +106,7 @@ export function GameOverlays({
                 • Chain damages basic enemies only
                 <br />
                 • Collect power-ups for upgrades
-                <br />• Survive as long as possible!
+                <br />• Break all three bosses to clear Wreck Run
               </div>
             </div>
             <button
@@ -168,9 +168,11 @@ export function GameOverlays({
         >
             <h2
               id="wreckavoid-result-title"
-              className="mb-3 text-3xl font-bold text-red-300 sm:mb-6 sm:text-4xl"
+              className={`mb-3 text-3xl font-bold sm:mb-6 sm:text-4xl ${gameState.runOutcome === "victory" ? "text-cyan-300" : "text-red-300"}`}
             >
-              Game Over!
+              {gameState.runOutcome === "victory"
+                ? "Wreck Run Complete!"
+                : "Wrecked!"}
             </h2>
             <div
               id="wreckavoid-result-summary"
@@ -180,6 +182,7 @@ export function GameOverlays({
                 Final Score: {gameState.score.toLocaleString()}
               </div>
               <div>Wave Reached: {gameState.wave}</div>
+              <div>Bosses Broken: {gameState.bossesDefeated}/3</div>
               <div>Time Survived: {Math.floor(gameState.gameTime)}s</div>
               {!user && (
                 <div className="mt-2 rounded-lg border border-yellow-600/30 bg-yellow-900/20 p-2 text-sm text-yellow-400 sm:mt-4 sm:p-3">
@@ -244,7 +247,7 @@ export function GameOverlays({
                 data-autofocus
                 className="w-full rounded-lg bg-red-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-300"
               >
-                Play Again
+                {gameState.runOutcome === "victory" ? "Run It Back" : "Try Again"}
               </button>
               {!user && (
                 <button
