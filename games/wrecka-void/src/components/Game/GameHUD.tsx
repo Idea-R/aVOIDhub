@@ -1,6 +1,6 @@
 import { useState } from "react";
-import type { User } from "@supabase/supabase-js";
 import { ArrowLeft, HelpCircle, Pause, Volume2, VolumeX } from "lucide-react";
+import type { PlatformPlayer } from "../../api/playerContext";
 import { GameState } from "../../types/Game";
 import { ActiveEffects, PlayerUpgrades } from "../../types/PowerUps";
 import { ModalSurface } from "../ui/ModalSurface";
@@ -9,7 +9,7 @@ interface GameHUDProps {
   gameState: GameState;
   activeEffects: ActiveEffects;
   playerUpgrades: PlayerUpgrades;
-  user: User | null;
+  user: PlatformPlayer | null;
   onNavigate: (page: string) => void;
   onToggleHelp: () => void;
   onTogglePause: () => void;
@@ -264,12 +264,16 @@ export function GameHUD({
             </div>
             <div className="text-right">
               <div className="text-sm font-bold text-blue-400">
-                <span className="sm:hidden">A{gameState.act} · W{gameState.wave}</span>
+                <span className="sm:hidden">
+                  A{gameState.act} · W{gameState.wave}
+                </span>
                 <span className="hidden sm:inline">
                   Act {gameState.act} · Wave {gameState.wave}
                 </span>
               </div>
-              <div className={`text-xs ${overtime ? "font-bold text-orange-300" : "text-gray-400"}`}>
+              <div
+                className={`text-xs ${overtime ? "font-bold text-orange-300" : "text-gray-400"}`}
+              >
                 {overtime ? `OVERTIME ${timeLabel}` : timeLabel}
               </div>
             </div>
@@ -292,33 +296,30 @@ export function GameHUD({
           overlayClassName="absolute inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
           dialogClassName="w-full max-w-sm rounded-2xl border border-gray-600 bg-gray-900 p-6 text-center shadow-2xl"
         >
-            <h3
-              id="wreckavoid-exit-title"
-              className="mb-4 text-xl font-bold text-white"
+          <h3
+            id="wreckavoid-exit-title"
+            className="mb-4 text-xl font-bold text-white"
+          >
+            Return to Title Screen?
+          </h3>
+          <p id="wreckavoid-exit-description" className="mb-6 text-gray-200">
+            Your current game progress will be lost.
+          </p>
+          <div className="flex space-x-3">
+            <button
+              onClick={confirmExit}
+              className="flex-1 rounded-lg bg-red-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-300"
             >
-              Return to Title Screen?
-            </h3>
-            <p
-              id="wreckavoid-exit-description"
-              className="mb-6 text-gray-200"
+              Yes, Exit
+            </button>
+            <button
+              onClick={cancelExit}
+              data-autofocus
+              className="flex-1 rounded-lg bg-gray-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-gray-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
             >
-              Your current game progress will be lost.
-            </p>
-            <div className="flex space-x-3">
-              <button
-                onClick={confirmExit}
-                className="flex-1 rounded-lg bg-red-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-300"
-              >
-                Yes, Exit
-              </button>
-              <button
-                onClick={cancelExit}
-                data-autofocus
-                className="flex-1 rounded-lg bg-gray-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-gray-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
-              >
-                Cancel
-              </button>
-            </div>
+              Cancel
+            </button>
+          </div>
         </ModalSurface>
       )}
     </>

@@ -119,6 +119,29 @@ class FakeLoop implements LoopPort {
 }
 
 describe("GameRuntime", () => {
+  it("applies a render-only player cosmetic without touching simulation state", () => {
+    const renderer: RendererPort = {
+      render: vi.fn(() => 7),
+      setPlayerCosmetic: vi.fn(),
+    };
+    const runtime = new GameRuntime(
+      new TankSimulation(),
+      new FakeInput(),
+      new FakeViewport(),
+      renderer,
+      (step, render) => new FakeLoop(step, render),
+      { onSnapshot: vi.fn(), onDiagnostics: vi.fn() },
+    );
+    const before = runtime.snapshot();
+
+    runtime.setPlayerCosmetic("founder-meteor");
+
+    expect(renderer.setPlayerCosmetic).toHaveBeenCalledWith("founder-meteor");
+    expect(renderer.render).toHaveBeenCalledTimes(2);
+    expect(runtime.snapshot()).toEqual(before);
+    runtime.destroy();
+  });
+
   it("keeps one ownership boundary through twenty complete/restart cycles", () => {
     const input = new FakeInput();
     const viewport = new FakeViewport();

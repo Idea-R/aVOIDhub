@@ -9,6 +9,7 @@ import { ActiveEffects, PlayerUpgrades } from "../types/PowerUps";
 import { PowerUpManager } from "../components/Game/PowerUpManager";
 import { ParticleSystem } from "./ParticleSystem";
 import { ChainRenderer } from "./renderers/ChainRenderer";
+import type { WreckCosmeticId } from "../cosmetics";
 import { PlayerRenderer } from "./renderers/PlayerRenderer";
 import { EnemyRenderer } from "./renderers/EnemyRenderer";
 import { EffectsRenderer } from "./renderers/EffectsRenderer";
@@ -56,6 +57,7 @@ export class GameRenderer {
     isRetracting: boolean,
     activeEffects: ActiveEffects,
     playerUpgrades?: { chainDamage: number },
+    cosmetic: WreckCosmeticId = "standard",
   ): void {
     this.chainRenderer.drawChain(
       chain,
@@ -63,6 +65,7 @@ export class GameRenderer {
       isRetracting,
       activeEffects,
       playerUpgrades,
+      cosmetic,
     );
   }
 
@@ -88,16 +91,18 @@ export class GameRenderer {
     player: Vector2,
     playerSize: number,
     activeEffects: ActiveEffects,
+    cosmetic: WreckCosmeticId = "standard",
   ): void {
-    this.playerRenderer.drawPlayer(player, playerSize, activeEffects);
+    this.playerRenderer.drawPlayer(player, playerSize, activeEffects, cosmetic);
   }
 
   drawBall(
     ball: Vector2,
     ballRadius: number,
     activeEffects: ActiveEffects,
+    cosmetic: WreckCosmeticId = "standard",
   ): void {
-    this.playerRenderer.drawBall(ball, ballRadius, activeEffects);
+    this.playerRenderer.drawBall(ball, ballRadius, activeEffects, cosmetic);
   }
 
   drawEnemies(enemies: Enemy[]): void {

@@ -11,12 +11,21 @@ import {
   type TankSnapshot,
   type ViewportLayout,
 } from "./types";
+import type { TankCosmeticId } from "../api/playerContext";
 
-const TEAM_COLORS: Record<
-  CombatantId,
-  { body: string; edge: string; dark: string }
-> = {
-  player: { body: "#8c9d3d", edge: "#e7ff4f", dark: "#4e5b23" },
+type TankPalette = { body: string; edge: string; dark: string };
+
+export const PLAYER_COSMETICS: Record<TankCosmeticId, TankPalette> = {
+  standard: { body: "#8c9d3d", edge: "#e7ff4f", dark: "#4e5b23" },
+  "founder-meteor": {
+    body: "#148f88",
+    edge: "#ff7957",
+    dark: "#075b59",
+  },
+};
+
+const TEAM_COLORS: Record<CombatantId, TankPalette> = {
+  player: PLAYER_COSMETICS.standard,
   enemy: { body: "#a6412d", edge: "#ff8b6f", dark: "#60251d" },
 };
 
@@ -117,6 +126,7 @@ function drawCover(
 function drawArmorGuide(
   context: CanvasRenderingContext2D,
   tank: TankSnapshot,
+  colors: TankPalette,
 ): void {
   context.save();
   context.translate(tank.x, tank.y);
@@ -124,7 +134,7 @@ function drawArmorGuide(
   context.lineCap = "square";
   context.lineWidth = 7;
 
-  context.strokeStyle = "#e7ff4f";
+  context.strokeStyle = colors.edge;
   context.beginPath();
   context.moveTo(46, -21);
   context.lineTo(46, 21);
@@ -154,12 +164,15 @@ function drawTank(
   team: CombatantId,
   label = "YOU",
   enemyArchetype?: EnemySnapshot["archetype"],
+  playerColors: TankPalette = PLAYER_COSMETICS.standard,
 ): void {
   const colors =
     team === "enemy" && enemyArchetype
       ? ENEMY_COLORS[enemyArchetype]
-      : TEAM_COLORS[team];
-  drawArmorGuide(context, tank);
+      : team === "player"
+        ? playerColors
+        : TEAM_COLORS[team];
+  drawArmorGuide(context, tank, colors);
 
   context.save();
   context.translate(tank.x + 11, tank.y + 13);
@@ -222,8 +235,12 @@ function drawTank(
 function drawProjectile(
   context: CanvasRenderingContext2D,
   projectile: ProjectileSnapshot,
+  playerColors: TankPalette,
 ): void {
-  const color = TEAM_COLORS[projectile.owner].edge;
+  const color =
+    projectile.owner === "player"
+      ? playerColors.edge
+      : TEAM_COLORS[projectile.owner].edge;
   context.strokeStyle = color;
   context.fillStyle = "#f4f1df";
   context.lineWidth = 5;
@@ -357,7 +374,13 @@ function drawStage(
 }
 
 export class TankRenderer {
+  private playerCosmetic: TankCosmeticId = "standard";
+
   constructor(private readonly context: CanvasRenderingContext2D) {}
+
+  setPlayerCosmetic(cosmetic: TankCosmeticId): void {
+    this.playerCosmetic = cosmetic;
+  }
 
   render(snapshot: RunSnapshot, layout: ViewportLayout): number {
     const context = this.context;
@@ -374,9 +397,10 @@ export class TankRenderer {
     );
     drawArena(context);
     for (const cover of snapshot.cover) drawCover(context, cover);
+    const playerColors = PLAYER_COSMETICS[this.playerCosmetic];
     for (const projectile of snapshot.projectiles)
-      drawProjectile(context, projectile);
-    drawTank(context, snapshot.tank, "player");
+      drawProjectile(context, projectile, playerColors);
+    drawTank(context, snapshot.tank, "player", "YOU", undefined, playerColors);
     for (const enemy of snapshot.enemies)
       drawTank(
         context,
