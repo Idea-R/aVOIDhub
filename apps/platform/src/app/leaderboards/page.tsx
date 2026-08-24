@@ -43,9 +43,10 @@ export default async function LeaderboardsPage({ searchParams }: { searchParams:
     const supabase = await createClient()
     let currentQuery = supabase
       .from('leaderboard_scores')
-      .select('id, user_id, player_name, score, game_key, verification_level, metadata, created_at')
+      .select('id, user_id, player_name, score, game_key, verification_level, metadata, created_at, submission:score_submissions!inner(status, mode)')
       .eq('game_key', gameKey)
-      .contains('metadata', { mode })
+      .eq('submission.status', 'accepted')
+      .eq('submission.mode', mode)
 
     if (gameKey === 'wreckavoid') {
       currentQuery = currentQuery.contains('metadata', { rulesetVersion: WRECKAVOID_RULESET_VERSION })

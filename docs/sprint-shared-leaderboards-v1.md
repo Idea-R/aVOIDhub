@@ -16,6 +16,7 @@ WORDaVOID no longer opens its old game-owned Supabase session to reach the platf
 - Each hosted game has a separate board.
 - WORDaVOID Classic and Time Attack have separate mode views.
 - One player's best accepted score occupies one row per game and mode.
+- A score-review rejection drops out of the board because current rows join the accepted submission record.
 - `server replay` means the platform rebuilt the score from deterministic evidence.
 - `bounded` means the platform checked and recomputed a smaller terminal summary.
 - Both capabilities remain `provisional`. Neither is presented as verified anti-cheat.
