@@ -109,6 +109,10 @@ Replace `5173` with `4173` to open the preview build.
 5. **Answer each enemy.** Raiders board, hounds slow you, crawlers ram and shrug off bullets, harpies fly (flak), sappers mine your planned track (scout car reveals them), wisps ignore bullets and shells (tesla / flame).
 6. **Reach the Last Gate.** Beat the Iron Wagon, the Brood Mother and the Void Maw. Score = settlements + passengers delivered + cars intact + time bonus.
 
+## Deploy
+
+The game ships inside the aVOID platform repo (`C:\devVOID-main`, GitHub `Idea-R/aVOIDhub`, Netlify site avoidgame.io). To publish: copy this folder into `games/rail-avoid` (keep that folder's `package.json`/`vite.config.ts`, exclude node_modules/dist/verify screenshots), run `npm run build:platform:netlify` at the repo root, commit and push `main`; Netlify builds in about a minute. `DIRECTION.md` holds the current master plan and hand-off prompts.
+
 ## Dev shortcuts
 
 Load the game with `?dev` (for example `http://localhost:5173/?dev`) to allow 4x speed and to mark the page as a dev session (`window.__RAIL_DEV === true`).
