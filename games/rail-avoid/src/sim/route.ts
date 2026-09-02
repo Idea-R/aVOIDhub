@@ -114,10 +114,21 @@ export function previewPlan(state: SimState, col: number, row: number): PlanResu
   return { ok: true, cost: c.cost };
 }
 
+const blockedNotice = new WeakMap<SimState, { reason: string; at: number }>();
+
 export function planTile(ctx: SimContext, col: number, row: number): PlanResult {
   const { state } = ctx;
   const pre = previewPlan(state, col, row);
-  if (!pre.ok) { ctx.bus.defer('track:blocked', { reason: pre.reason ?? 'Blocked' }); return pre; }
+  if (!pre.ok) {
+    // notify the UI at most once per reason every 2.5 s (autopilot / auto-follow retries would otherwise spam)
+    const last = blockedNotice.get(state);
+    const reason = pre.reason ?? 'Blocked';
+    if (!last || last.reason !== reason || state.time - last.at > 2.5) {
+      blockedNotice.set(state, { reason, at: state.time });
+      ctx.bus.defer('track:blocked', { reason });
+    }
+    return pre;
+  }
   const [ec, er] = pathEnd(state);
   const cost = pre.cost ?? 0;
   if (cost > 0) {
