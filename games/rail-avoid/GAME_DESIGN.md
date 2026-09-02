@@ -100,6 +100,18 @@ Besides resource settlements: **Watchtower** (5 min of longer wave warnings and 
 - Settlements are **havens**: no waves spawn while stopped there and militia shoot nearby enemies; stop pressure only builds when stalled in the wild.
 - **Reverse** (R): back down your own track at half speed (full with a Caboose); the plan ahead is refunded and planning re-anchors where you stop.
 
+## Loot, relics and bounties
+- **Salvage**: enemies drop scrap, ammo or rail crates (35%; doubled by Salvage Hooks) that the train collects when any car passes within reach. Drops fade after 28 s.
+- **Elites**: from region 2 most waves contain one glowing elite (1.6x HP). Elites and bosses drop **Void Marks** and a **relic choice** (pick 1 of 3).
+- **Relics** (18, common/rare/legendary) are permanent run passives: Coal Heart, Grease Tin, Void Compass, Lucky Spike, Salvage Hooks, Cargo Nets, Quartermaster's Ledger, Old Timetable, Signal Lantern, Hound Whistle, Sapper's Manual, Ember Gloves, Militia Banner, Tinker's Kit, Bounty Board, Conductor's Watch, Iron Couplings, Ashfall Cloak.
+- **Bounties**: settlements post up to two at a time (cull N of an enemy type in 3 minutes, deliver N passengers to the next yard, reach a named node before the void). Rewards: marks plus rails or scrap.
+- **Void Marks** buy a relic choice at markets (6 marks).
+
+## Expeditions (timed-hit turn-based)
+- **Expedition Sites** (two per region) offer "Send an expedition": choose up to three crew; The Conductor (the player character, present from the start) always goes.
+- Side-view rounds against on-foot foes (Rail Thug, Void Hound, Void Shade, Scrap Brute; scaled by region). Actions: Strike (press on impact: perfect x1.5, good x1, miss x0.5), Guard, Special per specialty (Whistle rally, Overcharge, Volley, Patch, Flare stun, Wrench, Bribe), Flee. Enemy blows can be guarded with the same timing (perfect blocks 75%).
+- Each round the void front creeps forward eight seconds of travel. Winning pays 4-7 marks, scrap, a relic choice and sometimes a rescued crew member; losing sends the crew home at 15 HP and costs morale. Six rounds maximum.
+
 ## Weather & Time
 Day/night cycle of 4 minutes (night: +30% enemy aggression, harpies more common, visibility tint). Weather: clear, rain (cooling, −10% speed), fog (turret range −30%), storm (cooling, drones grounded, lightning strikes heat a random car), ashfall (region 3-4, passengers take damage without Sleeper/Medical).
 

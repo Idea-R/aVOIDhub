@@ -6,6 +6,8 @@ import { TRAIN, SCORE, MAX_CARS } from '../core/config';
 import { addResource, log, recomputeCapacity } from './helpers';
 import { hexToWorld as hexToWorldOf } from '../core/hex';
 import { addCrew, boardPassengers, addCar, removeCar } from './train';
+import { maybePostBounty, onSettlementForBounty } from './bounties';
+import { hasRelic } from './loot';
 import { DIRECTOR, UPGRADES } from '../core/config';
 import type { LocoUpgradeKind } from '../core/types';
 import { damageEnemy, locoPos } from './helpers';
@@ -67,7 +69,9 @@ export function onArrive(ctx: SimContext, s: Settlement): void {
     for (const ch of state.route.sapperCharges) ch.revealed = true;
     log(state, 'Lookouts on the tower: longer warnings and sappers revealed for five minutes', 'good');
   }
-  if (s.type === 'shrine' || s.type === 'market' || s.type === 'wreck') {
+  onSettlementForBounty(ctx, s, delivered);
+  maybePostBounty(ctx, s);
+  if (s.type === 'shrine' || s.type === 'market' || s.type === 'wreck' || s.type === 'site') {
     const id = 'node_' + s.type;
     state.activeEvent = { defId: id, startedAt: state.time };
     state.phase = 'event';
@@ -100,10 +104,11 @@ export function updateStop(ctx: SimContext): void {
   for (const e of state.enemies) {
     if (e.hp <= 0 || e.state === 'dead' || e.type.startsWith('boss_')) continue;
     if (Math.hypot(e.x - lp.x, e.y - lp.y) > DIRECTOR.havenRadius) continue;
-    damageEnemy(ctx, e, DIRECTOR.havenMilitiaDps * dt, 'bullet');
+    damageEnemy(ctx, e, DIRECTOR.havenMilitiaDps * dt * (hasRelic(state, 'militia_banner') ? 2 : 1), 'bullet');
   }
   if (state.phase === 'shop') return;
-  if (t.stopTimer >= TRAIN.settlementStopTime && TRAIN.autoDepart) depart(ctx);
+  const stopTime = TRAIN.settlementStopTime * (hasRelic(state, 'old_timetable') ? 0.5 : 1);
+  if (t.stopTimer >= stopTime && TRAIN.autoDepart) depart(ctx);
 }
 
 export function currentSettlement(ctx: SimContext): Settlement | null {

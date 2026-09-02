@@ -141,6 +141,7 @@ export const NODE_EVENTS: PassengerEventDef[] = [
       { label: 'Buy ammunition', desc: '-8 food, +30 ammo.', requires: { resource: 'food', amount: 8 } },
       { label: 'Sell ammunition', desc: '-25 ammo, +18 scrap.', requires: { resource: 'ammo', amount: 25 } },
       { label: 'Just browse', desc: 'Morale +2.' },
+      { label: 'Rare goods: a relic', desc: '-6 Void Marks. Choose one of three relics.', requires: { marks: 6 } },
     ],
   },
   {
@@ -153,6 +154,17 @@ export const NODE_EVENTS: PassengerEventDef[] = [
     ],
   },
 ];
+
+export const SITE_EVENT: PassengerEventDef = {
+  id: 'node_site', title: 'Expedition Site', negative: false,
+  text: 'Ruins by the line. Lights move inside. Something worth taking, and something guarding it. The void will not wait while the crew is away.',
+  options: [
+    { label: 'Send an expedition', desc: 'Pick up to three crew. Timed-hit fight; win for a relic, marks and salvage. Each round costs void margin.' },
+    { label: 'Scout the edge only', desc: '+6 scrap, +4 ammo. Nothing risked.' },
+    { label: 'Keep rolling', desc: 'Morale +2.' },
+  ],
+};
+NODE_EVENTS.push(SITE_EVENT);
 
 export function eventById(id: string): PassengerEventDef | undefined {
   const n = NODE_EVENTS.find(e => e.id === id);

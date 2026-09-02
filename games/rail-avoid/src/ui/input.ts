@@ -11,6 +11,8 @@ export interface InputActions {
   detachLast(): void;
   toggleReverse(): void;
   departOrClose(): void;
+  /** Gamepad button pressed while a modal is open (expedition, relic choice, crew picker). Return true when consumed. */
+  modalButton?(button: number): boolean;
 }
 
 export interface Input { update(dt: number): void; destroy(): void; overlay: HTMLElement }
@@ -139,6 +141,9 @@ export function createInput(ui: UiShared, actions: InputActions): Input {
       if (pressed(9)) actions.togglePause();
       if (!ui.runActive()) continue;
       if (ui.anyModal()) {
+        let consumed = false;
+        if (actions.modalButton) for (let i = 0; i < cur.length; i++) if (pressed(i) && actions.modalButton(i)) consumed = true;
+        if (consumed) continue;
         if (pressed(1) && ui.topModal() === 'pause') ui.close('pause');
         if (pressed(2) && ui.isOpen('shop')) actions.departOrClose();
         continue;

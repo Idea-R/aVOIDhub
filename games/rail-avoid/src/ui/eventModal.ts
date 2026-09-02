@@ -20,6 +20,10 @@ function unmet(s: SimState, o: PassengerEventOption): string | null {
     const have = s.train.resources[r.resource] ?? 0;
     if (have < need) return `Requires ${need} ${r.resource} (have ${Math.floor(have)})`;
   }
+  if (r.marks) {
+    const have = s.train.marks ?? 0;
+    if (have < r.marks) return `Requires ◆ ${r.marks} Void Marks (have ${Math.floor(have)})`;
+  }
   return null;
 }
 
@@ -36,8 +40,9 @@ export function createEventModal(ui: UiShared): EventModal {
     const options = el('div', { class: 'rv-options', role: 'group', 'aria-label': 'Choices' });
     def.options.forEach((o, i) => {
       const why = el('span', { class: 'rv-opt-why' });
-      const b = el('button', { class: 'rv-btn rv-option', type: 'button', 'aria-label': `${o.label}. ${o.desc}` },
-        el('span', { class: 'rv-opt-label', text: `${i + 1}. ${o.label}` }),
+      const marks = o.requires?.marks ?? 0;
+      const b = el('button', { class: 'rv-btn rv-option' + (marks ? ' rv-opt-marks' : ''), type: 'button', 'aria-label': `${o.label}. ${o.desc}${marks ? ` Costs ${marks} Void Marks.` : ''}` },
+        el('span', { class: 'rv-opt-label' }, `${i + 1}. ${o.label}`, marks ? el('span', { class: 'rv-opt-cost', title: `${marks} Void Marks`, text: `◆ ${marks}` }) : null),
         el('span', { class: 'rv-opt-desc', text: o.desc }),
         why,
       );

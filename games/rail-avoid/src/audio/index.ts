@@ -17,6 +17,8 @@ export interface RailAudioApi extends AudioApi {
   setVoidProximity(p: number): void;
   /** Repeating boarding alarm while boarders are aboard. */
   setBoardingAlert(on: boolean): void;
+  /** Named one-shot cue (expedition timing judgements, relic and bounty stingers). */
+  cue(name: string): void;
   isUnlocked(): boolean;
 }
 
@@ -183,6 +185,7 @@ class RailAudio implements RailAudioApi {
     }
   }
   ui(kind: 'click' | 'hover' | 'open' | 'close' | 'error' | 'confirm' | 'notify'): void { this.sfx?.ui(kind); }
+  cue(name: string): void { this.sfx?.cue(name); }
 
   // ---------- gameplay events ----------
   private subscribe(): void {
@@ -222,6 +225,15 @@ class RailAudio implements RailAudioApi {
     u.push(b.on('crew:joined', () => this.sfx?.ui('confirm')));
     u.push(b.on('car:bought', () => this.sfx?.ui('confirm')));
     u.push(b.on('car:repaired', () => this.sfx?.resourceTick(true)));
+    // loot / relics / bounties / expeditions (timing judgements are cued by the UI at the judged moment)
+    u.push(b.on('marks:change', p => { if (p.delta > 0) this.sfx?.cue('marks'); }));
+    u.push(b.on('relic:offer', () => this.sfx?.cue('relic_offer')));
+    u.push(b.on('relic:taken', () => this.sfx?.cue('relic_take')));
+    u.push(b.on('bounty:new', () => this.sfx?.cue('bounty_new')));
+    u.push(b.on('bounty:done', () => this.sfx?.cue('bounty_done')));
+    u.push(b.on('bounty:failed', () => this.sfx?.cue('bounty_failed')));
+    u.push(b.on('expedition:start', () => this.sfx?.cue('exp_start')));
+    u.push(b.on('expedition:end', p => this.sfx?.cue(p.outcome === 'won' ? 'exp_won' : 'exp_lost')));
     u.push(b.on('run:victory', () => { this.setMusicMood('victory'); this.sfx?.victory(); }));
     u.push(b.on('run:defeat', () => { this.setMusicMood('defeat'); this.sfx?.defeat(); }));
     u.push(b.on('run:start', () => { this.setBoardingAlert(false); this.lastSettlementAt = -1; }));

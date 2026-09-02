@@ -47,6 +47,9 @@ export class OverlayLayer {
   private vignette: Phaser.GameObjects.Image;
   private flash: Phaser.GameObjects.Rectangle;
   private flashAlpha = 0;
+  /** Full-screen darkening (expedition scenes); 0 = off. */
+  private dim: Phaser.GameObjects.Rectangle;
+  private dimAlpha = 0;
   private warning: Indicator;
   private boss: Indicator;
   private w = 1280;
@@ -57,6 +60,8 @@ export class OverlayLayer {
     this.w = scene.scale.width; this.h = scene.scale.height;
     this.tint = scene.add.graphics();
     layer.add(this.tint);
+    this.dim = scene.add.rectangle(0, 0, this.w, this.h, 0x05060e, 1).setOrigin(0, 0).setAlpha(0).setVisible(false);
+    layer.add(this.dim);
     this.grain = scene.add.tileSprite(0, 0, this.w, this.h, 'noise').setOrigin(0, 0).setAlpha(0.05).setVisible(false);
     layer.add(this.grain);
     this.vignette = scene.add.image(0, 0, 'vignette').setOrigin(0, 0).setTint(0xff3030).setAlpha(0);
@@ -77,14 +82,23 @@ export class OverlayLayer {
 
   setGrain(on: boolean): void { this.grainOn = on; this.grain.setVisible(on); }
 
+  /** Darken the whole world view by `alpha` (0..1); used while an expedition scene sits on top. */
+  setDim(alpha: number): void {
+    const a = clamp(Number.isFinite(alpha) ? alpha : 0, 0, 1);
+    if (a === this.dimAlpha || (a > 0 && Math.abs(a - this.dimAlpha) < 0.002)) return;
+    this.dimAlpha = a;
+    this.dim.setAlpha(a).setVisible(a > 0.003);
+  }
+
   destroy(): void {
-    this.tint.destroy(); this.vignette.destroy(); this.flash.destroy(); this.grain.destroy();
+    this.tint.destroy(); this.vignette.destroy(); this.flash.destroy(); this.grain.destroy(); this.dim.destroy();
     this.warning.arrow.destroy(); this.warning.label.destroy(); this.boss.arrow.destroy(); this.boss.label.destroy();
   }
 
   resize(w: number, h: number): void {
     this.w = w; this.h = h;
     this.flash.setSize(w, h).setDisplaySize(w, h);
+    this.dim.setSize(w, h).setDisplaySize(w, h);
     this.grain.setSize(w, h);
     this.vignette.setDisplaySize(w, h);
   }

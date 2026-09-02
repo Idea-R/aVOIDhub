@@ -41,6 +41,7 @@ export function planRange(state: SimState): number {
   for (const car of state.train.cars) if (car.hp > 0) r += CAR_DEFS[car.type].planRangeBonus;
   if (state.train.crew.some(c => c.specialty === 'surveyor' && c.carIndex >= 0)) r += 2;
   r += state.train.locoUpgrades?.crew ?? 0;
+  if ((state.train.relics ?? []).includes('void_compass')) r += 1;
   return r;
 }
 
@@ -59,7 +60,8 @@ export function edgeCost(state: SimState, fc: number, fr: number, col: number, r
   if (t.terrain === 'mountain') return { cost: 0, free: false, blocked: 'Mountains are impassable' };
   if (isLinked(state, fc, fr, col, row)) return { cost: 0, free: true, blocked: null };
   const base = TRACK_COST[t.terrain];
-  const cost = Math.max(1, base + trackCostBonus(state));
+  const spike = (state.train.relics ?? []).includes('lucky_spike') && (t.terrain === 'plains' || t.terrain === 'ruins' || t.terrain === 'ash') ? -1 : 0;
+  const cost = Math.max(1, base + trackCostBonus(state) + spike);
   return { cost, free: false, blocked: null };
 }
 

@@ -293,6 +293,59 @@ export class FxLayer {
   glowPuffP(px: number, py: number, color: number, r = 8, life = 300): void {
     this.puffs.push({ x: px, y: py, vx: 0, vy: -6, t0: this.now, life, r0: r * 0.5, r1: r, c0: color, c1: color, add: true, a0: 0.5 });
   }
+  /** Tiny drifting additive mote (site doorways, elite auras), projected coords with its own velocity. */
+  moteP(px: number, py: number, color: number, r = 1.8, life = 1400, vx = 0, vy = -8): void {
+    if (this.puffs.length > 400) return;
+    this.puffs.push({ x: px, y: py, vx, vy, t0: this.now, life, r0: r * 0.6, r1: r, c0: color, c1: 0xffffff, add: true, a0: 0.75 });
+  }
+
+  /** Elite death: bigger violet/gold burst, a double ring and a glint of Void Marks rising. */
+  eliteDeath(x: number, y: number, color: number): void {
+    const px = this.px(x), py = this.py(y);
+    this.burst(x, y, color, 26);
+    this.emberE.setParticleTint(0xb98fe8);
+    this.emberE.explode(this.n(22), px, py - 6);
+    this.sparkE.setParticleTint(0xffd070);
+    this.sparkE.explode(this.n(14), px, py - 4);
+    this.addShape({ kind: 'flash', x: px, y: py - 6, r: 10, r2: 44, color: 0xffffff, alpha: 0.6, life: 220, glow: true });
+    this.addShape({ kind: 'ring', x: px, y: py, r: 6, r2: 74, color: 0xb98fe8, alpha: 0.9, life: 620, w: 3, glow: true });
+    this.addShape({ kind: 'ring', x: px, y: py, r: 4, r2: 44, color: 0xffd070, alpha: 0.8, life: 460, w: 2, glow: true });
+    // marks glint: a few violet shards drifting up and a bright pinpoint
+    const cnt = this.settings.quality === 'low' ? 3 : 7;
+    for (let i = 0; i < cnt; i++) {
+      const a = -Math.PI / 2 + (Math.random() - 0.5) * 1.6, sp = 26 + Math.random() * 40;
+      this.puffs.push({ x: px + (Math.random() - 0.5) * 10, y: py - 8, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, t0: this.now, life: 700 + Math.random() * 400, r0: 2.5, r1: 0.6, c0: 0xe8d0ff, c1: 0xc9a0ff, add: true, a0: 0.95 });
+    }
+    this.addShape({ kind: 'flash', x: px, y: py - 16, r: 2, r2: 9, color: 0xe8d0ff, alpha: 0.9, life: 380, glow: true });
+  }
+
+  /** Relic taken: a short gold ring pulse around the locomotive. */
+  relicPulse(x: number, y: number): void {
+    const px = this.px(x), py = this.py(y) - 8;
+    this.addShape({ kind: 'ring', x: px, y: py, r: 8, r2: 96, color: 0xe8c170, alpha: 0.95, life: 720, w: 3.5, glow: true });
+    this.addShape({ kind: 'ring', x: px, y: py, r: 4, r2: 60, color: 0xffffff, alpha: 0.6, life: 520, w: 1.5, glow: false });
+    this.addShape({ kind: 'flash', x: px, y: py, r: 14, r2: 54, color: 0xe8c170, alpha: 0.35, life: 360, glow: true });
+    this.emberE.setParticleTint(0xffe0a0);
+    this.emberE.explode(this.n(18), px, py);
+    if (this.settings.quality !== 'low') {
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2;
+        this.puffs.push({ x: px, y: py, vx: Math.cos(a) * 46, vy: Math.sin(a) * 46 * ISO_Y, t0: this.now, life: 600, r0: 3, r1: 6, c0: 0xffffff, c1: 0xe8c170, add: true, a0: 0.75 });
+      }
+    }
+  }
+
+  /** Bounty completed: confetti-like sparkle burst above the locomotive. */
+  bountyBurst(x: number, y: number): void {
+    const px = this.px(x), py = this.py(y) - 30;
+    this.confettiE.explode(this.n(30), px, py);
+    this.sparkE.setParticleTint(0xffe090);
+    this.sparkE.explode(this.n(16), px, py);
+    this.emberE.setParticleTint(0xfff6d0);
+    this.emberE.explode(this.n(14), px, py);
+    this.addShape({ kind: 'ring', x: px, y: py, r: 4, r2: 40, color: 0xffe8a0, alpha: 0.8, life: 480, w: 2, glow: true });
+    this.addShape({ kind: 'flash', x: px, y: py, r: 6, r2: 26, color: 0xffffff, alpha: 0.6, life: 200, glow: true });
+  }
 
   /** Settlement arrival: confetti, a rising ring of embers and sparkles (richer at high quality). */
   celebrate(x: number, y: number): void {

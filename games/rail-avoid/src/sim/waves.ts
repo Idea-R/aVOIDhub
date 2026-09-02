@@ -12,7 +12,7 @@
  */
 import type { EnemyType, WaveDirectorState, DamageClass, SimState, Tile } from '../core/types';
 import type { SimContext } from './api';
-import { DIRECTOR, HEX_R, HEX_H, REGION_W } from '../core/config';
+import { DIRECTOR, HEX_R, HEX_H, REGION_W, LOOT } from '../core/config';
 import { ENEMY_DEFS, REGULAR_ENEMIES, REGION_WEIGHTS, enemyCountersClass } from '../core/enemies';
 import { hexToWorld, worldToHex } from '../core/hex';
 import { spawnEnemy, tileAt, hasCar, locoPos, log } from './helpers';
@@ -58,7 +58,7 @@ export function updateDirector(ctx: SimContext): void {
   d.budget = waveBudget(state, region, threat);
   d.nextWaveIn -= dt * pressure;
 
-  const lead = DIRECTOR.warningLead * (hasCar(state, 'signal') ? 2 : 1) + (state.time < (state.train.watchUntil ?? 0) ? 4 : 0);
+  const lead = DIRECTOR.warningLead * (hasCar(state, 'signal') ? 2 : 1) + (state.time < (state.train.watchUntil ?? 0) ? 4 : 0) + ((state.train.relics ?? []).includes('signal_lantern') ? 4 : 0);
   if (!d.warning && d.nextWaveIn <= lead) {
     const type = pickType(ctx, region, []);
     const from = pickDirection(ctx, type);
@@ -88,6 +88,11 @@ export function spawnWave(ctx: SimContext, types: EnemyType[], from: Dir = 'west
   const { state } = ctx;
   if (types.length === 0) return;
   let ns = 0;
+  const region = Math.max(0, Math.min(3, state.region));
+  const eliteChance = LOOT.eliteChancePerWave[region] ?? 0;
+  const eligible = types.map((t, i) => (t !== 'sapper' ? i : -1)).filter(i => i >= 0);
+  const eliteIndex = eligible.length && ctx.rng.waves.chance(eliteChance) ? ctx.rng.waves.pick(eligible) : -1;
+  let elitePicked = false;
   for (let i = 0; i < types.length; i++) {
     const t = types[i];
     if (!ENEMY_DEFS[t]) continue;
@@ -95,7 +100,15 @@ export function spawnWave(ctx: SimContext, types: EnemyType[], from: Dir = 'west
     // only crawlers and sappers come from ahead; other members of an 'east' wave flank instead
     if (dir === 'east' && t !== 'crawler' && t !== 'sapper') dir = (ns++ % 2 === 0) ? 'north' : 'south';
     const p = spawnPoint(ctx, dir, t, i);
-    spawnEnemy(ctx, t, p.x, p.y);
+    const e = spawnEnemy(ctx, t, p.x, p.y);
+    // one elite per wave (region-gated): tougher, glowing, drops a relic choice and Void Marks
+    if (!elitePicked && i === eliteIndex) {
+      elitePicked = true;
+      e.extra.elite = 1;
+      e.maxHp = Math.round(e.maxHp * LOOT.eliteHpMul);
+      e.hp = e.maxHp;
+      ctx.bus.defer('enemy:elite', { id: e.id, type: e.type });
+    }
   }
   const d = state.director;
   d.waveCount++;

@@ -31,7 +31,7 @@ interface Building {
   chimney: { x: number; y: number } | null;
   flicker: number;
 }
-type FlameKind = 'shrine' | 'lantern' | 'fire';
+type FlameKind = 'shrine' | 'lantern' | 'fire' | 'doorway';
 interface SView {
   id: string;
   type: SettlementType;
@@ -74,6 +74,8 @@ const CLUSTERS: Record<SettlementType, string[]> = {
   shrine: ['b_shrine', 'b_stones', 'b_lantern_post', 'b_stones', 'b_lantern_post'],
   wreck: ['b_wreck_loco', 'b_wreck_car', 'b_scrap', 'b_scrap', 'b_wreck_car'],
   market: ['b_stall', 'b_stall2', 'b_crates', 'b_house2', 'b_crates'],
+  // expedition site: a ruined bunker / temple front with a green-lit doorway among broken walls and columns
+  site: ['b_site_gate', 'b_ruin_wall', 'b_ruin_pillar', 'b_ruin_wall', 'b_ruin_pillar'],
 };
 const HAS_CHIMNEY = new Set(['b_house', 'b_house2', 'b_warehouse', 'b_shed', 'b_depot', 'b_headframe']);
 const HAS_WINDOW = new Set(['b_house', 'b_house2', 'b_chapel', 'b_warehouse', 'b_clinic', 'b_shed', 'b_depot', 'b_silo', 'b_headframe', 'b_stall', 'b_stall2']);
@@ -83,6 +85,7 @@ const FLAMES: Record<string, { kind: FlameKind; tint: number; dy: number; scale:
   b_tower: { kind: 'lantern', tint: 0xffe08a, dy: -34, scale: 1.4 },
   b_brazier: { kind: 'fire', tint: 0xff9a3a, dy: -9, scale: 1.3 },
   b_lantern_post: { kind: 'lantern', tint: 0xffd080, dy: -12, scale: 1.1 },
+  b_site_gate: { kind: 'doorway', tint: 0x6fe0a0, dy: -12, scale: 3.2 },
 };
 
 export class SettlementsLayer {
@@ -368,6 +371,14 @@ export class SettlementsLayer {
                 if (this.settings.quality !== 'low' && Math.random() < dtGuess * 1.2 * this.settings.particleMul) this.fx.glowPuffP(b.light.x + (Math.random() - 0.5) * 4, b.light.y - 2, m > 0.5 ? 0xc9a0ff : 0xffd080, 4, 700);
               } else if (b.flame === 'fire' && this.settings.quality !== 'low' && Math.random() < dtGuess * 0.6 * this.settings.particleMul) {
                 this.fx.smokeP(b.light.x, b.light.y - 4, 1, 0x6a6672);
+              } else if (b.flame === 'doorway') {
+                // expedition site: slow green breathing light in the doorway + drifting motes; dims once explored
+                const breathe = reducedMotion ? 0.8 : 0.7 + 0.3 * Math.sin(tSec * 1.4 + b.flicker);
+                const explored = s.visited ? 0.45 : 1;
+                b.light.setAlpha((0.62 + night * 0.3) * breathe * explored).setScale(TEX_SCALE * 3.2 * (0.92 + 0.16 * breathe), TEX_SCALE * 3.6 * (0.92 + 0.16 * breathe));
+                if (this.settings.quality !== 'low' && Math.random() < dtGuess * 2.6 * explored * this.settings.particleMul) {
+                  this.fx.moteP(b.light.x + (Math.random() - 0.5) * 16, b.light.y + 6 + Math.random() * 6, Math.random() < 0.7 ? 0x8fffc0 : 0xd8ffe8, 1.4 + Math.random() * 0.8, 1400 + Math.random() * 900, (Math.random() - 0.5) * 7, -6 - Math.random() * 6);
+                }
               }
             } else if (night > 0.05) {
               const f = reducedMotion ? 1 : 0.8 + 0.2 * Math.sin(tSec * 7 + b.flicker) * Math.sin(tSec * 2.3 + b.flicker * 2);

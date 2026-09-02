@@ -78,6 +78,23 @@ export interface GameEvents {
   /** Pointer hovers a train car in the world (screen px); index -1 when leaving. */
   'ui:hoverCar': { index: number; x: number; y: number };
   'ui:openPanel': { panel: 'train' | 'shop' | 'settings' | 'pause' | 'none' };
+  // loot / relics / bounties / expeditions
+  'loot:drop': { id: string; kind: 'scrap' | 'ammo' | 'rails' | 'marks'; amount: number; x: number; y: number };
+  'loot:pickup': { id: string; kind: 'scrap' | 'ammo' | 'rails' | 'marks'; amount: number; x: number; y: number };
+  'loot:expire': { id: string };
+  'marks:change': { delta: number; total: number; why: string };
+  'relic:offer': { options: string[]; source: string };
+  'relic:taken': { id: string };
+  'bounty:new': { id: string; title: string };
+  'bounty:progress': { id: string; progress: number; count: number };
+  'bounty:done': { id: string; title: string; reward: { marks: number; rails: number; scrap: number } };
+  'bounty:failed': { id: string; title: string };
+  'expedition:start': { siteId: string; crew: string[]; foes: string[] };
+  'expedition:pending': { kind: string; actor: string; foe: string; turn: 'player' | 'enemy' };
+  'expedition:hit': { target: 'foe' | 'actor' | 'heal'; name: string; amount: number; timing: 'perfect' | 'good' | 'miss' };
+  'expedition:round': { round: number };
+  'expedition:end': { outcome: 'won' | 'lost' | 'fled'; summary: string; rounds: number };
+  'enemy:elite': { id: string; type: EnemyType };
 }
 
 type Handler<T> = (payload: T) => void;

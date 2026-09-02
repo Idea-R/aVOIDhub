@@ -134,5 +134,35 @@ export const UPGRADES = {
   watchtowerSeconds: 300,
 };
 
+export const LOOT = {
+  dropChance: 0.35,
+  ttl: 28,
+  pickupRadius: 70,
+  maxDrops: 40,
+  eliteMarks: [2, 4],
+  bossMarks: 8,
+  eliteChancePerWave: [0, 0.45, 0.6, 0.7],
+  eliteHpMul: 1.6,
+};
+
+export const BOUNTY = {
+  maxActive: 2,
+  postChance: 0.6,
+  killCount: [6, 10],
+  killSeconds: 180,
+  reachSeconds: 240,
+  deliverCount: [6, 10],
+  deliverSeconds: 300,
+};
+
+export const EXPEDITION = {
+  maxCrew: 3,
+  maxRounds: 6,
+  strike: 9,
+  voidSecondsPerRound: 8,
+  marks: [4, 7],
+  rescueChance: 0.3,
+};
+
 export const REGION_NAMES = ['The Greenbelt', 'The Rust Reaches', 'The Ash Steppe', 'The Void Frontier'];
 export const REGION_COLORS = [0x6fbf73, 0xc98a4b, 0x9a8fa6, 0x6d5fd6];

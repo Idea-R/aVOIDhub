@@ -20,6 +20,7 @@ import { SettlementsLayer } from './settlementsLayer';
 import { TrainLayer } from './trainLayer';
 import { EnemyLayer } from './enemyLayer';
 import { ProjectileLayer } from './projectileLayer';
+import { LootLayer } from './lootLayer';
 import { FxLayer } from './fxLayer';
 import { WeatherLayer } from './weatherLayer';
 import { OverlayLayer } from './overlayLayer';
@@ -28,7 +29,8 @@ import { PerfMonitor } from './perf';
 import { CinematicController } from './cinematics';
 import { createViewApi } from './viewApi';
 import { RESOURCE_COLORS } from './palette';
-import { fmtRes } from './util';
+import { fmtRes, expFactor, lerp, smoothstep, clamp } from './util';
+import { ZOOM_MIN, ZOOM_MAX } from './cameraController';
 
 type Unsub = () => void;
 
@@ -63,6 +65,7 @@ export class GameScene extends Phaser.Scene {
   public train!: TrainLayer;
   public enemies!: EnemyLayer;
   public projectiles!: ProjectileLayer;
+  public loot!: LootLayer;
   public fx!: FxLayer;
   public weather!: WeatherLayer;
   public overlay!: OverlayLayer;
@@ -73,6 +76,10 @@ export class GameScene extends Phaser.Scene {
   private punchT = -1;
   private punchBase = 1;
   private punchPower = 0;
+  // expedition: the world camera drifts slowly and darkens under the DOM scene, then restores
+  private expT = 0;
+  private expDrift = 0;
+  private expBase: { zoom: number; following: boolean } | null = null;
 
   // state tracking
   private lastSim: unknown = null;
@@ -134,6 +141,8 @@ export class GameScene extends Phaser.Scene {
     this.enemies = new EnemyLayer(this, this.worldLayer, this.airLayer, this.shadowLayer, this.fx, this.settings);
     this.projectiles = new ProjectileLayer(this, this.projectileLayerObj);
     this.projectiles.onEnemyShot = (x, y) => { this.enemies.onEnemyShot(x, y); };
+    this.loot = new LootLayer(this, this.worldLayer, this.shadowLayer, this.fx, this.settings,
+      i => this.train.carPos(i), () => this.currentState()?.train?.cars?.length ?? 0);
     this.weather = new WeatherLayer(this, this.screenRoot, this.settings);
     this.overlay = new OverlayLayer(this, this.screenRoot);
     this.cameraCtl = new CameraController(this, {
@@ -236,7 +245,7 @@ export class GameScene extends Phaser.Scene {
 
   /** Brief camera zoom punch (big explosions). */
   public zoomPunch(power: number): void {
-    if (!this.settings.screenShake || this.settings.reducedMotion || this.settings.quality === 'low' || this.cine.isPlaying()) return;
+    if (!this.settings.screenShake || this.settings.reducedMotion || this.settings.quality === 'low' || this.cine.isPlaying() || this.expBase) return;
     if (this.punchT >= 0) return;
     this.punchT = 0;
     this.punchBase = this.cameras.main.zoom;
@@ -249,6 +258,39 @@ export class GameScene extends Phaser.Scene {
     const D = 0.28;
     if (this.punchT >= D || this.cine.isPlaying()) { cam.setZoom(this.punchBase); this.punchT = -1; return; }
     cam.setZoom(this.punchBase * (1 + this.punchPower * Math.sin(Math.PI * this.punchT / D)));
+  }
+
+  /**
+   * Expedition phase: the world camera drifts slowly around the locomotive, eases in a touch of zoom
+   * and the overlay darkens (the DOM expedition scene sits on top). Everything eases back on exit and
+   * the previous zoom / follow state is restored. Returns true while it owns the camera.
+   */
+  private updateExpedition(state: SimState, loco: { x: number; y: number } | null, dt: number): boolean {
+    const active = state.phase === 'expedition';
+    const cam = this.cameras.main;
+    if (active && !this.expBase) { this.expBase = { zoom: cam.zoom, following: this.cameraCtl.following }; this.expDrift = Math.random() * 6.28; }
+    const target = active ? 1 : 0;
+    const k = expFactor(active ? 1.6 : 2.4, dt);
+    this.expT += (target - this.expT) * k;
+    if (Math.abs(this.expT - target) < 0.004) this.expT = target;
+    this.overlay.setDim(0.45 * smoothstep(this.expT));
+    const base = this.expBase;
+    if (!base) return false;
+    if (!active && this.expT <= 0) {
+      cam.setZoom(clamp(base.zoom, ZOOM_MIN, ZOOM_MAX));
+      this.cameraCtl.following = base.following;
+      this.expBase = null;
+      return false;
+    }
+    const rm = this.settings.reducedMotion;
+    if (!rm) this.expDrift += dt;
+    const e = smoothstep(this.expT);
+    const dx = (Math.sin(this.expDrift * 0.21) * 64 + Math.sin(this.expDrift * 0.07) * 40) * e;
+    const dy = (Math.cos(this.expDrift * 0.16) * 34) * e;
+    cam.setZoom(clamp(lerp(base.zoom, base.zoom * 1.12, e), ZOOM_MIN, ZOOM_MAX));
+    const c = loco ? { x: loco.x, y: loco.y * ISO_Y } : { x: cam.midPoint.x, y: cam.midPoint.y };
+    this.cameraCtl.follow(c.x + dx, c.y + dy, dt);
+    return true;
   }
 
   /** Keep the screen-space root aligned with the viewport regardless of camera zoom/rotation. */
@@ -269,6 +311,7 @@ export class GameScene extends Phaser.Scene {
     this.fx.setSettings(this.settings);
     this.train.setSettings(this.settings);
     this.enemies.setSettings(this.settings);
+    this.loot.setSettings(this.settings);
     this.weather.setSettings(this.settings);
     this.voidL.setSettings(this.settings);
     this.settlements.setSettings(this.settings);
@@ -389,6 +432,18 @@ export class GameScene extends Phaser.Scene {
     on('run:loaded', () => { this.needSnap = true; this.cameraCtl.following = true; this.selectedCar = -1; });
     on('track:planned', p => { if (p) { const w = hexToWorld(p.col, p.row); this.fx.ring(w.x, w.y, 20, 0x6fb7e8, 260, 1.5); } });
     on('track:blocked', () => { const lp = this.locoWorld(); if (lp) this.fx.floatText(lp.x, lp.y, 'BLOCKED', 0xe86f6f, 10); });
+    // loot / elites / relics / bounties
+    on('loot:drop', p => { if (p) this.loot.onDrop(p.id, p.kind, p.x, p.y); });
+    on('loot:pickup', p => { if (p) this.loot.onPickup(p.id, p.kind, p.x, p.y); });
+    on('loot:expire', p => { if (p) this.loot.onExpire(p.id); });
+    on('enemy:elite', p => { if (p) this.enemies.onElite(p.id); });
+    on('relic:taken', () => { const lp = this.locoWorld(); if (lp) { this.fx.relicPulse(lp.x, lp.y); if (this.settings.glow) this.fx.lightP(lp.x, lp.y * ISO_Y - 10, 0xe8c170, 70, 380); } });
+    on('bounty:done', p => {
+      const lp = this.locoWorld(); if (!lp) return;
+      this.fx.bountyBurst(lp.x, lp.y);
+      const r = p?.reward;
+      if (r && Number.isFinite(r.marks) && r.marks > 0) this.fx.floatText(lp.x, lp.y - 14, `+${r.marks} marks`, 0xc9a0ff, 11, 40);
+    });
     void rm;
   }
 
@@ -664,6 +719,8 @@ export class GameScene extends Phaser.Scene {
     if (this.cine.isPlaying()) {
       this.cine.update(dt);
       this.needSnap = false;
+    } else if (this.updateExpedition(state, loco, dt)) {
+      this.needSnap = false;
     } else if (loco && this.cameraCtl.following) {
       this.cameraCtl.follow(loco.x, loco.y * ISO_Y, dt, this.needSnap);
       this.needSnap = false;
@@ -696,6 +753,7 @@ export class GameScene extends Phaser.Scene {
     if (this.hoverCar >= (state.train?.cars?.length ?? 0)) this.hoverCar = -1;
     try { this.train.update(state, dt, time, this.selectedCar, this.overlay.night, zoom, this.enemies.positions, this.hoverCar); } catch (e) { this.warnOnce('train', e); }
     try { this.projectiles.update(state, dt); } catch (e) { this.warnOnce('projectiles', e); }
+    try { this.loot.update(state, dt, time); } catch (e) { this.warnOnce('loot', e); }
     try { this.fx.update(dt, time); if (state.phase !== 'title' || true) this.fx.ambient(state.region | 0, view, dt); } catch (e) { this.warnOnce('fx', e); }
     try { this.weather.update(state, dt, time); } catch (e) { this.warnOnce('weather', e); }
     let voidDist = Infinity;
@@ -739,8 +797,10 @@ export class GameScene extends Phaser.Scene {
     this.track.invalidate();
     this.enemies.clear();
     this.projectiles.clear();
+    this.loot.clear();
     this.fx.clear();
     this.train.reset();
+    this.expT = 0; this.expBase = null; this.overlay.setDim(0);
     const b = this.terrain.bounds;
     this.cameraCtl.setBounds(b.x0, b.y0, b.x1, b.y1);
     this.track.setBounds(b.x0, b.y0, b.x1, b.y1);

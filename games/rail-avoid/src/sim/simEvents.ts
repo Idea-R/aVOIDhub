@@ -7,6 +7,7 @@ import { spawnWave } from './waves';
 import { addCar } from './train';
 import type { CarType } from '../core/types';
 import { addCrew, removePassengers } from './train';
+import { addMarks, offerRelics, hasRelic } from './loot';
 
 export function updateEvents(ctx: SimContext): void {
   const { state, dt } = ctx;
@@ -27,8 +28,9 @@ export function updateEvents(ctx: SimContext): void {
   state.eventCooldown = EVENTS.interval + ctx.rng.events.range(-EVENTS.variance, EVENTS.variance);
 }
 
-function requirementMet(ctx: SimContext, opt: { requires?: { car?: any; resource?: any; amount?: number } }): boolean {
+function requirementMet(ctx: SimContext, opt: { requires?: { car?: any; resource?: any; amount?: number; marks?: number } }): boolean {
   if (!opt.requires) return true;
+  if (opt.requires.marks && (ctx.state.train.marks ?? 0) < opt.requires.marks) return false;
   if (opt.requires.car && !hasCar(ctx.state, opt.requires.car)) return false;
   if (opt.requires.resource && ctx.state.train.resources[opt.requires.resource as 'rails'] < (opt.requires.amount ?? 0)) return false;
   return true;
@@ -87,6 +89,10 @@ export function chooseEventOption(ctx: SimContext, index: number): boolean {
     case 'node_market:1': addResource(ctx, 'food', -8); addResource(ctx, 'ammo', 30); summary = 'Crates of ammunition loaded.'; break;
     case 'node_market:2': addResource(ctx, 'ammo', -25); addResource(ctx, 'scrap', 18); summary = 'Ammunition sold for scrap.'; break;
     case 'node_market:3': morale(2); summary = 'Window shopping.'; break;
+    case 'node_market:4': addMarks(ctx, -6, 'market relic'); summary = 'A wrapped relic changes hands.'; state.activeEvent = null; state.phase = 'running'; ctx.bus.defer('event:resolved', { defId: def.id, option: index, summary }); offerRelics(ctx, 'market'); return true;
+    case 'node_site:0': summary = 'Choose your crew.'; state.activeEvent = null; state.phase = 'running'; ctx.bus.defer('event:resolved', { defId: def.id, option: index, summary }); ctx.bus.defer('phase:change', { phase: 'running' }); return true; // the UI shows the crew picker and calls startExpedition(crewIds); cancelling simply continues the run
+    case 'node_site:1': addResource(ctx, 'scrap', 6); addResource(ctx, 'ammo', 4); summary = 'A quick sweep of the edge.'; break;
+    case 'node_site:2': morale(2); summary = 'Not today.'; break;
     case 'node_wreck:0': {
       const pool: CarType[] = ['coal_bunker', 'boiler', 'radiator', 'cargo', 'gatling', 'barracks', 'scout', 'coach', 'caboose'];
       if (rng.chance(0.75) && t.cars.length < 10) { const type = rng.pick(pool); const car = addCar(ctx, type); if (car) { car.hp = Math.round(car.maxHp * 0.6); summary = `A ${type.replace('_', ' ')} is dragged onto the rails.`; ctx.bus.defer('car:bought', { type }); break; } }
@@ -97,6 +103,7 @@ export function chooseEventOption(ctx: SimContext, index: number): boolean {
     default: summary = 'Resolved.';
   }
   state.stats.eventsResolved++;
+  if (hasRelic(state, 'conductors_watch') && !def.id.startsWith('node_')) addMarks(ctx, 2, 'conductors watch');
   log(state, `${def.title}: ${summary}`, def.negative ? 'warn' : 'good');
   state.activeEvent = null;
   state.phase = 'running';

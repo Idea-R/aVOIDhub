@@ -13,6 +13,7 @@ import { ENEMY_DEFS } from '../core/enemies';
 import { gsap, D, isReduced, floatLabel, shake } from './motion';
 import { createVolumePopover } from './volume';
 import { nodeMeta } from './nodes';
+import { relicDef } from '../core/relics';
 
 export interface Hud {
   el: HTMLElement;
@@ -20,6 +21,10 @@ export interface Hud {
   zones: { top: HTMLElement; left: HTMLElement; dock: HTMLElement };
   update(s: SimState, now: number): void;
   flashResource(key: ResourceKey, delta: number): void;
+  /** Salvage picked up in the world: the coalesced delta float reads "+4 scrap" in gold instead of a bare number. */
+  flashLoot(kind: ResourceKey | 'marks', amount: number): void;
+  /** Void Marks changed: pop the ◆ chip with a floating delta. */
+  popMarks(delta: number): void;
   /** Subtle "plan range reached" feedback instead of a toast. */
   shakeRoute(): void;
   /** Close transient popovers (volume). Returns true when one was open. */
@@ -64,13 +69,49 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
     el('span', { class: 'rv-chip-sep', 'aria-hidden': 'true', text: '·' }),
     el('span', { class: 'rv-chip-ico', 'aria-hidden': 'true', text: '⚒' }), el('span', { class: 'rv-chip-k', text: 'Crew' }), crewV, morale);
   chipsEl.appendChild(peopleChip);
+  // Void Marks: the rare currency (markets sell relics for it, shrines take it)
+  const marksV = el('span', { class: 'rv-chip-v', text: '0' });
+  const marksChip = el('div', { class: 'rv-chip rv-chip-marks', title: 'Void Marks — rare currency from elites, bounties and expeditions. Markets sell relics for marks.', 'aria-label': 'Void Marks', tabindex: '0' },
+    el('span', { class: 'rv-chip-ico', 'aria-hidden': 'true', text: '◆' }), el('span', { class: 'rv-chip-k', text: 'Marks' }), marksV);
+  chipsEl.appendChild(marksChip);
+
+  // relic bar: one icon chip per relic owned this run, with a hover / focus tooltip
+  const relicsEl = el('div', { class: 'rv-relics', role: 'group', 'aria-label': 'Relics' });
+  relicsEl.hidden = true;
+  let relicSig = '';
+  function updateRelics(s: SimState): void {
+    const ids = s.train.relics ?? [];
+    const sig = ids.join(',');
+    if (sig === relicSig) return;
+    const fresh = ids.slice(relicSig ? relicSig.split(',').length : 0);
+    relicSig = sig;
+    relicsEl.replaceChildren(
+      el('span', { class: 'rv-relics-ico', 'aria-hidden': 'true', text: '✦' }),
+      ...ids.map((id) => {
+        const def = relicDef(id);
+        const chip = el('button', { class: 'rv-relic-chip rv-r-' + (def?.rarity ?? 'common'), type: 'button', 'aria-label': `${def?.name ?? id}: ${def?.desc ?? ''}`, 'data-relic': id },
+          el('span', { class: 'rv-relic-glyph', 'aria-hidden': 'true', text: def?.icon ?? '✦' }),
+          el('span', { class: 'rv-relic-tip', role: 'tooltip' },
+            el('b', { text: def?.name ?? id }),
+            el('i', { class: 'rv-relic-rarity', text: def?.rarity ?? '' }),
+            el('span', { text: def?.desc ?? '' })),
+        );
+        return chip;
+      }),
+    );
+    show(relicsEl, ids.length > 0);
+    if (fresh.length && !isReduced()) {
+      const chips = Array.from(relicsEl.querySelectorAll<HTMLElement>('.rv-relic-chip')).slice(-fresh.length);
+      gsap.fromTo(chips, { scale: 0, rotate: -40, opacity: 0 }, { scale: 1, rotate: 0, opacity: 1, duration: 0.55, ease: 'back.out(2)', stagger: 0.08, clearProps: 'transform,opacity' });
+    }
+  }
 
   // void meter
   const voidFill = el('i');
   const voidDist = el('span', { class: 'rv-void-dist', text: '—' });
   const voidEl = el('div', { class: 'rv-void rv-panel', role: 'meter', 'aria-label': 'Distance to the void front', 'aria-valuemin': '0', 'aria-valuemax': '24' },
     el('span', { class: 'rv-label', text: 'Void' }), el('div', { class: 'rv-bar' }, voidFill), voidDist);
-  const tl = el('div', { class: 'rv-hud-tl' }, chipsEl, voidEl);
+  const tl = el('div', { class: 'rv-hud-tl' }, chipsEl, voidEl, relicsEl);
 
   // ---------- top-centre: status + boss ----------
   const regionEl = el('span', { class: 'rv-region', text: '' });
@@ -177,24 +218,50 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
     pending[key] = (pending[key] ?? 0) + delta;
     if (!flushTimer) flushTimer = window.setTimeout(flushDeltas, 400);
   }
+  const lootKeys = new Set<ResourceKey>();
   function flushDeltas(): void {
     flushTimer = 0;
     for (const k of Object.keys(pending) as ResourceKey[]) {
       const d = pending[k] ?? 0;
       delete pending[k];
       const c = chips[k];
+      const loot = lootKeys.delete(k);
       if (!c || Math.abs(d) < 0.5) continue;
       const up = d > 0;
-      c.el.classList.remove('rv-flash-up', 'rv-flash-down');
+      c.el.classList.remove('rv-flash-up', 'rv-flash-down', 'rv-flash-loot');
       void c.el.offsetWidth;
-      c.el.classList.add(up ? 'rv-flash-up' : 'rv-flash-down');
+      c.el.classList.add(loot && up ? 'rv-flash-loot' : up ? 'rv-flash-up' : 'rv-flash-down');
       if (c.flashTimer) clearTimeout(c.flashTimer);
-      c.flashTimer = window.setTimeout(() => { c.el.classList.remove('rv-flash-up', 'rv-flash-down'); c.flashTimer = 0; }, 500);
+      c.flashTimer = window.setTimeout(() => { c.el.classList.remove('rv-flash-up', 'rv-flash-down', 'rv-flash-loot'); c.flashTimer = 0; }, 500);
       if (isReduced()) continue;
       gsap.killTweensOf(c.el);
       gsap.fromTo(c.el, { scale: 1 }, { scale: 1.25, duration: 0.12, ease: 'power2.out', yoyo: true, repeat: 1, clearProps: 'transform' });
-      floatLabel(c.el, `${up ? '+' : '−'}${Math.round(Math.abs(d))}`, up ? 'rv-good-text' : 'rv-danger-text');
+      const n = Math.round(Math.abs(d));
+      floatLabel(c.el, loot && up ? `+${n} ${k}` : `${up ? '+' : '−'}${n}`, loot && up ? 'rv-gold rv-float-loot' : up ? 'rv-good-text' : 'rv-danger-text');
     }
+    lootKeys.clear();
+  }
+  function flashLoot(kind: ResourceKey | 'marks', amount: number): void {
+    if (kind === 'marks') return; // marks:change pops the ◆ chip
+    if (!chips[kind]) return;
+    lootKeys.add(kind);
+    // the matching resource:change lands in the same flush; make sure a float happens even if it was filtered
+    if (pending[kind] === undefined) { pending[kind] = 0; if (!flushTimer) flushTimer = window.setTimeout(flushDeltas, 400); }
+    void amount;
+  }
+  let marksTimer = 0;
+  function popMarks(delta: number): void {
+    if (Math.abs(delta) < 0.5) return;
+    const up = delta > 0;
+    marksChip.classList.remove('rv-flash-loot', 'rv-flash-down');
+    void marksChip.offsetWidth;
+    marksChip.classList.add(up ? 'rv-flash-loot' : 'rv-flash-down');
+    if (marksTimer) clearTimeout(marksTimer);
+    marksTimer = window.setTimeout(() => { marksChip.classList.remove('rv-flash-loot', 'rv-flash-down'); marksTimer = 0; }, 600);
+    if (isReduced()) return;
+    gsap.killTweensOf(marksChip);
+    gsap.fromTo(marksChip, { scale: 1 }, { scale: 1.35, duration: 0.14, ease: 'power2.out', yoyo: true, repeat: 1, clearProps: 'transform' });
+    floatLabel(marksChip, `${up ? '+' : '−'}${Math.round(Math.abs(delta))} ◆`, up ? 'rv-void-text rv-float-loot' : 'rv-danger-text');
   }
 
   const groups = (): HTMLElement[] => [tl, tc, tr, routeEl, logEl, ...(Array.from(dock.children) as HTMLElement[])];
@@ -225,9 +292,13 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
   function updateResources(s: SimState): void {
     const t = s.train;
     const assigned = t.crew.filter(c => c.carIndex >= 0).length;
-    const sig = RES.map(r => `${Math.floor(t.resources[r.key])}/${Math.floor(t.capacity[r.key])}`).join('|') + `|${t.passengers}/${t.passengerCap}|${Math.round(t.morale)}|${t.crew.length}|${assigned}`;
+    const marks = Math.max(0, Math.round(t.marks ?? 0));
+    const sig = RES.map(r => `${Math.floor(t.resources[r.key])}/${Math.floor(t.capacity[r.key])}`).join('|') + `|${t.passengers}/${t.passengerCap}|${Math.round(t.morale)}|${t.crew.length}|${assigned}|${marks}`;
     if (sig === lastResSig) return;
     lastResSig = sig;
+    setText(marksV, String(marks));
+    setAttr(marksChip, 'aria-label', `Void Marks ${marks}`);
+    toggleClass(marksChip, 'rv-has', marks > 0);
     for (const r of RES) {
       const c = chips[r.key];
       const v = Math.floor(t.resources[r.key] ?? 0), capV = Math.floor(t.capacity[r.key] ?? 0);
@@ -424,6 +495,7 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
 
   function update(s: SimState, _now: number): void {
     updateResources(s);
+    updateRelics(s);
     updateStatus(s);
     updateSpeed(s);
     updateVoid(s);
@@ -438,14 +510,15 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
     warnShown = false; bossShown = false; lastSecs = -1; logSeen.clear(); reversingShown = false;
     setText(reverseBtn.querySelector('.rv-rb-lbl'), 'Reverse'); setText(reverseBtn.querySelector('.rv-rb-ico'), '◀'); toggleClass(reverseBtn, 'rv-reversing', false);
     for (const k of Object.keys(pending) as ResourceKey[]) delete pending[k];
+    lootKeys.clear(); relicSig = ''; relicsEl.replaceChildren(); relicsEl.hidden = true;
     logLines.length = 0; logEl.replaceChildren();
     show(warningEl, false); show(bossEl, false); show(stopEl, false);
     volume.close();
   }
 
-  const anchors: Record<string, HTMLElement> = { resources: chipsEl, void: voidEl, status: statusEl, speed: speedEl, menu: menuBtn, route: routeEl, stop: stopEl, log: logEl, hud: root, top, dock, left, speaker: volume.button };
+  const anchors: Record<string, HTMLElement> = { resources: chipsEl, void: voidEl, status: statusEl, speed: speedEl, menu: menuBtn, route: routeEl, stop: stopEl, log: logEl, hud: root, top, dock, left, speaker: volume.button, marks: marksChip, relics: relicsEl };
   return {
-    el: root, zones: { top, left, dock }, update, flashResource, shakeRoute, anchors, reset, enter, hide,
+    el: root, zones: { top, left, dock }, update, flashResource, flashLoot, popMarks, shakeRoute, anchors, reset, enter, hide,
     closePopovers() { if (volume.isOpen()) { volume.close(); return true; } return false; },
   };
 }

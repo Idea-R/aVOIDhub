@@ -133,6 +133,7 @@ function offersFor(type: SettlementType, rng: Rng, region: number): ResourceBund
     case 'wreck': return { scrap: Math.round(rng.range(18, 34) * m) };
     case 'market': return {};
     case 'shrine': return {};
+    case 'site': return {};
     default: return {};
   }
 }
@@ -153,10 +154,10 @@ function crewFor(type: SettlementType, rng: Rng): CrewSpecialty | null {
 }
 
 const REGION_SETTLEMENTS: SettlementType[][] = [
-  ['village', 'depot', 'farm', 'fuel', 'yard', 'mine', 'armory', 'clinic', 'village', 'depot', 'fuel', 'village', 'watchtower', 'shrine', 'wreck', 'market'],
-  ['village', 'depot', 'mine', 'mine', 'fuel', 'yard', 'armory', 'farm', 'depot', 'village', 'fuel', 'clinic', 'watchtower', 'wreck', 'market', 'shrine'],
-  ['village', 'depot', 'mine', 'fuel', 'yard', 'clinic', 'armory', 'farm', 'village', 'depot', 'fuel', 'mine', 'shrine', 'watchtower', 'wreck', 'market'],
-  ['village', 'depot', 'mine', 'fuel', 'yard', 'armory', 'farm', 'clinic', 'village', 'depot', 'fuel', 'armory', 'shrine', 'wreck', 'watchtower', 'market'],
+  ['village', 'depot', 'farm', 'fuel', 'yard', 'mine', 'armory', 'clinic', 'village', 'depot', 'fuel', 'village', 'watchtower', 'shrine', 'wreck', 'market', 'site', 'site'],
+  ['village', 'depot', 'mine', 'mine', 'fuel', 'yard', 'armory', 'farm', 'depot', 'village', 'fuel', 'clinic', 'watchtower', 'wreck', 'market', 'shrine', 'site', 'site'],
+  ['village', 'depot', 'mine', 'fuel', 'yard', 'clinic', 'armory', 'farm', 'village', 'depot', 'fuel', 'mine', 'shrine', 'watchtower', 'wreck', 'market', 'site', 'site'],
+  ['village', 'depot', 'mine', 'fuel', 'yard', 'armory', 'farm', 'clinic', 'village', 'depot', 'fuel', 'armory', 'shrine', 'wreck', 'watchtower', 'market', 'site', 'site'],
 ];
 
 export function generateWorld(seed: number): WorldGen {

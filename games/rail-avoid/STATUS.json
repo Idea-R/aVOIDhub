@@ -1,11 +1,11 @@
 {
   "project": "RAILaVOID",
   "version": "1.0.0",
-  "updated": "2026-09-02T06:15:00Z",
+  "updated": "2026-09-02T11:30:00Z",
   "gates": {
     "build": "pass",
     "typecheck": "pass (0 errors)",
-    "unit_tests": "pass (11 passed, 1 balance probe skipped by default; run PROBE=1)",
+    "unit_tests": "pass (18 tests incl. relics, elites, expeditions win/lose, bounties, upgrades, reverse)",
     "boot": "pass",
     "start_tutorial": "pass",
     "controls": "pass (click-plan, undo, pause/resume, speed, mute, Tab panel)",
@@ -20,11 +20,25 @@
     "screenshots": "pass (none blank)",
     "standalone_file_build": "pass (dist-standalone/railavoid.html boots from file:// with no errors)",
     "perf_headless": "note (14-18 fps under SwiftShader software GL; not representative)",
-    "perf_headed_gpu": "pass (avg 56 fps, min 50 fps, worst frame 16.7 ms, 17 enemies, rain at night, 1920x1080, RTX 3080 shared with other sessions)"
+    "perf_headed_gpu": "pass (avg 53 fps, min 39 fps during a 17-enemy night-rain wave at 1920x1080 on a shared RTX 3080; auto quality steps down when needed)",
+    "ui_overlap": "pass (verify/ui-overlap.mjs: zero overlaps at 1920x1080, 1600x900, 1366x768, 1280x720 with shop and inspector open)",
+    "deploy": "live at https://avoidgame.io/railavoid/ (aVOIDhub platform catalog)",
+    "progression": "pass (relic choice, expedition flow, salvage drops driven through window.__RAIL)"
   },
   "performance": {
-    "headed_1080p": { "avgFps": 56.4, "minFps": 49.6, "worstFrameMs": 16.69, "drawCalls": 1687, "quality": "auto(high)", "enemies": 17 },
-    "render_agent_measurements": { "night_rain_48_enemies_zoom1.2": 60.2, "whole_map_zoom0.5": 60.1, "low_reduced_motion": 60.2 },
+    "headed_1080p": {
+      "avgFps": 53.1,
+      "minFps": 38.9,
+      "worstFrameMs": 20.0,
+      "drawCalls": 1829,
+      "quality": "auto(high)",
+      "enemies": 17
+    },
+    "render_agent_measurements": {
+      "night_rain_48_enemies_zoom1.2": 60.2,
+      "whole_map_zoom0.5": 60.1,
+      "low_reduced_motion": 60.2
+    },
     "auto_quality": "steps down below 45 fps for 3 s, up above 58 fps for 10 s"
   },
   "content": {
@@ -32,9 +46,21 @@
     "cars": 23,
     "enemies": 6,
     "bosses": 3,
-    "weather": ["clear", "rain", "fog", "storm", "ashfall"],
-    "passenger_events": 14,
-    "music": "7 Suno-generated tracks in public/audio (title, calm, tense, combat, boss, victory, defeat) with procedural fallback"
+    "weather": [
+      "clear",
+      "rain",
+      "fog",
+      "storm",
+      "ashfall"
+    ],
+    "passenger_events": 18,
+    "music": "7 Suno-generated tracks in public/audio (title, calm, tense, combat, boss, victory, defeat) with procedural fallback",
+    "nodes": "village, depot, mine, farm, fuel, clinic, armory, yard, watchtower, shrine, wreck, market, start, terminus",
+    "upgrades": "car levels I-III; locomotive tracks: speed, boiler pressure, reinforced frame, track crew",
+    "relics": 18,
+    "bounties": "kill / deliver / reach bounties posted by settlements (max 2 active), rewards in Void Marks + rails/scrap",
+    "expeditions": "timed-hit turn-based crew scenes at 8 Expedition Sites; 4 on-foot foe types; 7 crew specials; void creeps 8 s per round",
+    "loot": "salvage drops (scrap/ammo/rails), elites from region 2 with relic choice + Void Marks"
   },
   "screenshots": [
     "verify/screenshots/title.png",
@@ -51,10 +77,10 @@
     "verify/screenshots/standalone.png"
   ],
   "knownProblems": [
-    "The combat track (Boarding Party) is a 44 s take and loops audibly; a longer take is available in the Suno workspace.",
-    "The headless verification harness measures ~15 fps under SwiftShader; use `npm run perf:headed` for real numbers.",
-    "Campaign length with a bee-line route is ~20 minutes; exploring branches and yards stretches it to 30+.",
-    "No key-art image on the title yet (all art is procedural); pending a decision on generating one."
+    "The combat track (Boarding Party) is a 44 s take and loops audibly; the longer second take is in the Suno workspace.",
+    "Headless SwiftShader verification measures 10-18 fps; real numbers come from `npm run perf:headed`.",
+    "A bee-line run finishes in ~15 minutes at the new pace; exploring branches, yards and nodes stretches it to 25+.",
+    "Event cards have no illustrations yet; expedition foes are silhouettes (procedural)."
   ],
-  "nextWeakestArea": "Balance feel in regions 3-4 by human playtest (wisp/harpy pressure vs. affordable tesla/flak), and boss fights' readability"
+  "nextWeakestArea": "Expedition depth (more foes, boss-site variants) and illustrated event/relic art; human playtest of the loot/bounty economy"
 }

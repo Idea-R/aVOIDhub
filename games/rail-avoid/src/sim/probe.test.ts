@@ -15,6 +15,8 @@ const PROBE = !!process.env.PROBE;
     const s = sim.state;
     if (i % 10 === 0) {
       if (s.phase === 'shop') { sim.repairAll(); const list = ['barracks','cannon','radiator','flak','tesla','boiler','armor_plate','scout']; for (const t of list) { if (s.train.resources.scrap > 60) sim.buyCar(t as any); } sim.closeShop(); }
+      else if (s.phase === 'relic') sim.chooseRelic(0);
+      else if (s.phase === 'expedition') { const x = s.expedition!; if (x.outcome) sim.endExpedition(); else if (x.pending) sim.expeditionResolve('good'); else sim.expeditionAction('strike'); }
       else if (s.phase === 'event') { if (!sim.chooseEventOption(0)) if (!sim.chooseEventOption(1)) sim.chooseEventOption(2); }
       else if (s.phase === 'running') {
         const ahead = s.route.path.length - 1 - s.train.routeIndex;

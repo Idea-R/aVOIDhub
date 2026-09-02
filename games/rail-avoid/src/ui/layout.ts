@@ -48,8 +48,11 @@ export function createLayout(ui: UiShared, zones: { top: HTMLElement; dock: HTML
     if (root.classList.contains('rv-log-on') !== log) root.classList.toggle('rv-log-on', log);
   }
 
+  // measure on the next frame: writing --rv-top-h inside the observer callback resizes the observed left rail
+  // (its top edge follows the top bar), which would otherwise trip "ResizeObserver loop" errors
+  let roRaf = 0;
   if (typeof ResizeObserver !== 'undefined') {
-    ro = new ResizeObserver(() => measure());
+    ro = new ResizeObserver(() => { if (!roRaf) roRaf = requestAnimationFrame(() => { roRaf = 0; measure(); }); });
     ro.observe(zones.top); ro.observe(zones.dock); ro.observe(zones.left);
   }
   const onResize = () => measure();
@@ -84,6 +87,6 @@ export function createLayout(ui: UiShared, zones: { top: HTMLElement; dock: HTML
 
   return {
     update, freeZone, measure,
-    destroy() { ro?.disconnect(); window.removeEventListener('resize', onResize); unsub(); },
+    destroy() { ro?.disconnect(); if (roRaf) cancelAnimationFrame(roRaf); window.removeEventListener('resize', onResize); unsub(); },
   };
 }

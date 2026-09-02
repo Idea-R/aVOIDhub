@@ -185,6 +185,54 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   glyph('gl_wreck', d => d.poly([1.5, 8, 9.5, 3.5, 11, 6, 3, 10.5]).fill(0x0b0e1a).poly([5, 7.5, 6.5, 5.5, 7.2, 6.4, 5.8, 8.4]).fill(0xffffff).circle(3, 10.5, 1.2).circle(9.5, 7, 1.2));
   // market: awning with a scalloped edge over a stall
   glyph('gl_market', d => d.rect(1, 3, 10, 2).circle(2.5, 5.5, 1.5).circle(6, 5.5, 1.5).circle(9.5, 5.5, 1.5).rect(2, 7, 8, 4).fill(0x0b0e1a).rect(4, 8.5, 4, 1));
+  // expedition site: a stone doorway / arch with a dark opening
+  glyph('gl_site', d => d.rect(1.5, 5.5, 9, 5.5).circle(6, 5.8, 4.5).fill(0x0b0e1a).rect(4.2, 7, 3.6, 4).circle(6, 7.2, 1.8));
+
+  // ---- loot drops (origin centre; ground contact near the bottom edge) ----
+  gen(scene, 'loot_scrap', 14, 12, d => {
+    d.fill(0x5a3a22).rrect(0.5, 2, 13, 10, 1.5);
+    d.fill(0x8a5a30).rect(1.5, 3, 11, 8);
+    d.fill(0xa86a38).rect(1.5, 3, 11, 1.4).rect(1.5, 6.4, 11, 1.2);
+    d.line(1, 0x4a2a16, 0.9).seg(4.5, 3, 4.5, 11).seg(9.5, 3, 9.5, 11);
+    d.fill(0x3a2a20, 0.7).circle(3, 8.5, 1).circle(11, 4.5, 0.9).circle(7, 9.5, 0.8);
+    d.fill(0xc98a4b, 0.9).rect(6, 1, 2, 2.5);
+  });
+  gen(scene, 'loot_ammo', 12, 10, d => {
+    d.fill(0x3d5a2e).rrect(0.5, 2.5, 11, 7.5, 1.5);
+    d.fill(0x5a7a40).rrect(1, 3, 10, 3, 1);
+    d.fill(0x2e4422).rect(3, 0.8, 6, 2.2);
+    d.fill(0x6a8a50).rect(4, 0, 4, 1.4);
+    d.fill(0xe8c170).rect(1.5, 6.5, 9, 1.1);
+    d.fill(0xffffff, 0.6).rect(2.5, 3.5, 2, 0.8);
+  });
+  gen(scene, 'loot_rails', 20, 10, d => {
+    d.line(2.6, 0x2a2f3a, 0.9).seg(1, 7.5, 18, 3.5).seg(1.5, 5, 18.5, 1.2).seg(1.5, 9, 19, 5.2);
+    d.line(1.6, 0xb0b6c0).seg(1, 7.5, 18, 3.5);
+    d.line(1.6, 0xd8dce4).seg(1.5, 5, 18.5, 1.2);
+    d.line(1.6, 0x8a909c).seg(1.5, 9, 19, 5.2);
+    d.fill(0x6a4a2a).rect(5.5, 1.5, 2, 8).rect(12.5, 0.2, 2, 8);
+    d.fill(0xe8c170).rect(5.5, 4.2, 2, 1.6).rect(12.5, 2.8, 2, 1.6);
+  });
+  gen(scene, 'loot_marks', 10, 14, d => {
+    d.fill(0x7a5ad8).poly([5, 0, 10, 5, 7.5, 14, 2.5, 14, 0, 5]);
+    d.fill(0xc9a0ff, 0.95).poly([5, 0, 7, 5, 5, 14, 3, 5]);
+    d.fill(0xffffff, 0.55).poly([5, 0.5, 6.2, 3.5, 5, 5, 3.8, 3.5]);
+    d.fill(0x4a3a9a, 0.8).poly([7, 5, 10, 5, 7.5, 14, 5, 14]);
+  });
+
+  // ---- elite markers (white; tinted at runtime) ----
+  gen(scene, 'elite_ring', 52, 52, d => {
+    d.line(2.6, 0xffffff, 0.95).scircle(26, 26, 22);
+    d.line(1.1, 0xffffff, 0.55).scircle(26, 26, 17.5);
+    for (let i = 0; i < 4; i++) {
+      const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+      d.fill(0xffffff).circle(26 + Math.cos(a) * 22, 26 + Math.sin(a) * 22, 2.2);
+    }
+  });
+  gen(scene, 'elite_crown', 14, 10, d => {
+    d.fill(0xffffff).poly([1, 10, 1, 3, 4, 6, 7, 0, 10, 6, 13, 3, 13, 10]);
+    d.fill(0xffffff, 0.6).rect(2, 8, 10, 1.4);
+  });
 
   // ---- projectiles ----
   gen(scene, 'p_shell', 10, 6, d => d.fill(0x2a2f3a).ellipse(5, 3, 10, 6).fill(0xffd08a).ellipse(6.5, 2.5, 4, 2.5));
@@ -391,6 +439,32 @@ function generateBuildingTextures(scene: Phaser.Scene): void {
     for (let i = 0; i < 5; i++) d.fill(i % 2 ? 0x6fb7e8 : 0xf4f6fb).rect(1 + i * 3.6, 3, 3.7, 4);
     for (let i = 0; i < 5; i++) d.fill(i % 2 ? 0x6fb7e8 : 0xf4f6fb).circle(2.8 + i * 3.6, 7, 1.7);
     d.fill(0xe8c170).rect(5, 11, 4, 2.5); d.fill(0x8a8f9a).rect(11, 11, 3, 2.5);
+  });
+  // expedition site: a half-buried bunker / temple front with a dark arched doorway (green-lit at runtime),
+  // broken walls and snapped columns
+  gen(scene, 'b_site_gate', 34, 30, d => {
+    d.fill(0x4a4a52).rect(2, 26, 30, 4); d.fill(0x5e5e68).rect(4, 22, 26, 4);
+    d.fill(0x6a6a74).poly([5, 22, 8, 8, 26, 8, 29, 22]);
+    d.fill(0x8a8a94).poly([8, 8, 11, 2, 23, 2, 26, 8]);
+    d.fill(0x5a5a64, 0.9).poly([8, 8, 26, 8, 25, 9.5, 9, 9.5]);
+    d.fill(0x5e6a4a, 0.7).poly([8, 9, 12, 9, 13, 14, 9, 16]).poly([22, 12, 26, 11, 27, 18, 23, 17]);
+    d.fill(0x081410).rect(13.5, 13, 7, 10); d.fill(0x081410).circle(17, 13.5, 3.5);
+    d.line(1, 0x3fa070, 0.7).seg(13.5, 23, 13.5, 13.5).seg(20.5, 23, 20.5, 13.5);
+    d.g.lineStyle(1 * d.s, 0x3fa070, 0.7); d.g.beginPath(); d.g.arc(17 * d.s, 13.5 * d.s, 3.5 * d.s, Math.PI, 0, false); d.g.strokePath();
+    d.line(1, 0x3a3a44, 0.8).seg(10, 11, 12, 19).seg(24, 10, 22, 15);
+    d.fill(0x8a8a94).rect(3, 18, 3, 8).rect(28, 16, 3, 10);
+  });
+  gen(scene, 'b_ruin_wall', 22, 14, d => {
+    d.fill(0x5a5a64).poly([1, 14, 1, 6, 6, 5, 8, 2, 14, 3, 15, 7, 21, 8, 21, 14]);
+    d.fill(0x7a7a84).poly([1, 6, 6, 5, 8, 2, 14, 3, 13, 4.5, 7, 3.8, 5.5, 6.5, 1, 7.5]);
+    d.line(0.8, 0x3a3a44, 0.7).seg(1, 10, 21, 10).seg(5, 7, 5, 14).seg(11, 6, 11, 10).seg(16, 10, 16, 14);
+    d.fill(0x5e6a4a, 0.75).poly([1, 14, 1, 11, 4, 12, 3, 14]).poly([15, 8, 19, 8.5, 18, 11]);
+  });
+  gen(scene, 'b_ruin_pillar', 10, 20, d => {
+    d.fill(0x6a6a74).rect(3, 4, 4, 16); d.fill(0x8a8a94).rect(3, 4, 1.4, 16);
+    d.fill(0x7a7a84).poly([3, 4, 2, 2, 5, 0, 8, 3, 7, 4]);
+    d.fill(0x5a5a64).rect(1.5, 18, 7, 2);
+    d.line(0.7, 0x3a3a44, 0.6).seg(5, 6, 5.5, 12).seg(6, 13, 5, 17);
   });
   gen(scene, 'b_crates', 16, 12, d => { d.fill(0x9a7a4a).rect(1, 5, 7, 7).rect(8, 6, 7, 6); d.fill(0xb89a68).rect(4, 0, 7, 6); d.line(0.8, 0x5a4a3a).seg(1, 8.5, 8, 8.5).seg(4.5, 5, 4.5, 12).seg(8, 9, 15, 9).seg(7.5, 0, 7.5, 6); d.fill(0x6a4a3a).circle(14, 3, 2.2); d.fill(0x8a6a4a).rect(12.5, 1.5, 3, 0.8); });
 }

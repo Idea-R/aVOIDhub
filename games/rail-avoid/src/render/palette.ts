@@ -44,6 +44,7 @@ export const SETTLEMENT_COLORS: Record<SettlementType, number> = {
   shrine: 0xc9a0ff,
   wreck: 0xb5734a,
   market: 0xf0a05a,
+  site: 0x5fd8a0,
 };
 
 /** Colour for any settlement type string (unknown / future types fall back to the village look). */

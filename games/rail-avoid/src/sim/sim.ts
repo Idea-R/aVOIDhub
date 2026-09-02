@@ -1,5 +1,5 @@
 /** Simulation orchestrator implementing SimApi. Fixed-step, deterministic, JSON state. */
-import type { SimState, CarType, Tile, Settlement, CarDef, EnemyDef, ResourceKey, Stats, EnemyType, LocoUpgradeKind } from '../core/types';
+import type { SimState, CarType, Tile, Settlement, CarDef, EnemyDef, ResourceKey, Stats, EnemyType, LocoUpgradeKind, ExpeditionActionKind, ExpeditionTiming } from '../core/types';
 import type { EventBus } from '../core/events';
 import type { SimApi, SimContext, PlanResult } from './api';
 import { Rng, hashSeed } from '../core/rng';
@@ -16,8 +16,25 @@ import { onArrive, updateStop, depart, buyCar, sellCar, repairCar, repairAll, cl
 import { updateCombat, onTrainEnterTile, clearEnemies } from './combat';
 import { initDirector, updateDirector, spawnWave } from './waves';
 import { initBoss, updateBosses, spawnBoss } from './bosses';
+import { updateLoot, chooseRelic, offerRelics, addMarks } from './loot';
+import { updateBounties } from './bounties';
+import { startExpedition, expeditionAction, expeditionResolve, endExpedition } from './expedition';
+import { LOOT } from '../core/config';
 import { tileAt, log, recomputeCapacity, locoPos, addResource, makeCar } from './helpers';
 import { neighbors } from '../core/hex';
+
+import { killHooks } from './helpers';
+import { dropLoot } from './loot';
+import { onEnemyKilledForBounty } from './bounties';
+import { ENEMY_DEFS as _ED } from '../core/enemies';
+if (killHooks.length === 0) {
+  killHooks.push((ctx, e) => {
+    if (e.type.startsWith('boss_')) { addMarks(ctx, LOOT.bossMarks, 'boss'); ctx.state.pendingEliteRelic = (ctx.state.pendingEliteRelic ?? 0) + 1; return; }
+    dropLoot(ctx, e);
+    onEnemyKilledForBounty(ctx, e.type);
+  });
+}
+void _ED;
 
 function emptyStats(): Stats {
   return { kills: {}, settlementsRescued: 0, settlementsLost: 0, carsLost: 0, railsLaid: 0, damageTaken: 0, damageDealt: 0, bossesDefeated: 0, eventsResolved: 0, score: 0 };
@@ -66,6 +83,7 @@ export class Sim implements SimApi {
       enemies: [], projectiles: [], weather: initWeather(), dayTime: 0.1, isNight: false,
       void: initVoid(), boss: initBoss(), director: initDirector(),
       activeEvent: null, eventCooldown: EVENTS.firstAfter, usedEvents: [],
+      loot: [], bounties: [], pendingRelicChoice: null, phaseBeforeRelic: null, pendingEliteRelic: 0, expedition: null, phaseBeforeExpedition: null,
       region: 0, regionsEntered: [0], stats: emptyStats(), defeatReason: null, nextId: 1, tutorialStep: 0, log: [],
       rngState: { world: 0, waves: 0, events: 0, combat: 0 },
     };
@@ -110,6 +128,8 @@ export class Sim implements SimApi {
     if (this.checkEnd()) return;
     updateVoid(ctx);
     if (this.checkEnd()) return;
+    updateLoot(ctx);
+    updateBounties(ctx);
     this.maintainMawLoop();
     updateEvents(ctx);
     this.tutorial();
@@ -264,6 +284,16 @@ export class Sim implements SimApi {
   canShop(): boolean { return canShop(this.ctx); }
 
   chooseEventOption(index: number): boolean { const r = chooseEventOption(this.ctx, index); this.bus.flush(); return r; }
+  chooseRelic(index: number): boolean { const r = chooseRelic(this.ctx, index); this.bus.flush(); return r; }
+  startExpedition(crewIds: string[]): boolean {
+    const s = this.state;
+    const site = s.settlements.find(x => x.type === 'site' && s.route.path[s.train.routeIndex] && x.col === s.route.path[s.train.routeIndex][0] && x.row === s.route.path[s.train.routeIndex][1]);
+    const r = startExpedition(this.ctx, crewIds, site ? site.name : 'the ruins');
+    this.bus.flush(); return r;
+  }
+  expeditionAction(kind: ExpeditionActionKind, targetFoe?: number): boolean { const r = expeditionAction(this.ctx, kind, targetFoe); this.bus.flush(); return r; }
+  expeditionResolve(timing: ExpeditionTiming): boolean { const r = expeditionResolve(this.ctx, timing); this.bus.flush(); return r; }
+  endExpedition(): boolean { const r = endExpedition(this.ctx); this.bus.flush(); return r; }
 
   // ---------- queries ----------
   tileAt(col: number, row: number): Tile | null { return tileAt(this.state, col, row); }
@@ -296,6 +326,15 @@ export class Sim implements SimApi {
       if (!st.train.locoUpgrades) st.train.locoUpgrades = { speed: 0, power: 0, frame: 0, crew: 0 };
       if (st.train.watchUntil === undefined) st.train.watchUntil = 0;
       for (const c of st.train.cars) if (!c.level) c.level = 1;
+      if (!st.train.relics) st.train.relics = [];
+      if (st.train.marks === undefined) st.train.marks = 0;
+      if (!st.loot) st.loot = [];
+      if (!st.bounties) st.bounties = [];
+      if (st.pendingRelicChoice === undefined) st.pendingRelicChoice = null;
+      if (st.phaseBeforeRelic === undefined) st.phaseBeforeRelic = null;
+      if (!st.pendingEliteRelic) st.pendingEliteRelic = 0;
+      if (st.expedition === undefined) st.expedition = null;
+      if (st.phaseBeforeExpedition === undefined) st.phaseBeforeExpedition = null;
       this.rng.world.state = st.rngState.world >>> 0; this.rng.waves.state = st.rngState.waves >>> 0;
       this.rng.events.state = st.rngState.events >>> 0; this.rng.combat.state = st.rngState.combat >>> 0;
       this.ended = false;
@@ -406,6 +445,9 @@ export class Sim implements SimApi {
       updateEvents(this.ctx); this.bus.flush();
     },
     invulnerable: (on: boolean) => { this.ctx.invulnerable = on; },
+    offerRelics: () => { offerRelics(this.ctx, 'debug'); this.bus.flush(); },
+    grantMarks: (n: number) => { addMarks(this.ctx, n, 'debug'); this.bus.flush(); },
+    startExpedition: () => { const s = this.state; if (s.phase !== 'running') return; const ids = s.train.crew.filter(c => c.hp > 20).slice(0, 3).map(c => c.id); startExpedition(this.ctx, ids, 'debug site'); this.bus.flush(); },
     godTrain: () => {
       const s = this.state;
       const keep = s.train.cars[0];

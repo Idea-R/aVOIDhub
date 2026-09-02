@@ -83,6 +83,7 @@ Replace `5173` with `4173` to open the preview build.
 | `Space` | Pause / resume |
 | `1` / `2` / `3` | Speed 1x / 2x / 4x (4x only with `?dev`; `3` maps to the fastest allowed) |
 | `Backspace` | Unplan the last tile (refunds rails) |
+| `Space` / `Enter` (in an expedition) | Timed hit: press as your strike lands or as an enemy blow arrives to guard |
 | `R` | Reverse: back the train down its own track (half speed, full speed with a Caboose); press again to stop and re-plan |
 | `D` | Detach the selected car and everything behind it |
 | `Tab` | Train panel |

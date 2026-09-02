@@ -35,9 +35,16 @@ interface EView {
   bob: number;
   recoil: number;
   smokeAcc: number;
+  // elites: pulsing violet/gold aura ring under the body, a crown above, 1.25x scale, gold hit flash
+  elite: boolean;
+  aura: Phaser.GameObjects.Image | null;
+  crown: Phaser.GameObjects.Image | null;
 }
 
 const AIR_ALT = 30;
+const ELITE_SCALE = 1.25;
+const ELITE_VIOLET = 0xb98fe8;
+const ELITE_GOLD = 0xffd070;
 
 export class EnemyLayer {
   private views = new Map<string, EView>();
@@ -68,7 +75,7 @@ export class EnemyLayer {
     this.views.clear(); this.pools.clear();
     this.hpGfx.destroy(); this.bossLabel.destroy();
   }
-  private destroyView(v: EView): void { v.obj.destroy(); v.shadow?.destroy(); }
+  private destroyView(v: EView): void { v.obj.destroy(); v.shadow?.destroy(); v.aura?.destroy(); v.crown?.destroy(); }
 
   clear(): void {
     for (const v of this.views.values()) this.release(v);
@@ -89,11 +96,16 @@ export class EnemyLayer {
     if (v.obj instanceof Phaser.GameObjects.Image) v.obj.setFlipX(false);
     for (let i = 0; i < v.parts.length; i++) { v.parts[i].clearTint(); if (v.baseTints[i] !== -1) v.parts[i].setTint(v.baseTints[i]); v.parts[i].setAlpha(1); }
     if (v.shadow) v.shadow.setVisible(true).setAlpha(0.35);
+    v.elite = false;
+    if ((e.extra?.elite ?? 0) > 0) this.markElite(v);
     return v;
   }
   private release(v: EView): void {
     v.obj.setVisible(false);
     v.shadow?.setVisible(false);
+    v.aura?.setVisible(false);
+    v.crown?.setVisible(false);
+    v.elite = false;
     const list = this.pools.get(v.type) ?? [];
     list.push(v);
     this.pools.set(v.type, list);
@@ -193,7 +205,25 @@ export class EnemyLayer {
     return {
       id: '', type, obj, parts, baseTints, shadow, x: 0, y: 0, facing: 1, flashUntil: 0, dying: false, dieT0: 0, burst: false,
       seenAlive: true, hp: def.hp, maxHp: def.hp, visible: true, phase: 0, spin: 0, bob: 0, recoil: 0, smokeAcc: 0,
+      elite: false, aura: null, crown: null,
     };
+  }
+
+  /** Promote a view to elite: aura ring (world layer, just under the body) + crown (air layer). */
+  private markElite(v: EView): void {
+    if (v.elite) return;
+    v.elite = true;
+    if (!v.aura) {
+      v.aura = this.scene.add.image(0, 0, 'elite_ring').setBlendMode(Phaser.BlendModes.ADD).setScale(TEX_SCALE, TEX_SCALE * ISO_Y);
+      this.world.add(v.aura);
+    }
+    if (!v.crown) {
+      v.crown = this.scene.add.image(0, 0, 'elite_crown').setScale(TEX_SCALE).setTint(ELITE_GOLD);
+      this.air.add(v.crown);
+      v.crown.setDepth(1e6 - 1);
+    }
+    v.aura.setVisible(true).setAlpha(0.7).setTint(ELITE_VIOLET);
+    v.crown.setVisible(true).setAlpha(1);
   }
 
   // ---------------- events ----------------
@@ -206,12 +236,26 @@ export class EnemyLayer {
     const def = ENEMY_DEFS[type];
     const color = def?.color ?? 0xffffff;
     const boss = type.startsWith('boss_');
-    this.fx.burst(x, y, color, boss ? 60 : 12);
-    if (boss) { this.fx.explosion(x, y, 120, true); this.fx.shockwave(x, y, 220); }
-    else if (type === 'crawler') this.fx.debris(x, y, 8, color);
-    else if (type === 'wisp') this.fx.implosion(x, y);
     const v = this.views.get(id);
+    if (v?.elite) {
+      // elites: bigger violet/gold burst + a glint of marks; the aura and crown vanish at once
+      this.fx.eliteDeath(x, y, color);
+      v.aura?.setVisible(false); v.crown?.setVisible(false);
+      if (type === 'crawler') this.fx.debris(x, y, 10, color);
+    } else {
+      this.fx.burst(x, y, color, boss ? 60 : 12);
+      if (boss) { this.fx.explosion(x, y, 120, true); this.fx.shockwave(x, y, 220); }
+      else if (type === 'crawler') this.fx.debris(x, y, 8, color);
+      else if (type === 'wisp') this.fx.implosion(x, y);
+    }
     if (v && !v.dying) { v.dying = true; v.dieT0 = nowMs; v.burst = true; }
+  }
+  /** Sim event: an enemy was promoted to elite (also picked up from `extra.elite` each frame). */
+  onElite(id: string): void {
+    const v = this.views.get(id);
+    if (!v || v.dying) return;
+    this.markElite(v);
+    this.fx.burst(v.x, v.y, ELITE_VIOLET, 8);
   }
   /** An enemy shell was fired near (x,y): Iron Wagon turret recoil + muzzle light. */
   onEnemyShot(x: number, y: number): void {
@@ -295,6 +339,8 @@ export class EnemyLayer {
       else if (Math.abs(e.vx) > 2) v.facing = e.vx < 0 ? -1 : 1;
       this.positions.set(e.id, { x: v.x, y: v.y });
       v.hp = e.hp; v.maxHp = e.maxHp;
+      if (!v.elite && !v.dying && (e.extra?.elite ?? 0) > 0) this.markElite(v);
+      const m = v.elite ? ELITE_SCALE : 1;
 
       // visibility rules
       let visible = true;
@@ -317,33 +363,34 @@ export class EnemyLayer {
         const t = (nowMs - v.dieT0) / 900;
         if (t >= 1) { this.release(v); this.views.delete(e.id); this.positions.delete(e.id); continue; }
         alpha *= 1 - t;
-        if (v.obj instanceof Phaser.GameObjects.Image) v.obj.setScale(TEX_SCALE * (1 + t * 0.2), TEX_SCALE * (1 - t * 0.6));
+        if (v.obj instanceof Phaser.GameObjects.Image) v.obj.setScale(TEX_SCALE * (1 + t * 0.2) * m, TEX_SCALE * (1 - t * 0.6) * m);
         for (const p of v.parts) p.setTint(0x333340);
         if (def.layer === 'air') v.obj.setY(py - AIR_ALT + t * 60);
         v.obj.setAlpha(alpha).setVisible(visible);
         if (v.shadow) v.shadow.setAlpha(0.35 * (1 - t));
+        if (v.elite) { v.aura?.setVisible(false); v.crown?.setVisible(false); }
         continue;
       }
 
       v.visible = visible;
       v.obj.setVisible(visible);
       v.shadow?.setVisible(visible);
-      if (!visible) continue;
+      if (!visible) { if (v.elite) { v.aura?.setVisible(false); v.crown?.setVisible(false); } continue; }
       v.obj.setAlpha(alpha);
 
       // placement per layer
       let depthY = py;
       if (def.layer === 'air') {
         const bob = this.settings.reducedMotion ? 0 : Math.sin(v.bob) * 3;
-        v.obj.setPosition(px, py - AIR_ALT + bob);
-        v.shadow?.setPosition(px, py + 2).setAlpha(0.28 * alpha);
+        v.obj.setPosition(px, py - AIR_ALT + bob).setScale(m);
+        v.shadow?.setPosition(px, py + 2).setAlpha(0.28 * alpha).setScale(TEX_SCALE * 0.7 * m);
         const rotor = (v.obj as Phaser.GameObjects.Container).list[0] as Phaser.GameObjects.Image | undefined;
         if (rotor && !this.settings.reducedMotion) rotor.setRotation(rotor.rotation + dt * 28);
       } else if (v.type === 'wisp') {
         const bob = this.settings.reducedMotion ? 0 : Math.sin(v.bob * 0.8) * 3;
         v.obj.setPosition(px, py - 10 + bob);
         const c = v.obj as Phaser.GameObjects.Container;
-        const s = this.settings.reducedMotion ? 1 : 1 + Math.sin(v.bob * 1.7) * 0.12;
+        const s = (this.settings.reducedMotion ? 1 : 1 + Math.sin(v.bob * 1.7) * 0.12) * m;
         c.setScale(s, s);
         const gl = c.list[0] as Phaser.GameObjects.Image | undefined;
         if (gl) gl.setAlpha(0.35 + 0.25 * (rm ? 0.5 : 0.5 + 0.5 * Math.sin(v.bob * 2.6)));
@@ -407,12 +454,12 @@ export class EnemyLayer {
         img.setFlipX(v.facing < 0);
         if (v.type === 'crawler') {
           const w = rm ? 0 : Math.sin(v.bob * 3.2) * 0.035;
-          img.setScale(TEX_SCALE * (1 + w), TEX_SCALE * (1 - w * 0.8));
+          img.setScale(TEX_SCALE * (1 + w) * m, TEX_SCALE * (1 - w * 0.8) * m);
         } else {
           const sq = moving && !rm ? Math.abs(Math.sin(v.bob * 2.2)) * 0.06 : 0;
-          img.setScale(TEX_SCALE * (1 + sq * 0.5), TEX_SCALE * (1 - sq));
+          img.setScale(TEX_SCALE * (1 + sq * 0.5) * m, TEX_SCALE * (1 - sq) * m);
         }
-        v.shadow?.setPosition(px, py + 1).setScale(TEX_SCALE * (v.type === 'crawler' ? 1.1 : 0.6) * (1 - bobY * 0.05));
+        v.shadow?.setPosition(px, py + 1).setScale(TEX_SCALE * (v.type === 'crawler' ? 1.1 : 0.6) * (1 - bobY * 0.05) * m);
         if (e.state === 'attack' && !rm) {
           const lunge = Math.abs(Math.sin(v.bob * 2)) * 2;
           img.setY(py - lunge);
@@ -421,11 +468,28 @@ export class EnemyLayer {
       v.obj.setDepth(depthY);
       if (v.shadow) v.shadow.setDepth(py);
 
+      // elite aura + crown
+      if (v.elite && v.aura && v.crown) {
+        const ph = rm ? 0.5 : 0.5 + 0.5 * Math.sin(nowMs / 1000 * 3.1 + v.bob * 0.15);
+        const tint = ph < 0.5 ? ELITE_VIOLET : ELITE_GOLD;
+        const auraR = (def.radius > 14 ? 1.5 : 1) * (0.92 + 0.16 * ph);
+        // (no rotation: the ring is squashed by ISO_Y, so rotating it would tilt the ellipse)
+        v.aura.setVisible(true).setPosition(px, py + 1).setAlpha((0.42 + 0.38 * ph) * alpha).setTint(tint)
+          .setScale(TEX_SCALE * auraR, TEX_SCALE * auraR * ISO_Y).setDepth(py - 0.5);
+        const top = def.layer === 'air' ? py - AIR_ALT - 22 : py - 18 * m - def.radius * 0.4;
+        const cb = rm ? 0 : Math.sin(nowMs / 1000 * 2.4 + v.bob * 0.1) * 1.5;
+        v.crown.setVisible(true).setPosition(px, top + cb).setAlpha(alpha).setTint(ph < 0.5 ? ELITE_GOLD : 0xfff0c0);
+        if (this.settings.glow && this.settings.quality !== 'low' && Math.random() < dt * (hi ? 5 : 2.5)) {
+          const a = Math.random() * Math.PI * 2;
+          this.fx.moteP(px + Math.cos(a) * 12, py + Math.sin(a) * 7, Math.random() < 0.6 ? ELITE_VIOLET : ELITE_GOLD, 1.6, 900, 0, -14);
+        }
+      }
+
       // status tints / flash
       const flashing = nowMs < v.flashUntil;
       for (let i = 0; i < v.parts.length; i++) {
         const p = v.parts[i];
-        if (flashing) { if (v.type.startsWith("boss_")) p.setTint(0xffb8b8); else p.setTintFill(0xffffff); }
+        if (flashing) { if (v.type.startsWith("boss_")) p.setTint(0xffb8b8); else p.setTintFill(v.elite ? ELITE_GOLD : 0xffffff); }
         else if (e.stunned > 0) p.setTint(Math.floor(nowMs / 80) % 2 ? 0x9fd8ff : 0xffffff);
         else if (e.burning > 0) p.setTint(0xffb080);
         else if (v.baseTints[i] !== -1) p.setTint(v.baseTints[i]);
@@ -462,7 +526,7 @@ export class EnemyLayer {
     // remove views whose enemy vanished from the state
     for (const [id, v] of this.views) {
       if (seen.has(id)) continue;
-      if (!v.dying) { v.dying = true; v.dieT0 = nowMs - 600; }
+      if (!v.dying) { v.dying = true; v.dieT0 = nowMs - 600; v.aura?.setVisible(false); v.crown?.setVisible(false); }
       const t = (nowMs - v.dieT0) / 900;
       if (t >= 1) { this.release(v); this.views.delete(id); this.positions.delete(id); }
       else { v.obj.setAlpha(1 - t); }

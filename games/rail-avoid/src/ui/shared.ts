@@ -5,7 +5,7 @@ import type { SimState, Settings } from '../core/types';
 import { el, btn, focusables, show } from './dom';
 import { gsap, D, isReduced, popIn, rowsIn } from './motion';
 
-export type PanelName = 'title' | 'settings' | 'howto' | 'pause' | 'shop' | 'event' | 'results' | 'confirm' | 'inspector' | 'gamepad';
+export type PanelName = 'title' | 'settings' | 'howto' | 'pause' | 'shop' | 'event' | 'results' | 'confirm' | 'inspector' | 'gamepad' | 'relic' | 'crewpick' | 'expedition';
 
 export interface PanelDef {
   el: HTMLElement;
@@ -24,7 +24,12 @@ export interface ConfirmOpts { title: string; text: string; yes?: string; no?: s
 export interface AudioExtras {
   setVoidProximity(p: number): void;
   setBoardingAlert(on: boolean): void;
+  /** Named one-shot cues for the expedition / relic / bounty UI (see audio/index.ts). */
+  cue(name: AudioCue): void;
 }
+
+export type AudioCue = 'windup' | 'perfect' | 'good' | 'miss' | 'block' | 'block_perfect' | 'stun' | 'down' | 'rally'
+  | 'relic_offer' | 'relic_take' | 'bounty_new' | 'bounty_done' | 'bounty_failed' | 'marks' | 'exp_start' | 'exp_won' | 'exp_lost' | 'foe_windup' | 'heal';
 
 export type NotifyKind = 'info' | 'warn' | 'good' | 'bad';
 

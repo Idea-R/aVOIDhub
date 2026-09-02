@@ -23,6 +23,13 @@ import { createMoodDriver } from './mood';
 import { createCinematic } from './cinematic';
 import { createLayout } from './layout';
 import { createHoverCards } from './hovercards';
+import { createRelicModal } from './relics';
+import { createBountyTracker } from './bounties';
+import { createCrewPicker } from './crewPicker';
+import { createExpedition } from './expedition';
+import { createAnnouncer } from './announce';
+import { relicDef } from '../core/relics';
+import { eventById } from '../core/passengerEvents';
 import { nodeMeta } from './nodes';
 import { ROMAN } from './levels';
 import { CAR_DEFS } from '../core/cars';
@@ -51,6 +58,11 @@ export function createUI(ctx: AppContext): UiApi {
   hud.zones.dock.appendChild(strip.el);
   const inspector = createInspector(ui);
   const shop = createShop(ui);
+  const bounties = createBountyTracker(ui);
+  hud.zones.left.insertBefore(bounties.el, hud.anchors.log);
+  const announcer = createAnnouncer(ui);
+  const relics = createRelicModal(ui, { relicBarAnchor: () => hud.anchors.relics ?? null });
+  const expedition = createExpedition(ui);
   const tutorial = createTutorial(ui, (step) => {
     const a = hud.anchors;
     // steps anchored above the strip sit above the stop pill instead when it is showing, so the two never overlap
@@ -75,6 +87,10 @@ export function createUI(ctx: AppContext): UiApi {
   const howto = createHowto(ui);
   const settings = createSettings(ui);
   const eventModal = createEventModal(ui);
+  const crewPicker = createCrewPicker(ui, {
+    // the sim keeps the site event active after "Send an expedition": cancelling returns to the site card
+    onCancel: () => { const s = ui.state(); if (s && s.phase === 'event' && s.activeEvent?.defId === 'node_site') eventModal.show('node_site'); },
+  });
   const pause = createPause(ui, {
     restart: () => { const s = ui.state(); ctx.newRun(s ? s.seed : undefined); },
     newSeed: () => ctx.newRun(),
@@ -94,6 +110,13 @@ export function createUI(ctx: AppContext): UiApi {
     detachLast: () => detachLast(),
     toggleReverse: () => toggleReverse(),
     departOrClose: () => { const s = ui.state(); const sim = ui.sim(); if (!s || !sim) return; if (s.phase === 'shop') sim.closeShop(); else if (s.train.stopped && s.train.stopReason === 'settlement') sim.depart(); },
+    modalButton: (b) => {
+      const top = ui.topModal();
+      if (top === 'expedition') return expedition.gamepad(b);
+      if (top === 'relic') return relics.gamepad(b);
+      if (top === 'crewpick') return crewPicker.gamepad(b);
+      return false;
+    },
   });
   const mood = createMoodDriver(ui);
 
@@ -101,7 +124,7 @@ export function createUI(ctx: AppContext): UiApi {
   ui.registerPanel('gamepad', { el: input.overlay, modal: false });
 
   // DOM order = stacking order
-  root.append(hud.el, shop.el, inspector.el, tutorial.el, cine.el, title.el, eventModal.el, pause.el, settings, howto, results.el, input.overlay, cards.el);
+  root.append(hud.el, shop.el, inspector.el, tutorial.el, announcer.el, cine.el, title.el, eventModal.el, crewPicker.el, expedition.el, relics.el, pause.el, settings, howto, results.el, input.overlay, cards.el);
   // toasts + confirm were created by UiShared; move them on top
   for (const cls of ['.rv-toasts', '.rv-overlay[aria-label="Confirm"]']) { const n = root.querySelector(cls); if (n) root.appendChild(n); }
   hud.el.hidden = true;
@@ -121,7 +144,8 @@ export function createUI(ctx: AppContext): UiApi {
   function beginRun(): void {
     ui.runActiveFlag = true;
     ui.closeAll();
-    hud.reset(); strip.reset(); inspector.reset(); shop.reset(); mood.reset();
+    hud.reset(); strip.reset(); inspector.reset(); shop.reset(); mood.reset(); bounties.reset(); announcer.reset();
+    pendingExpeditionEnd = null;
     tutorial.hide();
     ui.selectCar(-1);
     hud.el.hidden = false;
@@ -139,6 +163,7 @@ export function createUI(ctx: AppContext): UiApi {
     hud.el.hidden = true;
     ui.selectCar(-1);
     mood.reset();
+    announcer.reset();
     ui.open('title');
   }
   function showResults(kind: 'victory' | 'defeat'): void {
@@ -174,8 +199,8 @@ export function createUI(ctx: AppContext): UiApi {
       return;
     }
     const top = ui.topModal();
-    if (top === 'pause' || top === 'settings' || top === 'howto' || top === 'confirm') { ui.closeTop(); ui.audio().ui('close'); return; }
-    if (top === 'event' || top === 'results') return;
+    if (top === 'pause' || top === 'settings' || top === 'howto' || top === 'confirm' || top === 'crewpick') { ui.closeTop(); ui.audio().ui('close'); return; }
+    if (top === 'event' || top === 'results' || top === 'relic' || top === 'expedition') return;
     if (ui.isOpen('inspector') && top !== 'shop') { ui.selectCar(-1); ui.audio().ui('close'); return; }
     if (ui.isOpen('inspector') && top === 'shop') { ui.selectCar(-1); ui.audio().ui('close'); return; }
     ui.audio().ui('open');
@@ -229,6 +254,35 @@ export function createUI(ctx: AppContext): UiApi {
   const settlementGroup = (): string | undefined => (performance.now() - lastSettlementAt < 2500 ? 'settlement:' + lastSettlement : undefined);
   // optional events from contracts that may land later (upgrades)
   const loose = bus as unknown as { on(name: string, h: (p: any) => void): () => void };
+  // announcements: the big notices; small toasts stay for minor resource lines
+  const say = (cat: string, title: string, body?: string, tone?: 'gold' | 'void' | 'good' | 'bad' | 'info', hold?: number): void => { if (ui.runActive()) announcer.announce({ cat, title, body, tone, hold }); };
+  const CREW_LINE: Record<string, string> = {
+    conductor: 'Keeps the whistle and the timetable.', engineer: 'Knows the boiler by its moods.', gunner: 'Counts shells in her sleep.',
+    medic: 'Bandages first, questions later.', surveyor: 'Reads the land like a timetable.', mechanic: 'Never met a bogie he could not shim.',
+    quartermaster: 'Every crate accounted for. Every favour, too.',
+  };
+  let pendingExpeditionEnd: { outcome: string; summary: string; rounds: number } | null = null;
+  const cinematicSoon = (fn: () => void): void => { window.setTimeout(() => { const v = ui.view(); if (v && v.isCinematicPlaying()) return; fn(); }, 220); };
+  const fmtBountyReward = (r: { marks: number; rails: number; scrap: number }): string => [r.marks ? `◆ ${r.marks} marks` : '', r.rails ? `+${r.rails} rails` : '', r.scrap ? `+${r.scrap} scrap` : ''].filter(Boolean).join(' · ');
+  unsubs.push(
+    bus.on('relic:offer', () => { if (ui.runActive()) relics.show(); }),
+    bus.on('relic:taken', ({ id }) => { const d = relicDef(id); say('Relic', d?.name ?? id, d?.desc ?? '', 'void'); }),
+    bus.on('marks:change', ({ delta, why }) => {
+      hud.popMarks(delta);
+      if (delta >= 4) say('Rare salvage', `+${Math.round(delta)} Void Marks`, why === 'elite' ? 'An elite falls and leaves something the void wanted.' : why === 'bounty' ? 'A bounty paid in the only coin the void respects.' : why === 'expedition' ? 'Carried back from the ruins.' : 'The rare currency. Markets sell relics for it.', 'void');
+    }),
+    bus.on('loot:pickup', ({ kind, amount }) => { if (ui.runActive()) hud.flashLoot(kind, amount); }),
+    bus.on('bounty:new', ({ id }) => { const b = ui.state()?.bounties.find(x => x.id === id); if (b) say('Bounty', b.title, `${b.fromName}: ${b.desc} Reward ${fmtBountyReward(b.reward)}.`, 'gold'); }),
+    bus.on('bounty:progress', ({ id }) => bounties.pulse(id)),
+    bus.on('bounty:done', ({ id, title, reward }) => { bounties.flash(id, 'done'); say('Bounty complete', title, `Paid in full: ${fmtBountyReward(reward)}.`, 'good'); }),
+    bus.on('bounty:failed', ({ id, title }) => { bounties.flash(id, 'failed'); say('Bounty failed', title, 'The poster will not be paying.', 'bad'); }),
+    bus.on('expedition:end', (p) => { pendingExpeditionEnd = p; }),
+    bus.on('event:resolved', ({ defId, option, summary }) => {
+      if (defId === 'node_site' && option === 0) { if (ui.runActive()) crewPicker.open(); return; }
+      const def = eventById(defId);
+      if (summary) say('Event', def?.title ?? 'Aboard the train', summary, def?.negative ? 'bad' : 'gold');
+    }),
+  );
   unsubs.push(
     bus.on('run:start', () => beginRun()),
     bus.on('run:loaded', () => beginRun()),
@@ -239,16 +293,17 @@ export function createUI(ctx: AppContext): UiApi {
     bus.on('tutorial:step', ({ step, text }) => { if (ui.runActive()) tutorial.show(step, text); }),
     bus.on('ui:notify', ({ text, kind }) => note(text, kind)),
     bus.on('wave:warning', ({ type, from, in: secs }) => { const n = ENEMY_DEFS[type]?.name ?? type; note(`${n}s incoming from the ${String(from).toUpperCase()} in ${Math.ceil(secs)}s`, 'warn', 3000, 'wave'); }),
-    bus.on('boss:spawn', ({ name }) => note(`BOSS — ${name}`, 'bad', 6000)),
-    bus.on('boss:died', ({ type }) => note(`${ENEMY_DEFS[type]?.name ?? 'Boss'} destroyed!`, 'good', 6000)),
+    bus.on('boss:spawn', ({ name }) => cinematicSoon(() => say('Boss', name, 'It blocks the line. Fight it or find a way around.', 'bad', 3.4))),
+    bus.on('boss:died', ({ type }) => say('Boss', `${ENEMY_DEFS[type]?.name ?? 'Boss'} destroyed`, 'The line ahead is clear.', 'good')),
     bus.on('settlement:reached', ({ id, name, type, rewards, passengers, crew }) => {
       lastSettlement = id; lastSettlementAt = performance.now();
       const m = nodeMeta(type);
       const parts = [fmtRewards(rewards), passengers ? `${passengers} passengers` : '', crew ? `a ${crew}` : ''].filter(Boolean).join(' · ');
-      note(`${m.icon} ${name} (${m.label})${parts ? ' — ' + parts : ''}`, 'good', 5000, 'settlement:' + id);
+      if (type === 'yard' || type === 'shrine' || type === 'market' || type === 'site') say(m.label, name, parts || m.blurb || 'The train stops.', 'gold');
+      else note(`${m.icon} ${name} (${m.label})${parts ? ' — ' + parts : ''}`, 'good', 5000, 'settlement:' + id);
     }),
     bus.on('settlement:consumed', ({ name, hadPassengers }) => note(`${name} was taken by the void${hadPassengers ? ` with ${hadPassengers} people` : ''}`, 'bad', 5000)),
-    bus.on('region:enter', ({ region, name }) => note(`Entering ${name || REGION_NAMES[region] || 'a new region'}`, 'info', 5000)),
+    bus.on('region:enter', ({ region, name }) => cinematicSoon(() => say('Region', name || REGION_NAMES[region] || 'A new region', `Region ${region + 1} of 4. The void follows.`, 'info'))),
     bus.on('ui:selectCar', ({ index }) => ui.selectCar(index, index >= 0)),
     bus.on('ui:selectSettlement', ({ id }) => {
       if (!id) return;
@@ -262,11 +317,11 @@ export function createUI(ctx: AppContext): UiApi {
     bus.on('ui:openPanel', ({ panel }) => openPanel(panel)),
     bus.on('resource:change', ({ key, delta }) => hud.flashResource(key, delta)),
     bus.on('resource:empty', ({ key }) => note(`Out of ${key}!`, 'bad', 4200, 'empty:' + key)),
-    bus.on('crew:joined', ({ specialty, name }) => note(`${name} the ${specialty} joined the crew`, 'good', 4200, settlementGroup())),
-    bus.on('passengers:board', ({ count }) => note(`${count} passengers boarded`, 'info', 4200, settlementGroup())),
+    bus.on('crew:joined', ({ specialty, name }) => say('Crew', `${name} the ${specialty} joins`, CREW_LINE[specialty] ?? 'Another pair of hands on the line.', 'good')),
+    bus.on('passengers:board', ({ count }) => { if (count >= 6) say('Passengers', `${count} passengers board`, 'Find them food, and a yard to deliver them to.', 'info'); else note(`${count} passengers boarded`, 'info', 4200, settlementGroup()); }),
     bus.on('passengers:delivered', ({ count, reward }) => note(`${count} passengers delivered — ${fmtRewards(reward) || 'thanks'}`, 'good', 5000, settlementGroup())),
     bus.on('passengers:lost', ({ count, cause }) => note(`${count} passengers lost (${cause})`, 'bad')),
-    bus.on('gate:open', () => note('THE LAST GATE IS OPEN — drive through!', 'good', 8000)),
+    bus.on('gate:open', () => say('The last gate', 'The Gate Is Open', 'Drive through. Nothing behind you is worth turning for.', 'gold', 4)),
     bus.on('train:split', ({ atIndex, lost }) => note(`Train split at car ${atIndex + 1} — ${lost} car${lost === 1 ? '' : 's'} lost`, 'bad', 6000)),
     bus.on('car:destroyed', ({ type }) => { note(`${CAR_DEFS[type]?.name ?? type} destroyed`, 'bad'); strip.update(ui.state() as SimState, true); }),
     bus.on('train:damage', ({ carIndex }) => { if (ui.runActive()) strip.hit(carIndex); }),
@@ -275,7 +330,6 @@ export function createUI(ctx: AppContext): UiApi {
     bus.on('track:blocked', ({ reason }) => { if (/plan range/i.test(reason || '')) hud.shakeRoute(); else note(reason || 'Track blocked', 'warn', 4200, 'track'); }),
     bus.on('day:phase', ({ night }) => note(night ? 'Night falls — enemies grow bolder' : 'Dawn breaks', 'info', 3000, 'day')),
     bus.on('rift:open', () => note('A void rift opened ahead!', 'bad', 5000, 'rift')),
-    bus.on('event:resolved', ({ summary }) => { if (summary) note(summary, 'info', 5000); }),
     loose.on('car:upgraded', (p: { carIndex?: number; level?: number }) => {
       const s = ui.state(); const car = s?.train.cars[p?.carIndex ?? -1];
       const name = car ? CAR_DEFS[car.type]?.name ?? car.type : 'Car';
@@ -289,6 +343,13 @@ export function createUI(ctx: AppContext): UiApi {
     if (!ui.runActive()) return;
     if (phase === 'shop') ui.open('shop'); else if (ui.isOpen('shop')) ui.close('shop');
     if (phase === 'event') eventModal.show(); else if (ui.isOpen('event')) ui.close('event');
+    if (phase === 'relic') relics.show(); else if (ui.isOpen('relic')) ui.close('relic');
+    if (phase === 'expedition') expedition.show();
+    else if (ui.isOpen('expedition')) {
+      ui.close('expedition');
+      const p = pendingExpeditionEnd; pendingExpeditionEnd = null;
+      if (p) say('Expedition', p.outcome === 'won' ? 'Victory in the ruins' : p.outcome === 'lost' ? 'Beaten back' : 'The crew withdraws', p.summary, p.outcome === 'won' ? 'good' : p.outcome === 'lost' ? 'bad' : 'info');
+    }
     if (phase === 'victory') showResults('victory');
     if (phase === 'defeat') showResults('defeat');
     lastPhase = phase;
@@ -303,12 +364,13 @@ export function createUI(ctx: AppContext): UiApi {
     const s = ui.state();
     if (ui.runActive() && s) {
       if (s.phase !== lastPhase) handlePhase(s.phase);
-      if (now - hudAt >= 100) { hudAt = now; hud.update(s, now); layout.update(s); cards.update(); }
-      if (now - stripAt >= 200) { stripAt = now; strip.update(s); if (ui.isOpen('inspector')) inspector.update(s); }
+      if (now - hudAt >= 100) { hudAt = now; hud.update(s, now); layout.update(s); cards.update(); if (ui.isOpen('expedition')) expedition.update(s); }
+      if (now - stripAt >= 200) { stripAt = now; strip.update(s); bounties.update(s); if (ui.isOpen('inspector')) inspector.update(s); }
       if (now - panelsAt >= 250) {
         panelsAt = now;
         if (ui.isOpen('shop')) shop.update(s);
         if (ui.isOpen('event')) eventModal.update(s);
+        if (ui.isOpen('relic')) relics.update(s);
         if (tutorial.visible()) tutorial.reposition();
       }
     }
@@ -319,6 +381,8 @@ export function createUI(ctx: AppContext): UiApi {
     for (const u of unsubs) u();
     unsubSettings();
     input.destroy();
+    expedition.destroy();
+    announcer.destroy();
     cine.destroy();
     layout.destroy();
     cards.destroy();

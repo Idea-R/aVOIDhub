@@ -1,0 +1,51 @@
+/* Announcement cards: telegram / ticket plates upper-centre of the free zone. */
+#ui .rv-announce-layer {
+  position: absolute; top: calc(var(--rv-top-h) + 14px); left: var(--rv-left-w); right: var(--rv-right-w);
+  display: flex; justify-content: center; align-items: flex-start; pointer-events: none; z-index: 5;
+}
+#ui.rv-has-toasts .rv-announce-layer { right: calc(var(--rv-right-w) + var(--rv-toast-w) + 12px); }
+#ui .rv-announce {
+  position: relative; pointer-events: auto; cursor: pointer;
+  width: min(92%, calc(520 * var(--u))); padding: 12px 26px 14px; text-align: center;
+  background: linear-gradient(180deg, rgba(14, 18, 36, 0.97), rgba(9, 12, 24, 0.97));
+  border: 1px solid rgba(232, 193, 112, 0.75); border-radius: 4px;
+  box-shadow: 0 0 0 4px rgba(9, 12, 24, 0.85), 0 0 0 5px rgba(232, 193, 112, 0.28), 0 18px 50px rgba(0, 0, 0, 0.6), inset 0 0 40px rgba(109, 95, 214, 0.08);
+  will-change: transform, opacity;
+}
+#ui .rv-announce::before { content: ''; position: absolute; inset: 4px; border: 1px solid rgba(232, 193, 112, 0.22); border-radius: 2px; pointer-events: none; }
+#ui .rv-ann-corner { position: absolute; width: 12px; height: 12px; border: 2px solid var(--void); pointer-events: none; }
+#ui .rv-ann-corner.rv-c-tl { left: -1px; top: -1px; border-right: 0; border-bottom: 0; }
+#ui .rv-ann-corner.rv-c-tr { right: -1px; top: -1px; border-left: 0; border-bottom: 0; }
+#ui .rv-ann-corner.rv-c-bl { left: -1px; bottom: -1px; border-right: 0; border-top: 0; }
+#ui .rv-ann-corner.rv-c-br { right: -1px; bottom: -1px; border-left: 0; border-top: 0; }
+#ui .rv-ann-punch { position: absolute; right: 10px; top: 10px; width: 7px; height: 7px; border-radius: 50%; background: #070912; box-shadow: inset 0 0 0 1px rgba(232, 193, 112, 0.5); }
+#ui .rv-ann-head { display: flex; align-items: center; gap: 10px; justify-content: center; font-family: 'Special Elite', 'Courier New', monospace; font-size: calc(10 * var(--u)); letter-spacing: 0.34em; color: var(--gold); text-transform: uppercase; }
+#ui .rv-ann-head i { flex: 0 1 60px; height: 1px; background: linear-gradient(90deg, transparent, rgba(232, 193, 112, 0.6)); }
+#ui .rv-ann-head i:last-child { background: linear-gradient(90deg, rgba(232, 193, 112, 0.6), transparent); }
+#ui .rv-ann-title { margin-top: 5px; font-family: 'Cinzel', 'Times New Roman', serif; font-weight: 800; font-size: calc(22 * var(--u)); letter-spacing: 0.12em; line-height: 1.15; color: var(--fg); text-shadow: 0 0 22px rgba(232, 193, 112, 0.3), 0 2px 0 rgba(0, 0, 0, 0.6); }
+#ui .rv-ann-rule { width: 64%; height: 1px; margin: 7px auto 6px; background: linear-gradient(90deg, transparent, var(--gold), transparent); transform-origin: 50% 50%; }
+#ui .rv-ann-body { font-family: 'Special Elite', 'Courier New', monospace; font-size: calc(13 * var(--u)); color: var(--fg2); min-height: 1.4em; line-height: 1.4; letter-spacing: 0.02em; }
+#ui .rv-ann-body.rv-empty { min-height: 0; }
+#ui .rv-ann-caret { display: inline-block; width: 0.55em; height: 1em; margin-left: 2px; vertical-align: -0.15em; background: var(--gold); animation: rv-blink 0.6s steps(1) infinite; }
+#ui .rv-ann-body.rv-typed .rv-ann-caret, #ui .rv-ann-body.rv-empty .rv-ann-caret { display: none; }
+#ui .rv-announce.rv-tone-void { border-color: rgba(154, 140, 255, 0.8); box-shadow: 0 0 0 4px rgba(9, 12, 24, 0.85), 0 0 0 5px rgba(109, 95, 214, 0.35), 0 18px 50px rgba(0, 0, 0, 0.6), inset 0 0 40px rgba(109, 95, 214, 0.18); }
+#ui .rv-announce.rv-tone-void .rv-ann-head { color: #b9adff; }
+#ui .rv-announce.rv-tone-void .rv-ann-caret { background: #b9adff; }
+#ui .rv-announce.rv-tone-void .rv-ann-title { text-shadow: 0 0 22px rgba(109, 95, 214, 0.6), 0 2px 0 rgba(0, 0, 0, 0.6); }
+#ui .rv-announce.rv-tone-good .rv-ann-head { color: var(--good); }
+#ui .rv-announce.rv-tone-good .rv-ann-corner { border-color: var(--good); }
+#ui .rv-announce.rv-tone-bad { border-color: rgba(232, 111, 111, 0.8); }
+#ui .rv-announce.rv-tone-bad .rv-ann-head { color: var(--danger); }
+#ui .rv-announce.rv-tone-bad .rv-ann-corner { border-color: var(--danger); }
+#ui .rv-announce.rv-tone-bad .rv-ann-title { color: #ffd0d0; text-shadow: 0 0 22px rgba(232, 111, 111, 0.45), 0 2px 0 rgba(0, 0, 0, 0.6); }
+#ui .rv-announce.rv-tone-bad .rv-ann-rule { background: linear-gradient(90deg, transparent, var(--danger), transparent); }
+#ui .rv-announce.rv-tone-info .rv-ann-head { color: var(--info); }
+#ui .rv-announce.rv-tone-info .rv-ann-corner { border-color: var(--info); }
+/* a coach-mark under an announcement is noise while the card is up */
+#ui.rv-compact .rv-announce { padding: 9px 18px 11px; }
+#ui.rv-compact .rv-ann-title { font-size: calc(18 * var(--u)); }
+
+/* brand fonts through the chrome: panel titles + tutorial header in Cinzel, event copy in Special Elite */
+#ui .rv-modal h2, #ui .rv-side-head h2, #ui .rv-results h1, #ui .rv-exp-result h1, #ui .rv-exp-site { font-family: 'Cinzel', 'Times New Roman', serif; }
+#ui .rv-coach .rv-coach-step { font-family: 'Cinzel', 'Times New Roman', serif; font-weight: 600; letter-spacing: 0.16em; }
+#ui .rv-event .rv-event-text, #ui .rv-crewpick-lead, #ui .rv-relic-lead { font-family: 'Special Elite', 'Courier New', monospace; }

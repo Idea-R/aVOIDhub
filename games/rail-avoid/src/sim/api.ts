@@ -2,7 +2,7 @@
  * The command surface the UI / input / debug layers use to talk to the simulation.
  * Presentation reads `state` directly (read-only!) and subscribes to `bus` for effects.
  */
-import type { SimState, CarType, Tile, Settlement, CarDef, EnemyDef, ResourceKey, LocoUpgradeKind } from '../core/types';
+import type { SimState, CarType, Tile, Settlement, CarDef, EnemyDef, ResourceKey, LocoUpgradeKind, ExpeditionActionKind, ExpeditionTiming } from '../core/types';
 import type { EventBus } from '../core/events';
 import type { Rng } from '../core/rng';
 
@@ -56,6 +56,16 @@ export interface SimApi {
 
   // --- events ---
   chooseEventOption(index: number): boolean;
+  /** Relic 1-of-3 choice while phase === 'relic'. */
+  chooseRelic(index: number): boolean;
+  // --- expeditions (phase === 'expedition') ---
+  /** Send crew from an Expedition Site event (option 0 of 'node_site'). */
+  startExpedition(crewIds: string[]): boolean;
+  expeditionAction(kind: ExpeditionActionKind, targetFoe?: number): boolean;
+  /** Report the player's timing for the pending action/blow. */
+  expeditionResolve(timing: ExpeditionTiming): boolean;
+  /** Dismiss the result screen and resume the run. */
+  endExpedition(): boolean;
 
   // --- queries ---
   tileAt(col: number, row: number): Tile | null;
@@ -87,6 +97,9 @@ export interface SimApi {
     setWeather(kind: string): void;
     triggerEvent(defId?: string): void;
     invulnerable(on: boolean): void;
+    offerRelics(): void;
+    grantMarks(n: number): void;
+    startExpedition(): void;
     godTrain(): void;   // strong composition for testing
   };
 }

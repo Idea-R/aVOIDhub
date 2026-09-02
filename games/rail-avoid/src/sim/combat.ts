@@ -765,7 +765,7 @@ function updatePlanting(f: Frame, e: Enemy): void {
   for (const c of state.route.sapperCharges) if (c.col === col && c.row === row) { exists = true; break; }
   if (!exists) {
     const id = nextId(state, 'chg');
-    state.route.sapperCharges.push({ col, row, revealed: f.scout, timer: SAPPER_CHARGE_TIMER, id });
+    state.route.sapperCharges.push({ col, row, revealed: f.scout || (state.train.relics ?? []).includes('sappers_manual'), timer: SAPPER_CHARGE_TIMER, id });
     ctx.bus.defer('sapper:planted', { id, col, row });
     if (f.scout) log(state, 'Scout car spots a sapper charge on the track ahead!', 'warn');
   }

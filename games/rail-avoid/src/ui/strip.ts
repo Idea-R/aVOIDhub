@@ -7,7 +7,7 @@ import { MAX_CARS, TRAIN } from '../core/config';
 import { gsap, D, isReduced, popIn, shake } from './motion';
 import { levelOf, ROMAN } from './levels';
 
-const CREW_CODE: Record<CrewSpecialty, string> = { engineer: 'EN', gunner: 'GU', medic: 'MD', surveyor: 'SV', mechanic: 'MC', quartermaster: 'QM' };
+const CREW_CODE: Record<CrewSpecialty, string> = { engineer: 'EN', gunner: 'GU', medic: 'MD', surveyor: 'SV', mechanic: 'MC', quartermaster: 'QM', conductor: 'CD' };
 
 interface Chip {
   id: string;

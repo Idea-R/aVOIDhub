@@ -254,4 +254,82 @@ export class Sfx {
       case 'notify': this.notifyBlip('info'); break;
     }
   }
+
+  // ---------- expedition / relic / bounty cues (driven by the DOM UI at judged moments) ----------
+  cue(name: string): void {
+    const c = this.ctx, d = this.dest, u = this.uiDest, t = this.now;
+    switch (name) {
+      case 'windup':   // rising tick as the strike ring closes
+        if (!this.ok('cue:windup', 0.2)) return;
+        tone(c, d, { type: 'triangle', freq: 320, endFreq: 760, dur: 0.85, gain: 0.05, attack: 0.05, slide: 0.85, filter: { type: 'lowpass', freq: 2200 } });
+        break;
+      case 'foe_windup':
+        if (!this.ok('cue:foe', 0.2)) return;
+        tone(c, d, { type: 'sawtooth', freq: 140, endFreq: 70, dur: 0.9, gain: 0.07, attack: 0.1, slide: 0.9, filter: { type: 'lowpass', freq: 700 } });
+        noise(c, d, this.pink, { dur: 0.8, gain: 0.05, attack: 0.4, filter: { type: 'bandpass', freq: 500, q: 2 } });
+        break;
+      case 'perfect':
+        tone(c, d, { type: 'sine', freq: 180, endFreq: 40, dur: 0.35, gain: 0.5, slide: 0.2 });
+        noise(c, d, this.white, { dur: 0.16, gain: 0.35, filter: { type: 'highpass', freq: 1800 } });
+        tone(c, d, { type: 'triangle', freq: 1318, dur: 0.35, gain: 0.08, when: t + 0.02 });
+        tone(c, d, { type: 'triangle', freq: 1975, dur: 0.5, gain: 0.07, when: t + 0.09 });
+        break;
+      case 'good':
+        tone(c, d, { type: 'sine', freq: 160, endFreq: 50, dur: 0.28, gain: 0.38, slide: 0.18 });
+        noise(c, d, this.white, { dur: 0.1, gain: 0.22, filter: { type: 'bandpass', freq: 2200, q: 0.8 } });
+        tone(c, d, { type: 'triangle', freq: 988, dur: 0.25, gain: 0.06, when: t + 0.02 });
+        break;
+      case 'miss':
+        noise(c, d, this.pink, { dur: 0.22, gain: 0.18, filter: { type: 'lowpass', freq: 900, endFreq: 300 } });
+        tone(c, d, { type: 'square', freq: 200, endFreq: 120, dur: 0.18, gain: 0.05, filter: { type: 'lowpass', freq: 900 } });
+        break;
+      case 'block':
+        tone(c, d, { type: 'square', freq: 660, endFreq: 440, dur: 0.12, gain: 0.1, filter: { type: 'bandpass', freq: 1800, q: 3 } });
+        noise(c, d, this.white, { dur: 0.08, gain: 0.18, filter: { type: 'highpass', freq: 3000 } });
+        break;
+      case 'block_perfect':
+        tone(c, d, { type: 'square', freq: 880, endFreq: 660, dur: 0.16, gain: 0.12, filter: { type: 'bandpass', freq: 2400, q: 3 } });
+        noise(c, d, this.white, { dur: 0.12, gain: 0.25, filter: { type: 'highpass', freq: 3500 } });
+        tone(c, d, { type: 'sine', freq: 1760, dur: 0.6, gain: 0.07, attack: 0.01, when: t + 0.05 });
+        tone(c, d, { type: 'sine', freq: 2637, dur: 0.7, gain: 0.04, attack: 0.01, when: t + 0.1 });
+        break;
+      case 'stun':
+        for (let i = 0; i < 3; i++) tone(c, d, { type: 'sine', freq: 1500 - i * 200, dur: 0.1, gain: 0.05, when: t + i * 0.09 });
+        break;
+      case 'down':
+        tone(c, d, { type: 'sawtooth', freq: 220, endFreq: 55, dur: 0.7, gain: 0.14, slide: 0.6, filter: { type: 'lowpass', freq: 800 } });
+        noise(c, d, this.pink, { dur: 0.5, gain: 0.2, filter: { type: 'lowpass', freq: 400 } });
+        break;
+      case 'heal':
+        [784, 988, 1175].forEach((f, i) => tone(c, d, { type: 'sine', freq: f, dur: 0.35, gain: 0.06, attack: 0.02, when: t + i * 0.07 }));
+        break;
+      case 'rally': this.whistle(); break;
+      case 'exp_start':
+        tone(c, d, { type: 'sine', freq: 70, endFreq: 40, dur: 1.2, gain: 0.3, attack: 0.05 });
+        [330, 415, 494].forEach((f, i) => tone(c, d, { type: 'triangle', freq: f, dur: 0.8, gain: 0.06, attack: 0.03, when: t + 0.1 + i * 0.12 }));
+        break;
+      case 'exp_won':
+        [523, 659, 784, 1047].forEach((f, i) => tone(c, d, { type: 'triangle', freq: f, dur: 0.9, gain: 0.08, attack: 0.02, when: t + i * 0.13 }));
+        tone(c, d, { type: 'sawtooth', freq: 131, dur: 2.2, gain: 0.07, attack: 0.2, when: t + 0.4, filter: { type: 'lowpass', freq: 700 } });
+        break;
+      case 'exp_lost':
+        [330, 311, 294].forEach((f, i) => tone(c, d, { type: 'sawtooth', freq: f, dur: 1.1, gain: 0.07, attack: 0.05, when: t + i * 0.4, filter: { type: 'lowpass', freq: 600 } }));
+        break;
+      case 'relic_offer':
+        [880, 1109, 1319, 1760].forEach((f, i) => tone(c, d, { type: 'sine', freq: f, dur: 1.4, gain: 0.05, attack: 0.05, when: t + i * 0.08 }));
+        break;
+      case 'relic_take':
+        tone(c, d, { type: 'sine', freq: 1319, dur: 0.9, gain: 0.08, attack: 0.005 });
+        tone(c, d, { type: 'sine', freq: 1976, dur: 1.2, gain: 0.05, attack: 0.005, when: t + 0.05 });
+        noise(c, d, this.white, { dur: 0.3, gain: 0.05, filter: { type: 'highpass', freq: 5000 } });
+        break;
+      case 'bounty_new': tone(c, u, { type: 'triangle', freq: 660, dur: 0.1, gain: 0.05 }); tone(c, u, { type: 'triangle', freq: 880, dur: 0.18, gain: 0.05, when: t + 0.1 }); break;
+      case 'bounty_done': [784, 988, 1319].forEach((f, i) => tone(c, u, { type: 'sine', freq: f, dur: 0.4, gain: 0.06, when: t + i * 0.1 })); break;
+      case 'bounty_failed': tone(c, u, { type: 'square', freq: 330, endFreq: 220, dur: 0.3, gain: 0.05, filter: { type: 'lowpass', freq: 1000 } }); break;
+      case 'marks':
+        if (!this.ok('cue:marks', 0.15)) return;
+        tone(c, u, { type: 'sine', freq: 1568, dur: 0.12, gain: 0.05 }); tone(c, u, { type: 'sine', freq: 2093, dur: 0.2, gain: 0.04, when: t + 0.07 });
+        break;
+    }
+  }
 }

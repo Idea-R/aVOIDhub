@@ -36,7 +36,7 @@ export function updateWeather(ctx: SimContext): void {
     }
   }
   w.intensity = Math.min(1, w.intensity + dt / 5);
-  if (w.kind === 'storm' && w.intensity > 0.5) {
+  if (w.kind === 'storm' && w.intensity > 0.5 && !(state.train.relics ?? []).includes('ashfall_cloak')) {
     w.lightningTimer -= dt;
     if (w.lightningTimer <= 0) {
       w.lightningTimer = ctx.rng.events.range(8, 16);

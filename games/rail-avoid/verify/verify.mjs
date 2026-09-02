@@ -530,6 +530,50 @@ async function main() {
     report.bosses = results;
   }, 420000);
 
+  await gate('progression', async (g) => {
+    if (!(await requireRail(page, g))) return;
+    if (!(await ensureRunning(page, g))) return;
+    await evalRail(page, R => { R.autopilot.setEnabled(false); R.setSpeed(1); try { R.view && R.view.skipCinematic(); } catch {} });
+    // relic choice
+    await evalRail(page, R => R.sim.debug.offerRelics());
+    const relicPhase = await pollRail(page, R => R.state.phase === 'relic', 3000);
+    g.assert(relicPhase, 'offerRelics did not enter phase relic');
+    await sleep(900);
+    await shot(page, 'relic_choice', g);
+    const relicOk = await evalRail(page, R => R.sim.chooseRelic(0));
+    g.assert(relicOk, 'chooseRelic(0) failed');
+    const relics = await evalRail(page, R => R.state.train.relics.length);
+    g.assert(relics === 1, 'relic not recorded (' + relics + ')');
+    // expedition: drive through the API with perfect timing
+    await evalRail(page, R => R.sim.debug.startExpedition());
+    const exp = await pollRail(page, R => R.state.phase === 'expedition', 3000);
+    g.assert(exp, 'startExpedition did not enter phase expedition');
+    await sleep(1200);
+    await shot(page, 'expedition', g);
+    let steps = 0;
+    while (steps++ < 80) {
+      const st = await evalRail(page, R => { const x = R.state.expedition; if (!x) return 'none'; if (x.outcome) return x.outcome; if (x.pending) { R.sim.expeditionResolve('perfect'); return 'resolved'; } if (x.turn === 'player') { R.sim.expeditionAction('strike'); return 'acted'; } return 'wait'; });
+      if (st === 'won' || st === 'lost' || st === 'fled' || st === 'none') { g.note('expedition outcome=' + st + ' after ' + steps + ' steps'); break; }
+      await sleep(60);
+    }
+    await sleep(800);
+    await shot(page, 'expedition_result', g);
+    const ended = await evalRail(page, R => R.sim.endExpedition());
+    g.assert(ended, 'endExpedition failed');
+    // a win offers a relic; take it if so
+    await sleep(300);
+    await evalRail(page, R => { if (R.state.phase === 'relic') R.sim.chooseRelic(0); });
+    const marks = await evalRail(page, R => R.state.train.marks);
+    g.note('marks=' + marks + ' relics=' + (await evalRail(page, R => R.state.train.relics.length)));
+    // loot: kill a wave with the god train and confirm at least one drop existed
+    await evalRail(page, R => { R.godTrain(); R.invulnerable(true); R.warpToRegion(2); R.spawnWave(['raider','raider','raider','hound','hound','crawler']); R.setSpeed(4); R.autopilot.setEnabled(true); });
+    const drops = await pollRail(page, R => (R.state.loot && R.state.loot.length > 0) || Object.keys(R.state.stats.kills).length > 0 && (R.state.stats.lootCollected || 0) > 0, 30000);
+    g.assert(drops, 'no salvage drops or pickups observed after a wave');
+    await sleep(500);
+    await shot(page, 'loot', g);
+    await evalRail(page, R => { R.setSpeed(1); R.invulnerable(false); });
+  }, 120000);
+
   await gate('save_load', async (g) => {
     if (!(await requireRail(page, g))) return;
     if (!(await ensureRunning(page, g))) return;

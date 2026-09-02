@@ -221,7 +221,8 @@ export function createAutopilot(ctx: AppContext): Autopilot {
     decisions++;
     const notes: string[] = [];
     switch (state.phase) {
-      case 'running': {
+      case 'running':
+        if (ctx.sim.state.boss.active && ctx.sim.state.boss.type === 'boss_maw') { notes.push('maw: holding the loop'); break; } {
         const t = state.train;
         if (t.stopped && t.stopReason === 'settlement' && t.stopTimer > 6) {
           sim.depart();
@@ -237,6 +238,15 @@ export function createAutopilot(ctx: AppContext): Autopilot {
       }
       case 'shop': notes.push(shop()); break;
       case 'event': notes.push(resolveEvent()); break;
+      case 'relic': { const anySim = ctx.sim as any; if (typeof anySim.chooseRelic === 'function') { anySim.chooseRelic(0); notes.push('relic 0'); } break; }
+      case 'expedition': {
+        const anySim = ctx.sim as any; const x = ctx.sim.state.expedition;
+        if (!x) break;
+        if (x.outcome) { anySim.endExpedition(); notes.push('expedition end ' + x.outcome); }
+        else if (x.pending) { anySim.expeditionResolve('good'); }
+        else { anySim.expeditionAction('strike'); notes.push('expedition strike'); }
+        break;
+      }
       default: break;
     }
     if (notes.length) last = `#${decisions} t=${state.time.toFixed(1)} ${notes.join(' | ')}`;

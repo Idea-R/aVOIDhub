@@ -105,7 +105,7 @@ function cinematic(name: 'run_intro' | 'region_enter' | 'boss_intro' | 'victory'
   let done = false;
   const finish = () => { if (!done) { done = true; cinematicActive = false; } };
   ctx.view.playCinematic(name, data).then(finish, finish);
-  window.setTimeout(finish, 15000); // hard safety cap
+  window.setTimeout(finish, 9000); // hard safety cap
 }
 bus.on('run:start', ({ seed }) => {
   const region = ctx.sim.state.region;

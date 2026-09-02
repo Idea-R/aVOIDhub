@@ -14,7 +14,7 @@ const CREW_NAMES = ['Ada', 'Bram', 'Cass', 'Dov', 'Elka', 'Finn', 'Greta', 'Hale
 export function initTrain(state: SimState): TrainState {
   const t: TrainState = {
     cars: [], routeIndex: 0, progress: 0, speed: 0, speedTarget: 0, moving: false, stopped: true, stopReason: 'no_route',
-    stopTimer: 0, stopPressure: 0, hounds: 0, reversing: false, locoUpgrades: { speed: 0, power: 0, frame: 0, crew: 0 }, watchUntil: 0,
+    stopTimer: 0, stopPressure: 0, hounds: 0, reversing: false, locoUpgrades: { speed: 0, power: 0, frame: 0, crew: 0 }, watchUntil: 0, relics: [], marks: 0,
     resources: { ...TRAIN.startResources }, capacity: { ...TRAIN.baseCapacity },
     passengers: 0, passengerCap: 0, passengersDelivered: 0, morale: 80, crew: [],
     trailX: [], trailY: [], trailAngle: [], burningScrap: false, distanceTravelled: 0,
@@ -22,6 +22,10 @@ export function initTrain(state: SimState): TrainState {
   };
   state.train = t;
   for (const type of ['locomotive', 'barracks', 'coal_bunker', 'gatling', 'cargo', 'coach'] as CarType[]) t.cars.push(makeCar(state, type));
+  // the Conductor (player character) always rides the locomotive and leads expeditions
+  const conductor = addCrew(state, 'conductor', 'The Conductor');
+  conductor.carIndex = 0;
+  t.cars[0].crewId = conductor.id;
   recomputeCapacity(state);
   computeTrail(state);
   return t;
@@ -198,8 +202,9 @@ export function propagate(ctx: SimContext): void {
     if (car.disabled) { car.disabledFor -= dt; if (car.disabledFor <= 0) { car.disabled = false; car.disabledFor = 0; } }
     if (car.heat >= TRAIN.heatFireAt && !car.onFire) { car.onFire = true; ctx.bus.defer('car:fire', { carIndex: i, on: true }); ctx.bus.defer('car:overheat', { carIndex: i }); log(state, `${defs[i].name} is on fire!`, 'bad'); }
     if (car.onFire && car.heat < 60) { car.onFire = false; ctx.bus.defer('car:fire', { carIndex: i, on: false }); }
-    if (car.onFire) damageCar(ctx, i, TRAIN.fireDamage * dt, 'fire');
-    else if (car.heat >= TRAIN.heatDamageAt) damageCar(ctx, i, TRAIN.heatDamage * dt, 'heat');
+    const emberMul = (t.relics ?? []).includes('ember_gloves') ? 0.5 : 1;
+    if (car.onFire) damageCar(ctx, i, TRAIN.fireDamage * dt * emberMul, 'fire');
+    else if (car.heat >= TRAIN.heatDamageAt) damageCar(ctx, i, TRAIN.heatDamage * dt * emberMul, 'heat');
     if (before < TRAIN.heatDamageAt && car.heat >= TRAIN.heatDamageAt && !car.onFire) ctx.bus.defer('car:overheat', { carIndex: i });
     if (state.phase === 'defeat') return;
   }
@@ -226,6 +231,7 @@ function production(ctx: SimContext): void {
       }
     }
     if (cr && cr.specialty === 'mechanic' && car.hp < car.maxHp) car.hp = Math.min(car.maxHp, car.hp + TRAIN.mechanicRepair * dt);
+    if ((t.relics ?? []).includes('tinkers_kit') && car.hp < car.maxHp) car.hp = Math.min(car.maxHp, car.hp + 0.4 * dt);
     if (car.type === 'medical' && pr > 0.5) {
       for (const c of t.crew) c.hp = Math.min(100, c.hp + TRAIN.crewHeal * dt);
     }
@@ -245,7 +251,7 @@ function production(ctx: SimContext): void {
     const need = t.passengers * TRAIN.passengerFoodPerMin / 60 * dt;
     if (t.resources.food > 0) { t.resources.food = Math.max(0, t.resources.food - need); t.morale = Math.min(100, t.morale + 0.15 * dt); }
     else { t.morale = Math.max(0, t.morale - 1.2 * dt); }
-    if (state.weather.kind === 'ashfall' && state.weather.intensity > 0.5 && !t.cars.some(c => c.type === 'sleeper' && c.hp > 0)) {
+    if (state.weather.kind === 'ashfall' && state.weather.intensity > 0.5 && !t.cars.some(c => c.type === 'sleeper' && c.hp > 0) && !(t.relics ?? []).includes('ashfall_cloak')) {
       t.morale = Math.max(0, t.morale - 0.4 * dt);
       const hasMed = t.cars.some(c => c.type === 'medical' && c.hp > 0);
       state.train.stopTimer; // no-op; ashfall passenger loss is handled by the periodic block below
@@ -307,8 +313,9 @@ export function speedTarget(state: SimState): number {
   if (tile) f *= TERRAIN_SPEED[tile.terrain];
   const w = WEATHER[state.weather.kind];
   f *= 1 - (1 - w.speedMul) * state.weather.intensity;
-  f *= Math.max(0.4, 1 - t.hounds * TRAIN.houndSlowPerStack);
+  if (!(t.relics ?? []).includes('hound_whistle')) f *= Math.max(0.4, 1 - t.hounds * TRAIN.houndSlowPerStack);
   f *= 1 + UPGRADES.locoSpeedPerLevel * (t.locoUpgrades?.speed ?? 0);
+  if ((t.relics ?? []).includes('grease_tin')) f *= 1.08;
   if (t.resources.coal <= 0 && t.resources.scrap <= 0) f *= 0.3;
   return TRAIN.baseSpeed * f;
 }
@@ -356,7 +363,7 @@ export function updateMovement(ctx: SimContext, onEnterTile: (col: number, row: 
   const step = t.speed * pxPerHex * dt;
   // coal / scrap burn
   const hexes = step / pxPerHex;
-  const coalNeed = hexes * (TRAIN.coalPerHex + t.totalWeight * TRAIN.coalPerTonPerHex);
+  const coalNeed = hexes * (TRAIN.coalPerHex + t.totalWeight * TRAIN.coalPerTonPerHex) * ((t.relics ?? []).includes('coal_heart') ? 0.8 : 1);
   if (t.resources.coal >= coalNeed) { t.resources.coal -= coalNeed; t.burningScrap = false; }
   else if (t.resources.scrap >= coalNeed * TRAIN.scrapBurnRatio) {
     t.resources.coal = 0; t.resources.scrap -= coalNeed * TRAIN.scrapBurnRatio;

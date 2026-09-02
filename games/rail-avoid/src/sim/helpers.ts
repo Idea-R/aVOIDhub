@@ -152,7 +152,7 @@ export function destroyCar(ctx: SimContext, idx: number, source: string): void {
   if (state.phase === 'defeat') return;
   // split: everything behind is lost
   const lostCount = t.cars.length - idx - 1;
-  if (TRAIN.splitOnDestroy && lostCount > 0) {
+  if (TRAIN.splitOnDestroy && lostCount > 0 && !(t.relics ?? []).includes('iron_couplings')) {
     let lostPassengers = 0;
     for (let i = idx + 1; i < t.cars.length; i++) {
       lostPassengers += t.cars[i].passengers;
@@ -243,6 +243,7 @@ export function recomputeCapacity(state: SimState): void {
     use += d.powerUse;
   }
   if (qm) for (const k of Object.keys(cap) as ResourceKey[]) cap[k] = Math.round(cap[k] * 1.3);
+  if ((t.relics ?? []).includes('ledger')) for (const k of Object.keys(cap) as ResourceKey[]) cap[k] = Math.round(cap[k] * 1.2);
   t.capacity = cap;
   for (const k of Object.keys(cap) as ResourceKey[]) t.resources[k] = Math.min(t.resources[k], cap[k]);
   t.passengerCap = pcap;
@@ -283,6 +284,9 @@ export function damageEnemy(ctx: SimContext, e: Enemy, amount: number, cls: Dama
   return dmg;
 }
 
+/** Hooks registered by loot/bounty modules (avoids import cycles). */
+export const killHooks: Array<(ctx: SimContext, e: Enemy) => void> = [];
+
 export function killEnemy(ctx: SimContext, e: Enemy, cls: DamageClass | null): void {
   if (e.state === 'dead') return;
   e.hp = 0;
@@ -297,6 +301,7 @@ export function killEnemy(ctx: SimContext, e: Enemy, cls: DamageClass | null): v
   state.stats.score += SCORE.kill;
   if (cls) state.director.killsByClass[cls] = (state.director.killsByClass[cls] ?? 0) + 1;
   ctx.bus.defer('enemy:died', { id: e.id, type: e.type, x: e.x, y: e.y, killedBy: cls });
+  for (const h of killHooks) { try { h(ctx, e); } catch (err) { console.error('[killHook]', err); } }
 }
 
 export function isNight(state: SimState): boolean { return state.isNight; }

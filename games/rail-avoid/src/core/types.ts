@@ -24,7 +24,7 @@ export interface Tile {
 
 export type SettlementType =
   | 'start' | 'village' | 'depot' | 'mine' | 'farm' | 'fuel' | 'clinic' | 'armory' | 'yard' | 'terminus'
-  | 'watchtower' | 'shrine' | 'wreck' | 'market';
+  | 'watchtower' | 'shrine' | 'wreck' | 'market' | 'site';
 
 export interface ResourceBundle {
   rails?: number;
@@ -36,7 +36,7 @@ export interface ResourceBundle {
 
 export type ResourceKey = 'rails' | 'scrap' | 'coal' | 'ammo' | 'food';
 
-export type CrewSpecialty = 'engineer' | 'gunner' | 'medic' | 'surveyor' | 'mechanic' | 'quartermaster';
+export type CrewSpecialty = 'engineer' | 'gunner' | 'medic' | 'surveyor' | 'mechanic' | 'quartermaster' | 'conductor';
 
 export interface Settlement {
   id: string;
@@ -156,6 +156,8 @@ export interface TrainState {
   stopPressure: number;       // 0..1
   reversing: boolean;         // backing down the traversed track
   locoUpgrades: LocoUpgrades; // engine upgrade tracks bought at yards (0..3 each)
+  relics: string[];           // relic ids owned this run
+  marks: number;              // Void Marks (rare currency)
   watchUntil: number;         // sim time until which watchtower early warning is active
   hounds: number;             // hound bite stacks (slow)
   resources: Record<ResourceKey, number>;
@@ -281,7 +283,7 @@ export interface BossState {
 export interface PassengerEventOption {
   label: string;
   desc: string;
-  requires?: { car?: CarType; resource?: ResourceKey; amount?: number };
+  requires?: { car?: CarType; resource?: ResourceKey; amount?: number; marks?: number };
 }
 
 export interface PassengerEventDef {
@@ -306,7 +308,47 @@ export interface WaveDirectorState {
   warning: { type: EnemyType; from: 'west' | 'north' | 'south' | 'east'; in: number } | null;
 }
 
-export type RunPhase = 'title' | 'running' | 'paused' | 'event' | 'shop' | 'victory' | 'defeat';
+export type RunPhase = 'title' | 'running' | 'paused' | 'event' | 'shop' | 'relic' | 'expedition' | 'victory' | 'defeat';
+
+// ---------- Loot / bounties / expeditions ----------
+export interface LootDrop { id: string; x: number; y: number; kind: 'scrap' | 'ammo' | 'rails' | 'marks'; amount: number; ttl: number }
+
+export interface Bounty {
+  id: string;
+  kind: 'kill' | 'deliver' | 'reach';
+  fromId: string;
+  fromName: string;
+  status: 'active' | 'done' | 'failed';
+  target: string;          // enemy type, settlement id or 'yard'
+  targetName: string;
+  count: number;
+  progress: number;
+  expiresAt: number;
+  reward: { marks: number; rails: number; scrap: number };
+  title: string;
+  desc: string;
+}
+
+export type ExpeditionTiming = 'perfect' | 'good' | 'miss';
+export type ExpeditionActionKind = 'strike' | 'guard' | 'special' | 'flee';
+export interface ExpeditionActor { id: string; name: string; specialty: CrewSpecialty; hp: number; maxHp: number; guard: number; down: boolean }
+export interface ExpeditionFoe { id: string; kind: string; name: string; hp: number; maxHp: number; atk: number; speed: number; stunned: number; desc: string }
+export interface ExpeditionState {
+  siteId: string;
+  round: number;
+  rounds: number;
+  turn: 'player' | 'enemy';
+  activeActor: number;
+  activeFoe: number;
+  actors: ExpeditionActor[];
+  foes: ExpeditionFoe[];
+  rally: number;
+  pending: { kind: ExpeditionActionKind; actorIndex: number; foeIndex: number } | null;
+  foeSwingsLeft?: number;
+  log: string[];
+  outcome: 'won' | 'lost' | 'fled' | null;
+  rewardRelic: boolean;
+}
 
 export interface Stats {
   kills: Record<string, number>;
@@ -319,6 +361,10 @@ export interface Stats {
   bossesDefeated: number;
   eventsResolved: number;
   score: number;
+  relicsTaken?: number;
+  lootCollected?: number;
+  bountiesDone?: number;
+  expeditionsWon?: number;
 }
 
 export interface SimState {
@@ -344,6 +390,13 @@ export interface SimState {
   director: WaveDirectorState;
   activeEvent: ActiveEvent | null;
   eventCooldown: number;
+  loot: LootDrop[];
+  bounties: Bounty[];
+  pendingRelicChoice: { options: string[]; source: string } | null;
+  phaseBeforeRelic: RunPhase | null;
+  pendingEliteRelic: number;
+  expedition: ExpeditionState | null;
+  phaseBeforeExpedition: RunPhase | null;
   usedEvents: string[];
   region: number;             // current region of loco
   regionsEntered: number[];
