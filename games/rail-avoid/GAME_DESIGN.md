@@ -25,7 +25,7 @@ You command the last train on a continent that is falling into the void. The voi
 ## Map
 - 160×36 flat-top hex continent, four vertical regions of 40 columns.
 - Terrain: plains, forest, hills, mountain (impassable), water (bridge), ruins, ash, crystal.
-- **Pre-laid rail network**: a spine plus branches with junctions per region. Players switch routes by planning along a branch.
+- **Three main lines**: the Central Line (yards, fuel, shrines; balanced), the Northern Line through the highlands (mines, armouries, depots, expedition sites; +threat, richer salvage) and the Southern Line through the lowlands (villages, farms, clinics, markets; passengers, calmer). The lines only meet at a **Crossroads** hub on each region boundary (a fortified junction, not a haven: fight through an elite ambush for a guaranteed relic, pay a scrap toll, or bribe the tower with marks); anywhere else you cut your own track between lines (rails, time and exposure). All lines rejoin at the Last Gate ring. Region terrain blends across the borders instead of a hard seam.
 - **Void front**: a noisy column frontier advancing east at a tuned rate; occasional *rifts* open ahead of the train (scripted per region) forcing detours.
 - ~65 settlements and nodes: village, depot (rails), mine (scrap), farm (food), fuel (coal), clinic (medic), armory (ammo), yard (repair/shop), watchtower, shrine, wreck, market, terminus.
 

@@ -9,7 +9,7 @@ import { ENEMY_DEFS } from '../core/enemies';
 import { hexToWorld, tileKey } from '../core/hex';
 import { generateWorld, worldToState } from './worldgen';
 import { initTrain, updateTrain, computeTrail, detachFrom, moveCar, addCar, assignCrew, startReversing, stopReversing } from './train';
-import { planRange, plannableTiles, previewPlan, planTile, unplanLast, clearPlan, planPathTo, edgeCost, tileHasRail, isRail, aheadCount } from './route';
+import { planRange, plannableTiles, previewPlan, planTile, unplanLast, clearPlan, planPathTo, edgeCost, tileHasRail, isRail, aheadCount, junctionOptions } from './route';
 import { initWeather, initVoid, updateWeather, updateDayNight, updateVoid, voidDistance } from './weather';
 import { updateEvents, chooseEventOption } from './simEvents';
 import { onArrive, updateStop, depart, buyCar, sellCar, repairCar, repairAll, closeShop, canShop, upgradeCar, upgradeCost, upgradeLoco, locoUpgradeCost } from './settlements';
@@ -79,7 +79,7 @@ export class Sim implements SimApi {
       version: SAVE_VERSION, seed, time: 0, tick: 0, phase: 'running', speedMul: 1,
       mapW: MAP_W, mapH: MAP_H, tiles: [], settlements: [],
       train: null as any,
-      route: { path: [], builtLinks: [], railLinks: [], planRange: 6, blocked: false, sapperCharges: [] },
+      route: { path: [], builtLinks: [], railLinks: [], railLines: {}, planRange: 6, blocked: false, sapperCharges: [] },
       enemies: [], projectiles: [], weather: initWeather(), dayTime: 0.1, isNight: false,
       void: initVoid(), boss: initBoss(), director: initDirector(),
       activeEvent: null, eventCooldown: EVENTS.firstAfter, usedEvents: [],
@@ -260,6 +260,7 @@ export class Sim implements SimApi {
   unplanLast(): PlanResult { const r = unplanLast(this.ctx); this.bus.flush(); return r; }
   clearPlan(): void { clearPlan(this.ctx); this.bus.flush(); }
   plannableTiles() { return plannableTiles(this.state); }
+  junctionOptions() { return junctionOptions(this.state); }
   planPathTo(col: number, row: number): PlanResult {
     if (this.state.phase === 'defeat' || this.state.phase === 'victory') return { ok: false, reason: 'Run over' };
     const r = planPathTo(this.ctx, col, row); this.bus.flush(); return r;
@@ -326,6 +327,7 @@ export class Sim implements SimApi {
       if (!st.train.locoUpgrades) st.train.locoUpgrades = { speed: 0, power: 0, frame: 0, crew: 0 };
       if (st.train.watchUntil === undefined) st.train.watchUntil = 0;
       for (const c of st.train.cars) if (!c.level) c.level = 1;
+      if (!st.route.railLines) st.route.railLines = {};
       if (!st.train.relics) st.train.relics = [];
       if (st.train.marks === undefined) st.train.marks = 0;
       if (!st.loot) st.loot = [];

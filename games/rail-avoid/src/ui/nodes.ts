@@ -17,6 +17,7 @@ export const NODE_META: Record<string, NodeMeta> = {
   shrine:     { icon: '☥', label: 'Shrine',       color: '#d6b4f0', blurb: 'A choice awaits on arrival.' },
   wreck:      { icon: '☒', label: 'Wreck',        color: '#a3a8b8', blurb: 'Salvage — with luck, a free car.' },
   market:     { icon: '⚖', label: 'Market',       color: '#e8c170', blurb: 'Trade goods on arrival.' },
+  crossroads: { icon: '⑂', label: 'Crossroads',   color: '#9aa3b8', blurb: 'Where lines meet — choose a branch.' },
 };
 
 export function nodeMeta(type: string | null | undefined): NodeMeta {

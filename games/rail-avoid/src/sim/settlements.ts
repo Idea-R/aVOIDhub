@@ -71,7 +71,7 @@ export function onArrive(ctx: SimContext, s: Settlement): void {
   }
   onSettlementForBounty(ctx, s, delivered);
   maybePostBounty(ctx, s);
-  if (s.type === 'shrine' || s.type === 'market' || s.type === 'wreck' || s.type === 'site') {
+  if (s.type === 'shrine' || s.type === 'market' || s.type === 'wreck' || s.type === 'site' || s.type === 'crossroads') {
     const id = 'node_' + s.type;
     state.activeEvent = { defId: id, startedAt: state.time };
     state.phase = 'event';
@@ -99,6 +99,8 @@ export function updateStop(ctx: SimContext): void {
   const { state, dt } = ctx;
   const t = state.train;
   if (!t.stopped || t.stopReason !== 'settlement') return;
+  const here = currentSettlement(ctx);
+  if (here && here.type === 'crossroads') { if (state.phase !== 'shop' && t.stopTimer >= 4) depart(ctx); return; } // no haven at the crossroads
   // settlement militia defend the haven while the train is in
   const lp = locoPos(state);
   for (const e of state.enemies) {

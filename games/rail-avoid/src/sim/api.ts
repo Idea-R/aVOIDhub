@@ -33,6 +33,8 @@ export interface SimApi {
   plannableTiles(): Array<{ col: number; row: number; cost: number; free: boolean }>;
   /** Auto-plan toward a target tile with an A* over cost (used by autopilot & double-click). */
   planPathTo(col: number, row: number): PlanResult;
+  /** Branch options at the current plan end (rail continuations), with line id and the next settlement along each. */
+  junctionOptions(): Array<{ col: number; row: number; line: number; lineName: string; next: { id: string; name: string; type: string; distance: number } | null }>;
 
   // --- train ---
   depart(): void;                          // leave a settlement early

@@ -164,5 +164,10 @@ export const EXPEDITION = {
   rescueChance: 0.3,
 };
 
+export const LINE_NAMES = ['Central Line', 'Northern Line', 'Southern Line', 'Crossover'];
+export const LINE_COLORS = [0xe8dcb8, 0xe8a94f, 0x6fd3c8, 0x9aa3b8];
+/** Threat offset applied to tiles near each line (index = line id). */
+export const LINE_THREAT = [0, 0.16, -0.08, 0.04];
+
 export const REGION_NAMES = ['The Greenbelt', 'The Rust Reaches', 'The Ash Steppe', 'The Void Frontier'];
 export const REGION_COLORS = [0x6fbf73, 0xc98a4b, 0x9a8fa6, 0x6d5fd6];

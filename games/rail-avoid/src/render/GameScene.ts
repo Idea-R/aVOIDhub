@@ -16,6 +16,7 @@ import { TerrainLayer, TerrainFx } from './terrain';
 import { VoidLayer } from './voidLayer';
 import { TrackLayer } from './trackLayer';
 import { PlannableLayer } from './plannableLayer';
+import { LineLayer } from './lineLayer';
 import { SettlementsLayer } from './settlementsLayer';
 import { TrainLayer } from './trainLayer';
 import { EnemyLayer } from './enemyLayer';
@@ -61,6 +62,7 @@ export class GameScene extends Phaser.Scene {
   public voidL!: VoidLayer;
   public track!: TrackLayer;
   public plannable!: PlannableLayer;
+  public lines!: LineLayer;
   public settlements!: SettlementsLayer;
   public train!: TrainLayer;
   public enemies!: EnemyLayer;
@@ -136,6 +138,8 @@ export class GameScene extends Phaser.Scene {
     this.voidL = new VoidLayer(this, LAYER_DEPTH.void, this.fx, this.settings);
     this.track = new TrackLayer(this, LAYER_DEPTH.track, LAYER_DEPTH.trackPulse);
     this.plannable = new PlannableLayer(this, LAYER_DEPTH.plannable);
+    // line hover sits just above the track bake; junction signage floats above the y-sorted world
+    this.lines = new LineLayer(this, LAYER_DEPTH.trackPulse + 0.3, LAYER_DEPTH.projectiles - 10);
     this.settlements = new SettlementsLayer(this, this.settlementLayer, this.fx, this.settings);
     this.train = new TrainLayer(this, this.worldLayer, this.fx, this.settings);
     this.enemies = new EnemyLayer(this, this.worldLayer, this.airLayer, this.shadowLayer, this.fx, this.settings);
@@ -511,13 +515,19 @@ export class GameScene extends Phaser.Scene {
       try { bus.emit('ui:selectCar', { index: ci }); } catch { /* ignore */ }
       return;
     }
-    // 2) settlement marker
+    // 2) junction signage (label / chevron corridor) → plan the first tile of that branch
+    const jo = this.lines.hitTest(wp.x, wp.y, cam.zoom);
+    if (jo) {
+      try { this.ctx.sim.planTile(jo.option.col, jo.option.row); } catch (e) { console.warn('[render] junction plan failed', e); }
+      return;
+    }
+    // 3) settlement marker
     const sid = this.settlements.hitTest(wp.x, wp.y, 16 / cam.zoom);
     if (sid) {
       try { bus.emit('ui:selectSettlement', { id: sid }); } catch { /* ignore */ }
       return;
     }
-    // 3) tile planning
+    // 4) tile planning
     const hex = this.screenToHex(sx, sy);
     if (!hex) return;
     this.planHex(hex[0], hex[1]);
@@ -558,11 +568,13 @@ export class GameScene extends Phaser.Scene {
     const zoom = cam.zoom || 1;
     const wp = cam.getWorldPoint(p.x, p.y);
     const interactive = !dragging && !this.cine.isPlaying() && st.phase !== 'title';
-    let car = -1, sid: string | null = null;
+    let car = -1, sid: string | null = null, jopt = -1;
     if (interactive) {
       car = this.train.hitTest(wp.x, wp.y, Math.max(16, 22 / zoom));
-      if (car < 0) sid = this.settlements.hoverHitTest(wp.x, wp.y, 14 / zoom);
+      if (car < 0) { const jo = this.lines.hitTest(wp.x, wp.y, zoom); if (jo) jopt = jo.index; }
+      if (car < 0 && jopt < 0) sid = this.settlements.hoverHitTest(wp.x, wp.y, 14 / zoom);
     }
+    this.lines.setHoverOption(jopt);
     const hex = interactive ? this.screenToHex(p.x, p.y) : null;
     const bus = this.ctx.bus;
     // position updates only when the pointer actually moved, at most every 60 ms
@@ -588,8 +600,8 @@ export class GameScene extends Phaser.Scene {
     }
     if (emitted) { this.lastHoverPosEmit = now; this.pointerMoved = false; }
     this.settlements.setHover(sid);
-    // --- hex tile (suppressed while a car / settlement is hovered) ---
-    const suppress = car >= 0 || !!sid;
+    // --- hex tile (suppressed while a car / settlement / junction label is hovered) ---
+    const suppress = car >= 0 || !!sid || jopt >= 0;
     this.plannable.hovered = suppress ? null : hex;
     if (suppress) {
       if (this.lastHoverKey !== 'none') { this.lastHoverKey = 'none'; this.emitHover(null); }
@@ -598,7 +610,7 @@ export class GameScene extends Phaser.Scene {
       if (key !== this.lastHoverKey) { this.lastHoverEmit = now; this.lastHoverKey = key; this.emitHover(hex); }
     }
     // --- cursor ---
-    this.setCursor(this.cursorFor(dragging, car, sid, hex));
+    this.setCursor(jopt >= 0 && !dragging ? 'pointer' : this.cursorFor(dragging, car, sid, hex));
   }
 
   private cursorFor(dragging: boolean, car: number, sid: string | null, hex: [number, number] | null): CursorKind {
@@ -636,6 +648,7 @@ export class GameScene extends Phaser.Scene {
     if (this.hoverCar !== -1) { this.hoverCar = -1; try { bus?.emit('ui:hoverCar', { index: -1, x: p.x, y: p.y }); } catch { /* ignore */ } }
     if (this.hoverSettlement !== null) { this.hoverSettlement = null; try { bus?.emit('ui:hoverSettlement', { id: null, x: p.x, y: p.y }); } catch { /* ignore */ } }
     this.settlements.setHover(null);
+    this.lines.setHoverOption(-1);
     this.plannable.hovered = null;
     if (this.lastHoverKey !== 'none') { this.lastHoverKey = 'none'; this.emitHover(null); }
   }
@@ -747,6 +760,7 @@ export class GameScene extends Phaser.Scene {
     try { this.voidL.update(state, tSec, dt, view); } catch (e) { this.warnOnce('void', e); }
     try { this.track.update(state, tSec, rm, zoom); } catch (e) { this.warnOnce('track', e); }
     try { this.plannable.update(state, sim, time, this.cameraCtl.pointerOver, zoom, rm); } catch (e) { this.warnOnce('plannable', e); }
+    try { this.lines.update(state, sim, time, rm, zoom, this.cameraCtl.pointerOver ? this.plannable.hovered : null, dt); } catch (e) { this.warnOnce('lines', e); }
     try { this.settlements.update(state, time, zoom, rm, this.overlay.night, view, loco, dt); } catch (e) { this.warnOnce('settlements', e); }
     try { this.enemies.update(state, dt, time, loco); } catch (e) { this.warnOnce('enemies', e); }
     if (this.selectedCar >= (state.train?.cars?.length ?? 0)) this.selectedCar = -1;
@@ -795,6 +809,7 @@ export class GameScene extends Phaser.Scene {
     try { this.terrain.build(state, this.settings.decorDensity, this.settings.quality === 'high'); } catch (e) { console.error('[render] terrain build', e); }
     try { this.settlements.rebuild(state); } catch (e) { console.error('[render] settlements', e); }
     this.track.invalidate();
+    this.lines.invalidate();
     this.enemies.clear();
     this.projectiles.clear();
     this.loot.clear();

@@ -12,6 +12,7 @@ import type { GameEvents } from '../core/events';
 import { CAR_DEFS } from '../core/cars';
 import { nodeMeta } from './nodes';
 import { levelOf, levelPips } from './levels';
+import { settlementLine, lineName, lineFlavour, lineCss, lineKey } from './lines';
 
 type Kind = 'settlement' | 'car' | 'tile' | null;
 const SHOW_DELAY = 120;
@@ -112,12 +113,16 @@ export function createHoverCards(ui: UiShared, layout: { freeZone(): Rect }): Ho
     const p = s.route.path[Math.min(s.train.routeIndex, s.route.path.length - 1)];
     if (p) rows.push(row('Distance', `${Math.round(hexDistance(s, ui, st.col, st.row, p[0], p[1]))} hex from the loco`));
     const tag = st.consumed ? 'consumed' : st.visited ? 'visited' : '';
+    // line tag: the most common line id among pre-laid rail edges touching the settlement tile (omitted when none)
+    let line: number | null = null;
+    try { line = settlementLine(s, st); } catch { line = null; }
     const kids: Array<HTMLElement | undefined> = [
       el('div', { class: 'rv-hc-head', style: `--accent:${m.color}` },
         el('span', { class: 'rv-hc-ico', text: m.icon }),
         el('span', { class: 'rv-hc-name', text: st.name }),
         el('span', { class: 'rv-hc-type', text: m.label }),
         tag ? el('span', { class: 'rv-hc-tag' + (st.consumed ? ' rv-bad' : ''), text: tag }) : undefined,
+        line !== null ? el('span', { class: 'rv-hc-tag rv-hc-line rv-line-' + lineKey(line), style: `--line:${lineCss(line)}`, title: lineFlavour(line) }, el('i', { class: 'rv-line-sw', 'aria-hidden': 'true' }), lineName(line)) : undefined,
       ),
       m.blurb ? el('div', { class: 'rv-hc-blurb', text: m.blurb }) : undefined,
       ...rows,

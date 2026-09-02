@@ -33,6 +33,37 @@ describe('worldgen', () => {
       expect(t.terrain).not.toBe('mountain');
     }
   });
+  it('generates three connected main lines with crossovers per region', () => {
+    const w = generateWorld(TEST_SEED);
+    expect(w.lines.length).toBe(3);
+    const links = new Set(w.railLinks);
+    for (const line of w.lines) {
+      expect(line.length).toBeGreaterThan(100);
+      for (let i = 0; i + 1 < line.length; i++) expect(links.has(edgeKey(line[i][0], line[i][1], line[i + 1][0], line[i + 1][1]))).toBe(true);
+    }
+    // outer lines fork from the central line and rejoin at the terminus ring
+    const centralSet = new Set(w.lines[0].map(p => p[0] + ',' + p[1]));
+    expect(centralSet.has(w.lines[1][0][0] + ',' + w.lines[1][0][1])).toBe(true);
+    expect(centralSet.has(w.lines[2][0][0] + ',' + w.lines[2][0][1])).toBe(true);
+    const ring = new Set(w.loopTiles.map(p => p[0] + ',' + p[1]));
+    expect(ring.has(w.lines[1][w.lines[1].length - 1].join(','))).toBe(true);
+    expect(ring.has(w.lines[2][w.lines[2].length - 1].join(','))).toBe(true);
+    // rows: northern above central above southern on average
+    const avgRow = (l: Array<[number, number]>) => l.reduce((a, p) => a + p[1], 0) / l.length;
+    expect(avgRow(w.lines[1])).toBeLessThan(avgRow(w.lines[0]));
+    expect(avgRow(w.lines[2])).toBeGreaterThan(avgRow(w.lines[0]));
+    // no casual crossovers: the lines only meet at the three crossroads hubs (one per region boundary)
+    expect(Object.values(w.railLines).filter(v => v === 3).length).toBe(0);
+    const hubs = w.settlements.filter(s => s.type === 'crossroads');
+    expect(hubs.length).toBe(3);
+    for (const h of hubs) for (const line of w.lines) expect(line.some(p => p[0] === h.col && p[1] === h.row)).toBe(true);
+    // line flavour: every region has a mine on the north and a village on the south
+    for (let r = 0; r < 4; r++) {
+      expect(w.settlements.some(s => s.region === r && s.type === 'mine')).toBe(true);
+      expect(w.settlements.some(s => s.region === r && s.type === 'village')).toBe(true);
+      expect(w.settlements.some(s => s.region === r && s.type === 'yard')).toBe(true);
+    }
+  });
   it('varies across seeds', () => {
     const a = generateWorld(1), b = generateWorld(2);
     expect(a.spine).not.toEqual(b.spine);

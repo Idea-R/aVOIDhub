@@ -6,7 +6,7 @@ Status after the first public early-access deploy (avoidgame.io/railavoid). Orde
 - [x] Faster train (0.38 hex/s), shorter settlement stops (12 s), safe havens, reversing.
 - [x] Custom cursors, hover feedback on settlements/cars/hexes, no-overlap HUD layout, compact HUD, volume mixer (ambience/UI), log hidden by default.
 - [ ] "Express" toggle: 1.5× default sim speed for veterans, saved in settings.
-- [ ] Junction preview: when a branch splits ahead, show both destinations' offers on the branch line so choosing a route is a real decision at a glance.
+- [x] Three main lines (Central / Northern / Southern) with crossovers; junction chooser shows line names and the next settlement on each branch.
 - [ ] Auto-route to a clicked settlement with a confirm chip ("12 hexes · 6 rails · 40 s") instead of hex-by-hex planning for long stretches.
 
 ## 2. Train mechanics and upgrades (first pass shipped)

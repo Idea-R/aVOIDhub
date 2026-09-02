@@ -1,0 +1,18 @@
+import { chromium } from 'playwright';
+import { spawn } from 'node:child_process';
+import http from 'node:http';
+const port = 4179;
+const srv = spawn(process.platform === 'win32' ? 'npx.cmd' : 'npx', ['vite', 'preview', '--port', String(port), '--strictPort'], { stdio: 'ignore', shell: process.platform === 'win32' });
+await new Promise(r => { const t = setInterval(() => http.get(`http://localhost:${port}/`, res => { if (res.statusCode < 500) { clearInterval(t); r(); } }).on('error', () => {}), 300); });
+const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const p = await b.newPage({ viewport: { width: 1920, height: 1080 } });
+await p.goto(`http://localhost:${port}/?dev`);
+await p.waitForFunction(() => window.__RAIL && window.__RAIL.ready, null, { timeout: 30000 });
+await p.evaluate(() => { const R = window.__RAIL; R.newRun(12345); R.view.skipCinematic(); R.setSpeed(0); R.view.setFollow(false); R.view.setZoom(0.42); });
+await p.waitForTimeout(1500);
+const hubs = await p.evaluate(() => window.__RAIL.state.settlements.filter(s => s.type === 'crossroads').map(s => [s.col, s.row, s.name]));
+console.log('hubs', JSON.stringify(hubs));
+await p.evaluate((h) => { const R = window.__RAIL; const sc = R.view.hexToScreen(h[0], h[1]); R.view.panBy(sc.x - innerWidth / 2, sc.y - innerHeight / 2); }, hubs[0]);
+await p.waitForTimeout(1200);
+await p.screenshot({ path: 'verify/screenshots/map_hub0_zoom042.png' });
+await b.close(); srv.kill(); process.exit(0);

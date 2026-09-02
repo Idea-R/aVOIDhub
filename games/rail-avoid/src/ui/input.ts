@@ -13,6 +13,8 @@ export interface InputActions {
   departOrClose(): void;
   /** Gamepad button pressed while a modal is open (expedition, relic choice, crew picker). Return true when consumed. */
   modalButton?(button: number): boolean;
+  /** Gamepad button pressed while the junction chooser is docked (A/B/X → branches 1-3). Return true when consumed. */
+  junctionButton?(button: number): boolean;
 }
 
 export interface Input { update(dt: number): void; destroy(): void; overlay: HTMLElement }
@@ -147,6 +149,12 @@ export function createInput(ui: UiShared, actions: InputActions): Input {
         if (pressed(1) && ui.topModal() === 'pause') ui.close('pause');
         if (pressed(2) && ui.isOpen('shop')) actions.departOrClose();
         continue;
+      }
+      // a docked junction chooser takes A / B / X before the cursor / unplan / depart bindings
+      if (actions.junctionButton && (pressed(0) || pressed(1) || pressed(2))) {
+        let consumed = false;
+        for (const i of [0, 1, 2]) if (pressed(i) && actions.junctionButton(i)) consumed = true;
+        if (consumed) continue;
       }
       if (view) {
         const lx = ax(0), ly = ax(1);

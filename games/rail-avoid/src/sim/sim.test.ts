@@ -145,3 +145,29 @@ describe('upgrades and nodes', () => {
     expect(copy.state.train.cars[0].level).toBe(1);
   });
 });
+
+
+describe('junctions', () => {
+  it('reports line-tagged branch options at a junction and lets the player pick one', () => {
+    const sim = run(TEST_SEED, 20, false);
+    // drive along pre-laid rail until a junction stop
+    let guard = 0;
+    while (guard++ < 20000) {
+      const s = sim.state;
+      if (s.phase === 'relic') sim.chooseRelic(0);
+      if (s.phase === 'event') { if (!sim.chooseEventOption(2)) { if (!sim.chooseEventOption(1)) sim.chooseEventOption(0); } }
+      if (s.phase === 'shop') sim.closeShop();
+      if (s.train.stopped && s.train.stopReason === 'junction') break;
+      if (s.train.stopped && s.train.stopReason === 'no_route') { const o = sim.plannableTiles().filter(t => t.free)[0] ?? sim.plannableTiles()[0]; if (o) sim.planTile(o.col, o.row); }
+      if (s.train.stopped && s.train.stopReason === 'settlement' && s.train.stopTimer > 1) sim.depart();
+      sim.update(0.05);
+      if (s.phase === 'defeat') break;
+    }
+    expect(sim.state.train.stopReason).toBe('junction');
+    const opts = sim.junctionOptions();
+    expect(opts.length).toBeGreaterThanOrEqual(2);
+    for (const o of opts) expect(typeof o.lineName).toBe('string');
+    expect(sim.planTile(opts[0].col, opts[0].row).ok).toBe(true);
+    expect(sim.state.train.stopped).toBe(false);
+  });
+});

@@ -187,6 +187,11 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   glyph('gl_market', d => d.rect(1, 3, 10, 2).circle(2.5, 5.5, 1.5).circle(6, 5.5, 1.5).circle(9.5, 5.5, 1.5).rect(2, 7, 8, 4).fill(0x0b0e1a).rect(4, 8.5, 4, 1));
   // expedition site: a stone doorway / arch with a dark opening
   glyph('gl_site', d => d.rect(1.5, 5.5, 9, 5.5).circle(6, 5.8, 4.5).fill(0x0b0e1a).rect(4.2, 7, 3.6, 4).circle(6, 7.2, 1.8));
+  // crossroads hub: crossed tracks (four-way) with a junction ring at the centre
+  glyph('gl_crossroads', d => {
+    d.line(2, 0xffffff).seg(1.5, 1.5, 10.5, 10.5).seg(10.5, 1.5, 1.5, 10.5);
+    d.fill(0xffffff).circle(6, 6, 2.8); d.fill(0x0b0e1a).circle(6, 6, 1.3);
+  });
 
   // ---- loot drops (origin centre; ground contact near the bottom edge) ----
   gen(scene, 'loot_scrap', 14, 12, d => {
@@ -465,6 +470,53 @@ function generateBuildingTextures(scene: Phaser.Scene): void {
     d.fill(0x7a7a84).poly([3, 4, 2, 2, 5, 0, 8, 3, 7, 4]);
     d.fill(0x5a5a64).rect(1.5, 18, 7, 2);
     d.line(0.7, 0x3a3a44, 0.6).seg(5, 6, 5.5, 12).seg(6, 13, 5, 17);
+  });
+  // crossroads hub: a fortified junction station — barricaded platform, stone watchtowers with lantern
+  // cages (sweep beam at night, see settlementsLayer), a striped toll gate and a signal gantry that
+  // both straddle the track
+  gen(scene, 'b_xr_platform', 38, 24, d => {
+    d.fill(0x4a4a52).rect(2, 17, 34, 5); d.fill(0x6a6a74).rect(2, 17, 34, 1.5);          // platform slab
+    d.line(1.2, 0x5a5048).seg(8, 17, 8, 7).seg(19, 17, 19, 7).seg(30, 17, 30, 7);           // shelter posts
+    d.fill(0x3a3d48).poly([5, 7, 33, 7, 36, 4, 8, 4]); d.fill(0x5a606c).rect(8, 4, 28, 1.5); // flat steel roof
+    for (let i = 0; i < 9; i++) d.fill(i % 2 ? 0x8a6a4a : 0x7a5a3a).rect(3 + i * 3.6, 12 + (i % 2), 3, 5 - (i % 2)); // plank barricade
+    d.fill(0x22252c).rect(14, 13.5, 4, 1.6);                                                // firing slit
+    for (let i = 0; i < 6; i++) d.fill(i % 2 ? 0x9a8a68 : 0x8a7a5a).ellipse(6 + i * 5.2, 21, 5, 3); // sandbags
+    d.fill(WIN).rect(22, 8.5, 3, 3);                                                        // shelter window
+    d.fill(0xff5a2e).rect(33, 1, 2.4, 3); d.fill(0xffb060, 0.9).circle(34.2, 1.4, 1.2);      // warning lamp
+  });
+  gen(scene, 'b_xr_tower', 16, 38, d => {
+    d.fill(0x5a5a64).poly([3, 38, 13, 38, 12, 14, 4, 14]);                                  // tapered stone shaft
+    d.fill(0x7a7a84).poly([4, 14, 8, 14, 7.5, 38, 3, 38]);                                  // lit face
+    d.line(0.8, 0x3a3a44, 0.6).seg(4, 22, 12, 22).seg(4, 30, 12, 30);                       // masonry courses
+    d.fill(0x22252c).rect(7, 26, 2, 3);                                                     // arrow slit
+    d.fill(0x8a6a4a).rect(2, 12, 12, 2.5);                                                  // timber platform
+    d.line(1, 0x5a4a3a).seg(2, 8, 2, 12).seg(14, 8, 14, 12).seg(2, 8, 14, 8);               // railing
+    d.fill(0x3a3d48).rect(4, 5, 8, 7); d.fill(WIN).rect(6.5, 7, 3, 3);                       // steel cabin
+    d.fill(0x22252c).poly([3, 5, 8, 2, 13, 5]);                                             // roof
+    d.fill(0xffb060, 0.95).circle(8, 1.6, 1.5);                                             // lantern cage
+  });
+  gen(scene, 'b_xr_gate', 30, 18, d => {
+    d.fill(0x3a3d48).rect(2, 6, 3, 12).rect(25, 6, 3, 12); d.fill(0x8a8f9a).rect(2, 6, 3, 1.2).rect(25, 6, 3, 1.2); // posts
+    d.fill(0x6a6a74).rect(23, 1, 7, 6); d.fill(0x8a8a94).rect(23, 1, 7, 1.3); d.fill(WIN).rect(25.5, 3.2, 2, 2);   // toll booth
+    for (let i = 0; i < 6; i++) d.fill(i % 2 ? 0xff5a2e : 0xf4f6fb).rect(4 + i * 3.6, 9.5, 3.6, 2.2);              // striped boom
+    d.line(0.7, 0x22252c, 0.85).srect(4, 9.5, 21.6, 2.2);
+    d.fill(0x22252c).circle(3.5, 10.6, 1.5);                                                                        // pivot
+  });
+  gen(scene, 'b_xr_gantry', 32, 22, d => {
+    d.line(1.6, 0x5a606c).seg(3, 22, 3, 4).seg(29, 22, 29, 4).seg(2, 4, 30, 4);              // frame
+    d.line(0.7, 0x8a8f9a, 0.8).seg(3, 4, 29, 8).seg(3, 8, 29, 4).seg(2, 8, 30, 8);           // lattice
+    d.fill(0x22252c).rrect(9, 5.5, 4, 8, 1).rrect(19, 5.5, 4, 8, 1);                         // signal heads
+    d.fill(0xff5050).circle(11, 8, 1.2); d.fill(0x6fe07a).circle(21, 8, 1.2);
+    d.fill(0x3a3d48).circle(11, 11, 1.2).circle(21, 11, 1.2);
+    d.fill(0x3a3d48).rect(1, 20, 4, 2).rect(27, 20, 4, 2);                                  // footings
+  });
+  // lantern sweep beam: soft wedge with the apex at the left edge (origin 0, 0.5; rotated at runtime)
+  gen(scene, 'xr_beam', 48, 28, d => {
+    for (let s = 0; s < 12; s++) {
+      const x0 = (s / 12) * 48, x1 = ((s + 1) / 12) * 48 + 0.5, t0 = s / 12, t1 = (s + 1) / 12;
+      const w0 = 1.5 + t0 * 12, w1 = 1.5 + t1 * 12;
+      d.fill(0xffd090, 0.42 * (1 - t0) * (1 - t0)).poly([x0, 14 - w0, x1, 14 - w1, x1, 14 + w1, x0, 14 + w0]);
+    }
   });
   gen(scene, 'b_crates', 16, 12, d => { d.fill(0x9a7a4a).rect(1, 5, 7, 7).rect(8, 6, 7, 6); d.fill(0xb89a68).rect(4, 0, 7, 6); d.line(0.8, 0x5a4a3a).seg(1, 8.5, 8, 8.5).seg(4.5, 5, 4.5, 12).seg(8, 9, 15, 9).seg(7.5, 0, 7.5, 6); d.fill(0x6a4a3a).circle(14, 3, 2.2); d.fill(0x8a6a4a).rect(12.5, 1.5, 3, 0.8); });
 }

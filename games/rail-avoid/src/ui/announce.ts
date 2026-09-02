@@ -2,7 +2,7 @@
  * Announcements: important notices arrive as a telegram / ticket card upper-centre of the screen (inside the free
  * zone: below the top bar, beside the left rail, clear of side panels and toasts). Dark navy plate, gold hairline
  * frame, violet corner accents; a category header, a Cinzel title and a typewriter body line.
- * One card at a time; a queue plays the rest; identical titles within 5 s are dropped; click / Space skips.
+ * One card at a time; a queue plays the rest; identical titles within 5 s are dropped; click / Enter skips (Space stays the pause key).
  */
 import '@fontsource/cinzel/600.css';
 import '@fontsource/cinzel/800.css';
@@ -127,7 +127,7 @@ export function createAnnouncer(ui: UiShared): Announcer {
   }
 
   const onKey = (e: KeyboardEvent): void => {
-    if (e.key !== ' ' || !current || ui.anyModal() || e.repeat) return;
+    if (e.key !== 'Enter' || !current || ui.anyModal() || e.repeat) return;
     const t = e.target as HTMLElement | null;
     if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.tagName === 'BUTTON')) return;
     e.preventDefault();

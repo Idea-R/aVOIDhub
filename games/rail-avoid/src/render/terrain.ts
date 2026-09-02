@@ -151,8 +151,7 @@ export class TerrainLayer {
       const v = hashInt((t.decor | 0) * 7919 + t.col * 131 + t.row * 17);
       const elev = Number.isFinite(t.elevation) ? Math.max(0, Math.min(1, t.elevation)) : 0.5;
       let top = shade(base, 1.0 + elev * 0.3 + (v - 0.5) * 0.12);
-      const rc = REGION_COLORS[t.region] ?? REGION_COLORS[0];
-      top = mixColor(top, rc, 0.08);
+      top = mixColor(top, regionTint(t.col, t.row, t.region | 0, state.seed | 0), 0.08);
       const thick = terrain === 'mountain' ? 12 : terrain === 'hills' ? 7 : terrain === 'water' ? 1.5 : 2 + elev * 4;
 
       const faces: Array<[number, number, number]> = [[0, 1, 0.64], [1, 2, 0.5], [2, 3, 0.58]];
@@ -406,6 +405,25 @@ export class TerrainFx {
     }
     hideRest();
   }
+}
+
+/**
+ * Region tint for a tile. The worldgen dithers terrain rules across ±6 columns of every region
+ * border, so the tint is blended over the same band (weight (6 - d) / 12, i.e. 0.5 at the border
+ * column on both sides) with the same per-tile hash as the terrain dither, so the tint speckles with
+ * the terrain instead of snapping at a column.
+ */
+export function regionTint(col: number, row: number, region: number, seed: number): number {
+  const own = REGION_COLORS[region] ?? REGION_COLORS[0];
+  const inRegion = col - region * REGION_W;
+  const toNext = REGION_W - 1 - inRegion;
+  let other = -1, w = 0;
+  if (region < REGION_COLORS.length - 1 && toNext < 6) { other = region + 1; w = (6 - toNext) / 12; }
+  else if (region > 0 && inRegion < 6) { other = region - 1; w = (6 - inRegion) / 12; }
+  if (other < 0 || w <= 0) return own;
+  const bh = hash2(col * 7 + 3, row * 5 + 1, seed + 91);
+  const t = w * 0.6 + (bh < w ? 0.4 : 0);   // tiles that took the neighbour's terrain rules lean further into its tint
+  return mixColor(own, REGION_COLORS[other] ?? own, t);
 }
 
 /** Parse "c,r" keys defensively. */

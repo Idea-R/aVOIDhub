@@ -11,13 +11,17 @@
  * Level of detail: below zoom 0.7 only labels that matter (visited, unvisited with passengers,
  * yards, hovered) are shown; labels that would overlap an already-drawn label are skipped
  * (greedy, re-evaluated every 250 ms).
+ *
+ * Crossroads hubs (where the three lines meet) are fortified junction stations: a barricaded
+ * platform, two stone watchtowers whose lanterns sweep a slow beam over the ground at night, a
+ * striped toll gate and a signal gantry straddling the track. They are not havens — no militia glow.
  */
 import Phaser from 'phaser';
 import type { SimState, Settlement, SettlementType } from '../core/types';
 import { ISO_Y } from '../core/config';
 import { hexToWorld, neighbors, tileKey, worldToHex, hexDistance } from '../core/hex';
 import { hexCenterP, dist, rgb, hashInt, clamp, expFactor } from './util';
-import { settlementColor, FONT } from './palette';
+import { settlementColor, FONT, CROSSROADS_LANTERN } from './palette';
 import { TEX_SCALE } from './textures';
 import { safeParseKey } from './terrain';
 import type { FxLayer } from './fxLayer';
@@ -27,11 +31,12 @@ interface Building {
   img: Phaser.GameObjects.Image;
   shadow: Phaser.GameObjects.Image;
   light: Phaser.GameObjects.Image | null;
+  beam: Phaser.GameObjects.Image | null;   // hub watchtower sweep beam (night only)
   flame: FlameKind | null;   // always-lit light (shrine flame, tower lantern, brazier)
   chimney: { x: number; y: number } | null;
   flicker: number;
 }
-type FlameKind = 'shrine' | 'lantern' | 'fire' | 'doorway';
+type FlameKind = 'shrine' | 'lantern' | 'fire' | 'doorway' | 'sweep';
 interface SView {
   id: string;
   type: SettlementType;
@@ -76,9 +81,58 @@ const CLUSTERS: Record<SettlementType, string[]> = {
   market: ['b_stall', 'b_stall2', 'b_crates', 'b_house2', 'b_crates'],
   // expedition site: a ruined bunker / temple front with a green-lit doorway among broken walls and columns
   site: ['b_site_gate', 'b_ruin_wall', 'b_ruin_pillar', 'b_ruin_wall', 'b_ruin_pillar'],
+  // crossroads hub: fortified junction station (always the full set — two towers flank the platform,
+  // gate and gantry straddle the track)
+  crossroads: ['b_xr_platform', 'b_xr_tower', 'b_xr_gate', 'b_xr_gantry', 'b_xr_tower'],
 };
 const HAS_CHIMNEY = new Set(['b_house', 'b_house2', 'b_warehouse', 'b_shed', 'b_depot', 'b_headframe']);
-const HAS_WINDOW = new Set(['b_house', 'b_house2', 'b_chapel', 'b_warehouse', 'b_clinic', 'b_shed', 'b_depot', 'b_silo', 'b_headframe', 'b_stall', 'b_stall2']);
+const HAS_WINDOW = new Set(['b_house', 'b_house2', 'b_chapel', 'b_warehouse', 'b_clinic', 'b_shed', 'b_depot', 'b_silo', 'b_headframe', 'b_stall', 'b_stall2', 'b_xr_platform']);
+/** Buildings placed on a rail direction (across the track) instead of a free slot beside it. */
+const ON_TRACK = new Set(['b_xr_gate', 'b_xr_gantry']);
+
+const normAngle = (a: number): number => { while (a <= -Math.PI) a += Math.PI * 2; while (a > Math.PI) a -= Math.PI * 2; return a; };
+const angDist = (a: number, b: number): number => Math.abs(normAngle(a - b));
+
+/**
+ * Angular slots for a hub cluster. Hubs have 3-6 rail directions, which starves the generic 12-slot
+ * picker, so the platform and the two towers are placed in the widest gaps between the rails:
+ * the platform in the clearest upper gap (never over the label below the marker), the towers as far
+ * from the platform and from each other as the gaps allow.
+ */
+function hubSlots(rail: number[]): { platform: number; towers: [number, number] } {
+  const dirs = rail.map(normAngle).sort((a, b) => a - b);
+  let cands: Array<{ a: number; clear: number }> = [];
+  if (dirs.length === 0) cands = [{ a: -Math.PI / 2, clear: Math.PI }, { a: Math.PI * 5 / 6, clear: Math.PI }, { a: Math.PI / 6, clear: Math.PI }];
+  for (let i = 0; i < dirs.length; i++) {
+    const a0 = dirs[i], a1 = i + 1 < dirs.length ? dirs[i + 1] : dirs[0] + Math.PI * 2;
+    const gap = a1 - a0;
+    const n = Math.max(1, Math.floor(gap / (Math.PI / 4)));   // one candidate per ~45° of gap
+    for (let k = 1; k <= n; k++) {
+      const off = gap * k / (n + 1);
+      cands.push({ a: normAngle(a0 + off), clear: Math.min(off, gap - off) });
+    }
+  }
+  const clear = cands.filter(c => c.clear >= 0.4);
+  if (clear.length >= 3) cands = clear;
+  const label = Math.PI / 2;
+  const score = (c: { a: number; clear: number }) => c.clear * 0.5 - Math.sin(c.a) - (angDist(c.a, label) < 0.8 ? 5 : 0);
+  cands.sort((p, q) => score(q) - score(p));
+  const platform = cands[0].a;
+  const rest = cands.slice(1);
+  const pick = (from: number[]): number => {
+    let best = -1, bs = -Infinity;
+    for (let i = 0; i < rest.length; i++) {
+      let s = rest[i].clear * 0.5 - (angDist(rest[i].a, label) < 0.8 ? 5 : 0);   // tall towers stay off the label too
+      for (const f of from) s += Math.min(angDist(rest[i].a, f), 1.6);
+      if (s > bs) { bs = s; best = i; }
+    }
+    if (best < 0) return normAngle(platform + (from.length > 1 ? -2.1 : 2.1));
+    return rest.splice(best, 1)[0].a;
+  };
+  const t1 = pick([platform]);
+  const t2 = pick([platform, t1]);
+  return { platform, towers: [t1, t2] };
+}
 /** Buildings whose light is always lit (with a flicker), not only at night. */
 const FLAMES: Record<string, { kind: FlameKind; tint: number; dy: number; scale: number }> = {
   b_shrine: { kind: 'shrine', tint: 0xc9a0ff, dy: -14, scale: 1.7 },
@@ -86,6 +140,7 @@ const FLAMES: Record<string, { kind: FlameKind; tint: number; dy: number; scale:
   b_brazier: { kind: 'fire', tint: 0xff9a3a, dy: -9, scale: 1.3 },
   b_lantern_post: { kind: 'lantern', tint: 0xffd080, dy: -12, scale: 1.1 },
   b_site_gate: { kind: 'doorway', tint: 0x6fe0a0, dy: -12, scale: 3.2 },
+  b_xr_tower: { kind: 'sweep', tint: CROSSROADS_LANTERN, dy: -36.4, scale: 1.5 },
 };
 
 export class SettlementsLayer {
@@ -125,7 +180,7 @@ export class SettlementsLayer {
   }
   private destroyView(v: SView): void {
     v.ring.destroy(); v.core.destroy(); v.glyph.destroy(); v.check.destroy(); v.label.destroy(); v.arc.destroy();
-    for (const b of v.buildings) { b.img.destroy(); b.shadow.destroy(); b.light?.destroy(); }
+    for (const b of v.buildings) { b.img.destroy(); b.shadow.destroy(); b.light?.destroy(); b.beam?.destroy(); }
     v.gateGlow?.destroy();
   }
 
@@ -178,8 +233,13 @@ export class SettlementsLayer {
     // ---- buildings ----
     const buildings: Building[] = [];
     const keys = CLUSTERS[type];
-    const count = Math.min(keys.length, 2 + Math.floor(hashInt(seed * 1000 + 1) * 4)); // 2..5
+    const hub = type === 'crossroads';
+    const count = hub ? keys.length : Math.min(keys.length, 2 + Math.floor(hashInt(seed * 1000 + 1) * 4)); // 2..5 (hubs: the full set)
     const rail = this.railDirs.get(s.id) ?? [];
+    // rail directions a gate / gantry can straddle, steepest (most visibly "across") first
+    const trackSlots = rail.slice().sort((p, q) => Math.abs(Math.sin(q)) - Math.abs(Math.sin(p)));
+    const hubSl = hub ? hubSlots(rail) : null;
+    let towers = 0;
     const slots: number[] = [];
     for (let i = 0; i < 12; i++) slots.push(-Math.PI + (i / 12) * Math.PI * 2);
     const ok = (a: number) => {
@@ -200,20 +260,39 @@ export class SettlementsLayer {
     for (let i = 0; i < keys.length && placed < count; i++) {
       const key = keys[i];
       if (!this.scene.textures.exists(key)) continue;
-      const slot = free.length ? free[(i * 5 + Math.floor(hashInt(seed + i) * 3)) % free.length] : -Math.PI / 2;
-      // spread used slots
-      const idx = free.indexOf(slot); if (idx >= 0) free.splice(idx, 1);
-      const rad = (i === 0 ? 20 : 22 + hashInt(seed + i * 3) * 8);
-      const bx = x + Math.cos(slot) * rad, by = y + Math.sin(slot) * rad * ISO_Y + 6;
-      const scale = TEX_SCALE * (i === 0 ? 1 : 0.8 + hashInt(seed + i * 7) * 0.25);
-      const shadow = this.scene.add.image(bx + 2, by, 'b_shadow').setScale(scale * 1.05, scale).setAlpha(0.45);
+      let slot: number, rad: number;
+      const onTrack = ON_TRACK.has(key) && trackSlots.length > 0;
+      if (onTrack) {
+        // toll gate / signal gantry stand across the track just outside the marker ring
+        slot = trackSlots.shift()!;
+        rad = key === 'b_xr_gate' ? 34 : 40;
+      } else if (hubSl && key === 'b_xr_platform') {
+        slot = hubSl.platform; rad = 23;
+      } else if (hubSl && key === 'b_xr_tower') {
+        // the two watchtowers sit in the widest remaining gaps between the rails
+        slot = hubSl.towers[towers++ % 2]; rad = 30;
+      } else {
+        slot = free.length ? free[(i * 5 + Math.floor(hashInt(seed + i) * 3)) % free.length] : -Math.PI / 2;
+        // spread used slots
+        const idx = free.indexOf(slot); if (idx >= 0) free.splice(idx, 1);
+        rad = (i === 0 ? 20 : 22 + hashInt(seed + i * 3) * 8);
+      }
+      const bx = x + Math.cos(slot) * rad, by = y + Math.sin(slot) * rad * ISO_Y + (onTrack ? 2 : 6);
+      const scale = TEX_SCALE * (hub || i === 0 ? 1 : 0.8 + hashInt(seed + i * 7) * 0.25);
+      const shadow = this.scene.add.image(bx + 2, by, 'b_shadow').setScale(scale * 1.05, scale).setAlpha(onTrack ? 0.3 : 0.45);
       const img = this.scene.add.image(bx, by, key).setOrigin(0.5, 1).setScale(scale);
       let light: Phaser.GameObjects.Image | null = null;
+      let beam: Phaser.GameObjects.Image | null = null;
       let flame: FlameKind | null = null;
       const fl = FLAMES[key];
       if (fl) {
         flame = fl.kind;
         light = this.scene.add.image(bx, by + fl.dy * scale / TEX_SCALE, 'lantern').setBlendMode(Phaser.BlendModes.ADD).setScale(TEX_SCALE * fl.scale).setAlpha(0).setTint(fl.tint);
+        if (fl.kind === 'sweep' && this.scene.textures.exists('xr_beam')) {
+          // wedge with its apex on the lantern; rotated slowly back and forth at night
+          beam = this.scene.add.image(light.x, light.y, 'xr_beam').setOrigin(0, 0.5).setBlendMode(Phaser.BlendModes.ADD)
+            .setScale(TEX_SCALE * 1.9).setAlpha(0).setVisible(false).setTint(fl.tint);
+        }
       } else if (HAS_WINDOW.has(key)) {
         light = this.scene.add.image(bx + (hashInt(seed + i * 11) - 0.5) * 6, by - 4 * scale / TEX_SCALE, 'lantern').setBlendMode(Phaser.BlendModes.ADD).setScale(TEX_SCALE * 1.6).setAlpha(0).setTint(0xffc870);
       }
@@ -221,7 +300,8 @@ export class SettlementsLayer {
       const depth = y - 30 + (by - y);
       this.layer.add(shadow); this.layer.add(img); shadow.setDepth(depth - 0.1); img.setDepth(depth);
       if (light) { this.layer.add(light); light.setDepth(depth + 0.05); }
-      buildings.push({ img, shadow, light, flame, chimney, flicker: hashInt(seed + i * 13) * 6.28 });
+      if (beam) { this.layer.add(beam); beam.setDepth(depth + 0.04); }
+      buildings.push({ img, shadow, light, beam, flame, chimney, flicker: hashInt(seed + i * 13) * 6.28 });
       placed++;
     }
     let gateGlow: Phaser.GameObjects.Image | null = null;
@@ -319,7 +399,7 @@ export class SettlementsLayer {
         if (status === 'consumed') {
           v.ring.setTint(0x3a3f4a).setAlpha(0.6); v.core.setTint(0x2a2f3a).setAlpha(0.7); v.glyph.setAlpha(0.35); v.check.setVisible(false);
           v.arc.clear();
-          for (const b of v.buildings) { b.img.setTint(0x2a2438).setAlpha(0.5); b.shadow.setAlpha(0.15); b.light?.setVisible(false); }
+          for (const b of v.buildings) { b.img.setTint(0x2a2438).setAlpha(0.5); b.shadow.setAlpha(0.15); b.light?.setVisible(false); b.beam?.setVisible(false); }
           v.gateGlow?.setVisible(false);
         } else if (status === 'visited') {
           v.ring.clearTint().setAlpha(1); v.core.setTint(v.color).setAlpha(1); v.glyph.setAlpha(0.9); v.check.setVisible(false);
@@ -369,6 +449,15 @@ export class SettlementsLayer {
                 const m = reducedMotion ? 0.5 : 0.5 + 0.5 * Math.sin(tSec * 2.2 + b.flicker);
                 b.light.setTint(m > 0.5 ? 0xc9a0ff : 0xffd080);
                 if (this.settings.quality !== 'low' && Math.random() < dtGuess * 1.2 * this.settings.particleMul) this.fx.glowPuffP(b.light.x + (Math.random() - 0.5) * 4, b.light.y - 2, m > 0.5 ? 0xc9a0ff : 0xffd080, 4, 700);
+              } else if (b.flame === 'sweep') {
+                // hub watchtower: steady lantern by day; at night a slow beam sweeps the ground below the tower
+                b.light.setAlpha((0.35 + night * 0.55) * f);
+                if (b.beam) {
+                  if (night > 0.05) {
+                    const ang = Math.PI / 2 + (reducedMotion ? 0.35 : Math.sin(tSec * 0.42 + b.flicker) * 1.05);
+                    b.beam.setVisible(true).setRotation(ang).setAlpha(night * 0.95 * (0.8 + 0.2 * f));
+                  } else b.beam.setVisible(false);
+                }
               } else if (b.flame === 'fire' && this.settings.quality !== 'low' && Math.random() < dtGuess * 0.6 * this.settings.particleMul) {
                 this.fx.smokeP(b.light.x, b.light.y - 4, 1, 0x6a6672);
               } else if (b.flame === 'doorway') {
@@ -395,7 +484,7 @@ export class SettlementsLayer {
           if (this.settings.quality === 'high' && Math.random() < dtGuess * 3) this.fx.glowPuffP(v.gateGlow.x + (Math.random() - 0.5) * 30, v.gateGlow.y + 10, gateOpen ? 0xffd070 : 0x8f7bff, 5, 900);
         }
       } else {
-        for (const b of v.buildings) b.light?.setVisible(false);
+        for (const b of v.buildings) { b.light?.setVisible(false); b.beam?.setVisible(false); }
       }
 
       if (status !== 'open' || !doArcs) continue;

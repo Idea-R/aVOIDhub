@@ -1,7 +1,7 @@
 /** Route planning: costs, plannable tiles, plan/unplan, A* auto-planning, auto-follow of pre-laid rail. */
 import type { SimState } from '../core/types';
 import type { SimContext, PlanResult } from './api';
-import { TRACK_COST, TRAIN, MAX_CARS } from '../core/config';
+import { TRACK_COST, TRAIN, MAX_CARS, LINE_NAMES } from '../core/config';
 import { neighbors, edgeKey, hexDistance, tileKey } from '../core/hex';
 import { CAR_DEFS } from '../core/cars';
 import { tileAt, addResource, log } from './helpers';
@@ -269,3 +269,40 @@ export function autoFollow(ctx: SimContext): 'extended' | 'junction' | 'none' {
 export function maxCars(): number { return MAX_CARS; }
 
 export function logRoute(ctx: SimContext, text: string): void { log(ctx.state, text); }
+
+
+/** Rail continuations at the plan end, with their line and the next settlement along each branch. */
+export function junctionOptions(state: SimState): Array<{ col: number; row: number; line: number; lineName: string; next: { id: string; name: string; type: string; distance: number } | null }> {
+  const p = state.route.path;
+  if (!p.length) return [];
+  const [ec, er] = pathEnd(state);
+  const prev = p.length >= 2 ? p[p.length - 2] : null;
+  const out: Array<{ col: number; row: number; line: number; lineName: string; next: { id: string; name: string; type: string; distance: number } | null }> = [];
+  const lines = state.route.railLines ?? {};
+  for (const [nc, nr] of neighbors(ec, er)) {
+    if (prev && prev[0] === nc && prev[1] === nr) continue;
+    if (!isRail(state, ec, er, nc, nr)) continue;
+    if (isRevisit(state, nc, nr)) continue;
+    const t = tileAt(state, nc, nr);
+    if (!t || t.void) continue;
+    const line = lines[edgeKey(ec, er, nc, nr)] ?? 0;
+    // walk the branch until a settlement, a junction or 40 steps
+    let cur: [number, number] = [nc, nr];
+    let from: [number, number] = [ec, er];
+    let next: { id: string; name: string; type: string; distance: number } | null = null;
+    for (let step = 1; step <= 40; step++) {
+      const tile = tileAt(state, cur[0], cur[1]);
+      if (tile?.settlementId) {
+        const st = state.settlements.find(x => x.id === tile.settlementId);
+        if (st && !st.consumed && (!st.visited || st.type === 'yard')) { next = { id: st.id, name: st.name, type: st.type, distance: step }; break; }
+      }
+      let conts = neighbors(cur[0], cur[1]).filter(([c, r]) => !(c === from[0] && r === from[1]) && isRail(state, cur[0], cur[1], c, r));
+      // at a junction keep following the same line if exactly one continuation carries its id
+      if (conts.length > 1) conts = conts.filter(([c, r]) => (lines[edgeKey(cur[0], cur[1], c, r)] ?? -1) === line);
+      if (conts.length !== 1) break;
+      from = cur; cur = conts[0];
+    }
+    out.push({ col: nc, row: nr, line, lineName: LINE_NAMES[line] ?? 'Line', next });
+  }
+  return out;
+}

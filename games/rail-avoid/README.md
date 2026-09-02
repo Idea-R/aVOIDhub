@@ -19,6 +19,10 @@ Captured by `npm run verify` into `verify/screenshots/`:
 | `victory.png` / `defeat.png` | Results screens |
 | `resize_800x600.png` | Layout at a small viewport |
 
+## The map
+
+Three main lines cross the continent: the Central Line (balanced), the Northern Line (mines and armouries, dangerous) and the Southern Line (villages and farms, calmer). Pre-laid crossovers connect them once or twice per region; anywhere else you can cut your own track between lines for rails and time. Junction stops show each branch's line and next settlement.
+
 ## Music
 
 The score is seven instrumental tracks generated with Suno for this project (`public/audio/*.mp3`, mapped by mood in `public/audio/manifest.json`). If a track is missing the game falls back to its built-in procedural score, so the game is fully playable without the files.
@@ -84,6 +88,7 @@ Replace `5173` with `4173` to open the preview build.
 | `1` / `2` / `3` | Speed 1x / 2x / 4x (4x only with `?dev`; `3` maps to the fastest allowed) |
 | `Backspace` | Unplan the last tile (refunds rails) |
 | `Space` / `Enter` (in an expedition) | Timed hit: press as your strike lands or as an enemy blow arrives to guard |
+| `Enter` | Skip an announcement card (or confirm a cursor plan) |
 | `R` | Reverse: back the train down its own track (half speed, full speed with a Caboose); press again to stop and re-plan |
 | `D` | Detach the selected car and everything behind it |
 | `Tab` | Train panel |

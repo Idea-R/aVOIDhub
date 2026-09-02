@@ -28,6 +28,7 @@ const BOXES = {
   rightpanel: '#ui .rv-side:not([hidden]):not(.rv-closing)',
   wavebanner: '#ui .rv-warning',
   stoppill: '#ui .rv-stop',
+  junction: '#ui .rv-junction',
   strip: '#ui .rv-strip',
   toast: '#ui .rv-toast',
   tutorial: '#ui .rv-coach',

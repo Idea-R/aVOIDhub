@@ -1,6 +1,8 @@
 /**
  * Track as a metro map: thick rounded polylines through hex centres.
- * - pre-laid rail: grey double line
+ * - pre-laid rail: one colour per line id (route.railLines: 0 Central cream, 1 Northern amber,
+ *   2 Southern teal, 3 crossover grey-blue) with a darker outline so all lines read over any
+ *   terrain and at night; missing entries count as line 0
  * - player-built: warm cream/gold
  * - traversed: dimmed overlay
  * - planned-but-not-reached: dashed pulsing accent (separate small Graphics redrawn per frame)
@@ -9,14 +11,21 @@
  */
 import Phaser from 'phaser';
 import type { SimState } from '../core/types';
-import { ISO_Y, HEX_R } from '../core/config';
+import { ISO_Y, HEX_R, LINE_COLORS } from '../core/config';
 import { hexToWorld, tileKey } from '../core/hex';
 import {
-  TRACK_RAIL, TRACK_RAIL_DARK, TRACK_RAIL_GAP, TRACK_BUILT, TRACK_BUILT_EDGE, TRACK_PLANNED,
+  TRACK_RAIL, TRACK_RAIL_DARK, TRACK_BUILT, TRACK_BUILT_EDGE, TRACK_PLANNED,
   TRACK_PLANNED_FREE, TRACK_TRAVERSED, JUNCTION_RING, DANGER,
 } from './palette';
 import { safeParseKey } from './terrain';
 import { TEX_SCALE } from './textures';
+import { shade, lighten } from './util';
+
+/** Colour of a pre-laid line id (unknown / missing ids fall back to the Central Line). */
+export function lineColor(line: number | undefined | null): number {
+  const id = typeof line === 'number' && Number.isFinite(line) ? line | 0 : 0;
+  return LINE_COLORS[id >= 0 && id < LINE_COLORS.length ? id : 0];
+}
 
 export class TrackLayer {
   public gfx: Phaser.GameObjects.Graphics;
@@ -100,7 +109,10 @@ export class TrackLayer {
     const p = r.path ?? [];
     const last = p.length ? p[p.length - 1] : null;
     void t;
-    return `${p.length}|${(r.builtLinks ?? []).length}|${(r.railLinks ?? []).length}|${last ? last[0] + ',' + last[1] : ''}|${state.seed}`;
+    // railLines lands with the worldgen rewrite; its size is part of the hash so the bake follows it
+    const lines = r.railLines;
+    const nLines = lines && typeof lines === 'object' ? Object.keys(lines).length : 0;
+    return `${p.length}|${(r.builtLinks ?? []).length}|${(r.railLinks ?? []).length}|${nLines}|${last ? last[0] + ',' + last[1] : ''}|${state.seed}`;
   }
 
   update(state: SimState, timeSec: number, reducedMotion: boolean, zoom = 1): void {
@@ -130,18 +142,29 @@ export class TrackLayer {
     const path = Array.isArray(route.path) ? route.path : [];
     const routeIndex = state.train?.routeIndex ?? 0;
 
+    const railLines: Record<string, number> = route.railLines && typeof route.railLines === 'object' ? route.railLines : {};
     const railEdges: Array<[number, number, number, number]> = [];
+    // edges and nodes grouped by line id (crossovers drawn first so the main lines sit on top)
+    const byLine = new Map<number, { edges: Array<[number, number, number, number]>; nodes: Map<string, { x: number; y: number }> }>();
     const degree = new Map<string, number>();
     const nodes = new Map<string, { x: number; y: number }>();
     for (const k of rail) {
       const [a, b] = k.split('|');
       const pa = safeParseKey(a), pb = safeParseKey(b);
       if (!pa || !pb) continue;
-      railEdges.push([pa[0], pa[1], pb[0], pb[1]]);
+      const e: [number, number, number, number] = [pa[0], pa[1], pb[0], pb[1]];
+      railEdges.push(e);
       degree.set(a, (degree.get(a) ?? 0) + 1);
       degree.set(b, (degree.get(b) ?? 0) + 1);
       if (!nodes.has(a)) nodes.set(a, this.center(pa[0], pa[1]));
       if (!nodes.has(b)) nodes.set(b, this.center(pb[0], pb[1]));
+      const raw = railLines[k];
+      const line = typeof raw === 'number' && raw >= 0 && raw < LINE_COLORS.length ? raw | 0 : 0;
+      let grp = byLine.get(line);
+      if (!grp) { grp = { edges: [], nodes: new Map() }; byLine.set(line, grp); }
+      grp.edges.push(e);
+      if (!grp.nodes.has(a)) grp.nodes.set(a, nodes.get(a)!);
+      if (!grp.nodes.has(b)) grp.nodes.set(b, nodes.get(b)!);
     }
     const railSet = new Set(rail);
     const builtEdges: Array<[number, number, number, number]> = [];
@@ -194,13 +217,22 @@ export class TrackLayer {
     }
     this.junctions = [];
 
-    // --- pre-laid rail: grey double line ---
-    line(railEdges, 7.5, TRACK_RAIL_DARK, 0.9);
-    dots(nodes.values(), 3.75, TRACK_RAIL_DARK, 0.9);
-    line(railEdges, 5.5, TRACK_RAIL, 1);
-    dots(nodes.values(), 2.75, TRACK_RAIL, 1);
-    line(railEdges, 1.6, TRACK_RAIL_GAP, 1);
-
+    // --- pre-laid rail: metro lines, one colour per line id ---
+    // one dark outline pass for every edge first, so a coloured core is never cut by a neighbouring line's outline
+    line(railEdges, 8.5, TRACK_RAIL_DARK, 0.92);
+    dots(nodes.values(), 4.25, TRACK_RAIL_DARK, 0.92);
+    const lineOrder = [...byLine.keys()].sort((p, q) => q - p); // 3 (crossovers) first ... 0 (Central) last
+    for (const id of lineOrder) {
+      const grp = byLine.get(id)!;
+      const col = lineColor(id);
+      const edge = shade(col, 0.42);
+      line(grp.edges, 7, edge, 1);
+      dots(grp.nodes.values(), 3.5, edge, 1);
+      line(grp.edges, 5, col, 1);
+      dots(grp.nodes.values(), 2.5, col, 1);
+      // thin stripe down the middle keeps the "track" read at close zoom
+      line(grp.edges, 1.3, id === 3 ? lighten(col, 0.35) : shade(col, 0.62), 0.9);
+    }
     // --- player-built: cream/gold ---
     line(builtEdges, 7.5, TRACK_BUILT_EDGE, 0.95);
     dots(builtNodes.values(), 3.75, TRACK_BUILT_EDGE, 0.95);

@@ -93,6 +93,22 @@ export function chooseEventOption(ctx: SimContext, index: number): boolean {
     case 'node_site:0': summary = 'Choose your crew.'; state.activeEvent = null; state.phase = 'running'; ctx.bus.defer('event:resolved', { defId: def.id, option: index, summary }); ctx.bus.defer('phase:change', { phase: 'running' }); return true; // the UI shows the crew picker and calls startExpedition(crewIds); cancelling simply continues the run
     case 'node_site:1': addResource(ctx, 'scrap', 6); addResource(ctx, 'ammo', 4); summary = 'A quick sweep of the edge.'; break;
     case 'node_site:2': morale(2); summary = 'Not today.'; break;
+    case 'node_crossroads:0': {
+      const region = Math.max(0, Math.min(3, state.region));
+      const comp = region === 0 ? ['raider', 'raider', 'raider', 'hound', 'hound', 'raider'] : region === 1 ? ['crawler', 'raider', 'raider', 'sapper', 'hound', 'hound'] : region === 2 ? ['harpy', 'harpy', 'wisp', 'raider', 'raider', 'crawler'] : ['wisp', 'wisp', 'harpy', 'crawler', 'raider', 'raider'];
+      state.activeEvent = null; state.phase = 'running'; ctx.bus.defer('phase:change', { phase: 'running' });
+      state.train.stopped = false; state.train.stopReason = 'none'; state.train.stopTimer = 0;
+      spawnWave(ctx, comp as any, 'east');
+      // promote two members to elites (guaranteed relic + marks on kill)
+      let promoted = 0;
+      for (let i = state.enemies.length - 1; i >= 0 && promoted < 2; i--) { const e = state.enemies[i]; if (e.state === 'dead' || e.type.startsWith('boss_') || e.type === 'sapper') continue; e.extra.elite = 1; e.maxHp = Math.round(e.maxHp * 1.6); e.hp = e.maxHp; ctx.bus.defer('enemy:elite', { id: e.id, type: e.type }); promoted++; }
+      addMarks(ctx, 6, 'crossroads');
+      summary = 'The barricades open. Steel meets steel.';
+      ctx.bus.defer('event:resolved', { defId: def.id, option: index, summary });
+      return true;
+    }
+    case 'node_crossroads:1': addResource(ctx, 'scrap', -24); summary = 'The toll is paid. The barricades part.'; break;
+    case 'node_crossroads:2': addMarks(ctx, -5, 'crossroads bribe'); state.train.watchUntil = state.time + 300; summary = 'The tower talks. You know what is coming.'; break;
     case 'node_wreck:0': {
       const pool: CarType[] = ['coal_bunker', 'boiler', 'radiator', 'cargo', 'gatling', 'barracks', 'scout', 'coach', 'caboose'];
       if (rng.chance(0.75) && t.cars.length < 10) { const type = rng.pick(pool); const car = addCar(ctx, type); if (car) { car.hp = Math.round(car.maxHp * 0.6); summary = `A ${type.replace('_', ' ')} is dragged onto the rails.`; ctx.bus.defer('car:bought', { type }); break; } }

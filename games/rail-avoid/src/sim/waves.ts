@@ -52,7 +52,12 @@ export function updateDirector(ctx: SimContext): void {
   const region = clampRegion(tile ? tile.region : state.region);
   const threat = tile ? tile.threat : 0;
   // settlements are havens: the director holds its breath while the train is stopped at one
-  if (state.train.stopped && (state.train.stopReason === 'settlement' || state.phase === 'shop')) return;
+  if (state.train.stopped && (state.train.stopReason === 'settlement' || state.phase === 'shop')) {
+    const p = state.route.path[state.train.routeIndex];
+    const t = p ? state.tiles[p[1] * state.mapW + p[0]] : null;
+    const st = t && t.settlementId ? state.settlements.find(x => x.id === t.settlementId) : null;
+    if (!st || st.type !== 'crossroads') return;
+  }
   const pressure = 1 + DIRECTOR.threatMul * threat + DIRECTOR.stopPressureMul * state.train.stopPressure + (state.isNight ? 0.35 : 0);
 
   d.budget = waveBudget(state, region, threat);

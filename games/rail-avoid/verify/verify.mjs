@@ -364,6 +364,9 @@ async function main() {
     if (!(await ensureRunning(page, g, false))) return;
     await evalRail(page, R => { R.autopilot.setEnabled(false); R.setSpeed(1); if (R.sim.isPaused()) R.resume(); try { R.view && R.view.skipCinematic(); } catch {} });
     await sleep(600); // let the run-intro cinematic release the keys
+    // pause while planning so the train cannot start traversing the freshly planned tile before Backspace
+    await evalRail(page, R => R.pause());
+    await sleep(200);
     // click a plannable tile
     const target = await evalRail(page, R => {
       const opts = R.sim.plannableTiles();
@@ -386,7 +389,11 @@ async function main() {
       const afterBs = await evalRail(page, R => R.state.route.path.length);
       g.assert(afterBs < after, `Backspace did not unplan (${after} -> ${afterBs})`);
     }
-    // pause / resume
+    // leave any junction so the chooser does not capture number keys, then resume
+    await evalRail(page, R => { try { const o = R.sim.junctionOptions ? R.sim.junctionOptions() : []; if (o.length) R.sim.planTile(o[0].col, o[0].row); else { const t = R.sim.plannableTiles()[0]; if (t) R.sim.planTile(t.col, t.row); } } catch {} });
+    await evalRail(page, R => { if (R.sim.isPaused()) R.resume(); });
+    await sleep(700);
+    await sleep(200);
     await page.keyboard.press('Space');
     await sleep(250);
     const paused = await evalRail(page, R => R.sim.isPaused() || R.state.phase === 'paused');

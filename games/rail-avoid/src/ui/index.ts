@@ -51,7 +51,11 @@ export function createUI(ctx: AppContext): UiApi {
   root.appendChild(createColorFilters());
 
   // ---------- build screens ----------
-  const hud = createHud(ui, { openPause: () => openPause(), toggleReverse: () => toggleReverse() });
+  const hud = createHud(ui, {
+    openPause: () => openPause(), toggleReverse: () => toggleReverse(),
+    // first junction of a run: the chooser docks and the announcement card explains it once
+    firstJunction: () => { if (ui.runActive()) announcer.announce({ cat: 'Junction', title: 'Choose your line', body: 'Each line has its own character. Click a branch, press 1-3, or A / B / X on a pad.', tone: 'gold', hold: 3.2 }); },
+  });
   const layout = createLayout(ui, hud.zones);
   const cards = createHoverCards(ui, layout);
   const strip = createStrip(ui, { hover: (i, x, y) => cards.showCar(i, x, y), leave: () => cards.hideCar() });
@@ -66,7 +70,7 @@ export function createUI(ctx: AppContext): UiApi {
   const tutorial = createTutorial(ui, (step) => {
     const a = hud.anchors;
     // steps anchored above the strip sit above the stop pill instead when it is showing, so the two never overlap
-    const aboveStrip = a.stop && !a.stop.hidden ? a.stop : strip.el;
+    const aboveStrip = a.junction && !a.junction.hidden ? a.junction : a.stop && !a.stop.hidden ? a.stop : strip.el;
     const map: Array<{ el: HTMLElement; side: 'below' | 'above' }> = [
       { el: a.route, side: 'below' }, { el: a.route, side: 'below' }, { el: a.resources, side: 'below' },
       { el: aboveStrip, side: 'above' }, { el: aboveStrip, side: 'above' }, { el: a.void, side: 'below' },
@@ -110,6 +114,7 @@ export function createUI(ctx: AppContext): UiApi {
     detachLast: () => detachLast(),
     toggleReverse: () => toggleReverse(),
     departOrClose: () => { const s = ui.state(); const sim = ui.sim(); if (!s || !sim) return; if (s.phase === 'shop') sim.closeShop(); else if (s.train.stopped && s.train.stopReason === 'settlement') sim.depart(); },
+    junctionButton: (b) => hud.junctionGamepad(b),
     modalButton: (b) => {
       const top = ui.topModal();
       if (top === 'expedition') return expedition.gamepad(b);

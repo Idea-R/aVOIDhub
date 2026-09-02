@@ -875,3 +875,63 @@ html.rv-cursors #game canvas[data-cursor="default"] { cursor: var(--rv-cur-defau
 #ui .rv-event .rv-option .rv-opt-label { display: flex; align-items: center; gap: 8px; }
 #ui .rv-event .rv-option .rv-opt-cost { font-size: calc(10 * var(--u)); letter-spacing: 0.08em; padding: 0 7px; border-radius: 999px; border: 1px solid var(--void); color: #b9adff; background: rgba(109, 95, 214, 0.15); }
 #ui .rv-event .rv-option:disabled .rv-opt-cost { border-color: var(--danger); color: var(--danger); background: rgba(232, 111, 111, 0.12); }
+
+/* --- Plan 3: rail lines — junction chooser, route-panel "On:" row, legend, tooltip tag ------------------------
+   Each element carries --line (its line colour, see ui/lines.ts). Central / Northern / Southern / crossover. */
+#ui .rv-line-sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: var(--line, var(--fg3)); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45), 0 0 8px color-mix(in srgb, var(--line, transparent) 55%, transparent); flex: 0 0 auto; vertical-align: -1px; }
+
+/* route panel: current line */
+#ui .rv-route .rv-online { align-items: center; }
+#ui .rv-route .rv-online-v { display: inline-flex; align-items: center; gap: 6px; color: var(--line, var(--fg2)); }
+#ui .rv-route .rv-online-v b { font-weight: 700; letter-spacing: 0.04em; }
+#ui .rv-route .rv-online.rv-built .rv-online-v { color: var(--gold); }
+#ui .rv-route .rv-online.rv-unknown .rv-online-v { color: var(--fg2); }
+
+/* route panel: three-swatch legend; a swatch expands to its flavour on hover / focus */
+#ui .rv-route .rv-line-legend { display: flex; flex-wrap: wrap; gap: 4px; padding-top: 4px; border-top: 1px solid var(--line); margin-top: 2px; }
+#ui .rv-line-item { display: inline-flex; align-items: center; gap: 5px; padding: 2px 7px 2px 5px; border-radius: 999px; border: 1px solid var(--line2); background: rgba(255, 255, 255, 0.03); font-size: calc(10 * var(--u)); letter-spacing: 0.06em; color: var(--fg2); cursor: default; outline: none; transition: border-color 140ms, background 140ms; }
+#ui .rv-line-item:hover, #ui .rv-line-item:focus-visible { border-color: var(--line); background: color-mix(in srgb, var(--line) 14%, transparent); color: var(--fg); }
+#ui .rv-line-item .rv-line-name { font-weight: 700; }
+#ui .rv-line-item .rv-line-fl { display: none; color: var(--fg3); font-style: italic; letter-spacing: 0.02em; white-space: nowrap; }
+#ui .rv-line-item .rv-line-fl::before { content: "— "; }
+#ui .rv-line-item:hover .rv-line-fl, #ui .rv-line-item:focus-visible .rv-line-fl { display: inline; }
+#ui.rv-rail-collapsed .rv-route:not(:hover):not(:focus-within) .rv-online,
+#ui.rv-rail-collapsed .rv-route:not(:hover):not(:focus-within) .rv-line-legend { display: none; }
+#ui.rv-compact .rv-line-item { padding: 1px 6px 1px 4px; font-size: calc(9.5 * var(--u)); }
+
+/* settlement tooltip: line tag */
+#ui .rv-hovercard .rv-hc-tag.rv-hc-line { display: inline-flex; align-items: center; gap: 5px; color: var(--line, var(--fg2)); border-color: color-mix(in srgb, var(--line, var(--line2)) 60%, transparent); text-transform: none; letter-spacing: 0.04em; font-weight: 700; }
+#ui .rv-hovercard .rv-hc-tag.rv-hc-line .rv-line-sw { width: 8px; height: 8px; }
+
+/* junction chooser: docked above the strip in place of the stop pill while the train waits at a branch */
+#ui .rv-junction { position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 6px; padding: 7px 10px 8px; max-width: 100%; border-color: var(--gold); box-shadow: 0 0 0 1px rgba(232, 193, 112, 0.25), 0 0 22px rgba(232, 193, 112, 0.22), 0 8px 30px rgba(0, 0, 0, 0.35); }
+#ui .rv-junction .rv-junction-head { display: flex; align-items: baseline; gap: 8px; padding: 0 2px; }
+#ui .rv-junction .rv-junction-ico { color: var(--gold); font-size: calc(15 * var(--u)); line-height: 1; align-self: center; }
+#ui .rv-junction .rv-junction-title { font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; font-size: calc(11 * var(--u)); color: var(--gold); }
+#ui .rv-junction .rv-junction-sub { font-size: calc(10 * var(--u)); letter-spacing: 0.08em; color: var(--fg2); }
+#ui .rv-junction .rv-junction-keys { margin-left: auto; font-size: calc(9 * var(--u)); letter-spacing: 0.16em; color: var(--fg3); font-family: ui-monospace, Consolas, monospace; }
+#ui .rv-junction .rv-junction-opts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+#ui .rv-junction .rv-junction-opt {
+  --line: var(--fg3);
+  position: relative; display: inline-flex; align-items: stretch; gap: 8px; min-width: 196px; max-width: 300px; padding: 6px 10px 6px 8px; text-align: left; letter-spacing: 0; text-transform: none;
+  border: 1px solid color-mix(in srgb, var(--line) 55%, transparent); border-left: 4px solid var(--line); border-radius: 6px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--line) 16%, rgba(10, 12, 24, 0.9)), rgba(10, 12, 24, 0.9));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35); transition: transform 120ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 140ms, border-color 140ms, background 140ms;
+}
+#ui .rv-junction .rv-junction-opt:hover, #ui .rv-junction .rv-junction-opt:focus-visible { transform: translateY(-2px); border-color: var(--line); box-shadow: 0 0 0 1px color-mix(in srgb, var(--line) 50%, transparent), 0 0 18px color-mix(in srgb, var(--line) 45%, transparent), 0 6px 14px rgba(0, 0, 0, 0.4); background: linear-gradient(180deg, color-mix(in srgb, var(--line) 26%, rgba(10, 12, 24, 0.92)), rgba(10, 12, 24, 0.92)); }
+#ui .rv-junction .rv-junction-opt:active { transform: translateY(0); }
+#ui .rv-junction .rv-jo-key { align-self: center; width: 18px; height: 18px; line-height: 16px; text-align: center; border-radius: 4px; border: 1px solid var(--line2); background: rgba(0, 0, 0, 0.35); color: var(--fg2); font-size: calc(10 * var(--u)); font-family: ui-monospace, Consolas, monospace; font-weight: 700; flex: 0 0 auto; }
+#ui .rv-junction .rv-jo-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
+#ui .rv-junction .rv-jo-line { display: inline-flex; align-items: center; gap: 6px; color: var(--line); font-size: calc(12 * var(--u)); letter-spacing: 0.06em; text-transform: uppercase; }
+#ui .rv-junction .rv-jo-line b { font-weight: 800; }
+#ui .rv-junction .rv-jo-next { display: inline-flex; align-items: center; gap: 3px; font-size: calc(11.5 * var(--u)); color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#ui .rv-junction .rv-jo-next.rv-dim { color: var(--fg3); font-style: italic; }
+#ui .rv-junction .rv-jo-arrow { color: var(--fg3); }
+#ui .rv-junction .rv-jo-next-name { overflow: hidden; text-overflow: ellipsis; }
+#ui .rv-junction .rv-jo-dist { color: var(--fg2); font-variant-numeric: tabular-nums; }
+#ui .rv-junction .rv-jo-flavour { font-size: calc(9.5 * var(--u)); letter-spacing: 0.12em; text-transform: uppercase; color: color-mix(in srgb, var(--line) 75%, var(--fg2)); }
+#ui .rv-junction .rv-jo-pad { align-self: flex-start; font-size: calc(8.5 * var(--u)); letter-spacing: 0.1em; color: var(--fg3); border: 1px solid var(--line2); border-radius: 999px; padding: 0 5px; line-height: 14px; flex: 0 0 auto; }
+#ui.rv-compact .rv-junction { padding: 5px 8px 6px; gap: 4px; }
+#ui.rv-compact .rv-junction .rv-junction-opt { min-width: 168px; max-width: 250px; padding: 4px 8px 4px 6px; gap: 6px; }
+#ui.rv-compact .rv-junction .rv-jo-flavour, #ui.rv-compact .rv-junction .rv-junction-sub, #ui.rv-compact .rv-junction .rv-jo-pad { display: none; }
+@media (max-width: 1100px) { #ui .rv-junction .rv-junction-opt { min-width: 150px; max-width: 220px; } }

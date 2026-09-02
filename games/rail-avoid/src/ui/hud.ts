@@ -5,7 +5,7 @@
  *   dock      — wave banner → stop pill → train strip (appended by index.ts), centred in the remaining width
  * The right rail (inspector / shop) lives outside this element; layout.ts publishes the zone sizes.
  */
-import { el, btn, setText, setWidth, toggleClass, show, setAttr, fmtTime, clamp } from './dom';
+import { el, btn, append, setText, setWidth, toggleClass, show, setAttr, fmtTime, clamp } from './dom';
 import type { UiShared } from './shared';
 import type { SimState, ResourceKey } from '../core/types';
 import { HEX_R, REGION_NAMES, TRAIN } from '../core/config';
@@ -14,6 +14,8 @@ import { gsap, D, isReduced, floatLabel, shake } from './motion';
 import { createVolumePopover } from './volume';
 import { nodeMeta } from './nodes';
 import { relicDef } from '../core/relics';
+import { LINE_NAMES } from '../core/config';
+import { readJunctionOptions, currentLine, lineName, lineFlavour, lineCss, lineKey, LINE_BUILT, LINE_UNKNOWN, type JunctionOption } from './lines';
 
 export interface Hud {
   el: HTMLElement;
@@ -29,6 +31,12 @@ export interface Hud {
   shakeRoute(): void;
   /** Close transient popovers (volume). Returns true when one was open. */
   closePopovers(): boolean;
+  /** True while the junction chooser is docked (the train waits at a branch). */
+  junctionVisible(): boolean;
+  /** Pick junction option `i` (0-based). Returns true when an option was chosen. */
+  chooseJunction(i: number): boolean;
+  /** Gamepad button routed from input.ts while the chooser shows (A/B/X → options 1-3). Returns true when consumed. */
+  junctionGamepad(button: number): boolean;
   anchors: Record<string, HTMLElement>;
   reset(): void;
   /** Staggered slide-in of every HUD group (run start, after a cinematic). */
@@ -46,7 +54,7 @@ const RES: Array<{ key: ResourceKey; label: string; icon: string }> = [
 ];
 const WEATHER_ICON: Record<string, string> = { clear: '○', rain: '☂', fog: '≋', storm: '⚡', ashfall: '☁' };
 
-export function createHud(ui: UiShared, actions: { openPause(): void; toggleReverse(): void }): Hud {
+export function createHud(ui: UiShared, actions: { openPause(): void; toggleReverse(): void; firstJunction?(): void }): Hud {
   // ---------- top-left: resources ----------
   const chips: Record<string, { el: HTMLElement; v: HTMLElement; cap: HTMLElement; flashTimer: number }> = {};
   const chipsEl = el('div', { class: 'rv-chips', role: 'group', 'aria-label': 'Resources' });
@@ -164,10 +172,22 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
   const reverseBtn = railBtn('◀', 'Reverse', () => actions.toggleReverse(), { aria: 'Reverse down the track (R)', cls: 'rv-reverse' });
   const logBtn = railBtn('≡', 'Log', () => { const on = !ui.settings().showLog; ui.audio().ui('click'); ui.app.settings.set({ showLog: on }); }, { aria: 'Toggle the event log feed' });
   let reversingShown = false;
+  // current line: the edge behind the loco looked up in railLines ("Your track" on built rail)
+  const onLineSw = el('i', { class: 'rv-line-sw', 'aria-hidden': 'true' });
+  const onLineV = el('b', { text: '—' });
+  const onLineEl = el('div', { class: 'rv-kv rv-online' }, el('span', { text: 'On' }), el('span', { class: 'rv-online-v' }, onLineSw, onLineV));
+  // three-swatch legend; hovering / focusing expands each swatch to its one-line flavour
+  const legendEl = el('div', { class: 'rv-line-legend', role: 'list', 'aria-label': 'Rail lines' },
+    ...[0, 1, 2].map((id) => el('span', { class: 'rv-line-item rv-line-' + lineKey(id), role: 'listitem', tabindex: '0', style: `--line:${lineCss(id)}`, title: `${LINE_NAMES[id]} — ${lineFlavour(id)}` },
+      el('i', { class: 'rv-line-sw', 'aria-hidden': 'true' }),
+      el('span', { class: 'rv-line-name', text: (LINE_NAMES[id] ?? '').replace(/ Line$/, '') }),
+      el('span', { class: 'rv-line-fl', text: lineFlavour(id) }))));
   const routeEl = el('div', { class: 'rv-route rv-panel', role: 'group', 'aria-label': 'Route planning', tabindex: '-1' },
     el('div', { class: 'rv-route-head' }, el('span', { class: 'rv-route-ico', 'aria-hidden': 'true', text: '⌖' }), el('span', { class: 'rv-label', text: 'Route' })),
+    onLineEl,
     el('div', { class: 'rv-kv rv-ahead' }, el('span', { text: 'Planned ahead' }), el('span', null, aheadV, ' hex')),
     el('div', { class: 'rv-kv rv-range' }, el('span', { text: 'Plan range' }), el('span', null, rangeV, ' hex')),
+    legendEl,
     el('div', { class: 'rv-route-btns' },
       railBtn('↶', 'Undo', () => { const sim = ui.sim(); if (!sim) return; const r = sim.unplanLast(); ui.audio().ui(r.ok ? 'click' : 'error'); if (!r.ok && r.reason) ui.notify(r.reason, 'warn'); }, { aria: 'Undo last planned hex (Backspace)' }),
       railBtn('✕', 'Clear', () => { const sim = ui.sim(); if (!sim) return; ui.audio().ui('click'); sim.clearPlan(); }, { aria: 'Clear planned route' }),
@@ -198,7 +218,79 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
     el('div', { class: 'rv-stop-main' }, stopIco, stopText, stopType, havenEl, departBtn),
     pressureEl);
   stopEl.hidden = true;
-  const dock = el('div', { class: 'rv-dock' }, warningEl, stopEl);
+
+  // ---------- junction chooser: replaces the stop pill while the train waits at a branch ----------
+  const junctionBtns = el('div', { class: 'rv-junction-opts', role: 'group', 'aria-label': 'Branches' });
+  const junctionEl = el('div', { class: 'rv-junction rv-panel', role: 'group', 'aria-label': 'Junction — choose your line' },
+    el('div', { class: 'rv-junction-head' },
+      el('span', { class: 'rv-junction-ico', 'aria-hidden': 'true', text: '⑂' }),
+      el('span', { class: 'rv-junction-title', text: 'Junction' }),
+      el('span', { class: 'rv-junction-sub', text: 'choose your line' }),
+      el('span', { class: 'rv-junction-keys', 'aria-hidden': 'true', text: '1 · 2 · 3' })),
+    junctionBtns);
+  junctionEl.hidden = true;
+  let junctionOpts: JunctionOption[] = [];
+  let junctionSig = '';
+  let junctionSeen = false;      // first junction of the run → announcement card
+  const KEY_HINT = ['1', '2', '3', '4', '5', '6'];
+  const PAD_HINT = ['A', 'B', 'X'];
+  function optionLabel(o: JunctionOption): string {
+    const n = o.next;
+    return n ? `${o.lineName} to ${n.name} (${nodeMeta(n.type).label}), ${n.distance} hex` : `${o.lineName}, dead end`;
+  }
+  function buildJunction(opts: JunctionOption[]): void {
+    junctionBtns.replaceChildren(...opts.map((o, i) => {
+      const n = o.next;
+      const flavour = lineFlavour(o.line);
+      const b = btn('', () => chooseJunction(i), { class: 'rv-junction-opt rv-line-' + lineKey(o.line), aria: `${KEY_HINT[i] ? KEY_HINT[i] + ': ' : ''}${optionLabel(o)}` });
+      b.setAttribute('style', `--line:${lineCss(o.line)}`);
+      b.dataset.col = String(o.col); b.dataset.row = String(o.row);
+      append(b, [
+        el('span', { class: 'rv-jo-key', 'aria-hidden': 'true', text: KEY_HINT[i] ?? '' }),
+        el('span', { class: 'rv-jo-body' },
+          el('span', { class: 'rv-jo-line' }, el('i', { class: 'rv-line-sw', 'aria-hidden': 'true' }), el('b', { text: o.lineName })),
+          el('span', { class: 'rv-jo-next' + (n ? '' : ' rv-dim') },
+            el('span', { class: 'rv-jo-arrow', 'aria-hidden': 'true', text: '→' }),
+            n ? el('span', { class: 'rv-jo-next-name' }, el('span', { class: 'rv-jo-next-ico', 'aria-hidden': 'true', style: `color:${nodeMeta(n.type).color}`, text: nodeMeta(n.type).icon }), ` ${n.name} (${n.type})`) : el('span', { class: 'rv-jo-next-name', text: 'dead end' }),
+            n ? el('span', { class: 'rv-jo-dist', text: ` · ${n.distance} hex` }) : null),
+          flavour ? el('span', { class: 'rv-jo-flavour', text: flavour }) : null),
+        PAD_HINT[i] ? el('span', { class: 'rv-jo-pad', 'aria-hidden': 'true', text: PAD_HINT[i] }) : null,
+      ]);
+      return b;
+    }));
+  }
+  function chooseJunction(i: number): boolean {
+    const o = junctionOpts[i];
+    const sim = ui.sim();
+    if (!o || !sim || junctionEl.hidden) return false;
+    let r: { ok: boolean; reason?: string } = { ok: false };
+    try { r = sim.planTile(o.col, o.row); } catch (e) { r = { ok: false, reason: e instanceof Error ? e.message : String(e) }; }
+    ui.audio().ui(r.ok ? 'confirm' : 'error');
+    if (!r.ok) { if (r.reason) ui.notify(r.reason, 'warn', 4200, 'junction'); return false; }
+    const b = junctionBtns.children[i] as HTMLElement | undefined;
+    if (b && !isReduced()) gsap.fromTo(b, { scale: 1.06 }, { scale: 1, duration: 0.25, ease: 'power2.out', clearProps: 'transform' });
+    return true;
+  }
+  function junctionGamepad(button: number): boolean {
+    if (junctionEl.hidden) return false;
+    const idx = button === 0 ? 0 : button === 1 ? 1 : button === 2 ? 2 : -1;
+    if (idx < 0 || idx >= junctionOpts.length) return false;
+    return chooseJunction(idx);
+  }
+  // keys 1-3 pick a branch while the chooser shows (they normally set the sim speed): capture phase so input.ts never sees them
+  const onJunctionKey = (e: KeyboardEvent): void => {
+    if (junctionEl.hidden || ui.anyModal() || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+    const t = e.target as HTMLElement | null;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT')) return;
+    const idx = KEY_HINT.indexOf(e.key);
+    if (idx < 0 || idx >= junctionOpts.length) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    chooseJunction(idx);
+  };
+  document.addEventListener('keydown', onJunctionKey, true);
+
+  const dock = el('div', { class: 'rv-dock' }, warningEl, junctionEl, stopEl);
 
   const root = el('div', { class: 'rv-hud' }, top, left, dock);
 
@@ -415,11 +507,66 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
     }
     const canRev = s.phase === 'running' || s.phase === 'paused';
     if (reverseBtn.disabled === canRev) reverseBtn.disabled = !canRev;
+    updateLine(s);
+  }
+
+  let lastLine: number | null | undefined;
+  function updateLine(s: SimState): void {
+    let id: number | null = null;
+    try { id = currentLine(s); } catch { id = null; }
+    if (id === lastLine) return;
+    lastLine = id;
+    const known = id !== null;
+    setText(onLineV, known ? lineName(id as number) : '—');
+    onLineSw.style.background = known ? lineCss(id as number) : 'transparent';
+    const st = known ? `--line:${lineCss(id as number)}` : '';
+    if (onLineEl.getAttribute('style') !== st) onLineEl.setAttribute('style', st);
+    toggleClass(onLineEl, 'rv-built', id === LINE_BUILT);
+    toggleClass(onLineEl, 'rv-unknown', id === LINE_UNKNOWN);
+    const fl = known ? lineFlavour(id as number) : '';
+    setAttr(onLineEl, 'title', known ? `The locomotive is on the ${lineName(id as number)}${fl ? ' — ' + fl : ''}` : 'No track behind the locomotive yet');
+    setAttr(onLineEl, 'aria-label', known ? `On: ${lineName(id as number)}` : 'On: no line');
+  }
+
+  /** Junction chooser: docked while the train waits at a branch with 2+ rail continuations. Returns true when it is showing. */
+  let junctionAt = 0;
+  function updateJunction(s: SimState, active: boolean): boolean {
+    if (!active) {
+      if (!junctionEl.hidden) { show(junctionEl, false); junctionSig = ''; junctionOpts = []; }
+      return false;
+    }
+    const now = performance.now();
+    const p = s.route.path;
+    const end = p[p.length - 1];
+    const sig = `${end ? end[0] + ',' + end[1] : ''}|${p.length}|${s.train.stopReason}|${Object.keys(s.route.railLines ?? {}).length}`;
+    if (sig !== junctionSig || now - junctionAt > 2000) {
+      junctionAt = now;
+      const opts = readJunctionOptions(ui.sim(), s);
+      const optSig = sig + '|' + opts.map(o => `${o.col},${o.row},${o.line},${o.next?.id ?? ''},${o.next?.distance ?? ''}`).join(';');
+      if (optSig !== junctionSig) {
+        junctionSig = optSig;
+        junctionOpts = opts;
+        buildJunction(opts);
+      }
+    }
+    if (junctionOpts.length < 2) { if (!junctionEl.hidden) show(junctionEl, false); return false; }
+    if (junctionEl.hidden) {
+      show(junctionEl, true);
+      if (!isReduced()) {
+        gsap.fromTo(junctionEl, { y: 22, opacity: 0 }, { y: 0, opacity: 1, duration: 0.45, ease: 'back.out(1.5)', clearProps: 'transform,opacity' });
+        gsap.fromTo(Array.from(junctionBtns.children), { y: 10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, stagger: 0.07, delay: 0.1, ease: 'power3.out', clearProps: 'transform,opacity' });
+      }
+      if (!junctionSeen) { junctionSeen = true; try { actions.firstJunction?.(); } catch { /* */ } }
+    }
+    return true;
   }
 
   function updateStop(s: SimState): void {
     const t = s.train;
-    if (s.phase === 'victory' || s.phase === 'defeat') { show(stopEl, false); lastStopSig = ''; return; }
+    if (s.phase === 'victory' || s.phase === 'defeat') { show(stopEl, false); updateJunction(s, false); lastStopSig = ''; return; }
+    // a branch to choose: the chooser replaces the stop pill (also when a plain 'no_route' stop sits at a fork)
+    const atFork = t.stopped && !t.reversing && (t.stopReason === 'junction' || t.stopReason === 'no_route') && (s.phase === 'running' || s.phase === 'paused');
+    if (updateJunction(s, atFork)) { show(stopEl, false); lastStopSig = ''; return; }
     let text = '', cls = 'rv-stop rv-panel', depart = false, haven = false, ico = '', type = '', color = '';
     if (t.reversing) {
       text = 'Reversing — press R or Stop to halt'; cls += ' rv-reversing'; ico = '◀';
@@ -512,13 +659,17 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
     for (const k of Object.keys(pending) as ResourceKey[]) delete pending[k];
     lootKeys.clear(); relicSig = ''; relicsEl.replaceChildren(); relicsEl.hidden = true;
     logLines.length = 0; logEl.replaceChildren();
-    show(warningEl, false); show(bossEl, false); show(stopEl, false);
+    show(warningEl, false); show(bossEl, false); show(stopEl, false); show(junctionEl, false);
+    junctionSig = ''; junctionOpts = []; junctionSeen = false; junctionAt = 0; lastLine = undefined;
     volume.close();
   }
 
-  const anchors: Record<string, HTMLElement> = { resources: chipsEl, void: voidEl, status: statusEl, speed: speedEl, menu: menuBtn, route: routeEl, stop: stopEl, log: logEl, hud: root, top, dock, left, speaker: volume.button, marks: marksChip, relics: relicsEl };
+  const anchors: Record<string, HTMLElement> = { resources: chipsEl, void: voidEl, status: statusEl, speed: speedEl, menu: menuBtn, route: routeEl, stop: stopEl, junction: junctionEl, lines: legendEl, log: logEl, hud: root, top, dock, left, speaker: volume.button, marks: marksChip, relics: relicsEl };
   return {
     el: root, zones: { top, left, dock }, update, flashResource, flashLoot, popMarks, shakeRoute, anchors, reset, enter, hide,
     closePopovers() { if (volume.isOpen()) { volume.close(); return true; } return false; },
+    junctionVisible: () => !junctionEl.hidden,
+    chooseJunction,
+    junctionGamepad,
   };
 }

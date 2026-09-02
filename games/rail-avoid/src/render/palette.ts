@@ -29,6 +29,11 @@ export const TRACK_PLANNED_FREE = 0x8fe0a0;
 export const TRACK_TRAVERSED = 0x0b0e1a;
 export const JUNCTION_RING = 0xf4f6fb;
 
+/** Crossroads hub marker: hot red-orange (fortified junction, not a haven). */
+export const CROSSROADS = 0xff5a2e;
+/** Warm lantern light of the hub watchtowers (glow + night sweep beam). */
+export const CROSSROADS_LANTERN = 0xffb060;
+
 export const SETTLEMENT_COLORS: Record<SettlementType, number> = {
   start: 0xe8c170,
   village: 0x6fbf73,
@@ -45,6 +50,7 @@ export const SETTLEMENT_COLORS: Record<SettlementType, number> = {
   wreck: 0xb5734a,
   market: 0xf0a05a,
   site: 0x5fd8a0,
+  crossroads: CROSSROADS,
 };
 
 /** Colour for any settlement type string (unknown / future types fall back to the village look). */

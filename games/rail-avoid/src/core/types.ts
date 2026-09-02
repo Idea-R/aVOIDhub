@@ -24,7 +24,7 @@ export interface Tile {
 
 export type SettlementType =
   | 'start' | 'village' | 'depot' | 'mine' | 'farm' | 'fuel' | 'clinic' | 'armory' | 'yard' | 'terminus'
-  | 'watchtower' | 'shrine' | 'wreck' | 'market' | 'site';
+  | 'watchtower' | 'shrine' | 'wreck' | 'market' | 'site' | 'crossroads';
 
 export interface ResourceBundle {
   rails?: number;
@@ -182,6 +182,8 @@ export interface RouteState {
   path: Array<[number, number]>;   // [col,row] tiles from start to planned end; index <= routeIndex are behind
   builtLinks: string[];            // edge keys "c1,r1|c2,r2" laid by the player
   railLinks: string[];             // pre-laid rail edges
+  /** Pre-laid edge key -> line id (0 Central, 1 Northern, 2 Southern, 3 crossover/branch). */
+  railLines: Record<string, number>;
   planRange: number;               // hexes ahead allowed
   blocked: boolean;                // next tile void/impassable
   sapperCharges: Array<{ col: number; row: number; revealed: boolean; timer: number; id: string }>;

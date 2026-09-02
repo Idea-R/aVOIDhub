@@ -1,11 +1,11 @@
 {
   "project": "RAILaVOID",
   "version": "1.0.0",
-  "updated": "2026-09-02T11:30:00Z",
+  "updated": "2026-09-02T14:40:00Z",
   "gates": {
     "build": "pass",
     "typecheck": "pass (0 errors)",
-    "unit_tests": "pass (18 tests incl. relics, elites, expeditions win/lose, bounties, upgrades, reverse)",
+    "unit_tests": "pass (20 tests incl. three-line worldgen, junction options, relics, expeditions, bounties, upgrades)",
     "boot": "pass",
     "start_tutorial": "pass",
     "controls": "pass (click-plan, undo, pause/resume, speed, mute, Tab panel)",
@@ -42,7 +42,7 @@
     "auto_quality": "steps down below 45 fps for 3 s, up above 58 fps for 10 s"
   },
   "content": {
-    "map": "160x36 hexes, 4 regions of 40 columns, ~50 settlements, pre-laid rail spine with 3 branch loops per region and a terminus ring",
+    "map": "160x36 hexes, 4 regions of 40 columns with dithered borders; three main lines (Central / Northern / Southern) meeting only at three Crossroads hubs and the terminus ring; ~74 settlements and nodes",
     "cars": 23,
     "enemies": 6,
     "bosses": 3,
@@ -55,7 +55,7 @@
     ],
     "passenger_events": 18,
     "music": "7 Suno-generated tracks in public/audio (title, calm, tense, combat, boss, victory, defeat) with procedural fallback",
-    "nodes": "village, depot, mine, farm, fuel, clinic, armory, yard, watchtower, shrine, wreck, market, start, terminus",
+    "nodes": "village, depot, mine, farm, fuel, clinic, armory, yard, watchtower, shrine, wreck, market, crossroads, start, terminus",
     "upgrades": "car levels I-III; locomotive tracks: speed, boiler pressure, reinforced frame, track crew",
     "relics": 18,
     "bounties": "kill / deliver / reach bounties posted by settlements (max 2 active), rewards in Void Marks + rails/scrap",
@@ -82,5 +82,5 @@
     "A bee-line run finishes in ~15 minutes at the new pace; exploring branches, yards and nodes stretches it to 25+.",
     "Event cards have no illustrations yet; expedition foes are silhouettes (procedural)."
   ],
-  "nextWeakestArea": "Expedition depth (more foes, boss-site variants) and illustrated event/relic art; human playtest of the loot/bounty economy"
+  "nextWeakestArea": "Human playtest of line choice (are Northern rewards worth the threat?), expedition depth, illustrated relic/event art"
 }

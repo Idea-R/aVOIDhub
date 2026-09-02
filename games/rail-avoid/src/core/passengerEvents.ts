@@ -166,6 +166,17 @@ export const SITE_EVENT: PassengerEventDef = {
 };
 NODE_EVENTS.push(SITE_EVENT);
 
+export const CROSSROADS_EVENT: PassengerEventDef = {
+  id: 'node_crossroads', title: 'The Crossroads', negative: true,
+  text: 'Every line meets here, and everyone knows it. Barricades on the platform, eyes in the towers, and a toll-keeper who has already counted your cars.',
+  options: [
+    { label: 'Fight through', desc: 'An ambush with two elites hits now. Clear it for a guaranteed relic and 6 Void Marks.' },
+    { label: 'Pay the toll', desc: '-24 scrap. Safe passage, no fight.', requires: { resource: 'scrap', amount: 24 } },
+    { label: 'Bribe the tower', desc: '-5 Void Marks. Safe passage and the toll-keeper shares intel: +6 s wave warnings for five minutes.', requires: { marks: 5 } },
+  ],
+};
+NODE_EVENTS.push(CROSSROADS_EVENT);
+
 export function eventById(id: string): PassengerEventDef | undefined {
   const n = NODE_EVENTS.find(e => e.id === id);
   if (n) return n;
