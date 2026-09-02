@@ -22,6 +22,7 @@ const expectedIds = [
   "wordavoid",
   "flipside",
   "tankavoid",
+  "railavoid",
   "bloomfall",
   "acrolis",
   "ttt3d",
@@ -34,7 +35,7 @@ function assert(condition, message) {
 assert(Array.isArray(allGames), "allGames must be an array");
 assert(
   allGames.length === expectedIds.length,
-  "catalog must contain exactly eight V1 titles",
+  "catalog must contain exactly nine V1 titles",
 );
 assert(
   JSON.stringify(allGames.map((game) => game.id)) ===
@@ -137,5 +138,5 @@ assert(
 );
 
 console.log(
-  "Game catalog contract verified: 8 titles, 8 details, 7 play destinations, 1 honest coming-soon state.",
+  "Game catalog contract verified: 9 titles, 9 details, 8 play destinations, 1 honest coming-soon state.",
 );

@@ -23,6 +23,11 @@ const games = [
     target: path.join(publicRoot, 'WORDaVOID'),
   },
   {
+    name: 'RAILaVOID',
+    source: path.join(repositoryRoot, 'dist', 'RAILaVOID'),
+    target: path.join(publicRoot, 'RAILaVOID'),
+  },
+  {
     name: 'TankaVOID review build',
     source: path.join(repositoryRoot, 'dist', 'TankaVOID'),
     target: path.join(publicRoot, 'TankaVOID'),

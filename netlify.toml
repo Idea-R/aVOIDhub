@@ -48,6 +48,16 @@
   to = "/WORDaVOID/:splat"
   status = 200
 
+[[redirects]]
+  from = "/railavoid"
+  to = "/RAILaVOID/"
+  status = 301
+
+[[redirects]]
+  from = "/railavoid/*"
+  to = "/RAILaVOID/:splat"
+  status = 200
+
 [[headers]]
   for = "/VOIDaVOID/assets/*"
   [headers.values]
@@ -60,6 +70,11 @@
 
 [[headers]]
   for = "/WORDaVOID/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/RAILaVOID/assets/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 

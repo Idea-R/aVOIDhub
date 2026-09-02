@@ -21,7 +21,7 @@
     "workspace:hub": "npm run dev --workspace=@avoid/game-hub",
     "workspace:platform": "npm run dev --workspace=@avoid/platform",
     "build:platform": "npm run build --workspace=@avoid/platform",
-    "build:platform:games": "npm run build --workspace=@avoid/void-main && npm run build --workspace=@avoid/wrecka-void && npm run build --workspace=@avoid/word-avoid && npm run build --workspace=@avoid/tanka-void",
+    "build:platform:games": "npm run build --workspace=@avoid/void-main && npm run build --workspace=@avoid/wrecka-void && npm run build --workspace=@avoid/word-avoid && npm run build --workspace=@avoid/tanka-void && npm run build --workspace=@avoid/rail-avoid",
     "prepare:platform:games": "node apps/platform/scripts/prepare-games.mjs",
     "build:platform:netlify": "npm run build:platform:games && npm run prepare:platform:games && npm run build:platform",
     "build:platform:preview": "npm run build:platform:games && npm run prepare:platform:games && npm run build:preview --workspace=@avoid/platform",

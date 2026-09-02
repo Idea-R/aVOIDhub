@@ -1,0 +1,11 @@
+import { chromium } from 'playwright';
+const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const p = await b.newPage({ viewport: { width: 1280, height: 720 } });
+const errs = [], bad = [];
+p.on('pageerror', e => errs.push(String(e.message))); p.on('console', m => { if (m.type() === 'error') errs.push(m.text()); });
+p.on('response', r => { if (r.status() >= 400) bad.push(r.status() + ' ' + r.url()); });
+await p.goto('http://localhost:4181/RAILaVOID/');
+await p.waitForTimeout(8000);
+const r = await p.evaluate(() => ({ ready: !!(window.__RAIL && window.__RAIL.ready), view: !!(window.__RAIL && window.__RAIL.view), phase: window.__RAIL && window.__RAIL.state.phase }));
+console.log(JSON.stringify({ ...r, errs: errs.slice(0, 5), bad: bad.slice(0, 5) }));
+await b.close();

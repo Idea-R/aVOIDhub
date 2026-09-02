@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "tracks": {
+    "title": "title.mp3",
+    "calm": "calm.mp3",
+    "tense": "tense.mp3",
+    "combat": "combat.mp3",
+    "boss": "boss.mp3",
+    "victory": "victory.mp3",
+    "defeat": "defeat.mp3"
+  },
+  "prompts": {
+    "title": "RAILaVOID Theme: cinematic dark orchestral, lonely steam locomotive rhythm, slow brass, distant choir, melancholic dark ambient, wide desolate landscape, 88 bpm, instrumental",
+    "calm": "RAILaVOID Open Line: hopeful post-rock travel theme, steady steam-train chug percussion, warm electric guitars, cello and strings, wide open plains at dawn, 96 bpm, instrumental",
+    "tense": "RAILaVOID Void Pressure: dark ambient suspense, ticking metallic percussion, low cello drones, dissonant tremolo strings, creeping dread, 80 bpm, instrumental",
+    "combat": "RAILaVOID Boarding Party: driving industrial rock combat theme, heavy pounding drums like train wheels on rails, distorted guitars, urgent brass stabs, 140 bpm, instrumental",
+    "boss": "RAILaVOID Iron Wagon: epic hybrid orchestral boss battle, massive taiko drums, menacing low brass, ominous choir, apocalyptic tension, 120 bpm, instrumental",
+    "victory": "RAILaVOID The Last Gate: triumphant warm orchestral finale, sunrise, soaring strings, gentle brass swell, hopeful piano, 100 bpm, instrumental",
+    "defeat": "RAILaVOID Derailed: mournful solo piano and low strings, distant train whistle, slow, fading into silence, 70 bpm, instrumental"
+  }
+}

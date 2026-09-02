@@ -295,6 +295,53 @@ export const originalGames: Game[] = [
       copy: "The platform recomputes the score from a tightly bounded terminal summary and a one-use run. That makes the result provisional—not replay-verified—and keeps old prototype samples off this board.",
     },
   },
+  {
+    id: "railavoid",
+    title: "RAILaVOID",
+    eyebrow: "Early access",
+    description:
+      "Drive the last train across a collapsing continent. Lay track, arm the cars, and outrun the void.",
+    premise:
+      "The train is your base. Every car you couple on is a decision about power, heat, ammunition and weight, and the void behind you never stops.",
+    genre: "Logistics tower-defense roguelite",
+    image: "/games/railavoid.webp",
+    status: "playable",
+    hosting: "hosted",
+    accent: "#6d5fd6",
+    meta: "Hosted on aVOID",
+    detailHref: "/games/railavoid/",
+    playHref: "/railavoid/",
+    playLabel: "Play RAILaVOID",
+    destination: "avoidgame.io/railavoid",
+    availability: "Early access",
+    statusNote:
+      "A complete four-region campaign is playable now. Balance, cutscenes, event artwork and train mechanics are still being tuned, so expect frequent updates.",
+    facts: [
+      { label: "Plan", value: "Click hexes to lay track" },
+      { label: "Defend", value: "Cars fight, boarders walk the train" },
+      { label: "Run shape", value: "Four regions, three bosses" },
+    ],
+    highlights: [
+      {
+        title: "Adjacency matters",
+        copy: "Power reaches three cars, ammo two, and heat spreads to neighbours. Where you couple a car is the whole strategy.",
+      },
+      {
+        title: "Nothing waits",
+        copy: "The void eats the map from the west. Settlements are havens, but every detour and every stop in the wild costs margin.",
+      },
+      {
+        title: "Adapt or derail",
+        copy: "Raiders board, crawlers ram, harpies sap power and wisps ignore bullets. No single turret answers every wave.",
+      },
+    ],
+    deviceSupport: ["Desktop mouse and keyboard", "Gamepad", "Reduced-motion and colourblind settings"],
+    score: {
+      scope: "independent",
+      headline: "Local best runs for now.",
+      copy: "Scores and best regions are stored in the browser while the campaign is balanced. Platform leaderboards come with the full release.",
+    },
+  },
 ];
 
 export const relatedGames: Game[] = [

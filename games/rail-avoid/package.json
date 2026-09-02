@@ -1,0 +1,30 @@
+{
+  "name": "@avoid/rail-avoid",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "RAILaVOID - a moving-train logistics and tower-defense roguelite by aVOID Games",
+  "scripts": {
+    "dev": "vite --port 5178",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "verify": "node verify/verify.mjs",
+    "typecheck": "tsc --noEmit",
+    "build:standalone": "node scripts/standalone.mjs",
+    "check:standalone": "node verify/standalone-check.mjs",
+    "perf:headed": "node verify/perf-headed.mjs"
+  },
+  "dependencies": {
+    "gsap": "^3.15.0",
+    "phaser": "3.90.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "playwright": "^1.62.1",
+    "pngjs": "^7.0.0",
+    "typescript": "^5.9.0",
+    "vite": "^7.0.0",
+    "vitest": "^4.0.0"
+  }
+}

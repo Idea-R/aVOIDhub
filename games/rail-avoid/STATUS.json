@@ -1,0 +1,60 @@
+{
+  "project": "RAILaVOID",
+  "version": "1.0.0",
+  "updated": "2026-09-02T06:15:00Z",
+  "gates": {
+    "build": "pass",
+    "typecheck": "pass (0 errors)",
+    "unit_tests": "pass (11 passed, 1 balance probe skipped by default; run PROBE=1)",
+    "boot": "pass",
+    "start_tutorial": "pass",
+    "controls": "pass (click-plan, undo, pause/resume, speed, mute, Tab panel)",
+    "early_game": "pass (autopilot reaches 120 s sim time, 3 settlements rescued)",
+    "combat": "pass (weapons fire, enemies die, train takes damage)",
+    "mid_game": "pass (warp to region 3, rain)",
+    "bosses": "pass (Iron Wagon, Brood Mother, Void Maw all defeated by the test train)",
+    "save_load": "pass (serialize -> reload -> continueRun restores time and seed)",
+    "victory_defeat": "pass (both result screens reached and captured)",
+    "resize": "pass (1280x720, 800x600, 1920x1080)",
+    "determinism": "pass (identical state after 30 s for seed 12345)",
+    "screenshots": "pass (none blank)",
+    "standalone_file_build": "pass (dist-standalone/railavoid.html boots from file:// with no errors)",
+    "perf_headless": "note (14-18 fps under SwiftShader software GL; not representative)",
+    "perf_headed_gpu": "pass (avg 56 fps, min 50 fps, worst frame 16.7 ms, 17 enemies, rain at night, 1920x1080, RTX 3080 shared with other sessions)"
+  },
+  "performance": {
+    "headed_1080p": { "avgFps": 56.4, "minFps": 49.6, "worstFrameMs": 16.69, "drawCalls": 1687, "quality": "auto(high)", "enemies": 17 },
+    "render_agent_measurements": { "night_rain_48_enemies_zoom1.2": 60.2, "whole_map_zoom0.5": 60.1, "low_reduced_motion": 60.2 },
+    "auto_quality": "steps down below 45 fps for 3 s, up above 58 fps for 10 s"
+  },
+  "content": {
+    "map": "160x36 hexes, 4 regions of 40 columns, ~50 settlements, pre-laid rail spine with 3 branch loops per region and a terminus ring",
+    "cars": 23,
+    "enemies": 6,
+    "bosses": 3,
+    "weather": ["clear", "rain", "fog", "storm", "ashfall"],
+    "passenger_events": 14,
+    "music": "7 Suno-generated tracks in public/audio (title, calm, tense, combat, boss, victory, defeat) with procedural fallback"
+  },
+  "screenshots": [
+    "verify/screenshots/title.png",
+    "verify/screenshots/tutorial.png",
+    "verify/screenshots/early_game.png",
+    "verify/screenshots/combat.png",
+    "verify/screenshots/mid_game.png",
+    "verify/screenshots/boss_boss_wagon.png",
+    "verify/screenshots/boss_boss_brood.png",
+    "verify/screenshots/boss_boss_maw.png",
+    "verify/screenshots/victory.png",
+    "verify/screenshots/defeat.png",
+    "verify/screenshots/resize_800x600.png",
+    "verify/screenshots/standalone.png"
+  ],
+  "knownProblems": [
+    "The combat track (Boarding Party) is a 44 s take and loops audibly; a longer take is available in the Suno workspace.",
+    "The headless verification harness measures ~15 fps under SwiftShader; use `npm run perf:headed` for real numbers.",
+    "Campaign length with a bee-line route is ~20 minutes; exploring branches and yards stretches it to 30+.",
+    "No key-art image on the title yet (all art is procedural); pending a decision on generating one."
+  ],
+  "nextWeakestArea": "Balance feel in regions 3-4 by human playtest (wisp/harpy pressure vs. affordable tesla/flak), and boss fights' readability"
+}

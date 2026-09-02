@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="color-scheme" content="dark" />
+  <title>RAILaVOID</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230b0e1a'/%3E%3Cpath d='M4 22 L28 10' stroke='%23e8c170' stroke-width='4' stroke-linecap='round'/%3E%3Ccircle cx='10' cy='19' r='4' fill='%236fb7e8'/%3E%3Ccircle cx='22' cy='13' r='4' fill='%23e86f6f'/%3E%3C/svg%3E" />
+  <style>
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #070912; }
+    body { font-family: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif; color: #e6e9f2; }
+    #game { position: absolute; inset: 0; }
+    #game canvas { display: block; image-rendering: auto; }
+    #ui { position: absolute; inset: 0; pointer-events: none; }
+    #ui > * { pointer-events: auto; }
+    #boot { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; color: #8fa1c7; letter-spacing: 0.3em; font-size: 14px; text-transform: uppercase; }
+    #boot .bar { width: 220px; height: 3px; background: #1b2238; overflow: hidden; border-radius: 2px; }
+    #boot .bar i { display: block; height: 100%; width: 40%; background: #e8c170; animation: boot 1s infinite linear; }
+    @keyframes boot { from { transform: translateX(-100%);} to { transform: translateX(250%);} }
+  </style>
+</head>
+<body>
+  <div id="game"></div>
+  <div id="ui"></div>
+  <div id="boot"><div>RAILaVOID</div><div class="bar"><i></i></div></div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

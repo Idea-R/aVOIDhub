@@ -1,0 +1,10 @@
+import { chromium } from 'playwright';
+const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--allow-file-access-from-files'] });
+const p = await b.newPage({ viewport: { width: 1280, height: 720 } });
+const errs = []; p.on('pageerror', e => errs.push(String(e.message))); p.on('console', m => { if (m.type() === 'error') errs.push(m.text()); });
+await p.goto('file:///C:/dev/Fable5.1test/railavoid/dist-standalone/railavoid.html');
+await p.waitForTimeout(7000);
+const r = await p.evaluate(() => ({ ready: !!(window.__RAIL && window.__RAIL.ready), view: !!(window.__RAIL && window.__RAIL.view), phase: window.__RAIL && window.__RAIL.state.phase }));
+console.log(JSON.stringify({ ...r, errs: errs.slice(0, 5) }));
+await p.screenshot({ path: 'C:/dev/Fable5.1test/railavoid/verify/screenshots/standalone.png' });
+await b.close();
