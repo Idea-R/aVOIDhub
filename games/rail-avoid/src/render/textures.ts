@@ -177,6 +177,14 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   glyph('gl_armory', d => d.poly([6, 1, 11, 3, 10, 8, 6, 11, 2, 8, 1, 3]).fill(0x0b0e1a).rect(5, 4, 2, 4));
   glyph('gl_yard', d => { d.line(2.2, 0xffffff).seg(2, 10, 8, 4); d.fill(0xffffff).circle(8.5, 3.5, 3); d.fill(0x0b0e1a).circle(9.5, 2.5, 1.5); });
   glyph('gl_terminus', d => d.rect(1, 2, 2.5, 9).rect(8.5, 2, 2.5, 9).rect(1, 1, 10, 2).fill(0xffffff, 0.7).rect(4.5, 5, 3, 6));
+  // watchtower: tapered tower with a lantern cap
+  glyph('gl_watchtower', d => d.poly([4.5, 11, 7.5, 11, 7, 4, 5, 4]).rect(3, 2.5, 6, 1.6).fill(0xffffff, 0.75).circle(6, 1.6, 1.5));
+  // shrine: torii-like gate with a flame
+  glyph('gl_shrine', d => d.rect(2.5, 4, 1.6, 7).rect(7.9, 4, 1.6, 7).rect(1.5, 3, 9, 1.6).poly([6, 5.5, 7.6, 8.5, 6, 10, 4.4, 8.5]));
+  // wreck: tilted car with a crack
+  glyph('gl_wreck', d => d.poly([1.5, 8, 9.5, 3.5, 11, 6, 3, 10.5]).fill(0x0b0e1a).poly([5, 7.5, 6.5, 5.5, 7.2, 6.4, 5.8, 8.4]).fill(0xffffff).circle(3, 10.5, 1.2).circle(9.5, 7, 1.2));
+  // market: awning with a scalloped edge over a stall
+  glyph('gl_market', d => d.rect(1, 3, 10, 2).circle(2.5, 5.5, 1.5).circle(6, 5.5, 1.5).circle(9.5, 5.5, 1.5).rect(2, 7, 8, 4).fill(0x0b0e1a).rect(4, 8.5, 4, 1));
 
   // ---- projectiles ----
   gen(scene, 'p_shell', 10, 6, d => d.fill(0x2a2f3a).ellipse(5, 3, 10, 6).fill(0xffd08a).ellipse(6.5, 2.5, 4, 2.5));
@@ -328,6 +336,63 @@ function generateBuildingTextures(scene: Phaser.Scene): void {
     d.fill(0x9a8fe0).circle(20, 12, 2);
   });
   gen(scene, 'b_shadow', 30, 12, d => d.fill(0x000000, 0.4).ellipse(15, 6, 30, 11).fill(0x000000, 0.3).ellipse(15, 6, 20, 7));
+
+  // ---- new settlement types ----
+  // watchtower: tall timber lookout on stilts with a railed platform and a lantern cage on top
+  gen(scene, 'b_tower', 18, 36, d => {
+    d.line(1.6, 0x5a4a3a).seg(4, 36, 7, 12).seg(14, 36, 11, 12).seg(5, 30, 13, 30).seg(6, 24, 12, 24).seg(4, 36, 13, 24).seg(14, 36, 5, 24);
+    d.fill(0x8a6a4a).rect(3, 11, 12, 2);
+    d.line(1, 0x6a5a4a).seg(3, 8, 3, 11).seg(15, 8, 15, 11).seg(3, 8, 15, 8);
+    d.fill(0x9a7a5a).rect(5, 4, 8, 7);
+    d.fill(WIN).rect(7.5, 6, 3, 3);
+    d.fill(0x4a4a52).poly([4, 4, 9, 0, 14, 4]);
+    d.fill(0xffe8a0, 0.9).circle(9, 1.5, 1.4);
+  });
+  gen(scene, 'b_palisade', 22, 10, d => { for (let i = 0; i < 7; i++) d.fill(i % 2 ? 0x8a6a4a : 0x7a5a3a).rect(1 + i * 3, 2 + (i % 3), 2.2, 8 - (i % 3)); d.line(1, 0x5a4a3a).seg(1, 5, 22, 5); });
+  gen(scene, 'b_brazier', 8, 12, d => { d.fill(0x3a3d48).rect(3, 6, 2, 6).rect(1, 5, 6, 2); d.fill(0xff9a3a, 0.9).poly([4, 0, 6.5, 4, 4, 5.5, 1.5, 4]); d.fill(0xfff0a0, 0.9).poly([4, 1.5, 5.2, 4, 4, 4.8, 2.8, 4]); });
+  // shrine: stepped stone plinth, a small roofed altar and a flame bowl
+  gen(scene, 'b_shrine', 22, 24, d => {
+    d.fill(0x6a6a74).rect(2, 20, 18, 4); d.fill(0x8a8a94).rect(4, 17, 14, 3); d.fill(0x9a9aa4).rect(6, 14, 10, 3);
+    d.fill(0xb8b4ac).rect(8, 8, 6, 6); d.fill(0x5a4a6a).poly([5, 8, 11, 3, 17, 8]); d.fill(0x7a6a8a).poly([6, 8, 11, 4.5, 16, 8]);
+    d.fill(0xc9a0ff, 0.95).poly([11, 5.5, 13, 9.5, 11, 12, 9, 9.5]); d.fill(0xffe08a).poly([11, 7.5, 12, 9.5, 11, 11, 10, 9.5]);
+  });
+  gen(scene, 'b_stones', 20, 10, d => { d.fill(0x6a6a74).rect(2, 3, 3, 7).rect(8, 1, 3, 9).rect(15, 4, 3, 6); d.fill(0x8a8a94).rect(2, 3, 3, 1.2).rect(8, 1, 3, 1.2).rect(15, 4, 3, 1.2); d.fill(0xc9a0ff, 0.55).circle(9.5, 4, 1); });
+  gen(scene, 'b_lantern_post', 8, 16, d => { d.line(1.4, 0x4a4a52).seg(4, 16, 4, 4); d.fill(0x3a3d48).rect(2, 2, 4, 4); d.fill(0xffd080, 0.95).rect(2.8, 2.8, 2.4, 2.4); });
+  // wreck: a derailed, rust-eaten car tipped on its side, a toppled loco and scrap piles
+  gen(scene, 'b_wreck_car', 30, 18, d => {
+    d.fill(0x5a3a2a).poly([2, 14, 24, 6, 28, 10, 6, 18]);
+    d.fill(0x8a4a30).poly([2, 14, 22, 7, 24, 3, 4, 10]);
+    d.fill(0xa86a40, 0.7).poly([6, 12, 14, 9, 15, 7, 7, 10]);
+    d.fill(0x2a2430).poly([10, 11, 13, 10, 13.5, 8, 10.5, 9]);
+    d.fill(0x1a1c22).circle(5, 17, 2).circle(13, 14, 2).circle(21, 11, 2);
+    d.fill(0x4a4a52).circle(5, 17, 0.8).circle(13, 14, 0.8).circle(21, 11, 0.8);
+    d.line(1, 0x3a2a20, 0.8).seg(9, 13, 12, 9).seg(17, 9, 19, 7);
+  });
+  gen(scene, 'b_wreck_loco', 34, 22, d => {
+    d.fill(0x4a3a30).rect(4, 12, 24, 8); d.fill(0x6a4a3a).rect(4, 12, 24, 2);
+    d.fill(0x5a4a44).ellipse(16, 12, 24, 10); d.fill(0x7a5a4a).ellipse(16, 10, 18, 5);
+    d.fill(0x3a3d48).rect(24, 4, 3, 8); d.fill(0x2a2a30).rect(23, 3, 5, 2);
+    d.fill(0x8a5a3a, 0.8).rect(6, 14, 6, 3).rect(16, 15, 5, 3);
+    d.fill(0x1a1c22).circle(8, 21, 2.2).circle(16, 21, 2.2).circle(24, 21, 2.2);
+    d.line(1.2, 0x2a2a30).seg(3, 8, 8, 12).seg(30, 9, 27, 13);
+  });
+  gen(scene, 'b_scrap', 20, 10, d => { d.fill(0x5a5048).ellipse(10, 7, 20, 6); d.fill(0x8a6a4a).poly([3, 8, 7, 3, 12, 5, 16, 8]); d.line(1.2, 0x9a9fa8).seg(4, 4, 14, 2).seg(9, 9, 18, 4); d.fill(0xb5734a, 0.8).rect(11, 4, 3, 3); d.fill(0x3a3d48).circle(6, 6, 1.4); });
+  // market: striped awnings over stalls, crates and a barrel
+  gen(scene, 'b_stall', 22, 16, d => {
+    d.fill(0x8a6a4a).rect(3, 9, 16, 7); d.fill(0x6a4a30).rect(3, 9, 16, 1.5);
+    d.line(1.2, 0x5a4a3a).seg(3, 16, 3, 5).seg(19, 16, 19, 5);
+    for (let i = 0; i < 6; i++) d.fill(i % 2 ? 0xe86f6f : 0xf4f6fb).rect(1 + i * 3.33, 3, 3.4, 4);
+    for (let i = 0; i < 6; i++) d.fill(i % 2 ? 0xe86f6f : 0xf4f6fb).circle(2.7 + i * 3.33, 7, 1.6);
+    d.fill(0xd9d15a).rect(5, 11, 3, 2); d.fill(0x6fbf73).rect(9, 11, 3, 2); d.fill(0xc98a4b).rect(13, 11, 3, 2);
+  });
+  gen(scene, 'b_stall2', 20, 16, d => {
+    d.fill(0x7a5a3a).rect(3, 9, 14, 7); d.fill(0x5a4a3a).rect(3, 9, 14, 1.5);
+    d.line(1.2, 0x5a4a3a).seg(3, 16, 3, 5).seg(17, 16, 17, 5);
+    for (let i = 0; i < 5; i++) d.fill(i % 2 ? 0x6fb7e8 : 0xf4f6fb).rect(1 + i * 3.6, 3, 3.7, 4);
+    for (let i = 0; i < 5; i++) d.fill(i % 2 ? 0x6fb7e8 : 0xf4f6fb).circle(2.8 + i * 3.6, 7, 1.7);
+    d.fill(0xe8c170).rect(5, 11, 4, 2.5); d.fill(0x8a8f9a).rect(11, 11, 3, 2.5);
+  });
+  gen(scene, 'b_crates', 16, 12, d => { d.fill(0x9a7a4a).rect(1, 5, 7, 7).rect(8, 6, 7, 6); d.fill(0xb89a68).rect(4, 0, 7, 6); d.line(0.8, 0x5a4a3a).seg(1, 8.5, 8, 8.5).seg(4.5, 5, 4.5, 12).seg(8, 9, 15, 9).seg(7.5, 0, 7.5, 6); d.fill(0x6a4a3a).circle(14, 3, 2.2); d.fill(0x8a6a4a).rect(12.5, 1.5, 3, 0.8); });
 }
 
 function generateMiscTextures(scene: Phaser.Scene): void {

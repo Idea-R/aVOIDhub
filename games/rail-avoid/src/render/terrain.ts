@@ -18,8 +18,14 @@ import type { RenderSettings } from './settings';
 interface DecorItem { key: string; x: number; y: number; scale: number; flip: boolean; alpha: number; }
 interface LiveTree { img: Phaser.GameObjects.Image; phase: number; amp: number; }
 
+/** Decor stamped into the terrain itself (never hidden by the zoom LOD). */
+const TERRAIN_DECOR = new Set(['peak', 'ripple']);
+
 export class TerrainLayer {
   private rts: Phaser.GameObjects.RenderTexture[] = [];
+  /** Trees / rocks / bushes baked separately so they can be hidden when zoomed far out. */
+  private decorRts: Phaser.GameObjects.RenderTexture[] = [];
+  private decorShown = true;
   private built = false;
   private trees: LiveTree[] = [];
   private swaying = false;
@@ -34,6 +40,8 @@ export class TerrainLayer {
   destroy(): void {
     for (const rt of this.rts) { try { rt.destroy(); } catch { /* ignore */ } }
     this.rts = [];
+    for (const rt of this.decorRts) { try { rt.destroy(); } catch { /* ignore */ } }
+    this.decorRts = [];
     for (const t of this.trees) t.img.destroy();
     this.trees = [];
     this.waterTiles = []; this.crystalTiles = [];
@@ -92,12 +100,27 @@ export class TerrainLayer {
       rt.setOrigin(0, 0);
       this.layer.add(rt);
       this.rts.push(rt);
-      this.drawChunk(rt, state, c0, c1, x0, yTop, noDecor, decorDensity, liveTrees, roads);
+      let drt: Phaser.GameObjects.RenderTexture | null = null;
+      try {
+        drt = this.scene.add.renderTexture(x0, yTop, w, h);
+        drt.setOrigin(0, 0).setDepth(-1e9).setVisible(this.decorShown);
+        this.decorLayer.add(drt);
+        this.decorRts.push(drt);
+      } catch (e) { console.warn('[render] decor RT failed', e); drt = null; }
+      this.drawChunk(rt, drt, state, c0, c1, x0, yTop, noDecor, decorDensity, liveTrees, roads);
     }
     this.built = true;
   }
 
-  private drawChunk(rt: Phaser.GameObjects.RenderTexture, state: SimState, c0: number, c1: number, ox: number, oy: number,
+  /** Zoom LOD: hide baked trees/rocks and live trees when zoomed far out (terrain stays). */
+  setDecorVisible(on: boolean): void {
+    if (on === this.decorShown) return;
+    this.decorShown = on;
+    for (const rt of this.decorRts) rt.setVisible(on);
+    for (const t of this.trees) t.img.setVisible(on);
+  }
+
+  private drawChunk(rt: Phaser.GameObjects.RenderTexture, drt: Phaser.GameObjects.RenderTexture | null, state: SimState, c0: number, c1: number, ox: number, oy: number,
     noDecor: Set<string>, density: number, liveTrees: boolean, roads: Array<[number, number, number, number]>): void {
     const mapW = state.mapW, mapH = state.mapH;
     const tiles: Tile[] = [];
@@ -285,27 +308,35 @@ export class TerrainLayer {
     if (decor.length) {
       const img = this.scene.make.image({ x: 0, y: 0, key: 'px' }, false);
       img.setOrigin(0.5, 1);
-      try {
-        rt.beginDraw();
-        for (const d of decor) {
-          if (!this.scene.textures.exists(d.key)) continue;
-          img.setTexture(d.key);
-          img.setScale(TEX_SCALE * d.scale * (d.flip ? -1 : 1), TEX_SCALE * d.scale);
-          img.setAlpha(d.alpha);
-          rt.batchDraw(img, d.x, d.y);
+      const stamp = (target: Phaser.GameObjects.RenderTexture, items: DecorItem[]) => {
+        if (!items.length) return;
+        try {
+          target.beginDraw();
+          for (const d of items) {
+            if (!this.scene.textures.exists(d.key)) continue;
+            img.setTexture(d.key);
+            img.setScale(TEX_SCALE * d.scale * (d.flip ? -1 : 1), TEX_SCALE * d.scale);
+            img.setAlpha(d.alpha);
+            target.batchDraw(img, d.x, d.y);
+          }
+          target.endDraw();
+        } catch (e) {
+          try { target.endDraw(); } catch { /* ignore */ }
+          console.warn('[render] decor stamp failed', e);
         }
-        rt.endDraw();
-      } catch (e) {
-        try { rt.endDraw(); } catch { /* ignore */ }
-        console.warn('[render] decor stamp failed', e);
-      }
+      };
+      // mountain peaks and water ripples belong to the terrain; everything else is LOD decor
+      const fixed = decor.filter(d => TERRAIN_DECOR.has(d.key));
+      const lod = drt ? decor.filter(d => !TERRAIN_DECOR.has(d.key)) : [];
+      stamp(rt, drt ? fixed : decor);
+      if (drt) stamp(drt, lod);
       img.destroy();
     }
     // live trees
     for (const t of live) {
       if (!this.scene.textures.exists(t.key)) continue;
       const img = this.scene.add.image(t.x, t.y, t.key).setOrigin(0.5, 1).setScale(TEX_SCALE * t.scale * (t.flip ? -1 : 1), TEX_SCALE * t.scale);
-      img.setDepth(t.y);
+      img.setDepth(t.y).setVisible(this.decorShown);
       this.decorLayer.add(img);
       this.trees.push({ img, phase: Math.random() * Math.PI * 2, amp: 0.025 + Math.random() * 0.02 });
     }

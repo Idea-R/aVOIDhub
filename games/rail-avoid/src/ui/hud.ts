@@ -1,19 +1,29 @@
-/** In-run HUD: resources, status bar, speed controls, void meter, warnings, route panel, stop status, log feed. */
+/**
+ * In-run HUD laid out as fixed safe zones:
+ *   top bar   — resources (left) · region/clock/boss (centre) · speaker/speed/menu (right)
+ *   left rail — route panel (collapses to a 44 px icon strip while the plan is fine) + optional log feed
+ *   dock      — wave banner → stop pill → train strip (appended by index.ts), centred in the remaining width
+ * The right rail (inspector / shop) lives outside this element; layout.ts publishes the zone sizes.
+ */
 import { el, btn, setText, setWidth, toggleClass, show, setAttr, fmtTime, clamp } from './dom';
 import type { UiShared } from './shared';
 import type { SimState, ResourceKey } from '../core/types';
-import type { GameEvents } from '../core/events';
 import { HEX_R, REGION_NAMES, TRAIN } from '../core/config';
 import { ENEMY_DEFS } from '../core/enemies';
-import { gsap, D, isReduced, floatLabel } from './motion';
-
-export type HoverPayload = GameEvents['ui:hoverTile'];
+import { gsap, D, isReduced, floatLabel, shake } from './motion';
+import { createVolumePopover } from './volume';
+import { nodeMeta } from './nodes';
 
 export interface Hud {
   el: HTMLElement;
+  /** Zones for the layout controller. */
+  zones: { top: HTMLElement; left: HTMLElement; dock: HTMLElement };
   update(s: SimState, now: number): void;
-  setHover(p: HoverPayload): void;
   flashResource(key: ResourceKey, delta: number): void;
+  /** Subtle "plan range reached" feedback instead of a toast. */
+  shakeRoute(): void;
+  /** Close transient popovers (volume). Returns true when one was open. */
+  closePopovers(): boolean;
   anchors: Record<string, HTMLElement>;
   reset(): void;
   /** Staggered slide-in of every HUD group (run start, after a cinematic). */
@@ -44,16 +54,16 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
     chips[r.key] = { el: chip, v, cap: capEl, flashTimer: 0 };
     chipsEl.appendChild(chip);
   }
+  // passengers + crew merged into one chip: ⚇ 12/20 · ⚒ 3 · ☺ 80
   const paxV = el('span', { class: 'rv-chip-v', text: '0' });
   const paxCap = el('span', { class: 'rv-chip-cap', text: '/0' });
+  const crewV = el('span', { class: 'rv-chip-v rv-chip-crew', text: '0' });
   const morale = el('span', { class: 'rv-morale', text: '' });
-  const paxChip = el('div', { class: 'rv-chip', title: 'Passengers aboard / capacity, and morale', 'aria-label': 'Passengers' },
-    el('span', { class: 'rv-chip-ico', 'aria-hidden': 'true', text: '⚇' }), el('span', { class: 'rv-chip-k', text: 'Pax' }), paxV, paxCap, morale);
-  const crewV = el('span', { class: 'rv-chip-v', text: '0' });
-  const crewCap = el('span', { class: 'rv-chip-cap', text: '' });
-  const crewChip = el('div', { class: 'rv-chip', title: 'Crew specialists (assigned / total)', 'aria-label': 'Crew' },
-    el('span', { class: 'rv-chip-ico', 'aria-hidden': 'true', text: '⚒' }), el('span', { class: 'rv-chip-k', text: 'Crew' }), crewV, crewCap);
-  chipsEl.append(paxChip, crewChip);
+  const peopleChip = el('div', { class: 'rv-chip rv-chip-people', title: 'Passengers aboard / capacity · crew specialists (posted) · morale', 'aria-label': 'Passengers and crew' },
+    el('span', { class: 'rv-chip-ico', 'aria-hidden': 'true', text: '⚇' }), el('span', { class: 'rv-chip-k', text: 'Pax' }), paxV, paxCap,
+    el('span', { class: 'rv-chip-sep', 'aria-hidden': 'true', text: '·' }),
+    el('span', { class: 'rv-chip-ico', 'aria-hidden': 'true', text: '⚒' }), el('span', { class: 'rv-chip-k', text: 'Crew' }), crewV, morale);
+  chipsEl.appendChild(peopleChip);
 
   // void meter
   const voidFill = el('i');
@@ -62,7 +72,7 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
     el('span', { class: 'rv-label', text: 'Void' }), el('div', { class: 'rv-bar' }, voidFill), voidDist);
   const tl = el('div', { class: 'rv-hud-tl' }, chipsEl, voidEl);
 
-  // ---------- top-center: status ----------
+  // ---------- top-centre: status + boss ----------
   const regionEl = el('span', { class: 'rv-region', text: '' });
   const dialHand = el('i');
   const dial = el('span', { class: 'rv-dial', 'aria-hidden': 'true' }, dialHand);
@@ -71,19 +81,15 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
   const forecastEl = el('span', { class: 'rv-forecast', text: '' });
   const clockEl = el('span', { class: 'rv-clock', text: '00:00' });
   const statusEl = el('div', { class: 'rv-status rv-panel', role: 'status', 'aria-label': 'Region, time of day, weather and clock' }, regionEl, dial, dayLbl, weatherEl, forecastEl, clockEl);
-  const warnText = el('span');
-  const warnSecs = el('b', { class: 'rv-warn-secs' });
-  const warningEl = el('div', { class: 'rv-warning rv-panel', role: 'alert' }, warnText, warnSecs);
-  warningEl.hidden = true;
   const bossName = el('span', { text: '' });
   const bossHp = el('span', { text: '' });
   const bossFill = el('i');
   const bossEl = el('div', { class: 'rv-boss rv-panel', role: 'meter', 'aria-label': 'Boss health' },
     el('div', { class: 'rv-bossname' }, bossName, bossHp), el('div', { class: 'rv-bar' }, bossFill));
   bossEl.hidden = true;
-  const tc = el('div', { class: 'rv-hud-tc' }, statusEl, warningEl, bossEl);
+  const tc = el('div', { class: 'rv-hud-tc' }, statusEl, bossEl);
 
-  // ---------- top-right: speed + menu ----------
+  // ---------- top-right: speaker + speed + menu ----------
   const speedBtns: Array<{ mul: 0 | 1 | 2 | 4; b: HTMLButtonElement }> = [];
   const mkSpeed = (mul: 0 | 1 | 2 | 4, label: string, aria: string) => {
     const b = btn(label, () => {
@@ -99,52 +105,68 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
   const speedEl = el('div', { class: 'rv-speed rv-panel', role: 'group', 'aria-label': 'Simulation speed' },
     mkSpeed(0, '⏸', 'Pause or resume (Space)'), mkSpeed(1, '1×', 'Normal speed (1)'), mkSpeed(2, '2×', 'Double speed (2)'));
   if (ui.isDev) speedEl.appendChild(mkSpeed(4, '4×', 'Quadruple speed (3, dev)'));
+  const volume = createVolumePopover(ui);
   const menuBtn = btn('Menu', () => { ui.audio().ui('open'); actions.openPause(); }, { aria: 'Open menu (Esc)' });
-  const tr = el('div', { class: 'rv-hud-tr' }, el('div', { class: 'rv-row' }, speedEl, menuBtn));
+  const tr = el('div', { class: 'rv-hud-tr' }, el('div', { class: 'rv-row' }, volume.button, speedEl, menuBtn), volume.pop);
 
-  // ---------- route panel ----------
+  const top = el('div', { class: 'rv-hud-top' }, tl, tc, tr);
+
+  // ---------- left rail: route panel (+ log) ----------
   const aheadV = el('b', { text: '0' });
   const rangeV = el('b', { text: '0' });
-  const hoverEl = el('div', { class: 'rv-hover', text: 'Hover a hex to see its track cost.' });
-  const followBtn = btn('Follow', () => { const v = ui.view(); if (!v) return; ui.audio().ui('click'); v.setFollow(!v.isFollowing()); }, { class: 'rv-small', aria: 'Toggle camera follow' });
-  const reverseBtn = btn('Reverse', () => actions.toggleReverse(), { class: 'rv-small rv-reverse', aria: 'Reverse down the track (R)' });
+  const railBtn = (icon: string, label: string, onClick: () => void, opts: { aria: string; cls?: string }) => {
+    const b = btn('', onClick, { class: 'rv-small rv-railbtn' + (opts.cls ? ' ' + opts.cls : ''), aria: opts.aria, title: opts.aria });
+    b.append(el('span', { class: 'rv-rb-ico', 'aria-hidden': 'true', text: icon }), el('span', { class: 'rv-rb-lbl', text: label }));
+    return b;
+  };
+  const followBtn = railBtn('◎', 'Follow', () => { const v = ui.view(); if (!v) return; ui.audio().ui('click'); v.setFollow(!v.isFollowing()); }, { aria: 'Toggle camera follow' });
+  const reverseBtn = railBtn('◀', 'Reverse', () => actions.toggleReverse(), { aria: 'Reverse down the track (R)', cls: 'rv-reverse' });
+  const logBtn = railBtn('≡', 'Log', () => { const on = !ui.settings().showLog; ui.audio().ui('click'); ui.app.settings.set({ showLog: on }); }, { aria: 'Toggle the event log feed' });
   let reversingShown = false;
-  const routeEl = el('div', { class: 'rv-route rv-panel', role: 'group', 'aria-label': 'Route planning' },
-    el('div', { class: 'rv-label', text: 'Route' }),
-    el('div', { class: 'rv-kv' }, el('span', { text: 'Planned ahead' }), el('span', null, aheadV, ' hex')),
-    el('div', { class: 'rv-kv' }, el('span', { text: 'Plan range' }), el('span', null, rangeV, ' hex')),
-    hoverEl,
+  const routeEl = el('div', { class: 'rv-route rv-panel', role: 'group', 'aria-label': 'Route planning', tabindex: '-1' },
+    el('div', { class: 'rv-route-head' }, el('span', { class: 'rv-route-ico', 'aria-hidden': 'true', text: '⌖' }), el('span', { class: 'rv-label', text: 'Route' })),
+    el('div', { class: 'rv-kv rv-ahead' }, el('span', { text: 'Planned ahead' }), el('span', null, aheadV, ' hex')),
+    el('div', { class: 'rv-kv rv-range' }, el('span', { text: 'Plan range' }), el('span', null, rangeV, ' hex')),
     el('div', { class: 'rv-route-btns' },
-      btn('Undo', () => { const sim = ui.sim(); if (!sim) return; const r = sim.unplanLast(); ui.audio().ui(r.ok ? 'click' : 'error'); if (!r.ok && r.reason) ui.notify(r.reason, 'warn'); }, { class: 'rv-small', aria: 'Undo last planned hex (Backspace)' }),
-      btn('Clear', () => { const sim = ui.sim(); if (!sim) return; ui.audio().ui('click'); sim.clearPlan(); }, { class: 'rv-small', aria: 'Clear planned route' }),
-      btn('Center', () => { ui.audio().ui('click'); ui.view()?.centerOnTrain(); }, { class: 'rv-small', aria: 'Center camera on train (F)' }),
+      railBtn('↶', 'Undo', () => { const sim = ui.sim(); if (!sim) return; const r = sim.unplanLast(); ui.audio().ui(r.ok ? 'click' : 'error'); if (!r.ok && r.reason) ui.notify(r.reason, 'warn'); }, { aria: 'Undo last planned hex (Backspace)' }),
+      railBtn('✕', 'Clear', () => { const sim = ui.sim(); if (!sim) return; ui.audio().ui('click'); sim.clearPlan(); }, { aria: 'Clear planned route' }),
+      railBtn('⌂', 'Center', () => { ui.audio().ui('click'); ui.view()?.centerOnTrain(); }, { aria: 'Center camera on train (F)' }),
       followBtn,
+      reverseBtn,
+      logBtn,
     ),
-    reverseBtn,
   );
+  const logEl = el('div', { class: 'rv-log', role: 'log', 'aria-live': 'polite', 'aria-label': 'Event log' });
+  const logLines: Array<{ el: HTMLElement; key: string; t: number }> = [];
+  const left = el('div', { class: 'rv-left' }, routeEl, logEl);
 
-  // ---------- stop status ----------
+  // ---------- dock: wave banner → stop pill → strip ----------
+  const warnText = el('span');
+  const warnSecs = el('b', { class: 'rv-warn-secs' });
+  const warningEl = el('div', { class: 'rv-warning rv-panel', role: 'alert' }, warnText, warnSecs);
+  warningEl.hidden = true;
+  const stopIco = el('span', { class: 'rv-stop-ico', 'aria-hidden': 'true', text: '' });
   const stopText = el('div', { class: 'rv-stop-text', text: '' });
+  const stopType = el('span', { class: 'rv-stop-type', text: '' });
   const departBtn = btn('Depart now', () => { ui.audio().ui('confirm'); ui.sim()?.depart(); }, { class: 'rv-small rv-primary', aria: 'Depart the settlement now' });
   const pressureFill = el('i');
   const pressureEl = el('div', { class: 'rv-pressure' }, el('span', { text: 'Stop pressure' }), el('div', { class: 'rv-bar' }, pressureFill));
-  const havenEl = el('div', { class: 'rv-haven', title: 'Safe haven: no waves spawn and the militia defends while you are stopped here' }, el('span', { class: 'rv-haven-tag', text: 'Haven' }), el('span', { text: 'militia on watch · no waves' }));
+  const havenEl = el('span', { class: 'rv-haven-tag', title: 'Safe haven: no waves spawn and the militia defends while you are stopped here', text: 'Haven' });
   const stopEl = el('div', { class: 'rv-stop rv-panel', role: 'status' },
-    el('span', { class: 'rv-stop-arrow', 'aria-hidden': 'true', text: '▲' }), stopText, departBtn, pressureEl, havenEl);
+    el('span', { class: 'rv-stop-arrow', 'aria-hidden': 'true', text: '▲' }),
+    el('div', { class: 'rv-stop-main' }, stopIco, stopText, stopType, havenEl, departBtn),
+    pressureEl);
   stopEl.hidden = true;
+  const dock = el('div', { class: 'rv-dock' }, warningEl, stopEl);
 
-  // ---------- log ----------
-  const logEl = el('div', { class: 'rv-log', role: 'log', 'aria-live': 'polite', 'aria-label': 'Event log' });
-  const logLines: Array<{ el: HTMLElement; key: string; t: number }> = [];
-
-  const root = el('div', { class: 'rv-hud' }, tl, tc, tr, routeEl, stopEl, logEl);
+  const root = el('div', { class: 'rv-hud' }, top, left, dock);
 
   // ---------- state caches ----------
   let lastResSig = '';
   let lastPhase = '';
   let lastSpeed = -1;
-  let lastHover = '';
   let warnShown = false, bossShown = false, lastSecs = -1;
+  let lastStopSig = '';
   const logSeen = new Set<string>();
 
   // resource deltas are coalesced per key for 400 ms, then: chip pop + colour flash + floating "+12"
@@ -175,50 +197,35 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
     }
   }
 
+  const groups = (): HTMLElement[] => [tl, tc, tr, routeEl, logEl, ...(Array.from(dock.children) as HTMLElement[])];
   function enter(delay = 0): void {
     root.classList.remove('rv-hud-off');
-    const narrow = window.innerWidth <= 1180;
-    (Array.from(root.children) as HTMLElement[]).forEach((e, i) => {
+    groups().forEach((e, i) => {
       const cl = e.classList;
-      const base: gsap.TweenVars = cl.contains('rv-hud-tc') || cl.contains('rv-stop') || cl.contains('rv-strip') ? { xPercent: -50 } : cl.contains('rv-route') && !narrow ? { yPercent: -50 } : {};
-      const from: gsap.TweenVars = cl.contains('rv-hud-tr') ? { x: 48 } : cl.contains('rv-hud-tc') ? { y: -44 } : cl.contains('rv-strip') ? { y: 64 } : cl.contains('rv-stop') ? { y: 30 } : { x: -48 };
+      const from: gsap.TweenVars = cl.contains('rv-hud-tr') ? { x: 48 } : cl.contains('rv-hud-tc') ? { y: -44 } : cl.contains('rv-hud-tl') ? { y: -32 } : cl.contains('rv-strip') ? { y: 64 } : cl.contains('rv-stop') || cl.contains('rv-warning') ? { y: 30 } : { x: -48 };
       gsap.killTweensOf(e);
-      gsap.fromTo(e, { ...base, ...from, opacity: 0 }, { ...base, x: 0, y: 0, opacity: 1, duration: D(0.65), delay: D(delay + i * 0.07), ease: 'power3.out', clearProps: 'transform,opacity' });
+      gsap.fromTo(e, { ...from, opacity: 0 }, { x: 0, y: 0, opacity: 1, duration: D(0.65), delay: D(delay + i * 0.07), ease: 'power3.out', clearProps: 'transform,opacity' });
     });
   }
   function hide(): void {
     root.classList.add('rv-hud-off');
-    for (const e of Array.from(root.children) as HTMLElement[]) { gsap.killTweensOf(e); gsap.to(e, { opacity: 0, duration: D(0.3), ease: 'power2.in' }); }
+    for (const e of groups()) { gsap.killTweensOf(e); gsap.to(e, { opacity: 0, duration: D(0.3), ease: 'power2.in' }); }
   }
 
-  function setHover(p: HoverPayload): void {
-    let text = 'Hover a hex to see its track cost.';
-    let cls = 'rv-hover';
-    if (p.col >= 0) {
-      if (!p.plannable) {
-        const sim = ui.sim();
-        let why = 'Not plannable from here';
-        if (sim) {
-          try { const r = sim.previewPlan(p.col, p.row); if (r.reason) why = r.reason; } catch { /* */ }
-          const t = sim.tileAt(p.col, p.row);
-          if (t?.void) why = 'Consumed by the void';
-          else if (t?.terrain === 'mountain') why = 'Mountain — impassable';
-        }
-        text = `${p.col},${p.row} — ${why}`;
-        cls += ' rv-no';
-      } else if (p.free) { text = `${p.col},${p.row} — FREE (old rail)`; cls += ' rv-free'; }
-      else text = `${p.col},${p.row} — ${p.cost} rail${p.cost === 1 ? '' : 's'}`;
-    }
-    if (text !== lastHover) {
-      lastHover = text;
-      setText(hoverEl, text);
-      hoverEl.className = cls;
-    }
+  let shakeAt = 0;
+  function shakeRoute(): void {
+    const now = performance.now();
+    if (now - shakeAt < 400) return;
+    shakeAt = now;
+    routeEl.classList.remove('rv-limit'); void routeEl.offsetWidth; routeEl.classList.add('rv-limit');
+    window.setTimeout(() => routeEl.classList.remove('rv-limit'), 600);
+    shake(routeEl, 4, 0.3);
   }
 
   function updateResources(s: SimState): void {
     const t = s.train;
-    const sig = RES.map(r => `${Math.floor(t.resources[r.key])}/${Math.floor(t.capacity[r.key])}`).join('|') + `|${t.passengers}/${t.passengerCap}|${Math.round(t.morale)}|${t.crew.length}|${t.crew.filter(c => c.carIndex >= 0).length}`;
+    const assigned = t.crew.filter(c => c.carIndex >= 0).length;
+    const sig = RES.map(r => `${Math.floor(t.resources[r.key])}/${Math.floor(t.capacity[r.key])}`).join('|') + `|${t.passengers}/${t.passengerCap}|${Math.round(t.morale)}|${t.crew.length}|${assigned}`;
     if (sig === lastResSig) return;
     lastResSig = sig;
     for (const r of RES) {
@@ -234,12 +241,11 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
     setText(paxV, String(t.passengers));
     setText(paxCap, '/' + t.passengerCap);
     const m = Math.round(t.morale);
-    setText(morale, `☺ ${m}`);
-    toggleClass(paxChip, 'rv-low', t.passengers > 0 && m < 30);
-    setAttr(paxChip, 'aria-label', `Passengers ${t.passengers} of ${t.passengerCap}, morale ${m}`);
-    const assigned = t.crew.filter(c => c.carIndex >= 0).length;
-    setText(crewV, String(t.crew.length));
-    setText(crewCap, t.crew.length ? ` (${assigned} posted)` : '');
+    setText(morale, t.passengers > 0 ? `☺ ${m}` : '');
+    setText(crewV, t.crew.length ? `${t.crew.length}` : '0');
+    setAttr(crewV, 'title', t.crew.length ? `${assigned} of ${t.crew.length} specialists posted to cars` : 'No crew specialists yet');
+    toggleClass(peopleChip, 'rv-low', t.passengers > 0 && m < 30);
+    setAttr(peopleChip, 'aria-label', `Passengers ${t.passengers} of ${t.passengerCap}, morale ${m}, crew ${t.crew.length} (${assigned} posted)`);
   }
 
   function updateStatus(s: SimState): void {
@@ -277,6 +283,7 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
     toggleClass(voidEl, 'rv-shiver', hexes < 3 && !ui.reducedMotion());
     toggleClass(voidEl, 'rv-critical', hexes < 2 && !ui.reducedMotion());
     setAttr(voidEl, 'aria-valuenow', hexes.toFixed(1));
+    void s;
   }
 
   function updateWarning(s: SimState): void {
@@ -287,7 +294,7 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
       setText(warnText, `⚠ ${name}s approaching from the ${String(w.from).toUpperCase()} — `);
       setText(warnSecs, `${secs}s`);
       show(warningEl, true);
-      if (!warnShown) { warnShown = true; gsap.fromTo(warningEl, { y: -28, opacity: 0 }, { y: 0, opacity: 1, duration: D(0.5), ease: 'back.out(1.6)', clearProps: 'transform,opacity' }); }
+      if (!warnShown) { warnShown = true; gsap.fromTo(warningEl, { y: 18, opacity: 0 }, { y: 0, opacity: 1, duration: D(0.5), ease: 'back.out(1.6)', clearProps: 'transform,opacity' }); }
       else if (secs !== lastSecs && !isReduced()) gsap.fromTo(warnSecs, { scale: 1.6, color: '#fff' }, { scale: 1, color: '', duration: 0.35, ease: 'power2.out', clearProps: 'transform,color' });
       lastSecs = secs;
     } else { show(warningEl, false); warnShown = false; lastSecs = -1; }
@@ -322,13 +329,17 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
     const v = ui.view();
     const following = v ? v.isFollowing() : false;
     setAttr(followBtn, 'aria-pressed', following ? 'true' : 'false');
+    setAttr(logBtn, 'aria-pressed', ui.settings().showLog ? 'true' : 'false');
     const rev = !!s.train.reversing;
     if (rev !== reversingShown) {
       reversingShown = rev;
-      setText(reverseBtn, rev ? 'Stop' : 'Reverse');
+      const lbl = reverseBtn.querySelector('.rv-rb-lbl');
+      setText(lbl, rev ? 'Stop' : 'Reverse');
+      setText(reverseBtn.querySelector('.rv-rb-ico'), rev ? '■' : '◀');
       toggleClass(reverseBtn, 'rv-reversing', rev);
       setAttr(reverseBtn, 'aria-pressed', rev ? 'true' : 'false');
       setAttr(reverseBtn, 'aria-label', rev ? 'Stop reversing (R)' : 'Reverse down the track (R)');
+      setAttr(reverseBtn, 'title', rev ? 'Stop reversing (R)' : 'Reverse down the track (R)');
       if (!isReduced()) gsap.fromTo(reverseBtn, { scale: 1.12 }, { scale: 1, duration: 0.35, ease: 'back.out(2)', clearProps: 'transform' });
     }
     const canRev = s.phase === 'running' || s.phase === 'paused';
@@ -337,51 +348,55 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
 
   function updateStop(s: SimState): void {
     const t = s.train;
-    if (s.phase === 'victory' || s.phase === 'defeat') { show(stopEl, false); return; }
+    if (s.phase === 'victory' || s.phase === 'defeat') { show(stopEl, false); lastStopSig = ''; return; }
+    let text = '', cls = 'rv-stop rv-panel', depart = false, haven = false, ico = '', type = '', color = '';
     if (t.reversing) {
-      setText(stopText, 'Reversing — press R or Stop to halt');
-      const rc = 'rv-stop rv-panel rv-reversing';
-      if (stopEl.className !== rc) stopEl.className = rc;
-      show(departBtn, false); show(pressureEl, false); show(havenEl, false);
-      show(stopEl, true);
-      return;
-    }
-    if (!t.stopped || t.stopReason === 'none') { show(stopEl, false); return; }
-    let text = '';
-    let cls = 'rv-stop rv-panel';
-    let depart = false;
-    switch (t.stopReason) {
-      case 'no_route': text = 'No track ahead — click a hex to plan'; cls += ' rv-no-route'; break;
-      case 'settlement': {
-        const p = s.route.path[Math.min(t.routeIndex, s.route.path.length - 1)];
-        let name = 'Settlement';
-        if (p) {
-          const tile = s.tiles[p[1] * s.mapW + p[0]];
-          const st = tile?.settlementId ? s.settlements.find(x => x.id === tile.settlementId) : null;
-          if (st) name = st.name;
+      text = 'Reversing — press R or Stop to halt'; cls += ' rv-reversing'; ico = '◀';
+    } else if (!t.stopped || t.stopReason === 'none') { show(stopEl, false); lastStopSig = ''; return; }
+    else {
+      switch (t.stopReason) {
+        case 'no_route': text = 'No track ahead — click a hex to plan'; cls += ' rv-no-route'; ico = '⌖'; break;
+        case 'settlement': {
+          const p = s.route.path[Math.min(t.routeIndex, s.route.path.length - 1)];
+          let name = 'Settlement', stType = '';
+          if (p) {
+            const tile = s.tiles[p[1] * s.mapW + p[0]];
+            const st = tile?.settlementId ? s.settlements.find(x => x.id === tile.settlementId) : null;
+            if (st) { name = st.name; stType = st.type; }
+          }
+          const m = nodeMeta(stType);
+          const remain = Math.max(0, Math.ceil(TRAIN.settlementStopTime - t.stopTimer));
+          text = s.phase === 'shop' ? name : `${name} · departing in ${remain}s`;
+          type = m.label; ico = m.icon; color = m.color;
+          cls += ' rv-settlement';
+          depart = s.phase !== 'shop';
+          haven = true;
+          break;
         }
-        const remain = Math.max(0, Math.ceil(TRAIN.settlementStopTime - t.stopTimer));
-        text = s.phase === 'shop' ? `${name} — repair yard` : `${name} — departing in ${remain}s`;
-        cls += ' rv-settlement';
-        depart = s.phase !== 'shop';
-        break;
+        case 'junction': text = 'Junction — choose a branch'; cls += ' rv-junction'; ico = '⑂'; break;
+        case 'boss': text = 'Boss blocks the line — fight or find a way around'; cls += ' rv-boss'; ico = '☠'; break;
+        case 'derailed': text = 'Derailed'; cls += ' rv-no-route'; ico = '✕'; break;
       }
-      case 'junction': text = 'Junction — choose a branch'; cls += ' rv-junction'; break;
-      case 'boss': text = 'Boss blocks the line — fight or find a way around'; cls += ' rv-boss'; break;
-      case 'derailed': text = 'Derailed'; cls += ' rv-no-route'; break;
     }
+    const sig = [text, cls, depart, haven, ico, type, color, Math.round(t.stopPressure * 100)].join('|');
+    if (sig === lastStopSig) return;
+    lastStopSig = sig;
     setText(stopText, text);
+    setText(stopType, type);
+    setText(stopIco, ico);
+    const st = color ? `--accent:${color}` : '';
+    if (stopEl.getAttribute('style') !== st) stopEl.setAttribute('style', st);
     if (stopEl.className !== cls) stopEl.className = cls;
     show(departBtn, depart);
-    // settlements are havens (no waves, militia); stop pressure only builds in the wild
-    const haven = t.stopReason === 'settlement';
+    show(stopType, !!type);
     show(havenEl, haven);
-    show(pressureEl, !haven);
+    show(pressureEl, !haven && !t.reversing);
     if (!haven) setWidth(pressureFill, clamp(t.stopPressure, 0, 1) * 100);
     show(stopEl, true);
   }
 
   function updateLog(s: SimState): void {
+    if (!ui.settings().showLog) { if (logLines.length) { logLines.length = 0; logEl.replaceChildren(); } return; }
     const entries = s.log.slice(-5);
     const keys = entries.map(e => `${e.t}|${e.text}`);
     let changed = keys.length !== logLines.length;
@@ -419,15 +434,18 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
   }
 
   function reset(): void {
-    lastResSig = ''; lastPhase = ''; lastSpeed = -1; lastHover = '';
+    lastResSig = ''; lastPhase = ''; lastSpeed = -1; lastStopSig = '';
     warnShown = false; bossShown = false; lastSecs = -1; logSeen.clear(); reversingShown = false;
-    setText(reverseBtn, 'Reverse'); toggleClass(reverseBtn, 'rv-reversing', false);
+    setText(reverseBtn.querySelector('.rv-rb-lbl'), 'Reverse'); setText(reverseBtn.querySelector('.rv-rb-ico'), '◀'); toggleClass(reverseBtn, 'rv-reversing', false);
     for (const k of Object.keys(pending) as ResourceKey[]) delete pending[k];
     logLines.length = 0; logEl.replaceChildren();
     show(warningEl, false); show(bossEl, false); show(stopEl, false);
-    setHover({ col: -1, row: -1, cost: 0, free: false, plannable: false });
+    volume.close();
   }
 
-  const anchors: Record<string, HTMLElement> = { resources: chipsEl, void: voidEl, status: statusEl, speed: speedEl, menu: menuBtn, route: routeEl, stop: stopEl, log: logEl, hud: root };
-  return { el: root, update, setHover, flashResource, anchors, reset, enter, hide };
+  const anchors: Record<string, HTMLElement> = { resources: chipsEl, void: voidEl, status: statusEl, speed: speedEl, menu: menuBtn, route: routeEl, stop: stopEl, log: logEl, hud: root, top, dock, left, speaker: volume.button };
+  return {
+    el: root, zones: { top, left, dock }, update, flashResource, shakeRoute, anchors, reset, enter, hide,
+    closePopovers() { if (volume.isOpen()) { volume.close(); return true; } return false; },
+  };
 }

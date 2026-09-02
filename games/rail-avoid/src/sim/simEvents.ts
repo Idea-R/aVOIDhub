@@ -3,6 +3,9 @@ import type { SimContext } from './api';
 import { PASSENGER_EVENTS, eventById } from '../core/passengerEvents';
 import { EVENTS } from '../core/config';
 import { addResource, hasCar, log } from './helpers';
+import { spawnWave } from './waves';
+import { addCar } from './train';
+import type { CarType } from '../core/types';
 import { addCrew, removePassengers } from './train';
 
 export function updateEvents(ctx: SimContext): void {
@@ -12,7 +15,7 @@ export function updateEvents(ctx: SimContext): void {
   if (state.eventCooldown > 0) return;
   if (state.train.passengers <= 0 || state.boss.active || state.train.stopped) { state.eventCooldown = 8; return; }
   const sleeper = hasCar(state, 'sleeper');
-  let pool = PASSENGER_EVENTS.filter(e => !state.usedEvents.includes(e.id));
+  let pool = PASSENGER_EVENTS.filter(e => !state.usedEvents.includes(e.id));  // node events are never scheduled
   if (pool.length === 0) { state.usedEvents = []; pool = PASSENGER_EVENTS.slice(); }
   const weights = pool.map(e => (e.negative ? (sleeper ? 0.5 : 1.2) : 1));
   const def = ctx.rng.events.weighted(pool, weights);
@@ -76,6 +79,21 @@ export function chooseEventOption(ctx: SimContext, index: number): boolean {
     case 'void_sermon:0': morale(5); summary = 'The medics talk them back.'; break;
     case 'void_sermon:1': morale(-6); summary = 'Doors locked. Nobody leaves.'; break;
     case 'void_sermon:2': removePassengers(ctx, 5, 'walked into the void'); morale(2); summary = 'Five walk west into the dark.'; break;
+    case 'node_shrine:0': t.locoUpgrades.power = Math.min(3, t.locoUpgrades.power + 1); ctx.bus.defer('loco:upgraded', { kind: 'power', level: t.locoUpgrades.power }); summary = 'The boiler sings. Power +2.'; break;
+    case 'node_shrine:1': for (const c of t.cars) { c.hp = Math.min(c.maxHp, c.hp + 40); c.heat = 0; c.onFire = false; } summary = 'Every coupling gleams; the cars are cool and patched.'; break;
+    case 'node_shrine:2': addResource(ctx, 'scrap', -10); addResource(ctx, 'rails', 25); summary = 'The offering is accepted: 25 rails.'; break;
+    case 'node_shrine:3': morale(3); summary = 'The crew nods at the shrine and moves on.'; break;
+    case 'node_market:0': addResource(ctx, 'scrap', -12); addResource(ctx, 'rails', 10); summary = 'Rails bought.'; break;
+    case 'node_market:1': addResource(ctx, 'food', -8); addResource(ctx, 'ammo', 30); summary = 'Crates of ammunition loaded.'; break;
+    case 'node_market:2': addResource(ctx, 'ammo', -25); addResource(ctx, 'scrap', 18); summary = 'Ammunition sold for scrap.'; break;
+    case 'node_market:3': morale(2); summary = 'Window shopping.'; break;
+    case 'node_wreck:0': {
+      const pool: CarType[] = ['coal_bunker', 'boiler', 'radiator', 'cargo', 'gatling', 'barracks', 'scout', 'coach', 'caboose'];
+      if (rng.chance(0.75) && t.cars.length < 10) { const type = rng.pick(pool); const car = addCar(ctx, type); if (car) { car.hp = Math.round(car.maxHp * 0.6); summary = `A ${type.replace('_', ' ')} is dragged onto the rails.`; ctx.bus.defer('car:bought', { type }); break; } }
+      addResource(ctx, 'scrap', 15); summary = 'Nothing worth coupling. +15 scrap.'; break;
+    }
+    case 'node_wreck:1': addResource(ctx, 'scrap', 20); addResource(ctx, 'ammo', 10); summary = 'Stripped for parts.'; break;
+    case 'node_wreck:2': addResource(ctx, 'food', 8); if (rng.chance(0.5)) { addCrew(state, 'mechanic'); ctx.bus.defer('crew:joined', { specialty: 'mechanic', name: 'a survivor' }); summary = 'A survivor mechanic joins.'; } else summary = 'Tins of food, nothing else.'; if (rng.chance(0.25)) { spawnWave(ctx, ['raider', 'raider', 'raider'], 'north'); summary += ' Scavengers were watching.'; } break;
     default: summary = 'Resolved.';
   }
   state.stats.eventsResolved++;

@@ -3,7 +3,7 @@ import type { SimState, Tile, Car, CarType, Enemy, DamageClass, ResourceKey, Set
 import type { SimContext } from './api';
 import { CAR_DEFS } from '../core/cars';
 import { ENEMY_DEFS } from '../core/enemies';
-import { TRAIN, SCORE } from '../core/config';
+import { TRAIN, SCORE, UPGRADES } from '../core/config';
 import { hexToWorld } from '../core/hex';
 
 export function tileAt(state: SimState, col: number, row: number): Tile | null {
@@ -34,7 +34,7 @@ export function makeCar(state: SimState, type: CarType): Car {
   const def = CAR_DEFS[type];
   return {
     id: nextId(state, 'car'), type, hp: def.hp, maxHp: def.hp, heat: 0, onFire: false, boarders: [],
-    crewId: null, cooldown: 0, workTimer: 0, passengers: 0, disabled: false, disabledFor: 0, derived: newDerived(),
+    crewId: null, cooldown: 0, workTimer: 0, passengers: 0, disabled: false, disabledFor: 0, level: 1, derived: newDerived(),
   };
 }
 
@@ -206,18 +206,40 @@ export function fixCrewIndices(state: SimState, removedIdx: number): void {
   }
 }
 
+/** Upgrade-level multipliers for a car. */
+export function carLevel(car: Car): number { return Math.max(1, Math.min(3, car.level || 1)); }
+export function carDamageMul(car: Car): number { return 1 + UPGRADES.carDamageMul * (carLevel(car) - 1); }
+export function carStorageMul(car: Car): number { return 1 + UPGRADES.carStorageMul * (carLevel(car) - 1); }
+export function carPowerGen(state: SimState, car: Car, idx: number): number {
+  const d = CAR_DEFS[car.type];
+  let g = d.powerGen;
+  if (g > 0) g += UPGRADES.carPowerAdd * (carLevel(car) - 1);
+  if (idx === 0) g += UPGRADES.locoPowerPerLevel * (state.train.locoUpgrades?.power ?? 0);
+  return g;
+}
+export function carCooling(car: Car): number {
+  const d = CAR_DEFS[car.type];
+  return d.cooling > 0 ? d.cooling + UPGRADES.carCoolingAdd * (carLevel(car) - 1) : 0;
+}
+export function carPassengerCap(car: Car): number {
+  const d = CAR_DEFS[car.type];
+  return d.passengerCap > 0 ? d.passengerCap + UPGRADES.coachPaxAdd * (carLevel(car) - 1) : 0;
+}
+
 export function recomputeCapacity(state: SimState): void {
   const t = state.train;
   const cap: Record<ResourceKey, number> = { ...TRAIN.baseCapacity };
   let pcap = 0, weight = 0, gen = 0, use = 0;
   const qm = t.crew.some(c => c.specialty === 'quartermaster' && c.carIndex >= 0);
-  for (const car of t.cars) {
+  for (let i = 0; i < t.cars.length; i++) {
+    const car = t.cars[i];
     if (car.hp <= 0) continue;
     const d = CAR_DEFS[car.type];
-    for (const k of Object.keys(d.storage) as ResourceKey[]) cap[k] += d.storage[k] ?? 0;
-    pcap += d.passengerCap;
+    const sm = carStorageMul(car);
+    for (const k of Object.keys(d.storage) as ResourceKey[]) cap[k] += Math.round((d.storage[k] ?? 0) * sm);
+    pcap += carPassengerCap(car);
     weight += d.weight;
-    gen += d.powerGen;
+    gen += carPowerGen(state, car, i);
     use += d.powerUse;
   }
   if (qm) for (const k of Object.keys(cap) as ResourceKey[]) cap[k] = Math.round(cap[k] * 1.3);

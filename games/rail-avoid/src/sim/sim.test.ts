@@ -97,3 +97,46 @@ describe('reverse', () => {
     expect(sim.state.phase).toBe('running');
   });
 });
+
+describe('upgrades and nodes', () => {
+  it('upgrades cars and the locomotive at a yard and applies their effects', () => {
+    const bus = new EventBus();
+    const sim = createSim(TEST_SEED, bus);
+    const s = sim.state;
+    s.phase = 'shop';
+    sim.debug.grant({ scrap: 500 });
+    const gat = s.train.cars.findIndex(c => c.type === 'gatling');
+    const hpBefore = s.train.cars[gat].maxHp;
+    expect(sim.upgradeCost(gat)).toBeGreaterThan(0);
+    expect(sim.upgradeCar(gat)).toBe(true);
+    expect(s.train.cars[gat].level).toBe(2);
+    expect(s.train.cars[gat].maxHp).toBeGreaterThan(hpBefore);
+    const rangeBefore = sim.currentPlanRange();
+    expect(sim.upgradeLoco('crew')).toBe(true);
+    expect(sim.currentPlanRange()).toBe(rangeBefore + 1);
+    expect(sim.upgradeLoco('frame')).toBe(true);
+    expect(s.train.cars[0].maxHp).toBe(280);
+    sim.debug.grant({ scrap: 500 });
+    expect(sim.upgradeLoco('speed')).toBe(true);
+    sim.debug.grant({ scrap: 500 });
+    expect(sim.upgradeLoco('speed')).toBe(true);
+    sim.debug.grant({ scrap: 500 });
+    expect(sim.upgradeLoco('speed')).toBe(true);
+    expect(sim.upgradeLoco('speed')).toBe(false);
+    expect(sim.locoUpgradeCost('speed')).toBe(-1);
+    s.phase = 'running';
+    expect(sim.upgradeCar(gat)).toBe(false);
+  });
+  it('generates the new node types and restores old saves with defaults', () => {
+    const bus = new EventBus();
+    const sim = createSim(TEST_SEED, bus);
+    const types = new Set(sim.state.settlements.map(x => x.type));
+    for (const t of ['watchtower', 'shrine', 'wreck', 'market']) expect(types.has(t as any)).toBe(true);
+    const json = JSON.parse(sim.serialize());
+    delete json.state.train.locoUpgrades; for (const c of json.state.train.cars) delete c.level;
+    const copy = createSim(TEST_SEED, new EventBus());
+    expect(copy.restore(JSON.stringify(json))).toBe(true);
+    expect(copy.state.train.locoUpgrades.speed).toBe(0);
+    expect(copy.state.train.cars[0].level).toBe(1);
+  });
+});

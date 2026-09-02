@@ -1,5 +1,5 @@
 /** Simulation orchestrator implementing SimApi. Fixed-step, deterministic, JSON state. */
-import type { SimState, CarType, Tile, Settlement, CarDef, EnemyDef, ResourceKey, Stats, EnemyType } from '../core/types';
+import type { SimState, CarType, Tile, Settlement, CarDef, EnemyDef, ResourceKey, Stats, EnemyType, LocoUpgradeKind } from '../core/types';
 import type { EventBus } from '../core/events';
 import type { SimApi, SimContext, PlanResult } from './api';
 import { Rng, hashSeed } from '../core/rng';
@@ -12,7 +12,7 @@ import { initTrain, updateTrain, computeTrail, detachFrom, moveCar, addCar, assi
 import { planRange, plannableTiles, previewPlan, planTile, unplanLast, clearPlan, planPathTo, edgeCost, tileHasRail, isRail, aheadCount } from './route';
 import { initWeather, initVoid, updateWeather, updateDayNight, updateVoid, voidDistance } from './weather';
 import { updateEvents, chooseEventOption } from './simEvents';
-import { onArrive, updateStop, depart, buyCar, sellCar, repairCar, repairAll, closeShop, canShop } from './settlements';
+import { onArrive, updateStop, depart, buyCar, sellCar, repairCar, repairAll, closeShop, canShop, upgradeCar, upgradeCost, upgradeLoco, locoUpgradeCost } from './settlements';
 import { updateCombat, onTrainEnterTile, clearEnemies } from './combat';
 import { initDirector, updateDirector, spawnWave } from './waves';
 import { initBoss, updateBosses, spawnBoss } from './bosses';
@@ -255,6 +255,10 @@ export class Sim implements SimApi {
   sellCar(carIndex: number): boolean { const r = sellCar(this.ctx, carIndex); this.bus.flush(); return r; }
   repairCar(carIndex: number): boolean { const r = repairCar(this.ctx, carIndex); this.bus.flush(); return r; }
   repairAll(): boolean { const r = repairAll(this.ctx); this.bus.flush(); return r; }
+  upgradeCar(carIndex: number): boolean { const r = upgradeCar(this.ctx, carIndex); this.bus.flush(); return r; }
+  upgradeCost(carIndex: number): number { return upgradeCost(this.ctx, carIndex); }
+  upgradeLoco(kind: LocoUpgradeKind): boolean { const r = upgradeLoco(this.ctx, kind); this.bus.flush(); return r; }
+  locoUpgradeCost(kind: LocoUpgradeKind): number { return locoUpgradeCost(this.ctx, kind); }
   assignCrew(crewId: string, carIndex: number): boolean { const r = assignCrew(this.ctx, crewId, carIndex); this.bus.flush(); return r; }
   closeShop(): void { closeShop(this.ctx); this.bus.flush(); }
   canShop(): boolean { return canShop(this.ctx); }
@@ -289,6 +293,9 @@ export class Sim implements SimApi {
       this.state = st;
       this.ctx.state = st;
       if (st.train.reversing === undefined) st.train.reversing = false;
+      if (!st.train.locoUpgrades) st.train.locoUpgrades = { speed: 0, power: 0, frame: 0, crew: 0 };
+      if (st.train.watchUntil === undefined) st.train.watchUntil = 0;
+      for (const c of st.train.cars) if (!c.level) c.level = 1;
       this.rng.world.state = st.rngState.world >>> 0; this.rng.waves.state = st.rngState.waves >>> 0;
       this.rng.events.state = st.rngState.events >>> 0; this.rng.combat.state = st.rngState.combat >>> 0;
       this.ended = false;

@@ -2,7 +2,7 @@
  * The command surface the UI / input / debug layers use to talk to the simulation.
  * Presentation reads `state` directly (read-only!) and subscribes to `bus` for effects.
  */
-import type { SimState, CarType, Tile, Settlement, CarDef, EnemyDef, ResourceKey } from '../core/types';
+import type { SimState, CarType, Tile, Settlement, CarDef, EnemyDef, ResourceKey, LocoUpgradeKind } from '../core/types';
 import type { EventBus } from '../core/events';
 import type { Rng } from '../core/rng';
 
@@ -45,6 +45,11 @@ export interface SimApi {
   sellCar(carIndex: number): boolean;
   repairCar(carIndex: number): boolean;    // costs scrap at yards
   repairAll(): boolean;
+  /** Car upgrade levels (1..3) and locomotive upgrade tracks (0..3); yards only. Cost in scrap, -1 when maxed. */
+  upgradeCar(carIndex: number): boolean;
+  upgradeCost(carIndex: number): number;
+  upgradeLoco(kind: LocoUpgradeKind): boolean;
+  locoUpgradeCost(kind: LocoUpgradeKind): number;
   assignCrew(crewId: string, carIndex: number): boolean;
   closeShop(): void;                       // leaves the yard (resumes running)
   canShop(): boolean;

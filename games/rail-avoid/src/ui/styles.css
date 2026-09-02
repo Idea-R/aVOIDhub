@@ -67,9 +67,9 @@
 #ui [hidden] { display: none !important; }
 #ui .rv-svg-defs { position: absolute; width: 0; height: 0; overflow: hidden; pointer-events: none; }
 
-/* --- pointer-event passthrough: containers are transparent, leaves are interactive --- */
-#ui > .rv-hud, #ui > .rv-toasts, #ui > .rv-tutorial-layer { pointer-events: none; }
-#ui > .rv-hud > *, #ui > .rv-toasts > *, #ui > .rv-tutorial-layer > * { pointer-events: auto; }
+/* --- pointer-event passthrough: containers are transparent, leaves are interactive (HUD rules live below) --- */
+#ui > .rv-toasts, #ui > .rv-tutorial-layer, #ui > .rv-hover-layer { pointer-events: none; }
+#ui > .rv-toasts > *, #ui > .rv-tutorial-layer > * { pointer-events: auto; }
 
 /* --- primitives --- */
 #ui .rv-panel {
@@ -278,9 +278,44 @@
 #ui .rv-setting output { color: var(--gold); font-variant-numeric: tabular-nums; }
 @media (max-width: 720px) { #ui .rv-settings-grid { grid-template-columns: 1fr; } }
 
-/* --- HUD --- */
-#ui .rv-hud { position: absolute; inset: 0; }
-#ui .rv-hud-tl { position: absolute; top: 10px; left: 10px; display: flex; flex-direction: column; gap: 6px; max-width: 46vw; }
+/* --- HUD: fixed safe zones ---------------------------------------------------------
+   top bar (full width) · left rail · right rail (inspector / shop, below the top bar) · bottom dock.
+   layout.ts measures the live sizes into --rv-top-h / --rv-dock-h; the classes below set the rest. */
+#ui {
+  --side-w: min(360px, 38vw);
+  --shop-w: min(560px, 44vw);
+  --rv-top-h: 56px;
+  --rv-dock-h: 150px;
+  --rv-left-w: 254px;
+  --rv-right-w: 0px;
+  --rv-toast-w: min(340px, 34vw);
+}
+#ui.rv-rail-collapsed { --rv-left-w: 64px; }
+#ui.rv-log-on { --rv-left-w: 300px; }
+#ui.rv-inspector-open { --rv-right-w: calc(var(--side-w) + 20px); }
+#ui.rv-shop-open { --rv-right-w: calc(var(--shop-w) + 20px); }
+
+#ui .rv-hud { position: absolute; inset: 0; pointer-events: none; }
+#ui .rv-hud .rv-panel, #ui .rv-hud .rv-chip, #ui .rv-hud .rv-btn, #ui .rv-hud .rv-log-line { pointer-events: auto; }
+
+/* top bar */
+#ui .rv-hud-top {
+  position: absolute; top: 0; left: 0; right: 0;
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 10px 6px;
+  background: linear-gradient(180deg, rgba(7, 9, 18, 0.78), rgba(7, 9, 18, 0.32) 70%, transparent);
+}
+#ui .rv-hud-tl { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; flex: 1 1 auto; min-width: 0; }
+#ui .rv-hud-tc { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 0 1 auto; }
+#ui .rv-hud-tr { position: relative; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex: 0 0 auto; margin-left: auto; }
+#ui .rv-hud-tr > .rv-row { gap: 6px; }
+@media (max-width: 1279px) {
+  #ui .rv-hud-top { flex-wrap: wrap; row-gap: 6px; }
+  #ui .rv-hud-tl { flex-basis: 100%; }
+  #ui .rv-hud-tc { order: 2; flex: 1 1 auto; }
+  #ui .rv-hud-tr { order: 3; margin-left: 0; }
+}
+
 #ui .rv-chips { display: flex; flex-wrap: wrap; gap: 5px; }
 #ui .rv-chip {
   position: relative;
@@ -290,12 +325,15 @@
   backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
   font-variant-numeric: tabular-nums;
   transition: border-color var(--tr), box-shadow var(--tr);
+  white-space: nowrap;
 }
 #ui .rv-chip:has(.rv-float) { z-index: 3; } /* delta label must paint over the neighbouring chip */
 #ui .rv-chip .rv-chip-ico { font-size: calc(12 * var(--u)); }
 #ui .rv-chip .rv-chip-k { font-size: calc(9 * var(--u)); letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg3); }
 #ui .rv-chip .rv-chip-v { font-weight: 700; font-size: calc(13 * var(--u)); }
 #ui .rv-chip .rv-chip-cap { color: var(--fg3); font-size: calc(10 * var(--u)); }
+#ui .rv-chip .rv-chip-sep { color: var(--fg3); margin: 0 1px; }
+#ui .rv-chip .rv-chip-crew { color: var(--gold); }
 #ui .rv-chip.rv-low { border-color: var(--danger); animation: rv-pulse-red 1.1s ease-in-out infinite; }
 #ui .rv-chip.rv-low .rv-chip-v { color: var(--danger); }
 #ui .rv-chip.rv-full { border-color: var(--gold); }
@@ -303,21 +341,20 @@
 #ui .rv-chip.rv-flash-up { box-shadow: 0 0 0 2px rgba(111, 191, 115, 0.6), 0 0 14px rgba(111, 191, 115, 0.5); }
 #ui .rv-chip.rv-flash-down { box-shadow: 0 0 0 2px rgba(232, 111, 111, 0.6), 0 0 14px rgba(232, 111, 111, 0.5); }
 @keyframes rv-pulse-red { 0%, 100% { box-shadow: 0 0 0 0 rgba(232, 111, 111, 0); } 50% { box-shadow: 0 0 0 3px rgba(232, 111, 111, 0.35); } }
-#ui .rv-morale { font-size: calc(10 * var(--u)); color: var(--fg3); }
+#ui .rv-morale { font-size: calc(10 * var(--u)); color: var(--fg3); margin-left: 2px; }
 
-#ui .rv-void { display: flex; align-items: center; gap: 8px; padding: 4px 10px; width: min(360px, 44vw); }
+#ui .rv-void { display: flex; align-items: center; gap: 8px; padding: 4px 10px; width: min(240px, 20vw); }
 #ui .rv-void .rv-label { color: var(--void); }
 #ui .rv-void .rv-bar { flex: 1 1 auto; height: 7px; }
 #ui .rv-void .rv-bar > i { background: linear-gradient(90deg, var(--void), #9a8cff); transition: width 700ms cubic-bezier(0.2, 0.8, 0.2, 1), background 300ms; }
 #ui .rv-void.rv-shiver { animation: rv-shiver 0.12s linear infinite; }
 @keyframes rv-shiver { 0% { transform: translate(0, 0); } 25% { transform: translate(1px, -1px); } 50% { transform: translate(-1px, 1px); } 75% { transform: translate(1px, 0); } 100% { transform: translate(-1px, -1px); } }
 #ui .rv-void.rv-near .rv-bar > i { background: linear-gradient(90deg, var(--danger), var(--void)); }
-#ui .rv-void .rv-void-dist { min-width: 70px; text-align: right; font-variant-numeric: tabular-nums; font-size: calc(11 * var(--u)); }
+#ui .rv-void .rv-void-dist { min-width: 62px; text-align: right; font-variant-numeric: tabular-nums; font-size: calc(11 * var(--u)); }
 #ui .rv-void.rv-near .rv-void-dist { color: var(--danger); font-weight: 700; }
 #ui .rv-void.rv-critical .rv-void-dist { animation: rv-shake 0.18s linear infinite; }
 @keyframes rv-shake { 0% { transform: translate(0, 0); } 25% { transform: translate(1px, -1px); } 50% { transform: translate(-1px, 1px); } 75% { transform: translate(1px, 1px); } 100% { transform: translate(-1px, 0); } }
 
-#ui .rv-hud-tc { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 6px; }
 #ui .rv-status { display: flex; align-items: center; gap: 12px; padding: 5px 14px; white-space: nowrap; }
 #ui .rv-region { font-size: calc(12 * var(--u)); letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold); font-weight: 600; }
 #ui .rv-dial { position: relative; width: 20px; height: 20px; border-radius: 50%; background: conic-gradient(from 0deg, #f0d48a 0 50%, #2b2657 50% 100%); border: 1px solid var(--line2); }
@@ -325,11 +362,66 @@
 #ui .rv-daylbl { font-size: calc(11 * var(--u)); color: var(--fg2); }
 #ui .rv-weather { font-size: calc(12 * var(--u)); color: var(--info); }
 #ui .rv-forecast { font-size: calc(10 * var(--u)); color: var(--fg3); letter-spacing: 0.08em; }
+#ui .rv-forecast:empty { display: none; }
 #ui .rv-clock { font-variant-numeric: tabular-nums; font-family: ui-monospace, Consolas, monospace; color: var(--fg2); font-size: calc(12 * var(--u)); }
+
+#ui .rv-boss { display: flex; flex-direction: column; gap: 4px; padding: 6px 14px; width: min(520px, 40vw); border-color: var(--void); }
+#ui .rv-boss .rv-bossname { font-size: calc(12 * var(--u)); letter-spacing: 0.22em; text-transform: uppercase; color: var(--void); font-weight: 700; display: flex; justify-content: space-between; gap: 12px; }
+#ui .rv-boss .rv-bar { height: 8px; }
+#ui .rv-boss .rv-bar > i { background: linear-gradient(90deg, var(--void), var(--danger)); }
+
+#ui .rv-speed { display: flex; gap: 4px; padding: 4px; }
+#ui .rv-speed .rv-btn { font-family: ui-monospace, Consolas, monospace; }
+#ui .rv-speaker { display: inline-flex; align-items: center; justify-content: center; min-width: calc(34 * var(--u)); padding: calc(5 * var(--u)) calc(8 * var(--u)); }
+#ui .rv-speaker.rv-muted { color: var(--danger); border-color: var(--danger); }
+#ui .rv-volpop { position: absolute; right: 0; top: calc(100% + 6px); width: 250px; padding: 10px 12px 8px; display: flex; flex-direction: column; gap: 6px; z-index: 6; }
+#ui .rv-volpop .rv-vol label { font-size: calc(10 * var(--u)); letter-spacing: 0.12em; text-transform: uppercase; color: var(--fg2); display: flex; justify-content: space-between; }
+#ui .rv-volpop .rv-vol output { color: var(--gold); font-variant-numeric: tabular-nums; }
+#ui .rv-volpop .rv-vol-mute { display: flex; align-items: center; gap: 8px; padding-top: 4px; border-top: 1px solid var(--line); font-size: calc(11 * var(--u)); color: var(--fg2); cursor: pointer; }
+#ui .rv-volpop .rv-vol-mute kbd { margin-left: auto; }
+
+/* left rail: route panel (+ log) */
+/* top-anchored so hover-expansion only grows right/down and never moves the panel out from under the pointer */
+#ui .rv-left { position: absolute; left: 0; top: var(--rv-top-h); bottom: 0; width: var(--rv-left-w); display: flex; flex-direction: column; justify-content: flex-start; padding: 10px; }
+#ui .rv-route { position: relative; width: 234px; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; transition: width 180ms cubic-bezier(0.2, 0.8, 0.2, 1), padding 180ms; z-index: 2; }
+#ui .rv-route-head { display: flex; align-items: center; gap: 6px; }
+#ui .rv-route-ico { color: var(--gold); font-size: calc(14 * var(--u)); line-height: 1; }
+#ui .rv-route .rv-kv { display: flex; justify-content: space-between; font-size: calc(12 * var(--u)); }
+#ui .rv-route .rv-kv b { font-variant-numeric: tabular-nums; }
+#ui .rv-route .rv-range { display: none; color: var(--fg2); }
+#ui .rv-route:hover .rv-range, #ui .rv-route:focus-within .rv-range { display: flex; }
+#ui .rv-route .rv-route-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+#ui .rv-railbtn { display: inline-flex; align-items: center; justify-content: flex-start; gap: 6px; }
+#ui .rv-railbtn .rv-rb-ico { width: 1.2em; text-align: center; color: var(--gold); font-size: calc(12 * var(--u)); }
+#ui .rv-route .rv-reverse { grid-column: 1 / -1; letter-spacing: 0.16em; }
+#ui .rv-route.rv-limit { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(232, 193, 112, 0.35), 0 0 18px rgba(232, 193, 112, 0.35); }
+/* collapsed: slim 44 px icon strip; hover / focus or "must act" states expand it */
+#ui.rv-rail-collapsed .rv-route:not(:hover):not(:focus-within) { width: 44px; padding: 6px 4px; gap: 4px; }
+#ui.rv-rail-collapsed .rv-route:not(:hover):not(:focus-within) .rv-route-head { justify-content: center; }
+#ui.rv-rail-collapsed .rv-route:not(:hover):not(:focus-within) .rv-route-head .rv-label,
+#ui.rv-rail-collapsed .rv-route:not(:hover):not(:focus-within) .rv-kv,
+#ui.rv-rail-collapsed .rv-route:not(:hover):not(:focus-within) .rv-rb-lbl { display: none; }
+#ui.rv-rail-collapsed .rv-route:not(:hover):not(:focus-within) .rv-route-btns { grid-template-columns: 1fr; gap: 3px; }
+#ui.rv-rail-collapsed .rv-route:not(:hover):not(:focus-within) .rv-railbtn { justify-content: center; width: 34px; height: 30px; padding: 0; }
+#ui.rv-rail-collapsed .rv-route:not(:hover):not(:focus-within) .rv-railbtn .rv-rb-ico { font-size: calc(13 * var(--u)); }
+#ui .rv-btn.rv-reversing { background: linear-gradient(180deg, rgba(255, 176, 64, 0.42), rgba(255, 176, 64, 0.18)); border-color: #ffb040; color: #ffd28a; font-weight: 700; animation: rv-amber 1s ease-in-out infinite; }
+#ui .rv-btn.rv-reversing .rv-rb-ico { color: #ffd28a; }
+@keyframes rv-amber { 0%, 100% { box-shadow: 0 0 0 0 rgba(255, 176, 64, 0); } 50% { box-shadow: 0 0 0 3px rgba(255, 176, 64, 0.35), 0 0 18px rgba(255, 176, 64, 0.5); } }
+
+#ui .rv-log { position: absolute; left: 10px; bottom: 10px; width: 280px; display: none; flex-direction: column; gap: 2px; font-size: calc(11 * var(--u)); }
+#ui.rv-log-on .rv-log { display: flex; }
+#ui .rv-log .rv-log-line { padding: 2px 8px; border-radius: 5px; background: rgba(11, 14, 26, 0.7); color: var(--fg2); transition: opacity 600ms; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#ui .rv-log .rv-log-line.rv-k-warn { color: var(--gold); }
+#ui .rv-log .rv-log-line.rv-k-bad { color: var(--danger); }
+#ui .rv-log .rv-log-line.rv-k-good { color: var(--good); }
+#ui .rv-log .rv-log-line .rv-log-t { color: var(--fg3); font-family: ui-monospace, Consolas, monospace; font-size: 0.9em; margin-right: 6px; }
+
+/* bottom dock: wave banner → stop pill → strip, centred in the remaining width */
+#ui .rv-dock { position: absolute; left: var(--rv-left-w); right: var(--rv-right-w); bottom: 10px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
 
 #ui .rv-warning {
   padding: 6px 16px; color: var(--danger); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
-  border-color: var(--danger); font-size: calc(12 * var(--u));
+  border-color: var(--danger); font-size: calc(12 * var(--u)); white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
   animation: rv-warn-glow 1s ease-in-out infinite;
 }
 @keyframes rv-warn-glow {
@@ -337,40 +429,24 @@
   50% { box-shadow: 0 0 0 2px rgba(232, 111, 111, 0.45), 0 0 28px rgba(232, 111, 111, 0.5), 0 8px 30px rgba(0, 0, 0, 0.35); }
 }
 #ui .rv-warning .rv-warn-secs { display: inline-block; min-width: 2.2em; color: #fff; font-variant-numeric: tabular-nums; }
-#ui .rv-boss { display: flex; flex-direction: column; gap: 4px; padding: 6px 14px; width: min(520px, 60vw); border-color: var(--void); }
-#ui .rv-boss .rv-bossname { font-size: calc(12 * var(--u)); letter-spacing: 0.22em; text-transform: uppercase; color: var(--void); font-weight: 700; display: flex; justify-content: space-between; }
-#ui .rv-boss .rv-bar { height: 8px; }
-#ui .rv-boss .rv-bar > i { background: linear-gradient(90deg, var(--void), var(--danger)); }
 
-#ui .rv-hud-tr { position: absolute; top: 10px; right: 10px; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
-#ui .rv-speed { display: flex; gap: 4px; padding: 4px; }
-#ui .rv-speed .rv-btn { font-family: ui-monospace, Consolas, monospace; }
-
-#ui .rv-route { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: min(230px, 26vw); padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; }
-#ui .rv-route .rv-kv { display: flex; justify-content: space-between; font-size: calc(12 * var(--u)); }
-#ui .rv-route .rv-kv b { font-variant-numeric: tabular-nums; }
-#ui .rv-route .rv-hover { min-height: 2.4em; font-size: calc(11 * var(--u)); color: var(--fg2); padding: 4px 6px; background: rgba(255, 255, 255, 0.03); border-radius: 6px; border: 1px dashed var(--line); }
-#ui .rv-route .rv-hover.rv-free { color: var(--good); }
-#ui .rv-route .rv-hover.rv-no { color: var(--danger); }
-#ui .rv-route .rv-route-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
-#ui .rv-route .rv-reverse { width: 100%; letter-spacing: 0.16em; }
-#ui .rv-btn.rv-reversing { background: linear-gradient(180deg, rgba(255, 176, 64, 0.42), rgba(255, 176, 64, 0.18)); border-color: #ffb040; color: #ffd28a; font-weight: 700; animation: rv-amber 1s ease-in-out infinite; }
-@keyframes rv-amber { 0%, 100% { box-shadow: 0 0 0 0 rgba(255, 176, 64, 0); } 50% { box-shadow: 0 0 0 3px rgba(255, 176, 64, 0.35), 0 0 18px rgba(255, 176, 64, 0.5); } }
-
-#ui .rv-stop { position: absolute; left: 50%; bottom: calc(112 * var(--u)); transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 16px; min-width: 260px; }
+#ui .rv-stop { position: relative; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 7px 16px; min-width: 260px; max-width: 100%; }
+#ui .rv-stop .rv-stop-main { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
+#ui .rv-stop .rv-stop-ico { color: var(--accent, var(--gold)); font-size: calc(14 * var(--u)); line-height: 1; }
+#ui .rv-stop .rv-stop-ico:empty { display: none; }
 #ui .rv-stop .rv-stop-text { font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; font-size: calc(12 * var(--u)); text-align: center; }
+#ui .rv-stop .rv-stop-type { font-size: calc(9 * var(--u)); letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent, var(--fg3)); padding: 1px 7px; border: 1px solid currentColor; border-radius: 999px; }
 #ui .rv-stop.rv-no-route { border-color: var(--danger); animation: rv-warn-glow 1s ease-in-out infinite; }
 #ui .rv-stop.rv-no-route .rv-stop-text { color: var(--danger); animation: rv-blink 0.9s ease-in-out infinite; }
 #ui .rv-stop .rv-stop-arrow { display: none; position: absolute; top: -24px; left: 50%; margin-left: -7px; color: var(--danger); font-size: 14px; text-shadow: 0 0 8px var(--danger); }
 #ui .rv-stop.rv-no-route .rv-stop-arrow { display: block; animation: rv-arrow 0.9s ease-in-out infinite; }
 @keyframes rv-arrow { 0%, 100% { transform: translateY(0); opacity: 1; } 50% { transform: translateY(-9px); opacity: 0.55; } }
-#ui .rv-stop.rv-settlement { border-color: var(--good); }
+#ui .rv-stop.rv-settlement { border-color: var(--accent, var(--good)); }
 #ui .rv-stop.rv-settlement .rv-stop-text { color: var(--good); }
 #ui .rv-stop.rv-junction .rv-stop-text, #ui .rv-stop.rv-boss .rv-stop-text { color: var(--gold); }
 #ui .rv-stop.rv-reversing { border-color: #ffb040; animation: rv-amber 1s ease-in-out infinite; }
 #ui .rv-stop.rv-reversing .rv-stop-text { color: #ffd28a; }
-#ui .rv-stop .rv-haven { display: flex; align-items: center; gap: 8px; font-size: calc(10 * var(--u)); letter-spacing: 0.12em; text-transform: uppercase; color: var(--fg3); }
-#ui .rv-stop .rv-haven-tag { padding: 1px 8px; border-radius: 999px; background: rgba(111, 191, 115, 0.18); border: 1px solid var(--good); color: var(--good); font-weight: 800; letter-spacing: 0.2em; animation: rv-haven 2.2s ease-in-out infinite; }
+#ui .rv-stop .rv-haven-tag { padding: 1px 8px; border-radius: 999px; background: rgba(111, 191, 115, 0.18); border: 1px solid var(--good); color: var(--good); font-weight: 800; letter-spacing: 0.2em; font-size: calc(9 * var(--u)); text-transform: uppercase; animation: rv-haven 2.2s ease-in-out infinite; }
 @keyframes rv-haven { 0%, 100% { box-shadow: 0 0 0 0 rgba(111, 191, 115, 0); } 50% { box-shadow: 0 0 12px rgba(111, 191, 115, 0.45); } }
 #ui .rv-stop .rv-pressure { width: 100%; display: flex; align-items: center; gap: 6px; font-size: calc(10 * var(--u)); color: var(--fg3); letter-spacing: 0.12em; text-transform: uppercase; }
 #ui .rv-stop .rv-pressure .rv-bar { flex: 1 1 auto; }
@@ -379,13 +455,13 @@
 
 /* --- train strip --- */
 #ui .rv-strip {
-  position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%);
-  max-width: min(96vw, 1400px);
+  position: relative;
+  max-width: 100%;
   padding: 8px 12px 14px;
   display: flex; flex-direction: column; gap: 4px;
 }
 #ui .rv-strip-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-#ui .rv-strip-head .rv-stat { font-size: calc(10 * var(--u)); color: var(--fg3); letter-spacing: 0.1em; text-transform: uppercase; font-variant-numeric: tabular-nums; }
+#ui .rv-strip-head .rv-stat { font-size: calc(10 * var(--u)); color: var(--fg3); letter-spacing: 0.1em; text-transform: uppercase; font-variant-numeric: tabular-nums; white-space: nowrap; }
 #ui .rv-strip-head .rv-stat b { color: var(--fg2); }
 #ui .rv-cars { position: relative; display: flex; align-items: center; gap: 0; overflow-x: auto; overflow-y: hidden; padding-bottom: 6px; scrollbar-width: thin; }
 #ui .rv-car {
@@ -417,8 +493,8 @@
 #ui .rv-car.rv-fire { border-color: var(--heat); box-shadow: 0 0 12px rgba(255, 143, 58, 0.35); }
 #ui .rv-car.rv-disabled { opacity: 0.6; }
 #ui .rv-car.rv-dead { opacity: 0.35; }
-#ui .rv-car .rv-car-short { font-size: calc(10 * var(--u)); letter-spacing: 0.12em; font-weight: 800; color: var(--accent, var(--fg2)); display: flex; justify-content: space-between; align-items: center; }
-#ui .rv-car .rv-car-idx { color: var(--fg3); font-weight: 400; font-size: calc(9 * var(--u)); }
+#ui .rv-car .rv-car-short { font-size: calc(10 * var(--u)); letter-spacing: 0.12em; font-weight: 800; color: var(--accent, var(--fg2)); display: flex; justify-content: space-between; align-items: center; gap: 3px; }
+#ui .rv-car .rv-car-idx { color: var(--fg3); font-weight: 400; font-size: calc(9 * var(--u)); margin-left: auto; }
 #ui .rv-car .rv-bar { height: 4px; }
 #ui .rv-car .rv-bar.rv-heat > i { background: linear-gradient(90deg, var(--heat), var(--danger)); }
 #ui .rv-car .rv-bar.rv-hp > i { background: var(--good); }
@@ -441,18 +517,49 @@
 #ui .rv-power-span::before, #ui .rv-power-span::after { content: ''; position: absolute; top: -2px; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
 #ui .rv-power-span::before { left: -2px; } #ui .rv-power-span::after { right: -2px; }
 
-/* --- log --- */
-#ui .rv-log { position: absolute; left: 10px; bottom: 10px; width: min(300px, 30vw); display: flex; flex-direction: column; gap: 2px; font-size: calc(11 * var(--u)); }
-#ui .rv-log .rv-log-line { padding: 2px 8px; border-radius: 5px; background: rgba(11, 14, 26, 0.7); color: var(--fg2); transition: opacity 600ms; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#ui .rv-log .rv-log-line.rv-k-warn { color: var(--gold); }
-#ui .rv-log .rv-log-line.rv-k-bad { color: var(--danger); }
-#ui .rv-log .rv-log-line.rv-k-good { color: var(--good); }
-#ui .rv-log .rv-log-line .rv-log-t { color: var(--fg3); font-family: ui-monospace, Consolas, monospace; font-size: 0.9em; margin-right: 6px; }
+/* level pips (I / II / III) */
+#ui .rv-pips { display: inline-flex; gap: 3px; align-items: center; vertical-align: middle; }
+#ui .rv-pips i { display: block; width: 5px; height: 5px; border-radius: 1px; background: rgba(255, 255, 255, 0.14); transform: rotate(45deg); }
+#ui .rv-pips i.rv-on { background: var(--gold); box-shadow: 0 0 4px rgba(232, 193, 112, 0.7); }
+#ui .rv-car .rv-car-lvl i { width: 4px; height: 4px; }
+#ui .rv-car .rv-car-lvl:not(:has(.rv-on)) { display: none; }
+#ui .rv-insp-lvl { margin-left: 8px; }
+#ui .rv-sc-lvl { margin-left: 4px; }
 
-/* --- toasts --- */
-#ui .rv-toasts { position: absolute; top: calc(56 * var(--u)); right: 10px; display: flex; flex-direction: column; align-items: flex-end; width: min(340px, 40vw); }
+/* between 1366 and 1500 px the chip labels go first so the top bar stays a single row */
+@media (max-width: 1500px) { #ui .rv-chip .rv-chip-k { display: none; } #ui .rv-void { width: min(200px, 16vw); } }
+
+/* --- compact HUD (Settings.compactHud or viewport < 1366 px) --- */
+#ui.rv-compact .rv-chip { padding: 3px 7px; gap: 4px; }
+#ui.rv-compact .rv-chip .rv-chip-k, #ui.rv-compact .rv-morale { display: none; }
+#ui.rv-compact .rv-chip .rv-chip-v { font-size: calc(12 * var(--u)); }
+#ui.rv-compact .rv-void { width: min(220px, 24vw); padding: 3px 8px; }
+#ui.rv-compact .rv-void .rv-label { display: none; }
+#ui.rv-compact .rv-status { gap: 8px; padding: 4px 10px; }
+#ui.rv-compact .rv-forecast { display: none; }
+#ui.rv-compact .rv-strip { padding: 6px 10px 10px; }
+#ui.rv-compact .rv-strip-head .rv-stat-k { display: none; }
+#ui.rv-compact .rv-strip-head .rv-label { font-size: calc(9 * var(--u)); }
+#ui.rv-compact .rv-cars { padding-bottom: 4px; }
+#ui.rv-compact .rv-car { width: calc(48 * var(--u)); min-width: calc(48 * var(--u)); height: 28px; padding: 3px 4px 2px; gap: 2px; justify-content: space-between; }
+#ui.rv-compact .rv-car .rv-car-short { font-size: calc(9 * var(--u)); letter-spacing: 0.08em; }
+#ui.rv-compact .rv-car .rv-car-idx, #ui.rv-compact .rv-car .rv-car-badges, #ui.rv-compact .rv-car .rv-bar.rv-heat { display: none; }
+#ui.rv-compact .rv-car .rv-bar { height: 3px; }
+#ui.rv-compact .rv-car .rv-crewb { width: 13px; height: 13px; font-size: 8px; top: -5px; right: -4px; }
+#ui.rv-compact .rv-flow { width: 10px; min-width: 10px; }
+#ui.rv-compact .rv-stop { padding: 5px 12px; min-width: 200px; }
+#ui.rv-compact .rv-warning { padding: 4px 12px; font-size: calc(11 * var(--u)); }
+#ui.rv-compact .rv-route { width: 210px; }
+
+/* --- toasts (under the top bar, right; shift left with the right rail; max 3) --- */
+#ui .rv-toasts { position: absolute; top: calc(var(--rv-top-h) + 6px); right: calc(var(--rv-right-w) + 10px); display: flex; flex-direction: column; align-items: flex-end; width: var(--rv-toast-w); z-index: 5; }
 #ui .rv-toast { display: flex; gap: 8px; align-items: flex-start; padding: 7px 12px; margin-bottom: 6px; overflow: hidden; font-size: calc(12 * var(--u)); border-left: 3px solid var(--info); max-width: 100%; }
 #ui .rv-toast .rv-toast-ico { flex: 0 0 auto; font-weight: 800; color: var(--info); }
+#ui .rv-toast .rv-toast-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+#ui .rv-toast .rv-toast-more { font-size: calc(11 * var(--u)); color: var(--fg2); }
+#ui .rv-toast .rv-toast-more.rv-k-good { color: var(--good); }
+#ui .rv-toast .rv-toast-more.rv-k-bad { color: var(--danger); }
+#ui .rv-toast .rv-toast-more.rv-k-warn { color: var(--gold); }
 #ui .rv-toast.rv-k-warn { border-left-color: var(--gold); }
 #ui .rv-toast.rv-k-warn .rv-toast-ico { color: var(--gold); }
 #ui .rv-toast.rv-k-bad { border-left-color: var(--danger); }
@@ -460,22 +567,26 @@
 #ui .rv-toast.rv-k-good { border-left-color: var(--good); }
 #ui .rv-toast.rv-k-good .rv-toast-ico { color: var(--good); }
 
-/* --- side panels --- */
+/* --- right rail: side panels start below the top bar; inspector OR shop occupy the same slot --- */
 #ui .rv-side {
-  position: absolute; top: 10px; right: 10px; bottom: calc(120 * var(--u));
-  width: min(360px, 40vw);
+  position: absolute; top: calc(var(--rv-top-h) + 6px); right: 10px; bottom: 10px;
+  width: var(--side-w);
   display: flex; flex-direction: column;
   padding: 0;
   overflow: hidden;
+  z-index: 3;
 }
-#ui .rv-side.rv-wide { width: min(640px, 52vw); bottom: 10px; }
+#ui .rv-side.rv-wide { width: var(--shop-w); }
+#ui .rv-inspector { z-index: 4; }
+#ui.rv-shop-open .rv-inspector { width: var(--shop-w); }
 #ui .rv-side-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
-#ui .rv-side-head h2 { margin: 0; font-size: calc(14 * var(--u)); letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); }
+#ui .rv-side-head h2 { margin: 0; font-size: calc(14 * var(--u)); letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); display: flex; align-items: center; }
+#ui .rv-side-head .rv-side-sub { font-size: calc(10 * var(--u)); letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg3); text-align: right; }
 #ui .rv-side-body { flex: 1 1 auto; overflow: auto; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; scrollbar-width: thin; }
 #ui .rv-side-foot { padding: 8px 12px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 6px; }
 #ui .rv-kv-grid { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: calc(12 * var(--u)); align-items: center; }
 #ui .rv-kv-grid .rv-k { color: var(--fg3); letter-spacing: 0.1em; text-transform: uppercase; font-size: calc(10 * var(--u)); }
-#ui .rv-kv-grid .rv-v { font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 6px; }
+#ui .rv-kv-grid .rv-v { font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 #ui .rv-kv-grid .rv-bar { flex: 1 1 auto; }
 #ui .rv-desc { color: var(--fg2); font-size: calc(12 * var(--u)); }
 #ui .rv-crew-line { display: flex; justify-content: space-between; gap: 6px; font-size: calc(12 * var(--u)); padding: 3px 6px; border-radius: 5px; background: rgba(255, 255, 255, 0.03); }
@@ -483,7 +594,6 @@
 #ui .rv-crew-line .rv-where { color: var(--fg3); }
 
 /* --- shop --- */
-#ui .rv-shop-res { display: flex; gap: 6px; flex-wrap: wrap; }
 #ui .rv-tier { margin-top: 4px; }
 #ui .rv-shop-item {
   display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 7px; background: rgba(255, 255, 255, 0.02); align-items: center;
@@ -494,22 +604,38 @@
 #ui .rv-shop-car { position: relative; transition: border-color 300ms, box-shadow 300ms; }
 #ui .rv-shop-car .rv-bar { height: 3px; }
 #ui .rv-shop-car.rv-repaired { border-color: var(--good); box-shadow: 0 0 12px rgba(111, 191, 115, 0.4); }
-#ui .rv-shop-item .rv-si-name { font-weight: 700; display: flex; gap: 8px; align-items: baseline; }
-#ui .rv-shop-item .rv-si-short { font-size: calc(10 * var(--u)); letter-spacing: 0.14em; color: var(--accent, var(--fg2)); }
+#ui .rv-si-name { font-weight: 700; display: flex; gap: 8px; align-items: baseline; }
+#ui .rv-si-short { font-size: calc(10 * var(--u)); letter-spacing: 0.14em; color: var(--accent, var(--fg2)); }
 #ui .rv-shop-item .rv-si-desc { grid-column: 1 / -1; font-size: calc(11 * var(--u)); color: var(--fg2); }
 #ui .rv-shop-item .rv-si-nums { grid-column: 1 / -1; display: flex; gap: 10px; flex-wrap: wrap; font-size: calc(10 * var(--u)); color: var(--fg3); letter-spacing: 0.06em; font-variant-numeric: tabular-nums; }
 #ui .rv-shop-item .rv-si-nums b { color: var(--fg2); font-weight: 600; }
 #ui .rv-shop-item .rv-si-cost { color: var(--gold); font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
 #ui .rv-shop-item .rv-si-cost.rv-poor { color: var(--danger); }
-#ui .rv-shop-train { display: flex; flex: 0 0 auto; gap: 4px; overflow-x: auto; padding: 4px 0; }
-#ui .rv-shop-car { display: flex; flex-direction: column; gap: 3px; min-width: 76px; padding: 4px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg2); font-size: calc(10 * var(--u)); text-align: center; }
-#ui .rv-shop-car .rv-sc-name { font-weight: 700; letter-spacing: 0.1em; color: var(--accent, var(--fg2)); }
-#ui .rv-shop-car .rv-sc-btns { display: flex; gap: 2px; justify-content: center; }
+#ui .rv-shop-train { display: flex; flex: 0 0 auto; gap: 4px; overflow-x: auto; padding: 4px 0; scrollbar-width: thin; }
+#ui .rv-shop-car { display: flex; flex-direction: column; gap: 3px; min-width: 96px; padding: 4px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg2); font-size: calc(10 * var(--u)); text-align: center; }
+#ui .rv-shop-car .rv-sc-name { font-weight: 700; letter-spacing: 0.1em; color: var(--accent, var(--fg2)); display: flex; align-items: center; justify-content: center; }
+#ui .rv-shop-car .rv-sc-btns { display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; }
+#ui .rv-shop-car .rv-sc-btns .rv-btn { padding: 2px 6px; min-width: 0; }
+#ui .rv-shop-car .rv-upgrade { white-space: normal; line-height: 1.2; letter-spacing: 0.04em; }
+#ui .rv-loco-card { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; border: 1px solid var(--accent, var(--line)); border-radius: 7px; background: rgba(232, 193, 112, 0.04); }
+#ui .rv-loco-card .rv-lt-hint { margin-left: auto; font-weight: 400; font-size: calc(10 * var(--u)); letter-spacing: 0.08em; text-transform: uppercase; }
+#ui .rv-loco-tracks { display: grid; gap: 4px; }
+#ui .rv-loco-track { display: grid; grid-template-columns: auto 1fr auto auto; gap: 8px; align-items: center; padding: 4px 6px; border-radius: 6px; background: rgba(255, 255, 255, 0.03); font-size: calc(11 * var(--u)); }
+#ui .rv-loco-track .rv-lt-ico { color: var(--gold); width: 1.3em; text-align: center; font-size: calc(13 * var(--u)); }
+#ui .rv-loco-track .rv-lt-name { display: flex; flex-direction: column; line-height: 1.2; }
+#ui .rv-loco-track .rv-lt-name b { color: var(--fg); }
+#ui .rv-loco-track .rv-lt-per { color: var(--fg3); font-size: calc(10 * var(--u)); }
+#ui .rv-loco-track .rv-lt-pips i { width: 7px; height: 7px; }
 #ui .rv-tip { border-bottom: 1px dotted var(--fg3); cursor: help; }
 #ui .rv-rules { font-size: calc(11 * var(--u)); color: var(--fg2); display: grid; gap: 3px; }
 #ui .rv-rules b { color: var(--gold); }
 
-/* --- event modal --- */
+/* --- event modal (centred in the free zone) --- */
+#ui .rv-overlay.rv-zone { padding: calc(var(--rv-top-h) + 12px) calc(var(--rv-right-w) + 16px) calc(var(--rv-dock-h) + 22px) calc(var(--rv-left-w) + 16px); }
+#ui.rv-has-toasts .rv-overlay.rv-zone { padding-right: calc(var(--rv-right-w) + var(--rv-toast-w) + 20px); }
+#ui .rv-overlay.rv-zone .rv-modal { max-height: 100%; width: min(100%, calc(560 * var(--u))); }
+/* a coach-mark under a modal card is noise; it comes back when the card closes */
+#ui:has(> .rv-overlay.rv-zone:not([hidden])) .rv-tutorial-layer { visibility: hidden; }
 #ui .rv-event .rv-event-text { font-size: calc(14 * var(--u)); color: var(--fg); line-height: 1.5; }
 #ui .rv-event .rv-option { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; text-transform: none; letter-spacing: 0; width: 100%; padding: 8px 12px; white-space: normal; }
 #ui .rv-event .rv-option .rv-opt-label { font-weight: 700; color: var(--gold); letter-spacing: 0.04em; }
@@ -551,17 +677,54 @@
 /* --- confirm --- */
 #ui .rv-confirm { width: min(90vw, calc(420 * var(--u))); }
 
-/* --- tutorial --- */
-#ui .rv-tutorial-layer { position: absolute; inset: 0; transition: opacity 300ms; }
+/* --- tutorial (compact coach-marks with a progress-dot row) --- */
+#ui .rv-tutorial-layer { position: absolute; inset: 0; transition: opacity 300ms; pointer-events: none; }
+#ui .rv-tutorial-layer > * { pointer-events: auto; }
 #ui .rv-tutorial-layer.rv-hud-off { opacity: 0; }
 #ui .rv-tutorial-layer.rv-hud-off > * { pointer-events: none !important; }
-#ui .rv-coach { position: absolute; width: min(320px, 80vw); padding: 10px 12px; border-color: var(--gold); display: flex; flex-direction: column; gap: 6px; }
-#ui .rv-coach .rv-coach-step { font-size: calc(10 * var(--u)); letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); }
-#ui .rv-coach .rv-coach-text { font-size: calc(12 * var(--u)); color: var(--fg); }
+#ui .rv-coach { position: absolute; width: min(268px, 70vw); padding: 8px 10px; border-color: var(--gold); display: flex; flex-direction: column; gap: 5px; --arrow-x: 24px; }
+#ui .rv-coach .rv-coach-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+#ui .rv-coach .rv-coach-step { font-size: calc(9 * var(--u)); letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); }
+#ui .rv-coach .rv-coach-dots { display: flex; gap: 4px; }
+#ui .rv-coach .rv-coach-dots i { width: 6px; height: 6px; border-radius: 50%; background: rgba(255, 255, 255, 0.14); }
+#ui .rv-coach .rv-coach-dots i.rv-done { background: rgba(232, 193, 112, 0.5); }
+#ui .rv-coach .rv-coach-dots i.rv-cur { background: var(--gold); box-shadow: 0 0 6px rgba(232, 193, 112, 0.8); }
+#ui .rv-coach .rv-coach-text { font-size: calc(12 * var(--u)); color: var(--fg); line-height: 1.4; }
 #ui .rv-coach .rv-actions { display: flex; gap: 6px; justify-content: flex-end; }
-#ui .rv-coach::after { content: ''; position: absolute; width: 10px; height: 10px; background: var(--bg); border-left: 1px solid var(--gold); border-top: 1px solid var(--gold); transform: rotate(45deg); left: 24px; top: -6px; }
+#ui .rv-coach::after { content: ''; position: absolute; width: 10px; height: 10px; background: var(--bg); border-left: 1px solid var(--gold); border-top: 1px solid var(--gold); transform: rotate(45deg); left: var(--arrow-x); top: -6px; }
 #ui .rv-coach.rv-arrow-bottom::after { top: auto; bottom: -6px; transform: rotate(225deg); }
 #ui .rv-coach.rv-arrow-none::after { display: none; }
+
+/* --- hover cards (settlement / car / track cost) --- */
+#ui .rv-hover-layer { position: absolute; inset: 0; pointer-events: none; z-index: 8; }
+#ui .rv-hovercard {
+  position: absolute; left: 0; top: 0; width: max-content; max-width: 290px;
+  padding: 8px 10px; display: flex; flex-direction: column; gap: 3px;
+  font-size: calc(12 * var(--u)); opacity: 0; transition: opacity 140ms ease-out; will-change: transform;
+}
+#ui .rv-hovercard.rv-on, #ui .rv-costchip.rv-on { opacity: 1; }
+#ui .rv-hovercard .rv-hc-head { display: flex; align-items: center; gap: 6px; padding: 0 0 4px 6px; margin-bottom: 2px; border-bottom: 1px solid var(--line); border-left: 3px solid var(--accent, var(--gold)); border-radius: 2px 0 0 0; flex-wrap: wrap; }
+#ui .rv-hovercard .rv-hc-ico { color: var(--accent, var(--gold)); font-size: calc(13 * var(--u)); line-height: 1; }
+#ui .rv-hovercard .rv-hc-short { font-size: calc(10 * var(--u)); letter-spacing: 0.14em; font-weight: 800; }
+#ui .rv-hovercard .rv-hc-name { font-weight: 700; color: var(--fg); }
+#ui .rv-hovercard .rv-hc-type { font-size: calc(9 * var(--u)); letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent, var(--fg3)); }
+#ui .rv-hovercard .rv-hc-tag { font-size: calc(9 * var(--u)); letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg3); padding: 0 6px; border: 1px solid var(--line2); border-radius: 999px; }
+#ui .rv-hovercard .rv-hc-tag.rv-bad { color: var(--danger); border-color: var(--danger); }
+#ui .rv-hovercard .rv-hc-blurb { font-size: calc(11 * var(--u)); color: var(--fg3); font-style: italic; }
+#ui .rv-hovercard .rv-hc-row { display: flex; justify-content: space-between; gap: 14px; }
+#ui .rv-hovercard .rv-hc-k { color: var(--fg3); font-size: calc(10 * var(--u)); letter-spacing: 0.12em; text-transform: uppercase; }
+#ui .rv-hovercard .rv-hc-v { font-variant-numeric: tabular-nums; text-align: right; display: inline-flex; align-items: center; gap: 6px; }
+#ui .rv-hovercard .rv-hc-bar { display: inline-block; width: 70px; height: 4px; }
+#ui .rv-hovercard .rv-hc-lvl { margin-left: auto; }
+#ui .rv-costchip {
+  position: absolute; left: 0; top: 0; padding: 3px 9px; border-radius: 999px;
+  background: var(--bg2); border: 1px solid var(--gold); color: var(--gold);
+  font-size: calc(11 * var(--u)); font-weight: 700; letter-spacing: 0.08em; white-space: nowrap;
+  opacity: 0; transition: opacity 120ms ease-out; will-change: transform;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+#ui .rv-costchip.rv-free { border-color: var(--good); color: var(--good); }
+#ui .rv-costchip.rv-no { border-color: var(--danger); color: var(--danger); font-weight: 600; letter-spacing: 0.02em; }
 
 /* --- cinematics (letterbox + title cards) --- */
 #ui .rv-cine { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
@@ -585,24 +748,30 @@
 #ui .rv-cine-defeat .rv-cine-rule { background: linear-gradient(90deg, transparent, #8a90a5, transparent); }
 #ui .rv-cine-region_enter .rv-cine-title { color: var(--fg); text-shadow: 0 0 30px rgba(111, 183, 232, 0.35), 0 4px 0 rgba(0, 0, 0, 0.6); }
 
-/* --- gamepad overlay --- */
-#ui .rv-gamepad { position: absolute; left: 50%; bottom: calc(140 * var(--u)); transform: translateX(-50%); padding: 10px 16px; display: grid; grid-template-columns: repeat(2, auto); gap: 3px 18px; font-size: calc(11 * var(--u)); color: var(--fg2); }
+/* --- gamepad overlay (sits above the dock) --- */
+#ui .rv-gamepad { position: absolute; left: 50%; bottom: calc(var(--rv-dock-h) + 22px); transform: translateX(-50%); padding: 10px 16px; display: grid; grid-template-columns: repeat(2, auto); gap: 3px 18px; font-size: calc(11 * var(--u)); color: var(--fg2); }
 #ui .rv-gamepad .rv-gp-title { grid-column: 1 / -1; color: var(--gold); letter-spacing: 0.2em; text-transform: uppercase; font-size: calc(10 * var(--u)); margin-bottom: 4px; }
 #ui .rv-gamepad b { color: var(--fg); font-family: ui-monospace, Consolas, monospace; }
 
-/* --- make room when side panels are open --- */
-#ui { --side-w: min(360px, 40vw); --shop-w: min(640px, 52vw); }
-#ui.rv-inspector-open .rv-toasts, #ui.rv-inspector-open .rv-hud-tr { right: calc(var(--side-w) + 18px); }
-#ui.rv-shop-open .rv-toasts, #ui.rv-shop-open .rv-hud-tr { right: calc(var(--shop-w) + 18px); }
-#ui.rv-shop-open .rv-inspector { right: calc(var(--shop-w) + 18px); }
-#ui.rv-shop-open.rv-inspector-open .rv-toasts, #ui.rv-shop-open.rv-inspector-open .rv-hud-tr { right: calc(var(--shop-w) + var(--side-w) + 26px); }
+/* --- settings layout --- */
+#ui .rv-settings-h { grid-column: 1 / -1; margin: 8px 0 0; }
+#ui .rv-settings-h:first-child { margin-top: 0; }
 
-/* --- narrow layouts --- */
-@media (max-width: 1180px) {
-  #ui .rv-route { top: auto; bottom: calc(118 * var(--u)); transform: none; width: 200px; }
-  #ui .rv-log { width: 220px; }
-}
+/* --- custom cursors (html.rv-cursors; variables set by cursors.ts) --- */
+html.rv-cursors, html.rv-cursors body, html.rv-cursors #game, html.rv-cursors #game canvas, html.rv-cursors #ui { cursor: var(--rv-cur-default, crosshair); }
+html.rv-cursors #ui .rv-btn, html.rv-cursors #ui button, html.rv-cursors #ui a, html.rv-cursors #ui select, html.rv-cursors #ui input,
+html.rv-cursors #ui label, html.rv-cursors #ui .rv-car, html.rv-cursors #ui .rv-shop-item, html.rv-cursors #ui .rv-shop-car, html.rv-cursors #ui .rv-chip, html.rv-cursors #ui .rv-tip,
+html.rv-cursors #ui [role="option"], html.rv-cursors #ui .rv-vol-mute { cursor: var(--rv-cur-ui, pointer); }
+html.rv-cursors #ui .rv-btn:disabled, html.rv-cursors #ui button:disabled { cursor: var(--rv-cur-blocked, not-allowed); }
+html.rv-cursors #ui input[type="range"] { cursor: var(--rv-cur-grab, grab); }
+html.rv-cursors #game canvas[data-cursor="plan"] { cursor: var(--rv-cur-plan, crosshair); }
+html.rv-cursors #game canvas[data-cursor="blocked"] { cursor: var(--rv-cur-blocked, not-allowed); }
+html.rv-cursors #game canvas[data-cursor="pointer"] { cursor: var(--rv-cur-pointer, pointer); }
+html.rv-cursors #game canvas[data-cursor="grab"] { cursor: var(--rv-cur-grab, grab); }
+html.rv-cursors #game canvas[data-cursor="default"] { cursor: var(--rv-cur-default, crosshair); }
+
+/* --- short viewports --- */
 @media (max-height: 700px) {
-  #ui .rv-side { bottom: calc(108 * var(--u)); }
   #ui .rv-strip { padding-bottom: 8px; }
+  #ui .rv-side-body { padding: 8px 10px; }
 }

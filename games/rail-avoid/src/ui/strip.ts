@@ -1,10 +1,11 @@
-/** Bottom train strip: one chip per car, diff-based updates. */
+/** Bottom train strip: one chip per car, diff-based updates. Lives in the HUD dock. */
 import { el, setText, setWidth, toggleClass, setAttr, hexColor } from './dom';
 import type { UiShared } from './shared';
 import type { SimState, Car, CrewSpecialty } from '../core/types';
 import { CAR_DEFS } from '../core/cars';
 import { MAX_CARS, TRAIN } from '../core/config';
 import { gsap, D, isReduced, popIn, shake } from './motion';
+import { levelOf, ROMAN } from './levels';
 
 const CREW_CODE: Record<CrewSpecialty, string> = { engineer: 'EN', gunner: 'GU', medic: 'MD', surveyor: 'SV', mechanic: 'MC', quartermaster: 'QM' };
 
@@ -15,22 +16,24 @@ interface Chip {
   heatFill: HTMLElement;
   badges: HTMLElement;
   crew: HTMLElement;
+  pips: HTMLElement[];
   sig: string;
 }
 
+export interface StripHooks { hover?(index: number, x: number, y: number): void; leave?(): void }
 export interface Strip { el: HTMLElement; update(s: SimState, force?: boolean): void; reset(): void; carsEl: HTMLElement; hit(carIndex: number): void }
 
-export function createStrip(ui: UiShared): Strip {
+export function createStrip(ui: UiShared, hooks: StripHooks = {}): Strip {
   const weightV = el('b', { text: '0' });
   const powerV = el('b', { text: '0/0' });
   const speedV = el('b', { text: '0.00' });
   const countV = el('b', { text: '0' });
   const head = el('div', { class: 'rv-strip-head' },
     el('span', { class: 'rv-label', text: 'Train' }),
-    el('span', { class: 'rv-stat' }, 'cars ', countV, ' / ' + MAX_CARS),
-    el('span', { class: 'rv-stat' }, 'weight ', weightV, ' t'),
-    el('span', { class: 'rv-stat', title: 'Power generated / power demanded' }, 'power ', powerV),
-    el('span', { class: 'rv-stat' }, 'speed ', speedV, ' hex/s'),
+    el('span', { class: 'rv-stat' }, el('span', { class: 'rv-stat-k', text: 'cars ' }), countV, ' / ' + MAX_CARS),
+    el('span', { class: 'rv-stat' }, el('span', { class: 'rv-stat-k', text: 'weight ' }), weightV, ' t'),
+    el('span', { class: 'rv-stat', title: 'Power generated / power demanded' }, el('span', { class: 'rv-stat-k', text: 'power ' }), powerV),
+    el('span', { class: 'rv-stat' }, el('span', { class: 'rv-stat-k', text: 'speed ' }), speedV, ' hex/s'),
   );
   const carsEl = el('div', { class: 'rv-cars', role: 'listbox', 'aria-label': 'Train cars, locomotive first' });
   const root = el('div', { class: 'rv-strip rv-panel' }, head, carsEl);
@@ -78,21 +81,25 @@ export function createStrip(ui: UiShared): Strip {
       const badges = el('span', { class: 'rv-car-badges' });
       const crew = el('span', { class: 'rv-crewb', 'aria-hidden': 'true' });
       crew.hidden = true;
+      const pips = [1, 2, 3].map(() => el('i'));
+      const pipsEl = el('span', { class: 'rv-pips rv-car-lvl', 'aria-hidden': 'true' }, ...pips);
       const chip = el('button', {
         class: 'rv-car', type: 'button', role: 'option', 'data-i': String(i),
         style: `--accent:${hexColor(def.color)}`,
-        title: def.name,
         'aria-label': `${def.name}, car ${i + 1}`,
       },
-        el('span', { class: 'rv-car-short' }, def.short, el('span', { class: 'rv-car-idx', text: String(i + 1) })),
+        el('span', { class: 'rv-car-short' }, def.short, pipsEl, el('span', { class: 'rv-car-idx', text: String(i + 1) })),
         hpBar,
         el('div', { class: 'rv-bar rv-heat', title: 'Heat' }, heatFill),
         badges, crew,
       );
       chip.addEventListener('click', () => { ui.audio().ui('click'); ui.selectCar(i, true); });
-      chip.addEventListener('mouseenter', () => ui.audio().ui('hover'));
+      chip.addEventListener('mouseenter', (e) => { ui.audio().ui('hover'); hooks.hover?.(i, e.clientX, e.clientY); });
+      chip.addEventListener('mouseleave', () => hooks.leave?.());
+      chip.addEventListener('focus', () => { const r = chip.getBoundingClientRect(); hooks.hover?.(i, r.left + r.width / 2, r.top); });
+      chip.addEventListener('blur', () => hooks.leave?.());
       carsEl.appendChild(chip);
-      chips.push({ id: car.id, root: chip, hpBar, hpFill, heatFill, badges, crew, sig: '' });
+      chips.push({ id: car.id, root: chip, hpBar, hpFill, heatFill, badges, crew, pips, sig: '' });
     });
     animateDiff(prev, chips);
     // power spans (generators reach ±3 cars)
@@ -156,8 +163,9 @@ export function createStrip(ui: UiShared): Strip {
       const def = CAR_DEFS[car.type];
       const hpR = car.maxHp > 0 ? car.hp / car.maxHp : 0;
       const crewSpec = crewByCar.get(i);
+      const lvl = levelOf(car);
       const sig = [Math.round(hpR * 100), Math.round(car.heat), Math.round((car.derived?.powerRatio ?? 1) * 100), car.derived?.hasAmmoSupply ? 1 : 0,
-        car.boarders.length, car.onFire ? 1 : 0, car.disabled ? 1 : 0, car.passengers, crewSpec ?? '', sel === i ? 1 : 0, car.derived?.marinesEngaged ? 1 : 0].join(',');
+        car.boarders.length, car.onFire ? 1 : 0, car.disabled ? 1 : 0, car.passengers, crewSpec ?? '', sel === i ? 1 : 0, car.derived?.marinesEngaged ? 1 : 0, lvl, car.maxHp].join(',');
       if (sig === ch.sig) continue;
       ch.sig = sig;
       setWidth(ch.hpFill, hpR * 100);
@@ -172,13 +180,13 @@ export function createStrip(ui: UiShared): Strip {
       if (ch.badges.innerHTML !== html) ch.badges.innerHTML = html;
       if (crewSpec) { ch.crew.hidden = false; setText(ch.crew, CREW_CODE[crewSpec]); ch.crew.title = crewSpec; }
       else ch.crew.hidden = true;
+      ch.pips.forEach((p, k) => toggleClass(p, 'rv-on', k < lvl));
       toggleClass(ch.root, 'rv-selected', sel === i);
       toggleClass(ch.root, 'rv-fire', car.onFire);
       toggleClass(ch.root, 'rv-disabled', car.disabled);
       toggleClass(ch.root, 'rv-dead', car.hp <= 0);
       setAttr(ch.root, 'aria-selected', sel === i ? 'true' : 'false');
-      setAttr(ch.root, 'aria-label', `${def.name}, car ${i + 1}, hull ${Math.round(hpR * 100)}%, heat ${Math.round(car.heat)}${car.boarders.length ? `, ${car.boarders.length} boarders` : ''}${car.onFire ? ', on fire' : ''}`);
-      setAttr(ch.root, 'title', `${def.name} — ${Math.ceil(car.hp)}/${car.maxHp} HP, heat ${Math.round(car.heat)}`);
+      setAttr(ch.root, 'aria-label', `${def.name}${lvl > 1 ? ` level ${ROMAN[lvl]}` : ''}, car ${i + 1}, hull ${Math.round(hpR * 100)}%, heat ${Math.round(car.heat)}${car.boarders.length ? `, ${car.boarders.length} boarders` : ''}${car.onFire ? ', on fire' : ''}`);
     }
     for (let i = 0; i < flows.length; i++) {
       const a = cars[i], b = cars[i + 1];

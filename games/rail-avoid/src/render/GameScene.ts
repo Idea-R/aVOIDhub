@@ -32,6 +32,12 @@ import { fmtRes } from './util';
 
 type Unsub = () => void;
 
+/** Value written to `canvas.dataset.cursor`; the DOM UI maps it to a CSS cursor. */
+export type CursorKind = 'default' | 'plan' | 'blocked' | 'pointer' | 'grab';
+
+const HOVER_POS_MS = 60;      // position updates while hovering a car / settlement
+const HOVER_REFRESH_MS = 100; // re-hit-test with a still pointer (the train moves under it)
+
 export class GameScene extends Phaser.Scene {
   public ctx: AppContext;
 
@@ -83,6 +89,15 @@ export class GameScene extends Phaser.Scene {
   public cursor: [number, number] | null = null;
   private lastHoverEmit = 0;
   private lastHoverKey = '';
+  // pointer hover state (cars → settlements → hex)
+  public hoverCar = -1;
+  public hoverSettlement: string | null = null;
+  private lastPointer: { x: number; y: number } | null = null;
+  private pointerDirty = false;
+  private lastHoverRefresh = -1;
+  private lastHoverPosEmit = -1;
+  private lastDragging = false;
+  private cursorKind: CursorKind | '' = '';
   public visibleCount = 0;
   private ready = false;
 
@@ -128,6 +143,9 @@ export class GameScene extends Phaser.Scene {
     });
     this.cameras.main.setBackgroundColor('#0b0e1a');
     this.cameras.main.setRoundPixels(true);
+    // the DOM UI owns the pointer look via canvas[data-cursor]; make sure Phaser never sets an inline cursor
+    try { this.input.setDefaultCursor(''); this.game.canvas.style.cursor = ''; } catch { /* ignore */ }
+    this.setCursor('default');
     this.cine = new CinematicController({
       scene: this,
       locoProjected: () => { const l = this.locoWorld(); return l ? { x: l.x, y: l.y * ISO_Y } : null; },
@@ -463,15 +481,108 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleHover(sx: number, sy: number): void {
-    const now = this.time.now;
-    const hex = this.screenToHex(sx, sy);
-    this.plannable.hovered = hex;
-    if (now - this.lastHoverEmit < 60) return;
-    this.lastHoverEmit = now;
-    const key = hex ? hex[0] + ',' + hex[1] : 'none';
-    if (key === this.lastHoverKey) return;
-    this.lastHoverKey = key;
-    this.emitHover(hex);
+    this.lastPointer = { x: sx, y: sy };
+    this.pointerDirty = true;
+    this.pointerMoved = true;
+  }
+  private pointerMoved = false;
+
+  /**
+   * One hover pass (at most once per frame): hit-test train cars → settlement markers → hex tile,
+   * emit ui:hoverCar / ui:hoverSettlement on change (+ position updates every 60 ms), keep the
+   * throttled ui:hoverTile behaviour for tiles (suppressed while a car / settlement is hovered)
+   * and set the canvas cursor state in the same pass.
+   */
+  private refreshHover(now: number): void {
+    const p = this.lastPointer;
+    const st = this.currentState();
+    const dragging = this.cameraCtl.isDragging;
+    this.lastDragging = dragging;
+    if (!p || !st || !this.cameraCtl.pointerOver) { this.clearHover(); this.setCursor(dragging ? 'grab' : 'default'); return; }
+    const cam = this.cameras.main;
+    const zoom = cam.zoom || 1;
+    const wp = cam.getWorldPoint(p.x, p.y);
+    const interactive = !dragging && !this.cine.isPlaying() && st.phase !== 'title';
+    let car = -1, sid: string | null = null;
+    if (interactive) {
+      car = this.train.hitTest(wp.x, wp.y, Math.max(16, 22 / zoom));
+      if (car < 0) sid = this.settlements.hoverHitTest(wp.x, wp.y, 14 / zoom);
+    }
+    const hex = interactive ? this.screenToHex(p.x, p.y) : null;
+    const bus = this.ctx.bus;
+    // position updates only when the pointer actually moved, at most every 60 ms
+    const posDue = this.pointerMoved && now - this.lastHoverPosEmit >= HOVER_POS_MS;
+    let emitted = false;
+    // --- cars ---
+    if (car !== this.hoverCar) {
+      this.hoverCar = car;
+      try { bus?.emit('ui:hoverCar', { index: car, x: p.x, y: p.y }); } catch { /* ignore */ }
+      emitted = true;
+    } else if (car >= 0 && posDue) {
+      try { bus?.emit('ui:hoverCar', { index: car, x: p.x, y: p.y }); } catch { /* ignore */ }
+      emitted = true;
+    }
+    // --- settlements ---
+    if (sid !== this.hoverSettlement) {
+      this.hoverSettlement = sid;
+      try { bus?.emit('ui:hoverSettlement', { id: sid, x: p.x, y: p.y }); } catch { /* ignore */ }
+      emitted = true;
+    } else if (sid && posDue) {
+      try { bus?.emit('ui:hoverSettlement', { id: sid, x: p.x, y: p.y }); } catch { /* ignore */ }
+      emitted = true;
+    }
+    if (emitted) { this.lastHoverPosEmit = now; this.pointerMoved = false; }
+    this.settlements.setHover(sid);
+    // --- hex tile (suppressed while a car / settlement is hovered) ---
+    const suppress = car >= 0 || !!sid;
+    this.plannable.hovered = suppress ? null : hex;
+    if (suppress) {
+      if (this.lastHoverKey !== 'none') { this.lastHoverKey = 'none'; this.emitHover(null); }
+    } else if (now - this.lastHoverEmit >= 60) {
+      const key = hex ? hex[0] + ',' + hex[1] : 'none';
+      if (key !== this.lastHoverKey) { this.lastHoverEmit = now; this.lastHoverKey = key; this.emitHover(hex); }
+    }
+    // --- cursor ---
+    this.setCursor(this.cursorFor(dragging, car, sid, hex));
+  }
+
+  private cursorFor(dragging: boolean, car: number, sid: string | null, hex: [number, number] | null): CursorKind {
+    if (dragging) return 'grab';
+    if (car >= 0 || sid) return 'pointer';
+    if (!hex) return 'default';
+    const sim = this.ctx.sim;
+    if (!sim) return 'default';
+    try {
+      const tile = sim.tileAt(hex[0], hex[1]);
+      if (!tile) return 'default';
+      if (tile.void || tile.terrain === 'mountain') return 'blocked';
+      if (this.plannable.isPlannable(hex[0], hex[1])) return 'plan';
+      const pr = sim.previewPlan(hex[0], hex[1]);
+      if (pr?.ok) return 'plan';
+      const reason = String(pr?.reason ?? '');
+      if (reason && !/not adjacent/i.test(reason)) return 'blocked';
+    } catch { /* ignore */ }
+    return 'default';
+  }
+
+  private setCursor(kind: CursorKind): void {
+    if (kind === this.cursorKind) return;
+    this.cursorKind = kind;
+    try {
+      const c = this.game.canvas;
+      c.dataset.cursor = kind;
+      if (c.style.cursor) c.style.cursor = '';
+    } catch { /* ignore */ }
+  }
+
+  private clearHover(): void {
+    const bus = this.ctx.bus;
+    const p = this.lastPointer ?? { x: 0, y: 0 };
+    if (this.hoverCar !== -1) { this.hoverCar = -1; try { bus?.emit('ui:hoverCar', { index: -1, x: p.x, y: p.y }); } catch { /* ignore */ } }
+    if (this.hoverSettlement !== null) { this.hoverSettlement = null; try { bus?.emit('ui:hoverSettlement', { id: null, x: p.x, y: p.y }); } catch { /* ignore */ } }
+    this.settlements.setHover(null);
+    this.plannable.hovered = null;
+    if (this.lastHoverKey !== 'none') { this.lastHoverKey = 'none'; this.emitHover(null); }
   }
 
   private emitHover(hex: [number, number] | null): void {
@@ -491,8 +602,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleLeave(): void {
-    this.plannable.hovered = null;
-    if (this.lastHoverKey !== 'none') { this.lastHoverKey = 'none'; this.emitHover(null); }
+    this.pointerDirty = false;
+    this.clearHover();
+    this.setCursor('default');
   }
 
   public moveCursor(dCol: number, dRow: number): void {
@@ -562,16 +674,27 @@ export class GameScene extends Phaser.Scene {
     const rm = this.settings.reducedMotion;
     const tSec = time / 1000;
 
+    // pointer hover / cursor: once per frame when the pointer moved, else every 100 ms (or on drag change)
+    if (this.pointerDirty || time - this.lastHoverRefresh > HOVER_REFRESH_MS || this.cameraCtl.isDragging !== this.lastDragging) {
+      this.pointerDirty = false;
+      this.lastHoverRefresh = time;
+      try { this.refreshHover(time); } catch (e) { this.warnOnce('hover', e); }
+    }
+    // zoom level-of-detail: decor + enemy shadows go away when zoomed far out (train and route always show)
+    const detail = zoom >= 0.55;
+    try { this.terrain.setDecorVisible(detail); this.shadowLayer.setVisible(detail); } catch (e) { this.warnOnce('lod', e); }
+
     const view = this.cameras.main.worldView;
     try { this.terrain.update(tSec, view, zoom, this.settings); } catch (e) { this.warnOnce('terrain', e); }
     try { this.terrainFx.update(this.terrain, tSec, view, zoom, this.settings); } catch (e) { this.warnOnce('terrainFx', e); }
     try { this.voidL.update(state, tSec, dt, view); } catch (e) { this.warnOnce('void', e); }
     try { this.track.update(state, tSec, rm, zoom); } catch (e) { this.warnOnce('track', e); }
     try { this.plannable.update(state, sim, time, this.cameraCtl.pointerOver, zoom, rm); } catch (e) { this.warnOnce('plannable', e); }
-    try { this.settlements.update(state, time, zoom, rm, this.overlay.night, view); } catch (e) { this.warnOnce('settlements', e); }
+    try { this.settlements.update(state, time, zoom, rm, this.overlay.night, view, loco, dt); } catch (e) { this.warnOnce('settlements', e); }
     try { this.enemies.update(state, dt, time, loco); } catch (e) { this.warnOnce('enemies', e); }
     if (this.selectedCar >= (state.train?.cars?.length ?? 0)) this.selectedCar = -1;
-    try { this.train.update(state, dt, time, this.selectedCar, this.overlay.night, zoom, this.enemies.positions); } catch (e) { this.warnOnce('train', e); }
+    if (this.hoverCar >= (state.train?.cars?.length ?? 0)) this.hoverCar = -1;
+    try { this.train.update(state, dt, time, this.selectedCar, this.overlay.night, zoom, this.enemies.positions, this.hoverCar); } catch (e) { this.warnOnce('train', e); }
     try { this.projectiles.update(state, dt); } catch (e) { this.warnOnce('projectiles', e); }
     try { this.fx.update(dt, time); if (state.phase !== 'title' || true) this.fx.ambient(state.region | 0, view, dt); } catch (e) { this.warnOnce('fx', e); }
     try { this.weather.update(state, dt, time); } catch (e) { this.warnOnce('weather', e); }
@@ -609,6 +732,7 @@ export class GameScene extends Phaser.Scene {
     this.needSnap = true;
     this.selectedCar = -1;
     this.cursor = null;
+    this.hoverCar = -1; this.hoverSettlement = null;
     this.warned.clear();
     try { this.terrain.build(state, this.settings.decorDensity, this.settings.quality === 'high'); } catch (e) { console.error('[render] terrain build', e); }
     try { this.settlements.rebuild(state); } catch (e) { console.error('[render] settlements', e); }

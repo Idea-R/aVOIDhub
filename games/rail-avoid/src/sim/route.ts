@@ -40,6 +40,7 @@ export function planRange(state: SimState): number {
   let r = TRAIN.basePlanRange;
   for (const car of state.train.cars) if (car.hp > 0) r += CAR_DEFS[car.type].planRangeBonus;
   if (state.train.crew.some(c => c.specialty === 'surveyor' && c.carIndex >= 0)) r += 2;
+  r += state.train.locoUpgrades?.crew ?? 0;
   return r;
 }
 

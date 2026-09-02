@@ -6,7 +6,8 @@ import { TRAIN, SCORE, MAX_CARS } from '../core/config';
 import { addResource, log, recomputeCapacity } from './helpers';
 import { hexToWorld as hexToWorldOf } from '../core/hex';
 import { addCrew, boardPassengers, addCar, removeCar } from './train';
-import { DIRECTOR } from '../core/config';
+import { DIRECTOR, UPGRADES } from '../core/config';
+import type { LocoUpgradeKind } from '../core/types';
 import { damageEnemy, locoPos } from './helpers';
 
 export function onArrive(ctx: SimContext, s: Settlement): void {
@@ -60,6 +61,19 @@ export function onArrive(ctx: SimContext, s: Settlement): void {
   ctx.bus.defer('settlement:reached', { id: s.id, name: s.name, type: s.type, rewards, passengers: boarded, crew: s.crew });
   const parts = Object.entries(rewards).filter(([, v]) => (v ?? 0) > 0).map(([k, v]) => `+${Math.round(v!)} ${k}`);
   log(state, `Reached ${s.name}${parts.length ? ': ' + parts.join(', ') : ''}${boarded ? `, ${boarded} passengers boarded` : ''}`, 'good');
+  // special nodes
+  if (s.type === 'watchtower') {
+    t.watchUntil = state.time + UPGRADES.watchtowerSeconds;
+    for (const ch of state.route.sapperCharges) ch.revealed = true;
+    log(state, 'Lookouts on the tower: longer warnings and sappers revealed for five minutes', 'good');
+  }
+  if (s.type === 'shrine' || s.type === 'market' || s.type === 'wreck') {
+    const id = 'node_' + s.type;
+    state.activeEvent = { defId: id, startedAt: state.time };
+    state.phase = 'event';
+    ctx.bus.defer('phase:change', { phase: 'event' });
+    ctx.bus.defer('event:show', { defId: id });
+  }
   // stop
   t.stopped = true;
   t.stopTimer = 0;
@@ -176,6 +190,56 @@ export function repairAll(ctx: SimContext): boolean {
   if (any) log(ctx.state, 'Repairs complete', 'good');
   recomputeCapacity(ctx.state);
   return any;
+}
+
+// ---------- upgrades ----------
+export function upgradeCost(ctx: SimContext, idx: number): number {
+  const car = ctx.state.train.cars[idx];
+  if (!car || idx === 0) return -1;
+  const lvl = car.level || 1;
+  if (lvl >= 3) return -1;
+  return Math.round(CAR_DEFS[car.type].cost * UPGRADES.carCostMul[lvl]);
+}
+
+export function upgradeCar(ctx: SimContext, idx: number): boolean {
+  const { state } = ctx;
+  if (!canShop(ctx)) return false;
+  const car = state.train.cars[idx];
+  const cost = upgradeCost(ctx, idx);
+  if (!car || cost < 0) return false;
+  if (state.train.resources.scrap < cost) { ctx.bus.defer('ui:notify', { text: `Need ${cost} scrap`, kind: 'warn' }); return false; }
+  addResource(ctx, 'scrap', -cost);
+  car.level = (car.level || 1) + 1;
+  const newMax = Math.round(CAR_DEFS[car.type].hp * (1 + UPGRADES.carHpMul * (car.level - 1)));
+  car.hp += newMax - car.maxHp;
+  car.maxHp = newMax;
+  recomputeCapacity(state);
+  ctx.bus.defer('car:upgraded', { carIndex: idx, level: car.level });
+  log(state, `${CAR_DEFS[car.type].name} upgraded to level ${car.level}`, 'good');
+  return true;
+}
+
+export function locoUpgradeCost(ctx: SimContext, kind: LocoUpgradeKind): number {
+  const lvl = ctx.state.train.locoUpgrades?.[kind] ?? 0;
+  if (lvl >= 3) return -1;
+  return UPGRADES.locoCost[kind][lvl];
+}
+
+export function upgradeLoco(ctx: SimContext, kind: LocoUpgradeKind): boolean {
+  const { state } = ctx;
+  if (!canShop(ctx)) return false;
+  const cost = locoUpgradeCost(ctx, kind);
+  if (cost < 0) return false;
+  if (state.train.resources.scrap < cost) { ctx.bus.defer('ui:notify', { text: `Need ${cost} scrap`, kind: 'warn' }); return false; }
+  addResource(ctx, 'scrap', -cost);
+  const t = state.train;
+  t.locoUpgrades[kind] = (t.locoUpgrades[kind] ?? 0) + 1;
+  if (kind === 'frame') { const loco = t.cars[0]; loco.maxHp += UPGRADES.locoHpPerLevel; loco.hp += UPGRADES.locoHpPerLevel; }
+  recomputeCapacity(state);
+  ctx.bus.defer('loco:upgraded', { kind, level: t.locoUpgrades[kind] });
+  const names: Record<LocoUpgradeKind, string> = { speed: 'Speed', power: 'Boiler pressure', frame: 'Reinforced frame', crew: 'Track crew' };
+  log(state, `Locomotive: ${names[kind]} level ${t.locoUpgrades[kind]}`, 'good');
+  return true;
 }
 
 export function closeShop(ctx: SimContext): void {

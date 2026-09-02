@@ -121,6 +121,41 @@ export const PASSENGER_EVENTS: PassengerEventDef[] = [
   },
 ];
 
+/** Events triggered by arriving at special nodes (never scheduled randomly). */
+export const NODE_EVENTS: PassengerEventDef[] = [
+  {
+    id: 'node_shrine', title: 'The Rail Shrine', negative: false,
+    text: 'An old shrine to the line-layers stands by the track. Offerings glitter in the ash. The crew waits for your word.',
+    options: [
+      { label: 'Bless the boiler', desc: 'Locomotive Boiler pressure +1 level (permanent power).' },
+      { label: 'Anoint the couplings', desc: 'Every car repairs 40 HP and sheds its heat.' },
+      { label: 'Offer 10 scrap', desc: '-10 scrap, +25 rails.', requires: { resource: 'scrap', amount: 10 } },
+      { label: 'Leave it be', desc: 'Nothing happens. Morale +3.' },
+    ],
+  },
+  {
+    id: 'node_market', title: 'Trackside Market', negative: false,
+    text: 'Traders have set up stalls on the platform. Prices are steep, but they have what the line does not.',
+    options: [
+      { label: 'Buy rails', desc: '-12 scrap, +10 rails.', requires: { resource: 'scrap', amount: 12 } },
+      { label: 'Buy ammunition', desc: '-8 food, +30 ammo.', requires: { resource: 'food', amount: 8 } },
+      { label: 'Sell ammunition', desc: '-25 ammo, +18 scrap.', requires: { resource: 'ammo', amount: 25 } },
+      { label: 'Just browse', desc: 'Morale +2.' },
+    ],
+  },
+  {
+    id: 'node_wreck', title: 'The Wreck', negative: false,
+    text: 'A derailed convoy lies rusting beside the line. One car looks salvageable if the crew can drag it onto the rails.',
+    options: [
+      { label: 'Salvage the car', desc: 'Couple a random tier-1 car if there is room (75%); otherwise +15 scrap.' },
+      { label: 'Strip it for parts', desc: '+20 scrap, +10 ammo.' },
+      { label: 'Search the cabins', desc: '+8 food, 50% chance of a mechanic; small chance of raiders nearby.' },
+    ],
+  },
+];
+
 export function eventById(id: string): PassengerEventDef | undefined {
+  const n = NODE_EVENTS.find(e => e.id === id);
+  if (n) return n;
   return PASSENGER_EVENTS.find(e => e.id === id);
 }

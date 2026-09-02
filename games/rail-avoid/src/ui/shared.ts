@@ -197,18 +197,40 @@ export class UiShared {
   onSelectCar(l: (i: number) => void): void { this.selectListeners.push(l); }
 
   // ---- toasts ----
-  notify(text: string, kind: NotifyKind = 'info', ttl = 4200): void {
+  private toastGroups = new Map<string, { el: HTMLElement; text: HTMLElement; at: number; timer: number }>();
+  /**
+   * Quiet toasts: at most 3 visible; a `group` key coalesces follow-ups (e.g. everything that happens at one
+   * settlement) into extra lines of the toast created within the last 2.5 s instead of a new card.
+   */
+  notify(text: string, kind: NotifyKind = 'info', ttl = 4200, group?: string): void {
     const ICON: Record<NotifyKind, string> = { info: 'ℹ', warn: '⚠', good: '✓', bad: '✕' };
-    const t = el('div', { class: 'rv-toast rv-panel rv-k-' + kind },
-      el('span', { class: 'rv-toast-ico', 'aria-hidden': 'true', text: ICON[kind] }), el('span', { class: 'rv-toast-text', text }));
+    const now = performance.now();
+    if (group) {
+      const g = this.toastGroups.get(group);
+      if (g && g.el.isConnected && now - g.at < 2500) {
+        g.text.appendChild(el('span', { class: 'rv-toast-more rv-k-' + kind, text }));
+        window.clearTimeout(g.timer);
+        g.timer = this.scheduleToastOut(g.el, ttl);
+        if (!isReduced()) gsap.fromTo(g.text.lastElementChild, { x: 10, opacity: 0 }, { x: 0, opacity: 1, duration: 0.25, clearProps: 'transform' });
+        return;
+      }
+    }
+    const textEl = el('span', { class: 'rv-toast-text', text });
+    const t = el('div', { class: 'rv-toast rv-panel rv-k-' + kind }, el('span', { class: 'rv-toast-ico', 'aria-hidden': 'true', text: ICON[kind] }), textEl);
     this.toastsEl.appendChild(t);
-    while (this.toastsEl.children.length > 6) this.toastsEl.removeChild(this.toastsEl.firstChild!);
+    while (this.toastsEl.children.length > 3) this.toastsEl.removeChild(this.toastsEl.firstChild!);
+    this.root.classList.add('rv-has-toasts');
     gsap.fromTo(t, { x: 56, opacity: 0 }, { x: 0, opacity: 1, duration: D(0.4), ease: 'back.out(1.6)', clearProps: 'transform' });
-    window.setTimeout(() => {
+    const timer = this.scheduleToastOut(t, ttl);
+    if (group) this.toastGroups.set(group, { el: t, text: textEl, at: now, timer });
+  }
+  private scheduleToastOut(t: HTMLElement, ttl: number): number {
+    const gone = () => { t.remove(); if (!this.toastsEl.children.length) this.root.classList.remove('rv-has-toasts'); };
+    return window.setTimeout(() => {
       if (!t.isConnected) return;
-      if (isReduced()) { t.remove(); return; }
+      if (isReduced()) { gone(); return; }
       gsap.to(t, { x: 36, opacity: 0, duration: 0.25, ease: 'power2.in' });
-      gsap.to(t, { height: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0, duration: 0.3, delay: 0.18, ease: 'power2.inOut', onComplete: () => t.remove() });
+      gsap.to(t, { height: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0, duration: 0.3, delay: 0.18, ease: 'power2.inOut', onComplete: gone });
     }, ttl);
   }
 

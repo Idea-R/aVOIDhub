@@ -21,6 +21,10 @@ import { createTutorial } from './tutorial';
 import { createInput } from './input';
 import { createMoodDriver } from './mood';
 import { createCinematic } from './cinematic';
+import { createLayout } from './layout';
+import { createHoverCards } from './hovercards';
+import { nodeMeta } from './nodes';
+import { ROMAN } from './levels';
 import { CAR_DEFS } from '../core/cars';
 import { ENEMY_DEFS } from '../core/enemies';
 import { REGION_NAMES } from '../core/config';
@@ -41,8 +45,10 @@ export function createUI(ctx: AppContext): UiApi {
 
   // ---------- build screens ----------
   const hud = createHud(ui, { openPause: () => openPause(), toggleReverse: () => toggleReverse() });
-  const strip = createStrip(ui);
-  hud.el.appendChild(strip.el);
+  const layout = createLayout(ui, hud.zones);
+  const cards = createHoverCards(ui, layout);
+  const strip = createStrip(ui, { hover: (i, x, y) => cards.showCar(i, x, y), leave: () => cards.hideCar() });
+  hud.zones.dock.appendChild(strip.el);
   const inspector = createInspector(ui);
   const shop = createShop(ui);
   const tutorial = createTutorial(ui, (step) => {
@@ -55,7 +61,7 @@ export function createUI(ctx: AppContext): UiApi {
       { el: a.status, side: 'below' }, { el: a.speed, side: 'below' }, { el: a.menu, side: 'below' },
     ];
     return map[step] ?? { el: a.status, side: 'below' };
-  });
+  }, () => layout.freeZone());
   const cine = createCinematic(ui, {
     hideHud: () => { hud.hide(); tutorial.el.classList.add('rv-hud-off'); },
     showHud: () => { tutorial.el.classList.remove('rv-hud-off'); if (ui.runActive()) hud.enter(); },
@@ -84,7 +90,7 @@ export function createUI(ctx: AppContext): UiApi {
     escape: () => onEscape(),
     toggleInspector: () => toggleInspector(),
     howto: () => { if (ui.isOpen('howto')) ui.close('howto'); else ui.open('howto'); },
-    toggleMute: () => { const m = !ui.settings().muted; ctx.settings.set({ muted: m }); ctx.audio.setMuted(m); ui.notify(m ? 'Audio muted' : 'Audio on', 'info'); },
+    toggleMute: () => { const m = !ui.settings().muted; ctx.settings.set({ muted: m }); ctx.audio.setMuted(m); ui.notify(m ? 'Audio muted' : 'Audio on', 'info', 2500, 'audio'); },
     detachLast: () => detachLast(),
     toggleReverse: () => toggleReverse(),
     departOrClose: () => { const s = ui.state(); const sim = ui.sim(); if (!s || !sim) return; if (s.phase === 'shop') sim.closeShop(); else if (s.train.stopped && s.train.stopReason === 'settlement') sim.depart(); },
@@ -95,17 +101,17 @@ export function createUI(ctx: AppContext): UiApi {
   ui.registerPanel('gamepad', { el: input.overlay, modal: false });
 
   // DOM order = stacking order
-  root.append(hud.el, inspector.el, shop.el, tutorial.el, cine.el, title.el, eventModal.el, pause.el, settings, howto, results.el, input.overlay);
+  root.append(hud.el, shop.el, inspector.el, tutorial.el, cine.el, title.el, eventModal.el, pause.el, settings, howto, results.el, input.overlay, cards.el);
   // toasts + confirm were created by UiShared; move them on top
   for (const cls of ['.rv-toasts', '.rv-overlay[aria-label="Confirm"]']) { const n = root.querySelector(cls); if (n) root.appendChild(n); }
   hud.el.hidden = true;
 
   // ---------- settings ----------
   applySettings(ui, ctx.settings.get());
-  const unsubSettings = ctx.settings.onChange(s => { applySettings(ui, s); if (ui.isOpen('title')) title.refresh(); });
+  const unsubSettings = ctx.settings.onChange(s => { applySettings(ui, s); if (ui.isOpen('title')) title.refresh(); layout.measure(); });
   const onViewReady = () => { applySettings(ui, ctx.settings.get()); ctx.view?.resize(); };
   window.addEventListener('railavoid:viewready', onViewReady);
-  const onResize = () => { tutorial.reposition(); };
+  const onResize = () => { layout.measure(); tutorial.reposition(); };
   window.addEventListener('resize', onResize);
 
   // ---------- flow helpers ----------
@@ -120,6 +126,7 @@ export function createUI(ctx: AppContext): UiApi {
     ui.selectCar(-1);
     hud.el.hidden = false;
     hud.enter(0.12);
+    layout.measure();
     resultsShownFor = '';
     lastPhase = '';
     ctx.audio.unlock();
@@ -161,6 +168,7 @@ export function createUI(ctx: AppContext): UiApi {
     else if (s.phase === 'paused') { sim.resume(); ui.audio().ui('click'); }
   }
   function onEscape(): void {
+    if (hud.closePopovers()) { ui.audio().ui('close'); return; }
     if (!ui.runActive()) {
       if (ui.topModal() && ui.topModal() !== 'title') ui.closeTop();
       return;
@@ -169,6 +177,7 @@ export function createUI(ctx: AppContext): UiApi {
     if (top === 'pause' || top === 'settings' || top === 'howto' || top === 'confirm') { ui.closeTop(); ui.audio().ui('close'); return; }
     if (top === 'event' || top === 'results') return;
     if (ui.isOpen('inspector') && top !== 'shop') { ui.selectCar(-1); ui.audio().ui('close'); return; }
+    if (ui.isOpen('inspector') && top === 'shop') { ui.selectCar(-1); ui.audio().ui('close'); return; }
     ui.audio().ui('open');
     openPause();
   }
@@ -211,9 +220,15 @@ export function createUI(ctx: AppContext): UiApi {
   // ---------- bus ----------
   const bus = ctx.bus;
   const unsubs: Array<() => void> = [];
-  const note = (text: string, kind: 'info' | 'warn' | 'good' | 'bad' = 'info', ttl?: number): void => { if (ui.runActive()) ui.notify(text, kind, ttl); };
+  const note = (text: string, kind: 'info' | 'warn' | 'good' | 'bad' = 'info', ttl?: number, group?: string): void => { if (ui.runActive()) ui.notify(text, kind, ttl, group); };
   const fmtRewards = (r: Partial<Record<ResourceKey, number>> | undefined): string =>
     r ? Object.entries(r).filter(([, v]) => (v ?? 0) !== 0).map(([k, v]) => `${(v ?? 0) > 0 ? '+' : ''}${Math.round(v ?? 0)} ${k}`).join(', ') : '';
+  // everything that happens at one settlement (rewards, boarding, crew, deliveries) folds into a single toast
+  let lastSettlement = '';
+  let lastSettlementAt = 0;
+  const settlementGroup = (): string | undefined => (performance.now() - lastSettlementAt < 2500 ? 'settlement:' + lastSettlement : undefined);
+  // optional events from contracts that may land later (upgrades)
+  const loose = bus as unknown as { on(name: string, h: (p: any) => void): () => void };
   unsubs.push(
     bus.on('run:start', () => beginRun()),
     bus.on('run:loaded', () => beginRun()),
@@ -223,12 +238,14 @@ export function createUI(ctx: AppContext): UiApi {
     bus.on('event:show', ({ defId }) => { if (ui.runActive()) eventModal.show(defId); }),
     bus.on('tutorial:step', ({ step, text }) => { if (ui.runActive()) tutorial.show(step, text); }),
     bus.on('ui:notify', ({ text, kind }) => note(text, kind)),
-    bus.on('wave:warning', ({ type, from, in: secs }) => { const n = ENEMY_DEFS[type]?.name ?? type; note(`${n}s incoming from the ${String(from).toUpperCase()} in ${Math.ceil(secs)}s`, 'warn', 3000); }),
+    bus.on('wave:warning', ({ type, from, in: secs }) => { const n = ENEMY_DEFS[type]?.name ?? type; note(`${n}s incoming from the ${String(from).toUpperCase()} in ${Math.ceil(secs)}s`, 'warn', 3000, 'wave'); }),
     bus.on('boss:spawn', ({ name }) => note(`BOSS — ${name}`, 'bad', 6000)),
     bus.on('boss:died', ({ type }) => note(`${ENEMY_DEFS[type]?.name ?? 'Boss'} destroyed!`, 'good', 6000)),
-    bus.on('settlement:reached', ({ name, type, rewards, passengers, crew }) => {
+    bus.on('settlement:reached', ({ id, name, type, rewards, passengers, crew }) => {
+      lastSettlement = id; lastSettlementAt = performance.now();
+      const m = nodeMeta(type);
       const parts = [fmtRewards(rewards), passengers ? `${passengers} passengers` : '', crew ? `a ${crew}` : ''].filter(Boolean).join(' · ');
-      note(`${name} (${type})${parts ? ' — ' + parts : ''}`, 'good', 5000);
+      note(`${m.icon} ${name} (${m.label})${parts ? ' — ' + parts : ''}`, 'good', 5000, 'settlement:' + id);
     }),
     bus.on('settlement:consumed', ({ name, hadPassengers }) => note(`${name} was taken by the void${hadPassengers ? ` with ${hadPassengers} people` : ''}`, 'bad', 5000)),
     bus.on('region:enter', ({ region, name }) => note(`Entering ${name || REGION_NAMES[region] || 'a new region'}`, 'info', 5000)),
@@ -237,29 +254,35 @@ export function createUI(ctx: AppContext): UiApi {
       if (!id) return;
       const st = ui.sim()?.settlementById(id);
       if (!st) return;
+      const m = nodeMeta(st.type);
       const off = fmtRewards(st.offers);
-      const status = st.consumed ? 'lost to the void' : st.visited ? 'visited' : `deadline ${Math.max(0, Math.floor(st.deadline - (ui.state()?.time ?? 0)))}s`;
-      note(`${st.name} — ${st.type}${off ? ' · ' + off : ''}${st.passengers ? ` · ${st.passengers} waiting` : ''}${st.crew ? ` · ${st.crew}` : ''} · ${status}`, 'info', 6000);
+      const status = st.consumed ? 'lost to the void' : st.visited ? 'visited' : `void in ${Math.max(0, Math.floor(st.deadline - (ui.state()?.time ?? 0)))}s`;
+      note(`${m.icon} ${st.name} — ${m.label}${off ? ' · ' + off : ''}${st.passengers ? ` · ${st.passengers} waiting` : ''}${st.crew ? ` · ${st.crew}` : ''} · ${status}`, 'info', 5000, 'select');
     }),
     bus.on('ui:openPanel', ({ panel }) => openPanel(panel)),
-    bus.on('ui:hoverTile', (p) => hud.setHover(p)),
     bus.on('resource:change', ({ key, delta }) => hud.flashResource(key, delta)),
-    bus.on('resource:empty', ({ key }) => note(`Out of ${key}!`, 'bad')),
-    bus.on('crew:joined', ({ specialty, name }) => note(`${name} the ${specialty} joined the crew`, 'good')),
-    bus.on('passengers:board', ({ count }) => note(`${count} passengers boarded`, 'info')),
-    bus.on('passengers:delivered', ({ count, reward }) => note(`${count} passengers delivered — ${fmtRewards(reward) || 'thanks'}`, 'good', 5000)),
+    bus.on('resource:empty', ({ key }) => note(`Out of ${key}!`, 'bad', 4200, 'empty:' + key)),
+    bus.on('crew:joined', ({ specialty, name }) => note(`${name} the ${specialty} joined the crew`, 'good', 4200, settlementGroup())),
+    bus.on('passengers:board', ({ count }) => note(`${count} passengers boarded`, 'info', 4200, settlementGroup())),
+    bus.on('passengers:delivered', ({ count, reward }) => note(`${count} passengers delivered — ${fmtRewards(reward) || 'thanks'}`, 'good', 5000, settlementGroup())),
     bus.on('passengers:lost', ({ count, cause }) => note(`${count} passengers lost (${cause})`, 'bad')),
     bus.on('gate:open', () => note('THE LAST GATE IS OPEN — drive through!', 'good', 8000)),
     bus.on('train:split', ({ atIndex, lost }) => note(`Train split at car ${atIndex + 1} — ${lost} car${lost === 1 ? '' : 's'} lost`, 'bad', 6000)),
     bus.on('car:destroyed', ({ type }) => { note(`${CAR_DEFS[type]?.name ?? type} destroyed`, 'bad'); strip.update(ui.state() as SimState, true); }),
     bus.on('train:damage', ({ carIndex }) => { if (ui.runActive()) strip.hit(carIndex); }),
-    bus.on('sapper:planted', () => note('A sapper planted a charge on your track!', 'warn', 5000)),
-    bus.on('sapper:defused', () => note('Sapper charge defused', 'good')),
-    bus.on('track:blocked', ({ reason }) => note(reason || 'Track blocked', 'warn')),
-    bus.on('weather:change', ({ kind }) => note(`Weather: ${kind}`, 'info')),
-    bus.on('day:phase', ({ night }) => note(night ? 'Night falls — enemies grow bolder' : 'Dawn breaks', 'info')),
-    bus.on('rift:open', () => note('A void rift opened ahead!', 'bad', 5000)),
+    bus.on('sapper:planted', () => note('A sapper planted a charge on your track!', 'warn', 5000, 'sapper')),
+    bus.on('sapper:defused', () => note('Sapper charge defused', 'good', 4200, 'sapper')),
+    bus.on('track:blocked', ({ reason }) => { if (/plan range/i.test(reason || '')) hud.shakeRoute(); else note(reason || 'Track blocked', 'warn', 4200, 'track'); }),
+    bus.on('day:phase', ({ night }) => note(night ? 'Night falls — enemies grow bolder' : 'Dawn breaks', 'info', 3000, 'day')),
+    bus.on('rift:open', () => note('A void rift opened ahead!', 'bad', 5000, 'rift')),
     bus.on('event:resolved', ({ summary }) => { if (summary) note(summary, 'info', 5000); }),
+    loose.on('car:upgraded', (p: { carIndex?: number; level?: number }) => {
+      const s = ui.state(); const car = s?.train.cars[p?.carIndex ?? -1];
+      const name = car ? CAR_DEFS[car.type]?.name ?? car.type : 'Car';
+      note(`${name} upgraded to level ${ROMAN[p?.level ?? 0] ?? p?.level}`, 'good', 4200, 'upgrade');
+      strip.update(ui.state() as SimState, true);
+    }),
+    loose.on('loco:upgraded', (p: { kind?: string; level?: number }) => note(`Locomotive ${p?.kind ?? 'upgrade'} → level ${ROMAN[p?.level ?? 0] ?? p?.level}`, 'good', 4200, 'upgrade')),
   );
 
   function handlePhase(phase: string): void {
@@ -280,7 +303,7 @@ export function createUI(ctx: AppContext): UiApi {
     const s = ui.state();
     if (ui.runActive() && s) {
       if (s.phase !== lastPhase) handlePhase(s.phase);
-      if (now - hudAt >= 100) { hudAt = now; hud.update(s, now); }
+      if (now - hudAt >= 100) { hudAt = now; hud.update(s, now); layout.update(s); cards.update(); }
       if (now - stripAt >= 200) { stripAt = now; strip.update(s); if (ui.isOpen('inspector')) inspector.update(s); }
       if (now - panelsAt >= 250) {
         panelsAt = now;
@@ -297,6 +320,8 @@ export function createUI(ctx: AppContext): UiApi {
     unsubSettings();
     input.destroy();
     cine.destroy();
+    layout.destroy();
+    cards.destroy();
     window.removeEventListener('railavoid:viewready', onViewReady);
     window.removeEventListener('resize', onResize);
     ctx.audio.setEngine(0, 0);

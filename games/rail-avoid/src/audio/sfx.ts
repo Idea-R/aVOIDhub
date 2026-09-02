@@ -4,7 +4,8 @@ import type { EnemyType, WeaponKind } from '../core/types';
 
 export class Sfx {
   private limiter = new RateLimiter();
-  constructor(private ctx: AudioContext, private dest: AudioNode, private white: AudioBuffer, private pink: AudioBuffer) {}
+  /** `uiDest` (optional) carries interface blips and notifications so they can be mixed separately from world SFX. */
+  constructor(private ctx: AudioContext, private dest: AudioNode, private white: AudioBuffer, private pink: AudioBuffer, private uiDest: AudioNode = dest) {}
 
   private get now(): number { return this.ctx.currentTime; }
   private ok(key: string, gap: number): boolean { return this.limiter.allow(key, gap, this.now); }
@@ -198,7 +199,7 @@ export class Sfx {
   notifyBlip(kind: string): void {
     if (!this.ok('notify', 0.12)) return;
     const f = kind === 'bad' ? 330 : kind === 'warn' ? 520 : kind === 'good' ? 990 : 780;
-    tone(this.ctx, this.dest, { type: 'sine', freq: f, endFreq: f * 1.25, dur: 0.12, gain: 0.06, slide: 0.06 });
+    tone(this.ctx, this.uiDest, { type: 'sine', freq: f, endFreq: f * 1.25, dur: 0.12, gain: 0.06, slide: 0.06 });
   }
   eventBell(): void {
     const t = this.now;
@@ -242,7 +243,7 @@ export class Sfx {
   }
   ui(kind: 'click' | 'hover' | 'open' | 'close' | 'error' | 'confirm' | 'notify'): void {
     if (!this.ok('ui:' + kind, kind === 'hover' ? 0.05 : 0.03)) return;
-    const c = this.ctx, d = this.dest, t = this.now;
+    const c = this.ctx, d = this.uiDest, t = this.now;
     switch (kind) {
       case 'click': tone(c, d, { type: 'sine', freq: 1100, endFreq: 800, dur: 0.05, gain: 0.05 }); break;
       case 'hover': tone(c, d, { type: 'sine', freq: 1600, dur: 0.02, gain: 0.015 }); break;

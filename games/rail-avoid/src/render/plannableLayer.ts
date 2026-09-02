@@ -92,12 +92,19 @@ export class PlannableLayer {
       const tile = sim.tileAt(c, r);
       if (tile) {
         const blocked = tile.void || tile.terrain === 'mountain';
+        const col = blocked ? DANGER : WHITE;
+        // crisp outer ring (constant alpha) + a subtle breathing inner ring
         const pts = pointsFromFlat(hexCornersP(c, r, HEX_R - 1.5));
-        g.lineStyle(2, blocked ? DANGER : WHITE, 0.45 + 0.4 * pulse);
+        g.lineStyle(1, 0x0b0e1a, 0.5);
+        g.strokePoints(pointsFromFlat(hexCornersP(c, r, HEX_R - 0.2)), true, true);
+        g.lineStyle(2.2, col, 0.92);
         g.strokePoints(pts, true, true);
+        const breathe = reducedMotion ? 0.5 : 0.5 + 0.5 * Math.sin(nowMs / 420);
+        g.lineStyle(1, col, 0.18 + 0.3 * breathe);
+        g.strokePoints(pointsFromFlat(hexCornersP(c, r, HEX_R - 6 - breathe * 2.5)), true, true);
         const cc = hexCenterP(c, r);
-        g.lineStyle(1, WHITE, 0.25 * pulse);
-        g.strokeEllipse(cc.x, cc.y, 12 + pulse * 4, (12 + pulse * 4) * ISO_Y);
+        g.lineStyle(1, col, 0.22 + 0.25 * breathe);
+        g.strokeEllipse(cc.x, cc.y, 10 + breathe * 5, (10 + breathe * 5) * ISO_Y);
       }
     }
     // keyboard cursor ring

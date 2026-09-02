@@ -17,7 +17,7 @@ import { TRAIN, DAY, DIRECTOR, HEX_R } from '../core/config';
 import { hexToWorld } from '../core/hex';
 import {
   spawnEnemy, damageEnemy, killEnemy, damageCar, carPos, locoPos, addResource,
-  hasCar, log, nextId, weatherRangeMul, dist,
+  hasCar, log, nextId, weatherRangeMul, dist, carDamageMul,
 } from './helpers';
 
 // ---------- tuning (local to combat) ----------
@@ -958,7 +958,7 @@ function fireWeapon(f: Frame, carIdx: number, w: WeaponDef, target: Enemy, range
       emitFire(tx, ty);
       const d = dist(cp.x, cp.y, tx, ty);
       pushProjectile(f, { kind: 'tracer', x: cp.x, y: cp.y, tx, ty, speed: TRACER_SPEED, damage: 0, damageClass: 'bullet', aoe: 0, targetId: null, fromCar: carIdx, life: d / TRACER_SPEED + 0.05, hitsAir: false });
-      if (!miss) hitEnemy(ctx, target, w.damage, 'bullet');
+      if (!miss) hitEnemy(ctx, target, w.damage * carDamageMul(f.state.train.cars[carIdx]), 'bullet');
       break;
     }
     case 'cannon':
@@ -968,7 +968,7 @@ function fireWeapon(f: Frame, carIdx: number, w: WeaponDef, target: Enemy, range
       emitFire(aim.x, aim.y);
       pushProjectile(f, {
         kind: w.kind === 'cannon' ? 'shell' : 'flak', x: cp.x, y: cp.y, tx: aim.x, ty: aim.y,
-        speed: w.projectileSpeed, damage: w.damage, damageClass: w.damageClass, aoe: w.aoe,
+        speed: w.projectileSpeed, damage: w.damage * carDamageMul(f.state.train.cars[carIdx]), damageClass: w.damageClass, aoe: w.aoe,
         targetId: target.id, fromCar: carIdx, life: d / Math.max(1, w.projectileSpeed) + 0.6, hitsAir: w.hitsAir,
       });
       break;
@@ -977,7 +977,7 @@ function fireWeapon(f: Frame, carIdx: number, w: WeaponDef, target: Enemy, range
       const pts: Array<[number, number]> = [[cp.x, cp.y]];
       const hitIds: string[] = [];
       let cur: Enemy | null = target;
-      let dmg = w.damage;
+      let dmg = w.damage * carDamageMul(f.state.train.cars[carIdx]);
       for (let n = 0; n <= w.chain && cur; n++) {
         pts.push([cur.x, cur.y]);
         hitIds.push(cur.id);
@@ -1006,7 +1006,7 @@ function fireWeapon(f: Frame, carIdx: number, w: WeaponDef, target: Enemy, range
         if (d > range) continue;
         const a = angleDiff(Math.atan2(e.y - cp.y, e.x - cp.x), ang);
         if (Math.abs(a) > FLAME_CONE) continue;
-        hitEnemy(ctx, e, w.damage, 'fire');
+        hitEnemy(ctx, e, w.damage * carDamageMul(f.state.train.cars[carIdx]), 'fire');
         if (e.state !== 'dead') e.burning = Math.max(e.burning, FLAME_BURN);
       }
       // visual-only flame tongue
@@ -1016,7 +1016,7 @@ function fireWeapon(f: Frame, carIdx: number, w: WeaponDef, target: Enemy, range
     }
     case 'marines': {
       emitFire(target.x, target.y);
-      hitEnemy(ctx, target, w.damage, 'melee');
+      hitEnemy(ctx, target, w.damage * carDamageMul(f.state.train.cars[carIdx]), 'melee');
       break;
     }
     default: break;

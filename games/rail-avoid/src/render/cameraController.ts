@@ -41,6 +41,10 @@ export class CameraController {
   }
 
   get cam(): Phaser.Cameras.Scene2D.Camera { return this.scene.cameras.main; }
+  /** True while the pointer drags the camera (left-drag past the threshold, right/middle drag, pinch). */
+  get isDragging(): boolean { return this.dragging; }
+  /** Last known pointer position in screen px. */
+  get pointer(): { x: number; y: number } { return { x: this.lastX, y: this.lastY }; }
 
   destroy(): void {
     const input = this.scene.input;
@@ -87,20 +91,35 @@ export class CameraController {
     this.following = false;
     this.cam.scrollX += dx / this.cam.zoom;
     this.cam.scrollY += dy / this.cam.zoom;
+    this.clampScroll();
   }
 
   centerOn(x: number, y: number): void {
     this.cam.centerOn(x, y);
+    this.clampScroll();
+  }
+
+  /**
+   * Keep the scroll inside the camera bounds immediately. Phaser only clamps in preRender, so
+   * without this any camera-derived math done during update() (hit tests, screenToHex, hexToScreen)
+   * would see an out-of-bounds scroll whenever the camera is pinned at a map edge.
+   */
+  private clampScroll(): void {
+    const cam = this.cam;
+    if (!cam.useBounds) return;
+    cam.scrollX = cam.clampX(cam.scrollX);
+    cam.scrollY = cam.clampY(cam.scrollY);
   }
 
   /** Smoothly follow a projected world point. */
   follow(x: number, y: number, dt: number, snap = false): void {
     const cam = this.cam;
     const tx = x - cam.width * 0.5, ty = y - cam.height * 0.5;
-    if (snap) { cam.scrollX = tx; cam.scrollY = ty; return; }
+    if (snap) { cam.scrollX = tx; cam.scrollY = ty; this.clampScroll(); return; }
     const f = 1 - Math.pow(1 - 0.08, Math.max(0.001, dt) * 60);
     cam.scrollX += (tx - cam.scrollX) * f;
     cam.scrollY += (ty - cam.scrollY) * f;
+    this.clampScroll();
   }
 
   getPointer(): { x: number; y: number } | null {
@@ -152,6 +171,7 @@ export class CameraController {
       if (this.dragging) {
         this.cam.scrollX -= dx / this.cam.zoom;
         this.cam.scrollY -= dy / this.cam.zoom;
+        this.clampScroll();
       }
       this.lastX = p.x; this.lastY = p.y;
       return;

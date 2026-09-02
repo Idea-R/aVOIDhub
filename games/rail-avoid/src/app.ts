@@ -52,6 +52,8 @@ export interface AudioApi {
   setMaster(v: number): void;
   setMusic(v: number): void;
   setSfx(v: number): void;
+  setAmbience(v: number): void;
+  setUi(v: number): void;
   setMuted(m: boolean): void;
   /** 'title' | 'calm' | 'tense' | 'combat' | 'boss' | 'victory' | 'defeat' */
   setMusicMood(mood: string): void;

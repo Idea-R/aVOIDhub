@@ -1,8 +1,11 @@
-/** Settings panel + applying settings to UI classes, view and audio. */
+/** Settings panel + applying settings to UI classes, view, cursors and audio. */
 import { el, btn } from './dom';
 import type { UiShared } from './shared';
 import type { Settings } from '../core/types';
 import { setReducedMotion } from './motion';
+import { applyCursors } from './cursors';
+import { volumeSlider, VOLUME_KEYS } from './volume';
+import { DEFAULT_SETTINGS } from '../core/storage';
 
 export function applySettings(ui: UiShared, s: Settings): void {
   const root = ui.root;
@@ -10,12 +13,14 @@ export function applySettings(ui: UiShared, s: Settings): void {
   root.classList.toggle('rv-large', !!s.largeText);
   root.classList.toggle('rv-contrast', !!s.highContrast);
   root.classList.toggle('rv-reduced', !!s.reducedMotion);
+  root.classList.toggle('rv-log-on', !!s.showLog);
   for (const m of ['deuteranopia', 'protanopia', 'tritanopia']) root.classList.toggle('rv-cb-' + m, s.colorblind === m);
   document.body.dataset.colorblind = s.colorblind;
   document.body.dataset.reducedMotion = s.reducedMotion ? '1' : '0';
   document.body.dataset.screenShake = s.screenShake ? '1' : '0';
   document.body.dataset.highContrast = s.highContrast ? '1' : '0';
   document.body.dataset.quality = s.quality;
+  applyCursors(s.customCursor !== false);
   const v = ui.view();
   if (v) {
     try { v.setReducedMotion(!!s.reducedMotion); } catch { /* */ }
@@ -53,21 +58,6 @@ export function createSettings(ui: UiShared): HTMLElement {
   const store = ui.app.settings;
   const grid = el('div', { class: 'rv-settings-grid rv-rows' });
 
-  const slider = (key: 'masterVolume' | 'musicVolume' | 'sfxVolume', label: string) => {
-    const out = el('output', { text: '0' });
-    const input = el('input', { type: 'range', min: '0', max: '100', step: '1', 'aria-label': label });
-    input.addEventListener('input', () => {
-      const v = Number(input.value) / 100;
-      out.textContent = Math.round(v * 100) + '%';
-      store.set({ [key]: v } as Partial<Settings>);
-      if (key === 'masterVolume') ui.audio().setMaster(v);
-      else if (key === 'musicVolume') ui.audio().setMusic(v);
-      else ui.audio().setSfx(v);
-    });
-    input.addEventListener('change', () => ui.audio().ui('click'));
-    const wrap = el('div', { class: 'rv-setting' }, el('label', null, label, out), input);
-    return { wrap, refresh: (s: Settings) => { input.value = String(Math.round(s[key] * 100)); out.textContent = Math.round(s[key] * 100) + '%'; } };
-  };
   const check = (key: keyof Settings, label: string, after?: (v: boolean) => void) => {
     const input = el('input', { type: 'checkbox', 'aria-label': label });
     input.addEventListener('change', () => {
@@ -88,37 +78,39 @@ export function createSettings(ui: UiShared): HTMLElement {
     const wrap = el('div', { class: 'rv-setting' }, el('label', { text: label }), sel);
     return { wrap, refresh: (s: Settings) => { sel.value = String(s[key]); } };
   };
+  const heading = (text: string) => ({ wrap: el('h3', { class: 'rv-settings-h', text }), refresh: () => { /* static */ } });
 
   const controls = [
-    slider('masterVolume', 'Master volume'),
-    slider('musicVolume', 'Music volume'),
-    slider('sfxVolume', 'Effects volume'),
+    heading('Audio'),
+    ...VOLUME_KEYS.map(k => volumeSlider(ui, k.key, k.label + ' volume')),
     check('muted', 'Mute all', v => ui.audio().setMuted(v)),
+    heading('Interface'),
+    check('compactHud', 'Compact HUD'),
+    check('showLog', 'Show event log feed'),
+    check('customCursor', 'Custom cursors'),
+    check('showTutorial', 'Show tutorial'),
+    check('autoFollowRail', 'Auto-follow rail lines'),
+    check('showSeedField', 'Show seed field on title'),
+    heading('Accessibility & display'),
     check('reducedMotion', 'Reduced motion'),
     check('screenShake', 'Screen shake'),
     check('highContrast', 'High contrast'),
     check('largeText', 'Large text'),
     select('colorblind', 'Colourblind mode', [['none', 'None'], ['deuteranopia', 'Deuteranopia'], ['protanopia', 'Protanopia'], ['tritanopia', 'Tritanopia']]),
     select('quality', 'Render quality', [['auto', 'Auto'], ['high', 'High'], ['medium', 'Medium'], ['low', 'Low']]),
-    check('showTutorial', 'Show tutorial'),
-    check('autoFollowRail', 'Auto-follow rail lines'),
-    check('showSeedField', 'Show seed field on title'),
   ];
   for (const c of controls) grid.appendChild(c.wrap);
 
   const overlay = el('div', { class: 'rv-overlay', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Settings' },
-    el('div', { class: 'rv-panel rv-modal' },
+    el('div', { class: 'rv-panel rv-modal rv-settings' },
       el('h2', { text: 'Settings' }),
       grid,
       el('div', { class: 'rv-actions' },
         btn('Back', () => { ui.audio().ui('close'); ui.close('settings'); }, { class: 'rv-primary', aria: 'Close settings' }),
         btn('Reset defaults', () => {
           ui.audio().ui('click');
-          store.set({
-            masterVolume: 0.8, musicVolume: 0.6, sfxVolume: 0.8, muted: false,
-            reducedMotion: false, screenShake: true, highContrast: false, largeText: false,
-            colorblind: 'none', quality: 'auto', showTutorial: true, autoFollowRail: true, showSeedField: false,
-          });
+          store.set({ ...DEFAULT_SETTINGS });
+          ui.audio().setMuted(false);
           refresh();
         }),
       ),

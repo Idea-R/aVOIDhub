@@ -1,4 +1,4 @@
-/** Repair-yard shop panel (phase === 'shop'). */
+/** Repair-yard shop panel (phase === 'shop'). Resources are read from the HUD top bar — the shop shows none of its own. */
 import { el, btn, hexColor, setText } from './dom';
 import type { UiShared } from './shared';
 import type { SimState, CarDef, CarType } from '../core/types';
@@ -6,6 +6,7 @@ import { CAR_DEFS, BUYABLE_CARS } from '../core/cars';
 import { MAX_CARS, TRAIN } from '../core/config';
 import { repairCost } from './inspector';
 import { gsap, D, isReduced } from './motion';
+import { levelOf, levelPips, levelEffect, hasUpgrades, hasLocoUpgrades, carUpgradeCost, locoUpgradeCost, locoLevel, upgradeApi, LOCO_TRACKS, MAX_LEVEL, ROMAN } from './levels';
 
 export interface Shop { el: HTMLElement; update(s: SimState, force?: boolean): void; reset(): void }
 
@@ -24,7 +25,6 @@ function nums(def: CarDef): HTMLElement {
 }
 
 export function createShop(ui: UiShared): Shop {
-  const resEl = el('div', { class: 'rv-shop-res', role: 'group', 'aria-label': 'Resources' });
   const body = el('div', { class: 'rv-side-body' });
   const repairAllBtn = btn('Repair all', () => {
     const sim = ui.sim(); if (!sim) return;
@@ -37,8 +37,9 @@ export function createShop(ui: UiShared): Shop {
   }, { class: 'rv-primary', aria: 'Repair every car' });
   const departBtn = btn('Depart', () => { ui.audio().ui('confirm'); ui.sim()?.closeShop(); }, { class: 'rv-primary', aria: 'Leave the yard and depart' });
   const foot = el('div', { class: 'rv-side-foot' }, repairAllBtn, departBtn);
-  const root = el('aside', { class: 'rv-side rv-wide rv-panel', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Repair yard' },
-    el('div', { class: 'rv-side-head' }, el('h2', { text: 'Repair Yard' }), resEl), body, foot);
+  const subEl = el('span', { class: 'rv-side-sub', text: 'Resources in the top bar' });
+  const root = el('aside', { class: 'rv-side rv-wide rv-panel', 'data-panel': 'shop', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Repair yard' },
+    el('div', { class: 'rv-side-head' }, el('h2', { text: 'Repair Yard' }), subEl), body, foot);
   departBtn.dataset.autofocus = '';
 
   let sig = '';
@@ -77,12 +78,11 @@ export function createShop(ui: UiShared): Shop {
     const sim = ui.sim();
     const t = s.train;
     const scrap = Math.floor(t.resources.scrap);
-    resEl.replaceChildren(...(['scrap', 'rails', 'coal', 'ammo', 'food'] as const).map(k =>
-      el('span', { class: 'rv-chip', 'aria-label': `${k} ${Math.floor(t.resources[k])} of ${Math.floor(t.capacity[k])}` },
-        el('span', { class: 'rv-chip-k', text: k }), el('span', { class: 'rv-chip-v', text: String(Math.floor(t.resources[k])) }), el('span', { class: 'rv-chip-cap', text: '/' + Math.floor(t.capacity[k]) }))));
-
     const scrollTop = body.scrollTop;
     const sections: HTMLElement[] = [];
+    const upgrades = hasUpgrades(sim);
+    const locoUp = hasLocoUpgrades(sim);
+    const api = upgradeApi(sim);
 
     sections.push(el('div', { class: 'rv-rules' },
       el('span', null, el('b', { class: 'rv-tip', title: 'A generator (locomotive, boiler, reactor) powers cars within 3 positions. If demand exceeds output, every consumer in the span runs at output/demand.', text: 'Power' }), ` reaches ±${TRAIN.powerRange} cars; overload → brownout.`),
@@ -96,9 +96,10 @@ export function createShop(ui: UiShared): Shop {
     t.cars.forEach((car, i) => {
       const def = CAR_DEFS[car.type];
       const cost = repairCost(car);
+      const lvl = levelOf(car);
       const hpFill = el('i');
       const chip = el('div', { class: 'rv-shop-car', role: 'listitem', style: `--accent:${hexColor(def.color)}` },
-        el('span', { class: 'rv-sc-name', text: `${i + 1} ${def.short}` }),
+        el('span', { class: 'rv-sc-name' }, `${i + 1} ${def.short}`, levelPips(lvl, 'rv-sc-lvl')),
         el('span', { class: 'rv-dim', text: `${Math.ceil(car.hp)}/${car.maxHp}` }),
         el('div', { class: 'rv-bar rv-hp', title: 'Hull' }, hpFill),
       );
@@ -127,10 +128,54 @@ export function createShop(ui: UiShared): Shop {
       fix.disabled = cost <= 0 || scrap < 1;
       btns.appendChild(fix);
       chip.appendChild(btns);
+      if (upgrades && i > 0) {
+        const uc = carUpgradeCost(sim, i);
+        const maxed = uc < 0 || lvl >= MAX_LEVEL;
+        const up = btn(maxed ? `Lv ${ROMAN[lvl]} max` : `Upgrade to Lv ${ROMAN[lvl + 1]} (${uc})`, () => {
+          let ok = false;
+          try { ok = !!api.upgradeCar?.(i); } catch { ok = false; }
+          ui.audio().ui(ok ? 'confirm' : 'error');
+          if (!ok) ui.notify('Cannot upgrade: not enough scrap or already at max level.', 'warn');
+          else if (!isReduced()) gsap.fromTo(chip, { boxShadow: '0 0 0 0 rgba(232,193,112,0)' }, { boxShadow: '0 0 18px 2px rgba(232,193,112,0.55)', duration: 0.35, yoyo: true, repeat: 1, clearProps: 'boxShadow' });
+          sig = '';
+        }, { class: 'rv-small rv-upgrade' + (maxed ? '' : ' rv-primary'), aria: maxed ? `${def.name} is at maximum level` : `Upgrade ${def.name} to level ${lvl + 1} for ${uc} scrap`, title: levelEffect(car.type) });
+        up.disabled = maxed || scrap < uc;
+        chip.appendChild(up);
+      }
       chip.addEventListener('click', (e) => { if ((e.target as HTMLElement).tagName !== 'BUTTON') ui.selectCar(i, true); });
       trainEl.appendChild(chip);
     });
     sections.push(el('div', { class: 'rv-label', text: `Your train (${t.cars.length}/${MAX_CARS})` }), trainEl);
+
+    // upgrades: locomotive tracks
+    if (locoUp) {
+      const tracks = el('div', { class: 'rv-loco-tracks' });
+      for (const tr of LOCO_TRACKS) {
+        const lvl = locoLevel(t, tr.kind);
+        const cost = locoUpgradeCost(sim, tr.kind);
+        const maxed = cost < 0 || lvl >= MAX_LEVEL;
+        const buy = btn(maxed ? 'MAX' : `Buy ${cost}`, () => {
+          let ok = false;
+          try { ok = !!api.upgradeLoco?.(tr.kind); } catch { ok = false; }
+          ui.audio().ui(ok ? 'confirm' : 'error');
+          if (!ok) ui.notify('Cannot upgrade the locomotive: not enough scrap or already at max level.', 'warn');
+          sig = '';
+        }, { class: 'rv-small' + (maxed ? '' : ' rv-primary'), aria: maxed ? `${tr.name} is at maximum level` : `Buy ${tr.name} level ${lvl + 1} for ${cost} scrap`, title: tr.per });
+        buy.disabled = maxed || scrap < cost;
+        tracks.appendChild(el('div', { class: 'rv-loco-track', title: tr.per },
+          el('span', { class: 'rv-lt-ico', 'aria-hidden': 'true', text: tr.icon }),
+          el('span', { class: 'rv-lt-name' }, el('b', { text: tr.name }), el('span', { class: 'rv-lt-per', text: tr.per })),
+          levelPips(lvl, 'rv-lt-pips'),
+          buy,
+        ));
+      }
+      sections.push(el('div', { class: 'rv-label rv-tier', text: 'Upgrades' }),
+        el('div', { class: 'rv-loco-card', style: `--accent:${hexColor(CAR_DEFS.locomotive.color)}` },
+          el('div', { class: 'rv-si-name' }, el('span', { class: 'rv-si-short', text: CAR_DEFS.locomotive.short }), 'Locomotive', el('span', { class: 'rv-dim rv-lt-hint', text: 'four tracks · 3 levels each' })),
+          tracks,
+          upgrades ? el('div', { class: 'rv-hint', text: 'Cars upgrade from their chip above: +25% max HP per level; weapons +20% damage, generators +1 power, radiators +2 cooling, storage +20%, coaches +4 passengers.' }) : undefined,
+        ));
+    }
 
     // catalogue
     const full = t.cars.length >= MAX_CARS;
@@ -163,13 +208,15 @@ export function createShop(ui: UiShared): Shop {
     const total = t.cars.reduce((a, c) => a + repairCost(c), 0);
     setText(repairAllBtn, total > 0 ? `Repair all (${total} scrap)` : 'Repair all (nothing to fix)');
     repairAllBtn.disabled = total <= 0 || scrap < 1;
+    setText(subEl, `${scrap} scrap to spend · resources in the top bar`);
   }
 
   function update(s: SimState, force = false): void {
     if (!ui.isOpen('shop')) return;
     const t = s.train;
     const sim = ui.sim();
-    const next = [t.cars.map(c => `${c.id}:${Math.ceil(c.hp)}`).join(','), Math.floor(t.resources.scrap), Math.floor(t.resources.rails), Math.floor(t.resources.ammo), Math.floor(t.resources.coal), Math.floor(t.resources.food), sim && sim.canShop() ? 1 : 0].join('|');
+    const lu = (t as unknown as { locoUpgrades?: Record<string, number> }).locoUpgrades;
+    const next = [t.cars.map(c => `${c.id}:${Math.ceil(c.hp)}:${levelOf(c)}:${c.maxHp}`).join(','), Math.floor(t.resources.scrap), Math.floor(t.resources.rails), Math.floor(t.resources.ammo), Math.floor(t.resources.coal), Math.floor(t.resources.food), sim && sim.canShop() ? 1 : 0, lu ? Object.values(lu).join('') : ''].join('|');
     if (!force && next === sig) return;
     sig = next;
     render(s);

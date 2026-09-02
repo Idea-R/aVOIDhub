@@ -20,6 +20,8 @@ export interface GameEvents {
   'car:sold': { type: CarType };
   'car:moved': { from: number; to: number };
   'car:repaired': { carIndex: number };
+  'car:upgraded': { carIndex: number; level: number };
+  'loco:upgraded': { kind: 'speed' | 'power' | 'frame' | 'crew'; level: number };
   'crew:assigned': { crewId: string; carIndex: number };
   'crew:joined': { specialty: CrewSpecialty; name: string };
 
@@ -71,6 +73,10 @@ export interface GameEvents {
   'ui:selectCar': { index: number };
   'ui:hoverTile': { col: number; row: number; cost: number; free: boolean; plannable: boolean } | { col: -1; row: -1; cost: 0; free: false; plannable: false };
   'ui:selectSettlement': { id: string | null };
+  /** Pointer hovers a settlement marker (screen px); id null when leaving. */
+  'ui:hoverSettlement': { id: string | null; x: number; y: number };
+  /** Pointer hovers a train car in the world (screen px); index -1 when leaving. */
+  'ui:hoverCar': { index: number; x: number; y: number };
   'ui:openPanel': { panel: 'train' | 'shop' | 'settings' | 'pause' | 'none' };
 }
 

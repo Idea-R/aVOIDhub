@@ -40,7 +40,16 @@ export const SETTLEMENT_COLORS: Record<SettlementType, number> = {
   armory: 0xe86f6f,
   yard: 0x6fb7e8,
   terminus: 0xb98fe8,
+  watchtower: 0xf0d9a0,
+  shrine: 0xc9a0ff,
+  wreck: 0xb5734a,
+  market: 0xf0a05a,
 };
+
+/** Colour for any settlement type string (unknown / future types fall back to the village look). */
+export function settlementColor(type: string): number {
+  return (SETTLEMENT_COLORS as Record<string, number | undefined>)[type] ?? SETTLEMENT_COLORS.village;
+}
 
 export const RESOURCE_COLORS: Record<ResourceKey, number> = {
   rails: 0xe8c170,

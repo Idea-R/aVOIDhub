@@ -58,7 +58,7 @@ export function updateDirector(ctx: SimContext): void {
   d.budget = waveBudget(state, region, threat);
   d.nextWaveIn -= dt * pressure;
 
-  const lead = DIRECTOR.warningLead * (hasCar(state, 'signal') ? 2 : 1);
+  const lead = DIRECTOR.warningLead * (hasCar(state, 'signal') ? 2 : 1) + (state.time < (state.train.watchUntil ?? 0) ? 4 : 0);
   if (!d.warning && d.nextWaveIn <= lead) {
     const type = pickType(ctx, region, []);
     const from = pickDirection(ctx, type);

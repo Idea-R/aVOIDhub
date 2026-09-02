@@ -23,6 +23,7 @@ interface CarView {
   init: boolean;
   type: CarType | null;
   fireAcc: number;
+  hoverT: number;
 }
 interface Snap { type: CarType; x: number; y: number; a: number; }
 interface Ghost { type: CarType; x: number; y: number; a: number; t0: number; }
@@ -73,7 +74,7 @@ export class TrainLayer {
     label.setLetterSpacing(0.5);
     const glow = this.scene.add.image(0, 0, 'glow').setBlendMode(Phaser.BlendModes.ADD).setTint(0xff7a30).setAlpha(0).setScale(0.9, 0.7);
     this.layer.add(gfx); this.layer.add(label); this.layer.add(glow);
-    return { gfx, label, glow, head: null, x: 0, y: 0, a: 0, init: false, type: null, fireAcc: 0 };
+    return { gfx, label, glow, head: null, x: 0, y: 0, a: 0, init: false, type: null, fireAcc: 0, hoverT: 0 };
   }
 
   /** Projected position of car i (smoothed), or null. */
@@ -111,7 +112,7 @@ export class TrainLayer {
     this.fx.explosion(x, y, explode ? 90 : 42, explode);
   }
 
-  update(state: SimState, dt: number, nowMs: number, selected: number, night: number, zoom: number, enemies: Map<string, { x: number; y: number }>): void {
+  update(state: SimState, dt: number, nowMs: number, selected: number, night: number, zoom: number, enemies: Map<string, { x: number; y: number }>, hovered = -1): void {
     this.nowMs = nowMs;
     this.nightF = night;
     this.enemyPos = enemies;
@@ -142,16 +143,21 @@ export class TrainLayer {
       else { v.x += (tx - v.x) * k; v.y += (ty - v.y) * k; v.a = lerpAngle(v.a, ang, k); }
       v.type = car.type;
       snap.push({ type: car.type, x: v.x, y: v.y, a: v.a });
-      const cx = v.x, cy = v.y * ISO_Y;
-      v.gfx.setVisible(true).setDepth(cy);
+      const cx = v.x, cyBase = v.y * ISO_Y;
+      // hovered car lifts 2 px (smoothed) and gets a gold outline
+      const hv = i === hovered ? 1 : 0;
+      v.hoverT = this.settings.reducedMotion ? hv : v.hoverT + (hv - v.hoverT) * expFactor(20, dt);
+      const lift = v.hoverT * 2;
+      const cy = cyBase - lift;
+      v.gfx.setVisible(true).setDepth(cyBase);
       v.gfx.clear();
       const def = CAR_DEFS[car.type] ?? CAR_DEFS.coach;
       const nv = this.views[i + 1];
       const next = i + 1 < cars.length && nv && nv.init ? { x: nv.x, y: nv.y, a: nv.a } : null;
-      this.drawCar(v.gfx, cx, cy, v.a, car.type, car, 1, i === selected ? pulse : -1, def.color, i, next);
+      this.drawCar(v.gfx, cx, cy, v.a, car.type, car, 1, i === selected ? pulse : -1, def.color, i, next, v.hoverT);
       if (this.reversing && i === cars.length - 1) this.drawRearLanterns(v.gfx, cx, cy, v.a, car.type === 'locomotive' ? 34 : 30, nowMs);
       // label
-      v.label.setVisible(showLabels).setText(def.short).setDepth(cy + 0.1);
+      v.label.setVisible(showLabels).setText(def.short).setDepth(cyBase + 0.1);
       const pa = projAngle(v.a);
       let la = pa;
       if (Math.cos(pa) < 0) la += Math.PI;
@@ -248,7 +254,7 @@ export class TrainLayer {
 
   // ---------------------------------------------------------------------------------------
   private drawCar(g: Phaser.GameObjects.Graphics, cx: number, cy: number, ang: number, type: CarType, car: Car | null,
-    alpha: number, selPulse: number, accent: number, index: number, next: { x: number; y: number; a: number } | null): void {
+    alpha: number, selPulse: number, accent: number, index: number, next: { x: number; y: number; a: number } | null, hover = 0): void {
     const L = type === 'locomotive' ? 34 : 30, W = 16, H = 9;
     const ca = Math.cos(ang), sa = Math.sin(ang);
     const lp = (u: number, v: number, z = 0) => ({ x: cx + u * ca - v * sa, y: cy + (u * sa + v * ca) * ISO_Y - z });
@@ -290,12 +296,37 @@ export class TrainLayer {
       g.strokeEllipse(cx, cy, L + 10, (W + 10) * ISO_Y + 6);
     }
 
+    // which faces are toward the camera (their midpoint projects below the roof centre)
+    const vis: boolean[] = [];
+    const faceDy: number[] = [];
+    for (let i = 0; i < 4; i++) { const a = R[i], b = R[(i + 1) % 4]; const dy = (a.y + b.y) / 2 - rc.y; faceDy.push(dy); vis.push(dy > 0.6); }
+    // hover: soft gold pool under the lifted car
+    if (hover > 0.01) {
+      F(0xffd75a, 0.14 * hover); g.fillEllipse(cx, cy + 2 + hover * 2, L + 14, (W + 14) * ISO_Y + 6);
+    }
+    // bogies on the sides that are not facing the camera, drawn before the body so it hides part of them:
+    //  - edge-on sides (train heading up/down the screen): wheels at ground level, outer half visible
+    //  - back-facing sides: the roof overhangs them, so their darker upper arcs peek past the far roof edge
+    for (const i of [1, 3]) {
+      if (vis[i]) continue;
+      const edgeOn = Math.abs(faceDy[i]) <= 0.6;
+      const v = (i === 1 ? W / 2 : -W / 2) * (edgeOn ? 1.12 : 1.06);
+      const z = edgeOn ? -1 : H - 0.8;
+      for (const u of [-L / 3, 0, L / 3]) {
+        const w = lp(u, v, z);
+        F(edgeOn ? 0x15171c : 0x0e1014); disc(g, w.x, w.y, edgeOn ? 2.75 : 2.5, (edgeOn ? 2.75 : 2.5) * ISO_Y + 0.5, 8);
+        F(edgeOn ? 0x50545e : 0x3a3e48, 0.9); disc(g, w.x, w.y, 1, 1 * ISO_Y + 0.2, 6);
+        const sa2 = (car ? this.wheelPhase : 0) + u * 0.3;
+        const sx = w.x + Math.cos(sa2) * 1.6, sy = w.y + Math.sin(sa2) * 1.6 * ISO_Y;
+        F(0xb0b4bc, 0.85); g.fillRect(sx - 0.6, sy - 0.6, 1.2, 1.2);
+      }
+    }
+
     // visible side faces
     const faceShade = [0.62, 0.74, 0.62, 0.74]; // end, side, end, side
     for (let i = 0; i < 4; i++) {
       const a = R[i], b = R[(i + 1) % 4];
-      const my = (a.y + b.y) / 2;
-      if (my <= rc.y) continue;
+      if (!vis[i]) continue;
       F(shade(body, faceShade[i]));
       poly([a, b, G[(i + 1) % 4], G[i]]);
       S(1, shade(body, 0.4), 0.7);
@@ -519,6 +550,41 @@ export class TrainLayer {
         // unknown / future car types: the generic box with a hatch
         rect(-6, -4, 6, 4, H + 0.5, shade(accent, 0.7), 0.8);
         break;
+    }
+
+    // ---- upgrade level: brass trim (2+) and a pennant mast (3) ----
+    const level = car ? Math.max(1, Math.min(3, (car.level as number | undefined) ?? 1)) : 1;
+    if (level >= 2) {
+      S(1.2, 0xd8b25a, 0.95);
+      for (let i = 0; i < 4; i++) {
+        if (!vis[i]) continue;
+        const a = R[i], b = R[(i + 1) % 4];
+        g.lineBetween(a.x, a.y + 1.6, b.x, b.y + 1.6);
+      }
+      // trim studs on the roof rim
+      F(0xf0d080, 0.9);
+      for (const [u, v] of [[L / 2 - 3, -W / 2 + 2], [L / 2 - 3, W / 2 - 2], [-L / 2 + 3, -W / 2 + 2], [-L / 2 + 3, W / 2 - 2]] as Array<[number, number]>) {
+        const p = lp(u, v, H + 0.2); g.fillRect(p.x - 0.7, p.y - 0.7, 1.4, 1.4);
+      }
+    }
+    if (level >= 3) {
+      const base = lp(-L / 2 + 5, -W / 2 + 3, H), top = lp(-L / 2 + 5, -W / 2 + 3, H + 9);
+      S(1.1, 0x8a8f9a, 0.95); g.lineBetween(base.x, base.y, top.x, top.y);
+      const pa = projAngle(ang);
+      const flutter = this.settings.reducedMotion ? 0 : Math.sin(now / 110 + index * 1.7) * 1.2;
+      const fx = -Math.cos(pa) * 6, fy = -Math.sin(pa) * 6 * 0.6 + flutter;
+      F(0xd8b25a, 0.95); g.fillTriangle(top.x, top.y, top.x + fx, top.y + fy + 1.2, top.x, top.y + 3.2);
+      F(0xfff0c0); g.fillCircle(top.x, top.y, 0.9);
+    }
+    // ---- hover: gold outline around the silhouette ----
+    if (hover > 0.01) {
+      S(1.6, 0xffd75a, 0.95 * hover);
+      g.strokePoints(R, true, true);
+      for (let i = 0; i < 4; i++) {
+        if (!vis[i]) continue;
+        const a = R[i], b = R[(i + 1) % 4], ga = G[i], gb = G[(i + 1) % 4];
+        g.lineBetween(a.x, a.y, ga.x, ga.y); g.lineBetween(ga.x, ga.y, gb.x, gb.y); g.lineBetween(gb.x, gb.y, b.x, b.y);
+      }
     }
 
     if (!car) return;

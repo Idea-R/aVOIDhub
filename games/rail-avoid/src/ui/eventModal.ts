@@ -25,7 +25,8 @@ function unmet(s: SimState, o: PassengerEventOption): string | null {
 
 export function createEventModal(ui: UiShared): EventModal {
   const box = el('div', { class: 'rv-panel rv-modal rv-event' });
-  const overlay = el('div', { class: 'rv-overlay', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Passenger event' }, box);
+  // rv-zone: the card is centred inside the free zone (below the top bar, above the dock, beside any side panel)
+  const overlay = el('div', { class: 'rv-overlay rv-zone', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Passenger event' }, box);
   let currentId: string | null = null;
   let optionButtons: Array<{ btn: HTMLButtonElement; why: HTMLElement; opt: PassengerEventOption }> = [];
 

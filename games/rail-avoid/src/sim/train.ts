@@ -2,9 +2,9 @@
 import type { SimState, TrainState, Car, ResourceKey, CarType, Crew, CrewSpecialty } from '../core/types';
 import type { SimContext } from './api';
 import { CAR_DEFS } from '../core/cars';
-import { TRAIN, HEX_R, TERRAIN_SPEED, WEATHER, MAX_CARS } from '../core/config';
+import { TRAIN, HEX_R, TERRAIN_SPEED, WEATHER, MAX_CARS, UPGRADES } from '../core/config';
 import { hexToWorld } from '../core/hex';
-import { makeCar, recomputeCapacity, damageCar, addResource, log, tileAt, fixCrewIndices, nextId, carPos, damageEnemy } from './helpers';
+import { makeCar, recomputeCapacity, damageCar, addResource, log, tileAt, fixCrewIndices, nextId, carPos, damageEnemy, carPowerGen, carCooling, carPassengerCap } from './helpers';
 import { autoFollow, aheadCount, unplanLast } from './route';
 
 export const CAR_SPACING = 40; // px between car centres along the track
@@ -14,7 +14,7 @@ const CREW_NAMES = ['Ada', 'Bram', 'Cass', 'Dov', 'Elka', 'Finn', 'Greta', 'Hale
 export function initTrain(state: SimState): TrainState {
   const t: TrainState = {
     cars: [], routeIndex: 0, progress: 0, speed: 0, speedTarget: 0, moving: false, stopped: true, stopReason: 'no_route',
-    stopTimer: 0, stopPressure: 0, hounds: 0, reversing: false,
+    stopTimer: 0, stopPressure: 0, hounds: 0, reversing: false, locoUpgrades: { speed: 0, power: 0, frame: 0, crew: 0 }, watchUntil: 0,
     resources: { ...TRAIN.startResources }, capacity: { ...TRAIN.baseCapacity },
     passengers: 0, passengerCap: 0, passengersDelivered: 0, morale: 80, crew: [],
     trailX: [], trailY: [], trailAngle: [], burningScrap: false, distanceTravelled: 0,
@@ -137,7 +137,7 @@ export function propagate(ctx: SimContext): void {
   const gens: number[] = new Array(n).fill(0);
   for (let i = 0; i < n; i++) {
     if (!alive[i]) continue;
-    let g = defs[i].powerGen;
+    let g = carPowerGen(state, t.cars[i], i);
     const cr = crewIn(state, i);
     if (cr && cr.specialty === 'engineer' && g > 0) g += 2;
     gens[i] = g;
@@ -176,8 +176,8 @@ export function propagate(ctx: SimContext): void {
       if (d.powerGen > 0) gen += d.heatGen;                    // generators run constantly
       else gen += d.heatGen * car.derived.activity * (ratio[i] > 0 ? 1 : 0.3);
     }
-    let cool = TRAIN.baseCooling + cooling + d.cooling;
-    for (const j of [i - 1, i + 1]) if (t.cars[j] && t.cars[j].hp > 0 && defs[j].type === 'radiator') cool += 3;
+    let cool = TRAIN.baseCooling + cooling + carCooling(car);
+    for (const j of [i - 1, i + 1]) if (t.cars[j] && t.cars[j].hp > 0 && defs[j].type === 'radiator') cool += 3 + (t.cars[j].level - 1);
     heatIn[i] += gen - cool;
     if (car.onFire) {
       for (const j of [i - 1, i + 1]) if (t.cars[j]) heatIn[j] += TRAIN.fireSpreadHeat;
@@ -278,7 +278,7 @@ export function boardPassengers(ctx: SimContext, count: number): number {
   const t = ctx.state.train;
   let left = count, boarded = 0;
   for (const car of t.cars) {
-    const cap = CAR_DEFS[car.type].passengerCap;
+    const cap = carPassengerCap(car);
     if (cap <= 0 || car.hp <= 0) continue;
     const room = cap - car.passengers;
     const take = Math.max(0, Math.min(room, left));
@@ -308,6 +308,7 @@ export function speedTarget(state: SimState): number {
   const w = WEATHER[state.weather.kind];
   f *= 1 - (1 - w.speedMul) * state.weather.intensity;
   f *= Math.max(0.4, 1 - t.hounds * TRAIN.houndSlowPerStack);
+  f *= 1 + UPGRADES.locoSpeedPerLevel * (t.locoUpgrades?.speed ?? 0);
   if (t.resources.coal <= 0 && t.resources.scrap <= 0) f *= 0.3;
   return TRAIN.baseSpeed * f;
 }

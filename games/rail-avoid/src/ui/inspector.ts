@@ -4,6 +4,7 @@ import type { UiShared } from './shared';
 import type { SimState, Car, Crew } from '../core/types';
 import { CAR_DEFS } from '../core/cars';
 import { TRAIN } from '../core/config';
+import { levelOf, levelPips, levelEffect, hasUpgrades, carUpgradeCost, upgradeApi, MAX_LEVEL, ROMAN } from './levels';
 
 export interface Inspector { el: HTMLElement; update(s: SimState, force?: boolean): void; reset(): void }
 
@@ -34,7 +35,8 @@ export function createInspector(ui: UiShared): Inspector {
     const def = CAR_DEFS[car.type];
     const sim = ui.sim();
     const canShop = !!sim && sim.canShop();
-    titleEl.replaceChildren(el('span', { style: `color:${hexColor(def.color)}`, text: def.short }), ' ', def.name);
+    const lvl = levelOf(car);
+    titleEl.replaceChildren(el('span', { style: `color:${hexColor(def.color)}`, text: def.short }), ' ', def.name, levelPips(lvl, 'rv-insp-lvl'));
 
     const hpText = el('span'); const hpFill = el('i');
     const heatText = el('span'); const heatFill = el('i');
@@ -49,6 +51,7 @@ export function createInspector(ui: UiShared): Inspector {
       el('span', { class: 'rv-k', text: 'Boarders' }), el('span', { class: 'rv-v' }, boardText),
       el('span', { class: 'rv-k', text: 'Status' }), el('span', { class: 'rv-v' }, statusText),
       el('span', { class: 'rv-k', text: 'Weight' }), el('span', { class: 'rv-v', text: `${def.weight} t` }),
+      el('span', { class: 'rv-k', text: 'Level' }), el('span', { class: 'rv-v', title: levelEffect(car.type) }, levelPips(lvl), el('span', { class: 'rv-dim', text: lvl >= MAX_LEVEL ? 'max' : `${ROMAN[lvl]} · ${levelEffect(car.type)}` })),
     );
     if (def.powerGen > 0) kv.append(el('span', { class: 'rv-k', text: 'Generates' }), el('span', { class: 'rv-v', text: `+${def.powerGen} power (range ${TRAIN.powerRange})` }));
     if (def.heatGen > 0 || def.cooling > 0) kv.append(el('span', { class: 'rv-k', text: 'Thermal' }), el('span', { class: 'rv-v', text: `${def.heatGen > 0 ? `+${def.heatGen} heat/s active` : ''}${def.cooling > 0 ? ` −${def.cooling}/s cooling` : ''}`.trim() }));
@@ -143,7 +146,21 @@ export function createInspector(ui: UiShared): Inspector {
     leftBtn.disabled = !canShop || i <= 1;
     rightBtn.disabled = !canShop || isLoco || i >= s.train.cars.length - 1;
     detachBtn.disabled = isLoco;
-    foot.replaceChildren(repairBtn, sellBtn, leftBtn, rightBtn, detachBtn, btn('Close', () => { ui.audio().ui('close'); ui.selectCar(-1); }, { class: 'rv-small', aria: 'Close inspector (Tab)' }));
+    const upgradeBtns: HTMLElement[] = [];
+    if (canShop && !isLoco && hasUpgrades(sim)) {
+      const uc = carUpgradeCost(sim, i);
+      const maxed = uc < 0 || lvl >= MAX_LEVEL;
+      const up = btn(maxed ? `Level ${ROMAN[lvl]} (max)` : `Upgrade to ${ROMAN[lvl + 1]} (${uc} scrap)`, () => {
+        let ok = false;
+        try { ok = !!upgradeApi(ui.sim()).upgradeCar?.(i); } catch { ok = false; }
+        ui.audio().ui(ok ? 'confirm' : 'error');
+        if (!ok) ui.notify('Cannot upgrade: not enough scrap or already at max level.', 'warn');
+        structSig = '';
+      }, { class: 'rv-small' + (maxed ? '' : ' rv-primary'), aria: maxed ? 'Car is at maximum level' : `Upgrade this car to level ${lvl + 1} for ${uc} scrap`, title: levelEffect(car.type) });
+      up.disabled = maxed || s.train.resources.scrap < uc;
+      upgradeBtns.push(up);
+    }
+    foot.replaceChildren(repairBtn, ...upgradeBtns, sellBtn, leftBtn, rightBtn, detachBtn, btn('Close', () => { ui.audio().ui('close'); ui.selectCar(-1); }, { class: 'rv-small', aria: 'Close inspector (Tab)' }));
     if (!canShop) foot.appendChild(el('div', { class: 'rv-hint', text: 'Repair, sell and reorder are available at repair yards.' }));
 
     dyn = { hpText, hpFill, heatText, heatFill, powerText, ammoText, paxText, boardText, statusText, repairBtn, sellBtn, leftBtn, rightBtn, detachBtn, crewHp };
@@ -198,7 +215,7 @@ export function createInspector(ui: UiShared): Inspector {
     const car = s.train.cars[i];
     const sim = ui.sim();
     const canShop = !!sim && sim.canShop();
-    const sig = [i, car.id, car.type, car.crewId ?? '', s.train.crew.map(c => `${c.id}:${c.carIndex}`).join(','), canShop ? 1 : 0, s.train.cars.length].join('|');
+    const sig = [i, car.id, car.type, car.crewId ?? '', s.train.crew.map(c => `${c.id}:${c.carIndex}`).join(','), canShop ? 1 : 0, s.train.cars.length, levelOf(car), canShop ? Math.floor(s.train.resources.scrap) : 0].join('|');
     if (sig !== structSig) { structSig = sig; build(s, i); force = true; }
     const now = performance.now();
     if (!force && now - lastDyn < 200) return;

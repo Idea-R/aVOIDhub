@@ -27,6 +27,8 @@ class RailAudio implements RailAudioApi {
   private master: GainNode | null = null;
   private musicBus: GainNode | null = null;
   private sfxBus: GainNode | null = null;
+  private ambBus: GainNode | null = null;
+  private uiBus: GainNode | null = null;
   private sfx: Sfx | null = null;
   private music: MusicEngine | null = null;
   private ambient: AmbientEngine | null = null;
@@ -77,12 +79,16 @@ class RailAudio implements RailAudioApi {
     this.master.connect(comp);
     this.musicBus = ctx.createGain();
     this.sfxBus = ctx.createGain();
+    this.ambBus = ctx.createGain();   // engine / weather / void beds
+    this.uiBus = ctx.createGain();    // interface blips + notifications
     this.musicBus.connect(this.master);
     this.sfxBus.connect(this.master);
+    this.ambBus.connect(this.master);
+    this.uiBus.connect(this.master);
     const white = createNoiseBuffer(ctx, 2, 'white');
     const pink = createNoiseBuffer(ctx, 2, 'pink');
     const brown = createNoiseBuffer(ctx, 3, 'brown');
-    this.sfx = new Sfx(ctx, this.sfxBus, white, pink);
+    this.sfx = new Sfx(ctx, this.sfxBus, white, pink, this.uiBus);
     // procedural score goes through a duck gain so real tracks (when present) can take over
     this.synthDuck = ctx.createGain();
     this.synthDuck.gain.value = 1;
@@ -94,7 +100,7 @@ class RailAudio implements RailAudioApi {
       this.synthDuck.gain.setTargetAtTime(usingTrack ? 0.0001 : 1, this.ctx.currentTime, 0.8);
     };
     this.tracks.setMood(this.mood);
-    this.ambient = new AmbientEngine(ctx, this.sfxBus, white, pink, brown);
+    this.ambient = new AmbientEngine(ctx, this.ambBus, white, pink, brown);
     this.applySettings(this.settings.get());
     this.music.setMood(this.mood);
     this.music.start();
@@ -135,10 +141,16 @@ class RailAudio implements RailAudioApi {
     this.master.gain.setTargetAtTime(master, now, 0.05);
     this.musicBus.gain.setTargetAtTime(Math.max(0, Math.min(1, s.musicVolume)) * 0.55, now, 0.05);
     this.sfxBus.gain.setTargetAtTime(Math.max(0, Math.min(1, s.sfxVolume)), now, 0.05);
+    const amb = typeof s.ambienceVolume === 'number' ? s.ambienceVolume : 0.7;
+    const uiV = typeof s.uiVolume === 'number' ? s.uiVolume : 0.7;
+    this.ambBus?.gain.setTargetAtTime(Math.max(0, Math.min(1, amb)), now, 0.05);
+    this.uiBus?.gain.setTargetAtTime(Math.max(0, Math.min(1, uiV)), now, 0.05);
   }
   setMaster(v: number): void { this.settings.set({ masterVolume: Math.max(0, Math.min(1, v)) }); }
   setMusic(v: number): void { this.settings.set({ musicVolume: Math.max(0, Math.min(1, v)) }); }
   setSfx(v: number): void { this.settings.set({ sfxVolume: Math.max(0, Math.min(1, v)) }); }
+  setAmbience(v: number): void { this.settings.set({ ambienceVolume: Math.max(0, Math.min(1, v)) }); }
+  setUi(v: number): void { this.settings.set({ uiVolume: Math.max(0, Math.min(1, v)) }); }
   setMuted(m: boolean): void { this.settings.set({ muted: !!m }); }
 
   // ---------- state-driven beds ----------

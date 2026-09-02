@@ -24,7 +24,7 @@ export const TERRAIN_SPEED: Record<Terrain, number> = {
 };
 
 export const TRAIN = {
-  baseSpeed: 0.3,           // hex/s at power/weight ratio 1 (~3.3 s per hex)
+  baseSpeed: 0.38,          // hex/s at power/weight ratio 1 (~2.6 s per hex)
   minSpeedFactor: 0.45,
   maxSpeedFactor: 1.3,
   weightPerPower: 16,       // tons that 1 power hauls at factor 1
@@ -54,7 +54,7 @@ export const TRAIN = {
   houndDecay: 0.1,           // stacks per second
   stopPressureRate: 1 / 45,  // reaches 1 after 45s stopped
   stopPressureDecay: 1 / 15,
-  settlementStopTime: 15,
+  settlementStopTime: 12,
   autoDepart: true,
   splitOnDestroy: true,
   detachLureTime: 20,
@@ -63,7 +63,7 @@ export const TRAIN = {
 };
 
 export const VOID = {
-  baseSpeed: 4.0,           // px/s eastward (train at 0.22 hex/s is about 13 px/s along track, less in x on detours)
+  baseSpeed: 4.6,           // px/s eastward (train at 0.22 hex/s is about 13 px/s along track, less in x on detours)
   regionSpeedMul: [1, 1.12, 1.25, 1.4],
   noiseAmp: 80,
   catchUpBoost: 1.6,        // when very far behind train, speeds up (keeps pressure honest)
@@ -89,7 +89,7 @@ export const WEATHER: Record<WeatherKind, { minDur: number; maxDur: number; spee
 };
 
 export const DIRECTOR = {
-  baseInterval: [42, 38, 34, 30],      // seconds between waves per region
+  baseInterval: [38, 34, 30, 27],      // seconds between waves per region
   budgetPerWave: [10, 19, 30, 42],
   havenMilitiaDps: 14,                 // settlement defenders while the train is stopped there
   havenRadius: 330,
@@ -116,6 +116,22 @@ export const SCORE = {
   kill: 5,
   timeBonusPerSecondUnder: 2, // under 30 minutes
   victory: 3000,
+};
+
+export const UPGRADES = {
+  carCostMul: [0, 0.7, 1.1],       // × CarDef.cost for level 2, 3
+  carHpMul: 0.25,                  // +25% max HP per level above 1
+  carDamageMul: 0.2,
+  carStorageMul: 0.2,
+  carPowerAdd: 1,
+  carCoolingAdd: 2,
+  coachPaxAdd: 4,
+  locoCost: { speed: [30, 45, 65], power: [28, 42, 60], frame: [24, 36, 52], crew: [26, 40, 58] },
+  locoSpeedPerLevel: 0.12,
+  locoPowerPerLevel: 2,
+  locoHpPerLevel: 60,
+  locoRangePerLevel: 1,
+  watchtowerSeconds: 300,
 };
 
 export const REGION_NAMES = ['The Greenbelt', 'The Rust Reaches', 'The Ash Steppe', 'The Void Frontier'];

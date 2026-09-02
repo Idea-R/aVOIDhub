@@ -23,7 +23,8 @@ export interface Tile {
 }
 
 export type SettlementType =
-  | 'start' | 'village' | 'depot' | 'mine' | 'farm' | 'fuel' | 'clinic' | 'armory' | 'yard' | 'terminus';
+  | 'start' | 'village' | 'depot' | 'mine' | 'farm' | 'fuel' | 'clinic' | 'armory' | 'yard' | 'terminus'
+  | 'watchtower' | 'shrine' | 'wreck' | 'market';
 
 export interface ResourceBundle {
   rails?: number;
@@ -54,6 +55,9 @@ export interface Settlement {
 }
 
 // ---------- Train ----------
+export type LocoUpgradeKind = 'speed' | 'power' | 'frame' | 'crew';
+export type LocoUpgrades = Record<LocoUpgradeKind, number>;
+
 export type CarType =
   | 'locomotive' | 'coal_bunker' | 'boiler' | 'reactor' | 'radiator'
   | 'fabricator' | 'foundry' | 'cargo' | 'armored_cargo'
@@ -126,6 +130,7 @@ export interface Car {
   passengers: number;       // riding in this car
   disabled: boolean;        // temporarily disabled (e.g. drone sap)
   disabledFor: number;
+  level: number;            // 1..3 upgrade level (yards)
   derived: CarDerived;      // recomputed every tick, safe to read from UI
 }
 
@@ -150,6 +155,8 @@ export interface TrainState {
   stopTimer: number;          // seconds stopped (stop pressure)
   stopPressure: number;       // 0..1
   reversing: boolean;         // backing down the traversed track
+  locoUpgrades: LocoUpgrades; // engine upgrade tracks bought at yards (0..3 each)
+  watchUntil: number;         // sim time until which watchtower early warning is active
   hounds: number;             // hound bite stacks (slow)
   resources: Record<ResourceKey, number>;
   capacity: Record<ResourceKey, number>;
@@ -353,6 +360,8 @@ export interface Settings {
   masterVolume: number;   // 0..1
   musicVolume: number;
   sfxVolume: number;
+  ambienceVolume: number; // engine, weather and void beds
+  uiVolume: number;       // interface clicks and notifications
   muted: boolean;
   reducedMotion: boolean;
   screenShake: boolean;
@@ -363,6 +372,9 @@ export interface Settings {
   showTutorial: boolean;
   autoFollowRail: boolean;
   showSeedField: boolean;
+  showLog: boolean;        // event log feed visible in the HUD
+  compactHud: boolean;     // slimmer HUD chrome
+  customCursor: boolean;
 }
 
 export interface MetaProgress {

@@ -23,11 +23,11 @@ You command the last train on a continent that is falling into the void. The voi
 | Detached cars save the locomotive | Detach the rear N cars: instant weight loss, and the abandoned segment lures enemies for 20 s. A destroyed *middle* car splits the train and loses everything behind it. |
 
 ## Map
-- 56×26 flat-top hex continent, four vertical regions of 14 columns.
+- 160×36 flat-top hex continent, four vertical regions of 40 columns.
 - Terrain: plains, forest, hills, mountain (impassable), water (bridge), ruins, ash, crystal.
 - **Pre-laid rail network**: a spine plus branches with junctions per region. Players switch routes by planning along a branch.
 - **Void front**: a noisy column frontier advancing east at a tuned rate; occasional *rifts* open ahead of the train (scripted per region) forcing detours.
-- ~40 settlements: village, depot (rails), mine (scrap), farm (food), fuel (coal), clinic (medic), armory (ammo), yard (repair/shop), terminus.
+- ~65 settlements and nodes: village, depot (rails), mine (scrap), farm (food), fuel (coal), clinic (medic), armory (ammo), yard (repair/shop), watchtower, shrine, wreck, market, terminus.
 
 ### Regions
 1. **Greenbelt** — plains & forest, raiders + hounds. Teaches planning, boarding, food.
@@ -44,7 +44,7 @@ Locomotive (index 0) + up to 9 cars. Each car: HP, heat, crew slot, boarders.
 - **Ammo**: weapons need an *ammo supplier* (Armory, Cargo Hold, Foundry, Armored Cargo) within 2 positions or they cannot fire.
 - **Boarding**: boarders attach to a car, deal damage, then walk one car toward the locomotive every 4 s. Barracks marines fight boarders in adjacent cars; flamethrowers purge boarders in adjacent cars; passengers in a boarded car take casualties.
 
-### Car Catalogue (22 types, 18+ required)
+### Car Catalogue (23 types, 18+ required)
 | Car | Role | Gen/Use | Heat | Notes |
 |---|---|---|---|---|
 | Locomotive | Drives | +6 | 2 | Fixed at front. |
@@ -69,6 +69,7 @@ Locomotive (index 0) + up to 9 cars. Each car: HP, heat, crew slot, boarders.
 | Rail Layer | Track −1 cost, +2 plan range | 2 | 1 | |
 | Armour Plate | Buffer car, 3× HP | 0 | 0 | Blocks boarders walking through. |
 | Signal Car | Weather forecast, −20% wave size | 1 | 0 | |
+| Caboose | Rear guard | 0 | 0 | Full-speed reversing, slows rear boarders, keeps passenger morale up. |
 
 ### Crew Specialists
 Engineer (+2 power in car), Gunner (+35% fire rate), Medic (heals), Surveyor (−1 track cost, +2 range), Mechanic (repairs car 1 HP/s), Quartermaster (+30% storage).
@@ -87,6 +88,17 @@ Engineer (+2 power in car), Gunner (+35% fire rate), Medic (heals), Surveyor (�
 1. **Iron Wagon** (end of region 2): a rival armoured train on a parallel line — exchanges cannon fire, launches boarders in phases; must be out-gunned or out-run to the switch that breaks its line.
 2. **Brood Mother** (end of region 3): giant crawler, armour plates fall off in phases exposing a weak core; spawns hounds; cannon/tesla checks.
 3. **Void Maw** (Last Gate): a void entity that opens rifts on your route and pulls the rear car; you must keep the train moving around a loop while Tesla/Flame damage it and flak clears its wisps. Beating it opens the Gate.
+
+## Upgrades (repair yards)
+- **Car levels I–III**: +25% max HP per level; weapons +20% damage, generators +1 power, radiators +2 cooling, storage +20%, coaches +4 passengers. Cost = 0.7× / 1.1× the car's price.
+- **Locomotive tracks** (3 levels each): Speed +12%/lvl, Boiler pressure +2 power/lvl, Reinforced frame +60 HP/lvl, Track crew +1 plan range/lvl.
+
+## Journey nodes
+Besides resource settlements: **Watchtower** (5 min of longer wave warnings and sapper reveal), **Shrine** (a boon choice: boiler blessing, full patch-up, rails for scrap), **Wreck** (salvage; 75% chance of a free tier-1 car), **Market** (trade rails/ammo/scrap/food).
+
+## Movement rules
+- Settlements are **havens**: no waves spawn while stopped there and militia shoot nearby enemies; stop pressure only builds when stalled in the wild.
+- **Reverse** (R): back down your own track at half speed (full with a Caboose); the plan ahead is refunded and planning re-anchors where you stop.
 
 ## Weather & Time
 Day/night cycle of 4 minutes (night: +30% enemy aggression, harpies more common, visibility tint). Weather: clear, rain (cooling, −10% speed), fog (turret range −30%), storm (cooling, drones grounded, lightning strikes heat a random car), ashfall (region 3-4, passengers take damage without Sleeper/Medical).
