@@ -157,6 +157,9 @@ export class SettlementsLayer {
   private hoverChip: Phaser.GameObjects.Text;
   private lastOverlapAt = -1;
   private overlapDirty = true;
+  /** Cinematics (the opening): hide the deadline countdown arcs; restored when cleared. */
+  public hideArcs = false;
+  private arcsHidden = false;
 
   constructor(private scene: Phaser.Scene, private layer: Phaser.GameObjects.Layer, private fx: FxLayer, settings: RenderSettings) {
     this.settings = settings;
@@ -371,7 +374,11 @@ export class SettlementsLayer {
   update(state: SimState, nowMs: number, zoom: number, reducedMotion: boolean, night: number, view: Phaser.Geom.Rectangle,
     loco: { x: number; y: number } | null = null, dt = 1 / 60): void {
     const list = Array.isArray(state.settlements) ? state.settlements : [];
-    if (list.length !== this.views.size) this.rebuild(state);
+    if (list.length !== this.views.size) { this.rebuild(state); this.arcsHidden = false; }
+    if (this.hideArcs !== this.arcsHidden) {
+      this.arcsHidden = this.hideArcs;
+      for (const v of this.views.values()) v.arc.setVisible(!this.arcsHidden);
+    }
     const labelsAll = zoom >= LABEL_LOD_ZOOM;
     const slice = Math.max(1, Math.ceil(list.length / 15));
     const arcStart = this.arcCursor;

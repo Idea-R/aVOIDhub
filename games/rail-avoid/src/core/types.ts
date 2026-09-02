@@ -440,6 +440,7 @@ export interface MetaProgress {
   totalKills: number;
   lastSeed: number;
   unlockedNotes: string[];
+  introSeen?: boolean;
 }
 
 export interface SaveGame {

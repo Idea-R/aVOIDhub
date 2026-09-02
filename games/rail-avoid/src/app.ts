@@ -41,7 +41,7 @@ export interface ViewApi {
    * window CustomEvent 'railavoid:cine' with detail { phase: 'start'|'card'|'end', name, title?, subtitle? }).
    * Resolves when finished or skipped. Must be safe to call when the view is not ready (resolve immediately).
    */
-  playCinematic(name: 'run_intro' | 'region_enter' | 'boss_intro' | 'victory' | 'defeat', data?: { title?: string; subtitle?: string; x?: number; y?: number }): Promise<void>;
+  playCinematic(name: 'opening' | 'run_intro' | 'region_enter' | 'boss_intro' | 'victory' | 'defeat', data?: { title?: string; subtitle?: string; x?: number; y?: number }): Promise<void>;
   skipCinematic(): void;
   isCinematicPlaying(): boolean;
 }

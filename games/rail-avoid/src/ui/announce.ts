@@ -14,7 +14,11 @@ import { gsap, isReduced } from './motion';
 
 export type AnnounceTone = 'gold' | 'void' | 'good' | 'bad' | 'info';
 export interface Announcement { cat: string; title: string; body?: string; tone?: AnnounceTone; hold?: number }
-export interface Announcer { el: HTMLElement; announce(a: Announcement): void; skip(): void; reset(): void; visible(): boolean; destroy(): void }
+export interface Announcer {
+  el: HTMLElement; announce(a: Announcement): void; skip(): void; reset(): void; visible(): boolean; destroy(): void;
+  /** Hold the queue (cinematics): the current card leaves, new ones wait, and everything resumes on hold(false). */
+  hold(on: boolean): void;
+}
 
 const CHARS_PER_S = 26;
 const BASE_HOLD = 2.8;
@@ -23,7 +27,8 @@ export function createAnnouncer(ui: UiShared): Announcer {
   const layer = el('div', { class: 'rv-announce-layer', role: 'status', 'aria-live': 'polite' });
   const queue: Announcement[] = [];
   const recent = new Map<string, number>();
-  let current: { el: HTMLElement; body: HTMLElement; text: string; tl: gsap.core.Timeline | null; typeTimer: number; holdTimer: number; done: boolean } | null = null;
+  let current: { a: Announcement; el: HTMLElement; body: HTMLElement; text: string; tl: gsap.core.Timeline | null; typeTimer: number; holdTimer: number; done: boolean } | null = null;
+  let held = false;
 
   function announce(a: Announcement): void {
     if (!a || !a.title) return;
@@ -34,7 +39,13 @@ export function createAnnouncer(ui: UiShared): Announcer {
     recent.set(key, now);
     if (recent.size > 40) { for (const [k, t] of recent) if (now - t > 5000) recent.delete(k); }
     queue.push(a);
-    if (!current) next();
+    if (!current && !held) next();
+  }
+  function hold(on: boolean): void {
+    if (held === on) return;
+    held = on;
+    if (on) { if (current && !current.done) { queue.unshift(current.a); finish(current); } } // replay the interrupted card afterwards
+    else if (!current) next();
   }
 
   function build(a: Announcement): { card: HTMLElement; body: HTMLElement; rule: HTMLElement; title: HTMLElement; head: HTMLElement } {
@@ -53,6 +64,7 @@ export function createAnnouncer(ui: UiShared): Announcer {
   }
 
   function next(): void {
+    if (held) return;
     const a = queue.shift();
     if (!a) return;
     const { card, body, rule, title, head } = build(a);
@@ -60,7 +72,7 @@ export function createAnnouncer(ui: UiShared): Announcer {
     const textEl = body.querySelector<HTMLElement>('.rv-ann-text')!;
     layer.replaceChildren(card);
     const hold = (a.hold ?? BASE_HOLD) + Math.max(0, text.length - 40) * 0.03;
-    const cur = { el: card, body, text, tl: null as gsap.core.Timeline | null, typeTimer: 0, holdTimer: 0, done: false };
+    const cur = { a, el: card, body, text, tl: null as gsap.core.Timeline | null, typeTimer: 0, holdTimer: 0, done: false };
     current = cur;
     if (isReduced()) {
       textEl.textContent = text;
@@ -140,6 +152,7 @@ export function createAnnouncer(ui: UiShared): Announcer {
     el: layer,
     announce,
     skip,
+    hold,
     visible: () => !!current,
     reset() {
       queue.length = 0; recent.clear();

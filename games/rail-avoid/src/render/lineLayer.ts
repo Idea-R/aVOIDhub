@@ -133,8 +133,13 @@ export class LineLayer {
     hoveredHex: [number, number] | null, dt: number): void {
     this.ensureGraph(state);
     this.updateSignage(state, sim, nowMs, reducedMotion, zoom, dt);
-    this.updateHover(state, hoveredHex, nowMs, reducedMotion, zoom);
+    this.updateHover(state, this.forcedHover ?? hoveredHex, nowMs, reducedMotion, zoom);
   }
+
+  /** Cinematics: force the line highlight through this hex regardless of the pointer (null = pointer). */
+  public forcedHover: [number, number] | null = null;
+  /** Cinematics: hide the junction signage (labels + chevrons) and the line-name chip; they fade back when cleared. */
+  public suppressed = false;
 
   // ------------------------------------------------------------------ signage
   private wantSignage(state: SimState): [number, number] | null {
@@ -304,7 +309,7 @@ export class LineLayer {
 
   private updateSignage(state: SimState, sim: SimApi, nowMs: number, reducedMotion: boolean, zoom: number, dt: number): void {
     const g = this.signGfx;
-    const junction = this.wantSignage(state);
+    const junction = this.suppressed ? null : this.wantSignage(state);
     if (junction) {
       const path = state.route.path;
       const key = `${junction[0]},${junction[1]}|${path.length}|${state.train.routeIndex}|${state.train.stopReason}`;
@@ -464,8 +469,8 @@ export class LineLayer {
       g.lineStyle(2.2, lighten(e.color, 0.4), 0.95);
       g.strokeEllipse(e.x, e.y, 15 + pulse * 2, (15 + pulse * 2) * ISO_Y);
     }
-    // line name chip above the hovered hex
-    if (hex && zoom >= 0.4) {
+    // line name chip above the hovered hex (not during cinematics)
+    if (hex && zoom >= 0.4 && !this.suppressed) {
       const c = hexCenterP(hex[0], hex[1]);
       const line = this.hoverLine >= 0 ? this.hoverLine : 0;
       const txt = LINE_NAMES[line] ?? LINE_NAMES[0];

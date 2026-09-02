@@ -29,7 +29,9 @@ export interface AudioExtras {
 }
 
 export type AudioCue = 'windup' | 'perfect' | 'good' | 'miss' | 'block' | 'block_perfect' | 'stun' | 'down' | 'rally'
-  | 'relic_offer' | 'relic_take' | 'bounty_new' | 'bounty_done' | 'bounty_failed' | 'marks' | 'exp_start' | 'exp_won' | 'exp_lost' | 'foe_windup' | 'heal';
+  | 'relic_offer' | 'relic_take' | 'bounty_new' | 'bounty_done' | 'bounty_failed' | 'marks' | 'exp_start' | 'exp_won' | 'exp_lost' | 'foe_windup' | 'heal'
+  // opening cinematic stingers (see ui/cinematic.ts)
+  | 'open_whistle' | 'open_ticks' | 'open_ticks_stop' | 'open_tone1' | 'open_tone2' | 'open_tone3' | 'open_drone' | 'open_sting' | 'open_stop';
 
 export type NotifyKind = 'info' | 'warn' | 'good' | 'bad';
 

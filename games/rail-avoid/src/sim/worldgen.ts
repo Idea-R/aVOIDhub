@@ -175,7 +175,7 @@ export function generateWorld(seed: number): WorldGen {
   const rng = new Rng(seed ^ 0x9e3779b9);
   const tiles = genTerrain(seed);
   const midRow = Math.floor(MAP_H / 2);
-  const start: [number, number] = [1, midRow + rng.int(-2, 2)];
+  const start: [number, number] = [6, midRow + rng.int(-2, 2)];
   const terminus: [number, number] = [MAP_W - 2, midRow + rng.int(-3, 3)];
   // make sure start/terminus and their surroundings are passable
   for (const [c, r] of [start, terminus]) {
@@ -218,6 +218,13 @@ export function generateWorld(seed: number): WorldGen {
     }
     return out;
   };
+  // Lead-in: a short straight of old rail west of the depot so the train spawns fully on track
+  const leadIn: Array<[number, number]> = [];
+  for (let c = 1; c <= start[0]; c++) {
+    const t = tileAt(tiles, c, start[1])!;
+    if (t.terrain === 'mountain' || t.terrain === 'water') t.terrain = 'plains';
+    leadIn.push([c, start[1]]);
+  }
   // Crossroads hubs at each region boundary: the only places where all three lines meet
   const hubs: Array<[number, number]> = [];
   for (let reg = 0; reg < REGIONS - 1; reg++) hubs.push(passableAt((reg + 1) * REGION_W - 2, midRow + rng.int(-3, 3)));
@@ -246,6 +253,7 @@ export function generateWorld(seed: number): WorldGen {
     append(northern, buildLine(from, via(northBand), last ? ringNorth : hubs[reg], 1000 + reg * 10));
     append(southern, buildLine(from, via(southBand), last ? ringSouth : hubs[reg], 2000 + reg * 10));
   }
+  addLine(leadIn, 0);
   addLine(central, 0);
   addLine(northern, 1);
   addLine(southern, 2);

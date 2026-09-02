@@ -35,3 +35,13 @@ Goal: the pre-laid network becomes three main lines across the continent so ever
 3. **Readability**: each line has its own colour on the map and in the route panel; junction stops show the line names and the next settlement on each branch; hovering a branch highlights it.
 4. **Balance**: line-specific threat, bounty and salvage weights; the void front is shared so long cross-cuts are the risk.
 5. Verified by worldgen tests (three connected lines, crossovers per region), the harness, and a redeploy.
+
+
+---
+
+# Plan 4 — "Show, don't tell" (presentation)
+
+- [x] Scripted opening cinematic (five shots) with styled cards, sounds, Watch intro, reduced-motion variant.
+- [x] BRAND.md art direction and image-agent prompts.
+- [ ] Drop generated art into `public/art/**` and wire: event card illustrations, relic icons, region title cards, painted cutscene frames layered under the opening's cards, crew portraits in the picker and expedition scene.
+- [ ] Boss intro vignettes (2-3 painted panels) and a victory sequence at the Last Gate.

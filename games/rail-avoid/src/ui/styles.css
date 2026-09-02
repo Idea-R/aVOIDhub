@@ -254,6 +254,9 @@
 #ui .rv-title-menu .rv-btn.rv-primary.rv-big { background: linear-gradient(180deg, #f6dc9a 0%, #e8c170 45%, #cfa14e 100%); color: #1a1408; border-color: #f6dc9a; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 10px 30px rgba(232, 193, 112, 0.28); }
 #ui .rv-title-menu .rv-btn.rv-primary.rv-big:hover:not(:disabled) { color: #1a1408; filter: brightness(1.07); border-color: #fff2cf; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 14px 40px rgba(232, 193, 112, 0.5), 0 0 0 1px rgba(255, 240, 200, 0.5); }
 #ui .rv-title-menu .rv-btn.rv-primary.rv-big::before { background: linear-gradient(90deg, transparent, #1a1408, transparent); opacity: 0.45; }
+/* secondary menu entry (Watch intro): quiet, compact, no plate — keeps the stack short at 720p */
+#ui .rv-title-menu .rv-btn.rv-big.rv-secondary { padding: calc(6 * var(--u)) calc(16 * var(--u)); font-size: calc(11 * var(--u)); letter-spacing: 0.26em; background: transparent; border-color: transparent; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; color: var(--fg3); font-family: 'Special Elite', 'Courier New', monospace; }
+#ui .rv-title-menu .rv-btn.rv-big.rv-secondary:hover:not(:disabled) { color: var(--gold); border-color: transparent; box-shadow: none; background: rgba(232, 193, 112, 0.06); }
 #ui .rv-seed-row { display: flex; gap: 6px; align-items: center; }
 #ui .rv-seed-row input { flex: 1 1 auto; min-width: 0; font-family: ui-monospace, Consolas, monospace; letter-spacing: 0.06em; }
 #ui .rv-meta { margin-top: 14px; font-size: calc(11 * var(--u)); color: var(--fg3); letter-spacing: 0.12em; text-transform: uppercase; display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
@@ -747,6 +750,33 @@
 #ui .rv-cine-defeat .rv-cine-tag, #ui .rv-cine-defeat .rv-cine-sub { color: #7a8095; }
 #ui .rv-cine-defeat .rv-cine-rule { background: linear-gradient(90deg, transparent, #8a90a5, transparent); }
 #ui .rv-cine-region_enter .rv-cine-title { color: var(--fg); text-shadow: 0 0 30px rgba(111, 183, 232, 0.35), 0 4px 0 rgba(0, 0, 0, 0.6); }
+/* the scripted opening: deeper letterbox, click-anywhere skip, per-card treatments (see ui/cinematic.ts) */
+#ui .rv-cine-opening { pointer-events: auto; cursor: pointer; }
+#ui .rv-cine-opening .rv-cine-bar { height: 14%; }
+#ui .rv-cine-opening .rv-cine-skip { bottom: calc(14% + 14px); font-family: 'Special Elite', 'Courier New', monospace; letter-spacing: 0.14em; background: rgba(3, 4, 10, 0.55); border-color: rgba(138, 149, 187, 0.35); color: var(--fg2); }
+#ui .rv-cine-opening .rv-cine-skip:hover:not(:disabled) { color: var(--gold); border-color: rgba(232, 193, 112, 0.6); }
+#ui .rv-cine-bloom { position: absolute; inset: 0; opacity: 0; pointer-events: none; mix-blend-mode: screen; background: radial-gradient(ellipse at 50% 50%, rgba(255, 244, 214, 1), rgba(232, 193, 112, 0.75) 32%, rgba(109, 95, 214, 0.35) 68%, transparent 90%); }
+/* card 1: studio card, typewriter face in small caps with a faint gold rule */
+#ui .rv-cine-card.rv-op-studio::before { background: radial-gradient(ellipse at 50% 50%, rgba(3, 4, 10, 0.72), transparent 72%); }
+#ui .rv-op-studio .rv-cine-title { font-family: 'Special Elite', 'Courier New', monospace; font-weight: 400; font-size: clamp(22px, 3.4vw, 46px); letter-spacing: 0.3em; padding-left: 0.3em; text-transform: none; font-variant: small-caps; color: var(--fg); text-shadow: 0 0 26px rgba(232, 193, 112, 0.28), 0 2px 0 rgba(0, 0, 0, 0.6); }
+#ui .rv-op-studio .rv-cine-rule { width: min(22vw, 220px); margin: 12px auto; opacity: 0.6; }
+#ui .rv-op-studio .rv-cine-sub { font-family: 'Special Elite', 'Courier New', monospace; font-variant: normal; text-transform: lowercase; letter-spacing: 0.5em; padding-left: 0.5em; font-size: calc(13 * var(--u)); color: var(--fg3); }
+/* cards 2–4: lower third so the world stays visible; Cinzel title types on, Special Elite subtitle rises after */
+#ui .rv-cine-card.rv-op-lower { top: auto; bottom: calc(14% + 5vh); transform: none; padding: 18px 8vw 22px; }
+#ui .rv-cine-card.rv-op-lower::before { background: linear-gradient(180deg, transparent, rgba(3, 4, 10, 0.5) 28%, rgba(3, 4, 10, 0.72) 100%); }
+#ui .rv-op-lower .rv-cine-title { font-family: 'Cinzel', 'Times New Roman', serif; font-weight: 800; font-size: clamp(24px, 3.8vw, 58px); letter-spacing: 0.08em; padding-left: 0; text-transform: none; line-height: 1.12; min-height: 1.12em; color: var(--fg); text-shadow: 0 0 30px rgba(232, 193, 112, 0.35), 0 3px 0 rgba(0, 0, 0, 0.6); }
+#ui .rv-op-lower .rv-cine-title.rv-cine-typing::after { content: '▍'; margin-left: 0.06em; color: var(--gold); animation: rv-blink 0.5s steps(1) infinite; }
+#ui .rv-op-lower .rv-cine-rule { display: none; }
+#ui .rv-op-lower .rv-cine-sub { font-family: 'Special Elite', 'Courier New', monospace; font-variant: normal; text-transform: none; letter-spacing: 0.22em; padding-left: 0.22em; font-size: calc(14 * var(--u)); color: var(--fg2); margin-top: 8px; }
+#ui .rv-cine-swatches { display: flex; justify-content: center; gap: 24px; margin-top: 14px; }
+#ui .rv-cine-swatches i { display: block; width: 14px; height: 14px; border-radius: 3px; background: var(--c); opacity: 0.15; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15); transform-origin: 50% 50%; }
+#ui .rv-cine-swatches i.rv-lit { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35), 0 0 18px var(--c), 0 0 4px var(--c); }
+/* card 5: the title-screen wordmark treatment, scaled in from 1.15 under a bloom flash */
+#ui .rv-cine-card.rv-op-wordmark { padding: 40px 6vw; }
+#ui .rv-cine-card.rv-op-wordmark::before { background: radial-gradient(ellipse at 50% 50%, rgba(3, 4, 10, 0.78), rgba(3, 4, 10, 0.3) 55%, transparent 80%); }
+#ui .rv-cine-wm { display: flex; flex-direction: column; align-items: center; gap: 16px; will-change: transform, filter; transform-origin: 50% 50%; }
+#ui .rv-cine-wm .rv-wordmark { font-family: 'Cinzel', 'Times New Roman', serif; }
+#ui .rv-cine-tagline { font-family: 'Special Elite', 'Courier New', monospace; text-transform: none; font-size: calc(15 * var(--u)); }
 
 /* --- gamepad overlay (sits above the dock) --- */
 #ui .rv-gamepad { position: absolute; left: 50%; bottom: calc(var(--rv-dock-h) + 22px); transform: translateX(-50%); padding: 10px 16px; display: grid; grid-template-columns: repeat(2, auto); gap: 3px 18px; font-size: calc(11 * var(--u)); color: var(--fg2); }

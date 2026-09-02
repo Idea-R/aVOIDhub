@@ -297,9 +297,14 @@ export function junctionOptions(state: SimState): Array<{ col: number; row: numb
         if (st && !st.consumed && (!st.visited || st.type === 'yard')) { next = { id: st.id, name: st.name, type: st.type, distance: step }; break; }
       }
       let conts = neighbors(cur[0], cur[1]).filter(([c, r]) => !(c === from[0] && r === from[1]) && isRail(state, cur[0], cur[1], c, r));
-      // at a junction keep following the same line if exactly one continuation carries its id
-      if (conts.length > 1) conts = conts.filter(([c, r]) => (lines[edgeKey(cur[0], cur[1], c, r)] ?? -1) === line);
-      if (conts.length !== 1) break;
+      if (conts.length === 0) break;
+      if (conts.length > 1) {
+        // at a junction prefer continuations that carry this branch's line id, then the east-most one
+        const same = conts.filter(([c, r]) => (lines[edgeKey(cur[0], cur[1], c, r)] ?? -1) === line);
+        const pool = same.length ? same : conts;
+        pool.sort((p1, p2) => p2[0] - p1[0]);
+        conts = [pool[0]];
+      }
       from = cur; cur = conts[0];
     }
     out.push({ col: nc, row: nr, line, lineName: LINE_NAMES[line] ?? 'Line', next });

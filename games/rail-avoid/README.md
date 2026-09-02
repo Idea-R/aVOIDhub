@@ -19,6 +19,10 @@ Captured by `npm run verify` into `verify/screenshots/`:
 | `victory.png` / `defeat.png` | Results screens |
 | `resize_800x600.png` | Layout at a small viewport |
 
+## Art direction
+
+See `BRAND.md` for the palette, typography, visual language, asset specs and ready-to-paste image-generation prompts used for cutscene frames, event cards, relic icons and key art. The scripted opening plays on a profile's first run and can be replayed from the title menu (Watch intro).
+
 ## The map
 
 Three main lines cross the continent: the Central Line (balanced), the Northern Line (mines and armouries, dangerous) and the Southern Line (villages and farms, calmer). Pre-laid crossovers connect them once or twice per region; anywhere else you can cut your own track between lines for rails and time. Junction stops show each branch's line and next settlement.

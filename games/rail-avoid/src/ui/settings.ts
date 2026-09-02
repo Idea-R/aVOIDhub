@@ -79,6 +79,16 @@ export function createSettings(ui: UiShared): HTMLElement {
     return { wrap, refresh: (s: Settings) => { sel.value = String(s[key]); } };
   };
   const heading = (text: string) => ({ wrap: el('h3', { class: 'rv-settings-h', text }), refresh: () => { /* static */ } });
+  /** Checkbox bound to meta progress rather than Settings (checked = the scripted opening plays on the next new run). */
+  const introCheck = (label: string) => {
+    const input = el('input', { type: 'checkbox', 'aria-label': label });
+    input.addEventListener('change', () => {
+      ui.audio().ui('click');
+      store.setMeta({ introSeen: !input.checked });
+    });
+    const wrap = el('div', { class: 'rv-setting rv-check' }, el('label', { text: label }), input);
+    return { wrap, refresh: () => { input.checked = !store.meta().introSeen; } };
+  };
 
   const controls = [
     heading('Audio'),
@@ -91,6 +101,7 @@ export function createSettings(ui: UiShared): HTMLElement {
     check('showTutorial', 'Show tutorial'),
     check('autoFollowRail', 'Auto-follow rail lines'),
     check('showSeedField', 'Show seed field on title'),
+    introCheck('Play the opening on the next new run'),
     heading('Accessibility & display'),
     check('reducedMotion', 'Reduced motion'),
     check('screenShake', 'Screen shake'),

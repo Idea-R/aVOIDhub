@@ -79,11 +79,14 @@ export function createUI(ctx: AppContext): UiApi {
     return map[step] ?? { el: a.status, side: 'below' };
   }, () => layout.freeZone());
   const cine = createCinematic(ui, {
-    hideHud: () => { hud.hide(); tutorial.el.classList.add('rv-hud-off'); },
-    showHud: () => { tutorial.el.classList.remove('rv-hud-off'); if (ui.runActive()) hud.enter(); },
+    hideHud: () => { hud.hide(); tutorial.el.classList.add('rv-hud-off'); announcer.hold(true); },
+    showHud: () => { tutorial.el.classList.remove('rv-hud-off'); announcer.hold(false); if (ui.runActive()) hud.enter(); },
+    moodReset: () => mood.reset(),
   });
   const title = createTitle(ui, {
     newRun: (seed) => { ctx.newRun(seed); },
+    // "Watch intro": a fresh run that plays the scripted opening (main.ts checks meta.introSeen on run:start)
+    watchIntro: (seed) => { ctx.settings.setMeta({ introSeen: false }); ctx.newRun(seed); },
     continueRun: () => { if (!ctx.continueRun()) ui.notify('No save found.', 'warn'); },
     howto: () => ui.open('howto'),
     settings: () => ui.open('settings'),

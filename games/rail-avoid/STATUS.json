@@ -1,7 +1,7 @@
 {
   "project": "RAILaVOID",
   "version": "1.0.0",
-  "updated": "2026-09-02T14:40:00Z",
+  "updated": "2026-09-02T16:30:00Z",
   "gates": {
     "build": "pass",
     "typecheck": "pass (0 errors)",
@@ -60,7 +60,9 @@
     "relics": 18,
     "bounties": "kill / deliver / reach bounties posted by settlements (max 2 active), rewards in Void Marks + rails/scrap",
     "expeditions": "timed-hit turn-based crew scenes at 8 Expedition Sites; 4 on-foot foe types; 7 crew specials; void creeps 8 s per round",
-    "loot": "salvage drops (scrap/ammo/rails), elites from region 2 with relic choice + Void Marks"
+    "loot": "salvage drops (scrap/ammo/rails), elites from region 2 with relic choice + Void Marks",
+    "opening": "five-shot scripted opening (~24 s, skippable, reduced-motion variant) on a profile's first run and from the title menu",
+    "brand": "BRAND.md: palette, Cinzel/Special Elite, ink-and-wash transit-poster direction, asset specs, image-agent prompts"
   },
   "screenshots": [
     "verify/screenshots/title.png",
@@ -80,7 +82,8 @@
     "The combat track (Boarding Party) is a 44 s take and loops audibly; the longer second take is in the Suno workspace.",
     "Headless SwiftShader verification measures 10-18 fps; real numbers come from `npm run perf:headed`.",
     "A bee-line run finishes in ~15 minutes at the new pace; exploring branches, yards and nodes stretches it to 25+.",
-    "Event cards have no illustrations yet; expedition foes are silhouettes (procedural)."
+    "Event cards have no illustrations yet; expedition foes are silhouettes (procedural).",
+    "Art assets (key art, event cards, relic icons, cutscene frames) still procedural; BRAND.md prompts are ready for the image agent."
   ],
   "nextWeakestArea": "Human playtest of line choice (are Northern rewards worth the threat?), expedition depth, illustrated relic/event art"
 }

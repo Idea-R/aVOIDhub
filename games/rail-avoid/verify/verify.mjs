@@ -298,6 +298,7 @@ async function main() {
     });
     const context = await browser.newContext({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
     page = await context.newPage();
+    await page.addInitScript(() => { window.__RAIL_SKIP_OPENING = true; }); // the 24 s scripted opening is verified separately
   } catch (e) {
     report.gates.push({ name: 'browser', pass: false, details: 'chromium launch failed: ' + (e && e.message) + ' (try: npx playwright install chromium)', screenshot: null, ms: 0 });
     return;

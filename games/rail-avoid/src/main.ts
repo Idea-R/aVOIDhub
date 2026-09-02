@@ -98,19 +98,24 @@ window.addEventListener('keydown', unlock);
 
 // ---- cinematics: the sim is frozen while a camera sequence plays (skippable via the UI)
 let cinematicActive = false;
-function cinematic(name: 'run_intro' | 'region_enter' | 'boss_intro' | 'victory' | 'defeat', data?: { title?: string; subtitle?: string; x?: number; y?: number }): void {
+function cinematic(name: 'opening' | 'run_intro' | 'region_enter' | 'boss_intro' | 'victory' | 'defeat', data?: { title?: string; subtitle?: string; x?: number; y?: number }): void {
   if (demoMode || !ctx.view || settings.get().reducedMotion) return;
   if (cinematicActive) return;
   cinematicActive = true;
   let done = false;
   const finish = () => { if (!done) { done = true; cinematicActive = false; } };
   ctx.view.playCinematic(name, data).then(finish, finish);
-  window.setTimeout(finish, 9000); // hard safety cap
+  window.setTimeout(finish, name === 'opening' ? 40000 : 9000); // hard safety cap
 }
 bus.on('run:start', ({ seed }) => {
   const region = ctx.sim.state.region;
-  window.setTimeout(() => cinematic('run_intro', { title: 'RAILaVOID', subtitle: `${REGION_NAMES[region]} · Seed ${seed}` }), 60);
+  // the first run of a profile gets the full scripted opening; later runs the short run intro (the title menu can replay the opening)
+  const first = !settings.meta().introSeen && !(window as any).__RAIL_SKIP_OPENING;
+  if (first) settings.setMeta({ introSeen: true });
+  window.setTimeout(() => cinematic(first ? 'opening' : 'run_intro', { title: 'RAILaVOID', subtitle: `${REGION_NAMES[region]} · Seed ${seed}` }), 60);
 });
+// UI can request the opening on demand (title menu "Watch intro") — it plays on the live run
+(window as any).__RAIL_PLAY_OPENING = () => { const s = ctx.sim.state; if (!demoMode && (s.phase === 'running' || s.phase === 'paused')) cinematic('opening', { title: 'RAILaVOID' }); };
 bus.on('region:enter', ({ name, region }) => { if (region > 0) cinematic('region_enter', { title: name.toUpperCase(), subtitle: `Region ${region + 1} of 4` }); });
 bus.on('boss:spawn', ({ type, name }) => {
   const e = ctx.sim.state.enemies.find(en => en.type === type);

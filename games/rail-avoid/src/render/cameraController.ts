@@ -65,6 +65,21 @@ export class CameraController {
     this.cam.setBounds(b.x0 - m, b.y0 - m, (b.x1 - b.x0) + m * 2, (b.y1 - b.y0) + m * 2);
   }
 
+  /**
+   * Where the camera centre ends up when asked to centre on (x, y) at `zoom` with the world bounds
+   * applied (Phaser clamps the scroll in preRender; when the view is wider than the bounds it centres).
+   * Cinematics aim their final move here so the hand-over to follow mode does not jump.
+   */
+  restCenter(x: number, y: number, zoom: number): { x: number; y: number } {
+    const b = this.bounds, m = this.margin;
+    const bx = b.x0 - m, by = b.y0 - m, bw = (b.x1 - b.x0) + m * 2, bh = (b.y1 - b.y0) + m * 2;
+    const z = Math.max(0.05, zoom || 1);
+    const hw = this.cam.width / 2 / z, hh = this.cam.height / 2 / z;
+    const cx = hw * 2 >= bw ? bx + bw / 2 : clamp(x, bx + hw, bx + bw - hw);
+    const cy = hh * 2 >= bh ? by + bh / 2 : clamp(y, by + hh, by + bh - hh);
+    return { x: cx, y: cy };
+  }
+
   getZoom(): number { return this.cam.zoom; }
 
   setZoom(z: number, aroundX?: number, aroundY?: number): void {

@@ -82,6 +82,9 @@ export class GameScene extends Phaser.Scene {
   private expT = 0;
   private expDrift = 0;
   private expBase: { zoom: number; following: boolean } | null = null;
+  // cinematics can force the night look (lanterns, tower sweeps, headlight); snaps up, decays out
+  private nightBoostTarget = 0;
+  private nightBoost = 0;
 
   // state tracking
   private lastSim: unknown = null;
@@ -172,6 +175,13 @@ export class GameScene extends Phaser.Scene {
       reducedMotion: () => this.settings.reducedMotion,
       shake: p => this.shake(p),
       setFollowing: on => { this.cameraCtl.following = on; },
+      state: () => this.currentState(),
+      fx: () => this.fx,
+      snapToLoco: () => { const l = this.locoWorld(); if (l) this.cameraCtl.follow(l.x, l.y * ISO_Y, 0, true); },
+      setCameraBounds: on => { if (on) this.cameraCtl.applyBounds(); else this.cameras.main.removeBounds(); },
+      setNightBoost: v => { this.nightBoostTarget = clamp(Number.isFinite(v) ? v : 0, 0, 1); },
+      setLineHighlight: hex => { this.lines.forcedHover = hex; },
+      restCenter: (x, y, zoom) => this.cameraCtl.restCenter(x, y, zoom),
     });
     this.applyPostFx();
     this.overlay.setGrain(this.settings.quality === 'high' && this.settings.glow);
@@ -743,6 +753,15 @@ export class GameScene extends Phaser.Scene {
     const zoom = this.cameras.main.zoom;
     const rm = this.settings.reducedMotion;
     const tSec = time / 1000;
+    // cinematics: no junction signage / line chip while any plays; no countdown arcs during the opening
+    const cinePlaying = this.cine.isPlaying();
+    this.lines.suppressed = cinePlaying;
+    this.settlements.hideArcs = cinePlaying && this.cine.current() === 'opening';
+    // forced night look (cinematics): snaps on quickly, fades back to the real time of day
+    const nbT = cinePlaying ? this.nightBoostTarget : 0;
+    this.nightBoost += (nbT - this.nightBoost) * expFactor(nbT > this.nightBoost ? 16 : 2.2, dt);
+    if (Math.abs(nbT - this.nightBoost) < 0.003) this.nightBoost = nbT;
+    const night = Math.max(this.overlay.night, this.nightBoost);
 
     // pointer hover / cursor: once per frame when the pointer moved, else every 100 ms (or on drag change)
     if (this.pointerDirty || time - this.lastHoverRefresh > HOVER_REFRESH_MS || this.cameraCtl.isDragging !== this.lastDragging) {
@@ -761,11 +780,11 @@ export class GameScene extends Phaser.Scene {
     try { this.track.update(state, tSec, rm, zoom); } catch (e) { this.warnOnce('track', e); }
     try { this.plannable.update(state, sim, time, this.cameraCtl.pointerOver, zoom, rm); } catch (e) { this.warnOnce('plannable', e); }
     try { this.lines.update(state, sim, time, rm, zoom, this.cameraCtl.pointerOver ? this.plannable.hovered : null, dt); } catch (e) { this.warnOnce('lines', e); }
-    try { this.settlements.update(state, time, zoom, rm, this.overlay.night, view, loco, dt); } catch (e) { this.warnOnce('settlements', e); }
+    try { this.settlements.update(state, time, zoom, rm, night, view, loco, dt); } catch (e) { this.warnOnce('settlements', e); }
     try { this.enemies.update(state, dt, time, loco); } catch (e) { this.warnOnce('enemies', e); }
     if (this.selectedCar >= (state.train?.cars?.length ?? 0)) this.selectedCar = -1;
     if (this.hoverCar >= (state.train?.cars?.length ?? 0)) this.hoverCar = -1;
-    try { this.train.update(state, dt, time, this.selectedCar, this.overlay.night, zoom, this.enemies.positions, this.hoverCar); } catch (e) { this.warnOnce('train', e); }
+    try { this.train.update(state, dt, time, this.selectedCar, night, zoom, this.enemies.positions, this.hoverCar); } catch (e) { this.warnOnce('train', e); }
     try { this.projectiles.update(state, dt); } catch (e) { this.warnOnce('projectiles', e); }
     try { this.loot.update(state, dt, time); } catch (e) { this.warnOnce('loot', e); }
     try { this.fx.update(dt, time); if (state.phase !== 'title' || true) this.fx.ambient(state.region | 0, view, dt); } catch (e) { this.warnOnce('fx', e); }
@@ -819,7 +838,11 @@ export class GameScene extends Phaser.Scene {
     const b = this.terrain.bounds;
     this.cameraCtl.setBounds(b.x0, b.y0, b.x1, b.y1);
     this.track.setBounds(b.x0, b.y0, b.x1, b.y1);
-    if (this.cine.isPlaying()) this.cine.skip();
+    // a cinematic built for this very state (the fresh run's opening, started before our first frame) keeps playing
+    const keepCine = this.cine.isPlaying() && this.cine.isForState(state);
+    if (this.cine.isPlaying() && !keepCine) this.cine.skip();
+    if (keepCine) this.cine.onWorldRebuilt();
+    else { this.nightBoostTarget = 0; this.nightBoost = 0; this.lines.forcedHover = null; }
     this.cameraCtl.following = true;
     this.plannable.cursor = null;
     this.plannable.cursorVisible = false;

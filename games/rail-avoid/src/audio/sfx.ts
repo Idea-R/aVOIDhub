@@ -4,6 +4,8 @@ import type { EnemyType, WeaponKind } from '../core/types';
 
 export class Sfx {
   private limiter = new RateLimiter();
+  /** Long opening-cinematic beds (rail-tick loop, crossroads drone) routed through their own gains so a skip can fade them. */
+  private openBeds: Record<string, GainNode> = {};
   /** `uiDest` (optional) carries interface blips and notifications so they can be mixed separately from world SFX. */
   constructor(private ctx: AudioContext, private dest: AudioNode, private white: AudioBuffer, private pink: AudioBuffer, private uiDest: AudioNode = dest) {}
 
@@ -330,6 +332,90 @@ export class Sfx {
         if (!this.ok('cue:marks', 0.15)) return;
         tone(c, u, { type: 'sine', freq: 1568, dur: 0.12, gain: 0.05 }); tone(c, u, { type: 'sine', freq: 2093, dur: 0.2, gain: 0.04, when: t + 0.07 });
         break;
+      // ---------- opening cinematic ----------
+      case 'open_whistle': {
+        // a whistle from far down the line: darker, quieter, with a late echo
+        if (!this.ok('cue:open_whistle', 2)) return;
+        for (const [i, f] of [622.25, 783.99, 932.33].entries()) {
+          tone(c, d, { type: 'triangle', freq: f * 0.96, endFreq: f, dur: 2.2, gain: 0.03 - i * 0.004, attack: 0.35, slide: 0.5, filter: { type: 'lowpass', freq: 1500 } });
+          tone(c, d, { type: 'triangle', freq: f * 0.98, endFreq: f * 0.99, dur: 1.6, gain: 0.012, attack: 0.3, when: t + 0.55, filter: { type: 'lowpass', freq: 900 } });
+        }
+        noise(c, d, this.pink, { dur: 2.4, gain: 0.03, attack: 0.5, filter: { type: 'bandpass', freq: 1200, q: 1.2 } });
+        break;
+      }
+      case 'open_ticks': {
+        // soft rail joints under a rolling train: clack-clack pairs for ~7 s, fading out on their own
+        this.stopBed('ticks', 0.2);
+        const g = this.bed('ticks', 0.9);
+        g.gain.setTargetAtTime(0.0001, t + 5.6, 0.5);
+        const period = 0.58;
+        for (let i = 0; i < 12; i++) {
+          const at = t + 0.2 + i * period;
+          for (const off of [0, 0.11]) {
+            noise(c, g, this.white, { dur: 0.05, gain: 0.09, when: at + off, filter: { type: 'bandpass', freq: 1900 + off * 3000, q: 1.6 } });
+            tone(c, g, { type: 'triangle', freq: 140, endFreq: 70, dur: 0.07, gain: 0.05, when: at + off });
+          }
+        }
+        noise(c, g, this.pink, { dur: 7, gain: 0.04, attack: 0.8, filter: { type: 'lowpass', freq: 220 } });
+        break;
+      }
+      case 'open_ticks_stop': this.stopBed('ticks', 0.4); break;
+      case 'open_tone1': case 'open_tone2': case 'open_tone3': {
+        const idx = Number(name.slice(-1)) - 1;
+        const f = [523.25, 659.25, 783.99][idx] ?? 523.25;
+        tone(c, d, { type: 'sine', freq: f, dur: 0.9, gain: 0.08, attack: 0.01 });
+        tone(c, d, { type: 'triangle', freq: f * 2, dur: 0.6, gain: 0.025, attack: 0.01 });
+        tone(c, d, { type: 'sine', freq: f / 2, dur: 1.1, gain: 0.04, attack: 0.02 });
+        break;
+      }
+      case 'open_drone': {
+        // the Crossroads: a low, slightly detuned drone with a slow filter opening and a distant bell
+        this.stopBed('drone', 0.3);
+        const g = this.bed('drone', 1);
+        g.gain.setTargetAtTime(0.0001, t + 5.2, 0.6);
+        tone(c, g, { type: 'sawtooth', freq: 43.65, dur: 6.5, gain: 0.16, attack: 1.4, filter: { type: 'lowpass', freq: 120, endFreq: 520, slide: 4.5 } });
+        tone(c, g, { type: 'sawtooth', freq: 44.1, dur: 6.5, gain: 0.13, attack: 1.4, filter: { type: 'lowpass', freq: 120, endFreq: 520, slide: 4.5 } });
+        tone(c, g, { type: 'sine', freq: 32.7, dur: 6.5, gain: 0.26, attack: 1 });
+        tone(c, g, { type: 'sine', freq: 392, dur: 2.6, gain: 0.035, attack: 0.01, when: t + 1.6 });
+        tone(c, g, { type: 'sine', freq: 587.33, dur: 2.2, gain: 0.02, attack: 0.01, when: t + 1.62 });
+        break;
+      }
+      case 'open_sting': {
+        // the wordmark lands: a low impact, a shimmer, and a rising D-minor stack that hands over to the title music
+        this.stopBed('drone', 0.25); this.stopBed('ticks', 0.25);
+        tone(c, d, { type: 'sine', freq: 90, endFreq: 30, dur: 1.1, gain: 0.5, slide: 0.5 });
+        noise(c, d, this.pink, { dur: 0.9, gain: 0.3, filter: { type: 'lowpass', freq: 1800, endFreq: 120 } });
+        noise(c, d, this.white, { dur: 1.6, gain: 0.08, attack: 0.02, filter: { type: 'highpass', freq: 5000 } });
+        [293.66, 349.23, 440, 587.33, 880].forEach((f, i) => {
+          tone(c, d, { type: 'triangle', freq: f, dur: 2.6, gain: 0.09, attack: 0.02, when: t + 0.12 + i * 0.09 });
+          tone(c, d, { type: 'sine', freq: f * 2, dur: 1.8, gain: 0.025, attack: 0.02, when: t + 0.12 + i * 0.09 });
+        });
+        tone(c, d, { type: 'sawtooth', freq: 146.83, dur: 3.8, gain: 0.11, attack: 0.4, when: t + 0.5, filter: { type: 'lowpass', freq: 700 } });
+        tone(c, d, { type: 'sawtooth', freq: 220, dur: 3.8, gain: 0.07, attack: 0.5, when: t + 0.5, filter: { type: 'lowpass', freq: 700 } });
+        break;
+      }
+      case 'open_stop': this.stopBed('ticks', 0.3); this.stopBed('drone', 0.3); break;
     }
+  }
+
+  /** Create (or replace) a named bed gain for the opening cinematic. */
+  private bed(key: string, gain: number): GainNode {
+    const g = this.ctx.createGain();
+    g.gain.value = gain;
+    g.connect(this.dest);
+    this.openBeds[key] = g;
+    return g;
+  }
+  private stopBed(key: string, fade: number): void {
+    const g = this.openBeds[key];
+    if (!g) return;
+    delete this.openBeds[key];
+    const t = this.now;
+    try {
+      g.gain.cancelScheduledValues(t);
+      g.gain.setValueAtTime(g.gain.value, t);
+      g.gain.linearRampToValueAtTime(0.0001, t + fade);
+    } catch { /* */ }
+    window.setTimeout(() => { try { g.disconnect(); } catch { /* */ } }, fade * 1000 + 100);
   }
 }

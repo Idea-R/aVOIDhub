@@ -10,6 +10,8 @@ gsap.registerPlugin(MotionPathPlugin);
 
 export interface TitleActions {
   newRun(seed?: number): void;
+  /** New run that plays the scripted opening cinematic first. */
+  watchIntro(seed?: number): void;
   continueRun(): void;
   howto(): void;
   settings(): void;
@@ -70,6 +72,7 @@ export function createTitle(ui: UiShared, actions: TitleActions): TitleScreen {
     seedRow,
     continueBtn,
     btn('How to Play', () => { ui.audio().ui('open'); actions.howto(); }, { class: 'rv-big', aria: 'How to play' }),
+    btn('Watch intro', () => depart(() => actions.watchIntro(parseSeed(seedInput.value))), { class: 'rv-big rv-secondary', aria: 'Watch the opening and start a new run' }),
     btn('Settings', () => { ui.audio().ui('open'); actions.settings(); }, { class: 'rv-big', aria: 'Open settings' }),
   );
   const hint = el('div', { class: 'rv-hint', text: 'Space pause · 1/2 speed · click hexes to plan track · R reverse · Tab train · Esc menu · H help' });
