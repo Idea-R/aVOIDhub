@@ -35,8 +35,12 @@ export class CameraController {
     input.on('pointerup', this.onUp, this);
     input.on('pointerupoutside', this.onUp, this);
     input.on('wheel', this.onWheel, this);
-    input.on('gameout', () => { this.pointerOver = false; this.down = false; this.dragging = false; this.cb.onLeave(); });
-    input.on('gameover', () => { this.pointerOver = true; });
+    input.on('gameout', this.onGameOut, this);
+    input.on('gameover', this.onGameOver, this);
+    // Phaser's disableContextMenu flag is not consistently honoured by every embed/browser.
+    // Own the gesture at the canvas boundary so right-drag always belongs to the game while
+    // right-click remains available on the surrounding HUD and host page.
+    this.scene.game.canvas.addEventListener('contextmenu', this.onContextMenu);
     if (input.addPointer) { try { input.addPointer(1); } catch { /* ignore */ } }
   }
 
@@ -54,6 +58,9 @@ export class CameraController {
     input.off('pointerup', this.onUp, this);
     input.off('pointerupoutside', this.onUp, this);
     input.off('wheel', this.onWheel, this);
+    input.off('gameout', this.onGameOut, this);
+    input.off('gameover', this.onGameOver, this);
+    this.scene.game.canvas.removeEventListener('contextmenu', this.onContextMenu);
   }
 
   setBounds(x0: number, y0: number, x1: number, y1: number): void {
@@ -151,6 +158,7 @@ export class CameraController {
     this.button = p.button ?? 0;
     this.downX = p.x; this.downY = p.y; this.lastX = p.x; this.lastY = p.y;
     if (this.button === 1 || this.button === 2 || p.rightButtonDown() || p.middleButtonDown()) {
+      p.event?.preventDefault();
       this.dragging = true;
       this.following = false;
     }
@@ -207,5 +215,20 @@ export class CameraController {
     if (!Number.isFinite(dy) || dy === 0) return;
     const factor = Math.exp(-dy * 0.0012);
     this.zoomBy(factor, p.x, p.y);
+  }
+
+  private onContextMenu = (event: MouseEvent): void => {
+    event.preventDefault();
+  };
+
+  private onGameOut(): void {
+    this.pointerOver = false;
+    this.down = false;
+    this.dragging = false;
+    this.cb.onLeave();
+  }
+
+  private onGameOver(): void {
+    this.pointerOver = true;
   }
 }
