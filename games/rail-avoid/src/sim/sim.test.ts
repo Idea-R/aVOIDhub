@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { EventBus } from '../core/events';
 import { createSim } from './sim';
 import { TEST_SEED } from '../core/config';
+import { CAR_DEFS } from '../core/cars';
 
 function run(seed: number, seconds: number, plan = true) {
   const bus = new EventBus();
@@ -180,5 +181,27 @@ describe('junctions', () => {
     for (const o of opts) expect(typeof o.lineName).toBe('string');
     expect(sim.planTile(opts[0].col, opts[0].row).ok).toBe(true);
     expect(sim.state.train.stopped).toBe(false);
+  });
+});
+
+describe('player-legibility safeguards', () => {
+  it('keeps an ammo-free short-range defense on the locomotive', () => {
+    const weapon = CAR_DEFS.locomotive.weapon;
+    expect(weapon).not.toBeNull();
+    expect(weapon?.ammoPerShot).toBe(0);
+    expect(weapon?.range).toBeLessThanOrEqual(120);
+    expect(weapon?.damage).toBeGreaterThan(0);
+  });
+
+  it('can plan toward a settlement instead of requiring adjacent hex clicks', () => {
+    const sim = createSim(TEST_SEED, new EventBus());
+    const end = sim.state.route.path.at(-1)!;
+    const target = sim.state.settlements
+      .filter(s => !s.visited && !s.consumed && s.col > end[0])
+      .sort((a, b) => Math.hypot(a.col - end[0], a.row - end[1]) - Math.hypot(b.col - end[0], b.row - end[1]))[0];
+    expect(target).toBeTruthy();
+    const before = sim.state.route.path.length;
+    expect(sim.planPathTo(target.col, target.row).ok).toBe(true);
+    expect(sim.state.route.path.length).toBeGreaterThan(before);
   });
 });

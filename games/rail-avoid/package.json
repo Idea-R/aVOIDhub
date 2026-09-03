@@ -15,6 +15,7 @@
     "check:standalone": "node verify/standalone-check.mjs",
     "verify:hud": "node verify/hud-sprint-check.mjs",
     "verify:inspector": "node verify/inspector-pan-check.mjs",
+    "verify:usability": "node verify/usability-check.mjs",
     "perf:headed": "node verify/perf-headed.mjs"
   },
   "dependencies": {

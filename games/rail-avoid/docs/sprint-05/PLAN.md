@@ -68,6 +68,7 @@ Work:
 - Replace opaque enemy sequencing with a visible intent queue for the remainder of the round.
 - Give actions explicit damage, target, timing pattern, cooldown and status previews.
 - Add a shared **Tempo** meter: Good and Perfect execution builds Tempo; advanced abilities spend it. Misses never erase an entire turn.
+- Define the major-boss handoff: an authored avatar approaches on the world map, telegraphs engagement range, and transitions into this combat layer. Existing roaming elites remain in world combat.
 - Use four shared conditions: Guarded, Exposed, Stunned and Burning.
 - Replace the nondeterministic-feeling Bribe result with a known contract: spend scrap to force a non-boss foe to withdraw or to Expose a boss.
 - Keep the Void pressure cost, but show the exact travel margin before the player commits to another round.
@@ -142,6 +143,7 @@ Ship the first complete authored set:
   - Ash Steppe — **The Ash Cantor:** alternates silence and a delayed area chant; position and Tempo management matter.
   - Void Frontier — **The Gate Warden:** changes intent after half HP and mirrors the last specialty used against it.
 - Seven specialty ability glyphs and four shared condition glyphs. These remain clean interface symbols rather than miniature paintings.
+- A major-boss encounter shell using the Iron Wagon as the first test: world avatar, approach telegraph, pre-fight readiness state and deterministic transition into battle. Full boss roster content may follow after the shell is verified.
 
 Exit gate:
 

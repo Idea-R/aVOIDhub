@@ -8,7 +8,7 @@ import type { AppContext } from '../app';
 import type { SimState, Tile, EnemyType } from '../core/types';
 import type { GameEvents } from '../core/events';
 import { ISO_Y, MAP_W, MAP_H } from '../core/config';
-import { unproject, worldToHex, inBounds, hexToWorld } from '../core/hex';
+import { unproject, worldToHex, inBounds, hexToWorld, neighbors, hexDistance } from '../core/hex';
 import { ENEMY_DEFS } from '../core/enemies';
 import { generateAllTextures } from './textures';
 import { LAYER_DEPTH, settingsForQuality, type RenderSettings, type QualityLevel } from './settings';
@@ -535,6 +535,7 @@ export class GameScene extends Phaser.Scene {
     const sid = this.settlements.hitTest(wp.x, wp.y, 16 / cam.zoom);
     if (sid) {
       try { bus.emit('ui:selectSettlement', { id: sid }); } catch { /* ignore */ }
+      this.planToSettlement(sid);
       return;
     }
     // 4) tile planning
@@ -549,10 +550,36 @@ export class GameScene extends Phaser.Scene {
     const tile: Tile | null = sim.tileAt(col, row);
     if (!tile) return;
     try {
-      if (this.plannable.isPlannable(col, row)) { sim.planTile(col, row); return; }
+      // Ask the simulation, not the last rendered planning overlay. This avoids a stale
+      // one-frame hit reporting "not adjacent" after the route has just advanced.
+      if (sim.previewPlan(col, row).ok) { sim.planTile(col, row); return; }
       if (tile.void || tile.terrain === 'mountain') return;
       sim.planPathTo(col, row);
     } catch (e) { console.warn('[render] plan failed', e); }
+  }
+
+  /** Clicking a settlement means "route me there". If its occupied hex is not usable,
+   * choose the nearest safe neighbouring approach instead of turning the marker into a dead click. */
+  private planToSettlement(id: string): void {
+    const state = this.currentState();
+    const sim = this.ctx.sim;
+    const st = state?.settlements.find(s => s.id === id);
+    if (!state || !sim || !st || st.consumed) return;
+    const end = this.planEnd();
+    const around = neighbors(st.col, st.row)
+      .filter(([c, r]) => {
+        const t = sim.tileAt(c, r);
+        return !!t && !t.void && t.terrain !== 'mountain';
+      })
+      .sort((a, b) => end ? hexDistance(end[0], end[1], a[0], a[1]) - hexDistance(end[0], end[1], b[0], b[1]) : 0);
+    const targets: Array<[number, number]> = [[st.col, st.row], ...around];
+    for (const [c, r] of targets) {
+      try {
+        const result = sim.planPathTo(c, r);
+        if (result.ok) return;
+      } catch { /* try the next approach */ }
+    }
+    try { this.ctx.bus.emit('ui:notify', { text: `No affordable approach to ${st.name}`, kind: 'warn' }); } catch { /* ignore */ }
   }
 
   private handleHover(sx: number, sy: number): void {

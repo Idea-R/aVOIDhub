@@ -80,6 +80,17 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   gen(scene, 'streak', 2, 14, d => d.fill(0xffffff, 0.9).rrect(0, 0, 2, 14, 1));
   gen(scene, 'flake', 5, 5, d => d.fill(0xffffff).circle(2.5, 2.5, 2).fill(0xffffff, 0.6).circle(1.5, 3.5, 1.5));
   gen(scene, 'fog', 160, 160, d => d.soft(80, 80, 80, 0xffffff, 1, 16));
+  // A deliberately asymmetric bank with transparent gaps. WeatherLayer scatters these
+  // across the screen so fog reads as passing cloud, not a grey full-map filter.
+  gen(scene, 'fog_cloud', 240, 112, d => {
+    d.soft(48, 68, 42, 0xffffff, 0.82, 16)
+      .soft(91, 47, 55, 0xffffff, 0.94, 18)
+      .soft(142, 56, 48, 0xffffff, 0.9, 17)
+      .soft(187, 70, 37, 0xffffff, 0.76, 15)
+      .soft(116, 78, 67, 0xffffff, 0.7, 18)
+      .fill(0xffffff, 0.78).ellipse(116, 76, 170, 38)
+      .circle(62, 66, 25).circle(101, 52, 34).circle(143, 60, 29).circle(181, 70, 21);
+  });
   gen(scene, 'ring', 32, 32, d => d.line(3, 0xffffff).scircle(16, 16, 13));
   gen(scene, 'ring_thin', 40, 40, d => d.line(1.5, 0xffffff).scircle(20, 20, 18));
   gen(scene, 'shadow', 40, 20, d => d.fill(0x000000, 0.35).ellipse(20, 10, 40, 20).fill(0x000000, 0.35).ellipse(20, 10, 28, 14));

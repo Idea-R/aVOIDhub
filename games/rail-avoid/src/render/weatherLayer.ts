@@ -1,5 +1,5 @@
 /**
- * Screen-space weather: rain streaks, fog blobs, storm flashes, ashfall flakes.
+ * Screen-space weather: rain streaks, fog banks, storm flashes, ashfall flakes.
  * Everything here lives in the scene's screen-space Container (GameScene.screenRoot), which is
  * counter-transformed every frame so 1 unit == 1 screen px regardless of camera zoom/rotation.
  */
@@ -44,10 +44,15 @@ export class WeatherLayer {
       frequency: 60, quantity: 2, emitting: false, maxAliveParticles: 500,
     });
     layer.add(this.rain); layer.add(this.ash);
-    for (let i = 0; i < 12; i++) {
-      const img = scene.add.image(Math.random() * this.w, Math.random() * this.h, 'fog');
-      img.setAlpha(0).setTint(0xb8c4d8).setScale(2 + Math.random() * 2.5).setBlendMode(Phaser.BlendModes.SCREEN);
-      img.setData('vx', 6 + Math.random() * 10).setData('vy', (Math.random() - 0.5) * 4);
+    // Sparse authored cloud silhouettes leave visible lanes of clear map between banks.
+    for (let i = 0; i < 11; i++) {
+      const img = scene.add.image(Math.random() * this.w, Math.random() * this.h, 'fog_cloud');
+      const sx = 0.68 + Math.random() * 0.62;
+      img.setAlpha(0).setTint(0xe8edf2).setScale(sx, sx * (0.7 + Math.random() * 0.18)).setBlendMode(Phaser.BlendModes.NORMAL);
+      img.setData('vx', 11 + Math.random() * 15)
+        .setData('vy', (Math.random() - 0.5) * 2)
+        .setData('alpha', 0.32 + Math.random() * 0.13)
+        .setData('phase', Math.random() * Math.PI * 2);
       layer.add(img);
       this.fog.push(img);
     }
@@ -105,14 +110,16 @@ export class WeatherLayer {
     }
     // fog
     const fogI = on && kind === 'fog' ? intensity : (on && kind === 'ashfall' ? intensity * 0.35 : 0);
-    for (const f of this.fog) {
-      const target = fogI * 0.16;
+    for (let i = 0; i < this.fog.length; i++) {
+      const f = this.fog[i];
+      const pulse = 0.86 + Math.sin(nowMs * 0.00032 + (f.getData('phase') as number)) * 0.14;
+      const target = fogI * (f.getData('alpha') as number) * pulse;
       f.alpha += (target - f.alpha) * Math.min(1, dt * 1.5);
       if (f.alpha < 0.005) { f.setVisible(false); continue; }
       f.setVisible(true);
       if (!this.settings.reducedMotion) {
         f.x += (f.getData('vx') as number) * dt;
-        f.y += (f.getData('vy') as number) * dt;
+        f.y += ((f.getData('vy') as number) + Math.sin(nowMs * 0.0002 + i) * 0.35) * dt;
       }
       if (f.x > this.w + 300) f.x = -300;
       if (f.y > this.h + 200) f.y = -200;
@@ -133,6 +140,5 @@ export class WeatherLayer {
     } else {
       this.flash.setVisible(false);
     }
-    void nowMs;
   }
 }

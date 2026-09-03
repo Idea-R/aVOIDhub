@@ -13,7 +13,8 @@ const base = (d: Partial<CarDef> & Pick<CarDef, 'type' | 'name' | 'short' | 'des
 });
 
 export const CAR_DEFS: Record<CarType, CarDef> = {
-  locomotive: base({ type: 'locomotive', name: 'Locomotive', short: 'LOCO', desc: 'The heart of the convoy. Generates 8 power. If it dies, the run ends.', tier: 1, cost: 0, hp: 220, weight: 40, powerGen: 8, heatGen: 2, color: 0xe8c170 }),
+  locomotive: base({ type: 'locomotive', name: 'Locomotive', short: 'LOCO', desc: 'The heart of the convoy. Generates 8 power. A conductor guard provides weak short-range defense; if the engine dies, the run ends.', tier: 1, cost: 0, hp: 220, weight: 40, powerGen: 8, heatGen: 2,
+    weapon: W({ kind: 'marines', damageClass: 'melee', range: 105, damage: 2.5, cooldown: 0.85, ammoPerShot: 0, heatPerShot: 0 }), color: 0xe8c170 }),
   coal_bunker: base({ type: 'coal_bunker', name: 'Coal Bunker', short: 'COAL', desc: '+80 coal storage. Coal is burned per hex; heavier trains burn more.', tier: 1, cost: 18, hp: 120, weight: 22, storage: { coal: 80 }, color: 0x4a4a52 }),
   boiler: base({ type: 'boiler', name: 'Boiler Car', short: 'BOIL', desc: '+4 power to cars within 3 positions. Runs hot.', tier: 1, cost: 26, hp: 110, weight: 24, powerGen: 4, heatGen: 3, color: 0xd9743a }),
   reactor: base({ type: 'reactor', name: 'Reactor Car', short: 'REAC', desc: '+10 power, +6 heat/s. Explodes violently when destroyed, damaging neighbours.', tier: 3, cost: 70, hp: 140, weight: 30, powerGen: 10, heatGen: 6, color: 0x5ee0b0 }),

@@ -422,6 +422,8 @@ export interface Settings {
   screenShake: boolean;
   highContrast: boolean;
   largeText: boolean;
+  /** Overall HUD chrome footprint. Text accessibility remains independently controllable. */
+  uiScale: number;          // 0.75..1.1
   colorblind: 'none' | 'deuteranopia' | 'protanopia' | 'tritanopia';
   quality: 'auto' | 'high' | 'medium' | 'low';
   showTutorial: boolean;

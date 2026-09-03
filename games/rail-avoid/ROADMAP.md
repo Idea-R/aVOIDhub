@@ -14,6 +14,18 @@ Status after the first public early-access deploy (avoidgame.io/railavoid). Orde
 
 Detailed plan: `docs/sprint-04/PLAN.md`. Review: `docs/sprint-04/REVIEW.md`.
 
+### Post-release usability patch
+
+- [x] Add a saved 75–110% interface-size control, defaulting to 75%, without shrinking essential text into illegibility.
+- [x] Separate resources from operations in the top deck and preserve a compact, complete 1280×720 layout.
+- [x] Rebuild repair-yard train cards and distinguish rolling-stock levels from the locomotive's four engine-system tracks.
+- [x] Make settlement clicks plan to the destination or its closest legal approach tile.
+- [x] Add a map-oriented junction dial with track direction and destination labels.
+- [x] Replace the fog colour film with discrete drifting cloud banks and expose each weather effect in the HUD.
+- [x] Give the locomotive a weak, ammo-free conductor guard so losing the only weapon car is not an unrecoverable combat state.
+
+Verification and implementation notes: `docs/sprint-04/USABILITY-PATCH.md`.
+
 ## Next sprint: Away Team
 
 - [ ] Establish deterministic expedition fixtures and a dedicated browser verification command.
@@ -32,7 +44,8 @@ Sprint 03 (readability and crew discovery) is archived in `docs/sprint-03/`.
 - [x] Custom cursors, hover feedback on settlements/cars/hexes, no-overlap HUD layout, compact HUD, volume mixer (ambience/UI), log hidden by default.
 - [ ] "Express" toggle: 1.5× default sim speed for veterans, saved in settings.
 - [x] Three main lines (Central / Northern / Southern) with crossovers; junction chooser shows line names and the next settlement on each branch.
-- [ ] Auto-route to a clicked settlement with a confirm chip ("12 hexes · 6 rails · 40 s") instead of hex-by-hex planning for long stretches.
+- [x] Auto-route a clicked settlement to the destination or nearest legal approach tile.
+- [ ] Add a route confirm chip ("12 hexes · 6 rails · 40 s") for long auto-routes.
 
 ## 2. Train mechanics and upgrades (first pass shipped)
 - [x] Car levels I–III at yards (+HP, +damage, +power, +storage, +passengers, +cooling).
@@ -56,6 +69,7 @@ Sprint 03 (readability and crew discovery) is archived in `docs/sprint-03/`.
 - [ ] Each event gets a painted card illustration (generated on-brand: violet void, gold rail, ink-and-wash miniature look) and a small consequence tag row.
 - [ ] Event "rooms" on the map: a `?` marker beside the track that only resolves when passed; some chain into follow-ups later in the run.
 - [ ] Boss "hangar" nodes with a pre-fight prep choice (Spire elite-style rewards).
+- [ ] Weather-specific event pools: obscured threats and navigation dilemmas in fog, washouts/rescues in rain, heat and visibility incidents in ashfall and storms. Always preview the mechanical consequence before a choice.
 
 ## 4. Presentation
 - [x] Cinematic run intro, region cards, boss intros, victory/defeat cameras, letterbox cards.
@@ -65,6 +79,7 @@ Sprint 03 (readability and crew discovery) is archived in `docs/sprint-03/`.
 - [ ] Complete authored rolling-stock art for the remaining purchasable cars and their meaningful level-III silhouettes.
 - [ ] Generated production key art for the title, catalog card and each region's title card.
 - [ ] Boss intro vignettes (2–3 panels) and a short victory sequence at the Last Gate.
+- [ ] Major bosses appear as authored world avatars that approach the train, then hand off to the Away Team combat layer. Keep roaming elites as readable open-world pressure rather than converting every threat into a modal battle.
 - [ ] Menus: unified panel system with tabs (Train / Crew / Journey log / Settings), controller focus rings, and a map overview (minimap with void front and settlement deadlines).
 
 ## 5. Balance
