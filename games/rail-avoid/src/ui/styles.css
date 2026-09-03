@@ -1669,3 +1669,121 @@ html.rv-cursors #game canvas[data-cursor="default"] { cursor: var(--rv-cur-defau
   #ui .rv-weapon-metric { border-right: 0; border-bottom: 1px solid rgba(117,131,165,.18); }
   #ui .rv-weapon-metric:last-child { border-bottom: 0; }
 }
+
+/* Sprint usability pass: scalable chrome, a two-tier manifest and consistent yard cards. */
+#ui {
+  --ui-density: .75;
+  --side-w: min(calc(440px * var(--ui-density)), 42vw);
+  --shop-w: min(calc(560px * var(--ui-density)), 92vw);
+}
+#ui .rv-settings .rv-ui-scale { grid-column: 1 / -1; padding: 7px 9px; border: 1px solid var(--line); background: rgba(255,255,255,.025); }
+#ui .rv-settings .rv-ui-scale small { color: var(--fg3); font-size: calc(10 * var(--u)); }
+#ui .rv-side-head h2 { white-space: nowrap; }
+
+/* The manifest now reads as two deliberate rails: supplies, then people/danger. */
+#ui .rv-hud-top {
+  grid-template-columns: minmax(calc(270px * var(--ui-density)), calc(320px * var(--ui-density))) minmax(calc(620px * var(--ui-density)), 1fr) minmax(calc(250px * var(--ui-density)), auto);
+  column-gap: calc(12px * var(--ui-density));
+  padding: calc(10px * var(--ui-density)) calc(12px * var(--ui-density)) calc(12px * var(--ui-density));
+}
+#ui .rv-mission { min-height: calc(112px * var(--ui-density)); padding: 10px 13px 9px 16px; }
+#ui .rv-mission strong { margin: 6px 0 3px; }
+#ui .rv-command-actions .rv-btn { padding-inline: 8px; }
+#ui .rv-deck-stack { display: grid; grid-template-rows: 1fr auto; gap: 5px; min-width: 0; }
+#ui .rv-chips { min-width: 0; }
+#ui .rv-chips .rv-chip {
+  min-width: 64px;
+  min-height: 47px;
+  padding: 5px 7px 6px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: 1fr 4px;
+  column-gap: 5px;
+  row-gap: 3px;
+  align-items: center;
+}
+#ui .rv-chips .rv-chip-top { grid-column: 1; grid-row: 1; }
+#ui .rv-chips .rv-chip-readout { grid-column: 2; grid-row: 1; justify-content: flex-end; padding-left: 0; }
+#ui .rv-chips .rv-chip-bar { grid-column: 1 / -1; grid-row: 2; margin: 0; }
+#ui .rv-chips .rv-chip .rv-chip-ico { width: 19px; height: 19px; flex-basis: 19px; }
+#ui .rv-chips .rv-chip .rv-chip-v { font-size: calc(16 * var(--u)); }
+#ui .rv-deck-operations { min-width: 0; display: flex; align-items: stretch; gap: 5px; }
+#ui .rv-deck-operations > .rv-chip { min-height: 35px; padding: 4px 7px; flex-direction: row; align-items: center; justify-content: flex-start; gap: 7px; }
+#ui .rv-deck-operations .rv-chip-top { flex: 0 0 auto; }
+#ui .rv-deck-operations .rv-chip .rv-chip-ico { width: 18px; height: 18px; flex-basis: 18px; font-size: calc(9px * var(--ui-scale)); }
+#ui .rv-deck-operations .rv-chip-people { flex: 1 1 220px; min-width: 174px; }
+#ui .rv-deck-operations .rv-chip-marks { flex: 0 1 105px; min-width: 78px; }
+#ui .rv-deck-operations .rv-chip .rv-chip-v { font-size: calc(14 * var(--u)); }
+#ui .rv-deck-operations .rv-void { flex: 1 1 180px; min-width: 135px; width: auto; min-height: 35px; display: flex; padding: 5px 9px; gap: 7px; }
+#ui .rv-deck-operations .rv-void .rv-bar { grid-column: auto; height: 7px; }
+#ui .rv-deck-operations .rv-relics { align-self: stretch; min-height: 35px; }
+#ui .rv-weather-effect { display: block; color: var(--fg3); font-size: calc(8 * var(--u)); letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+
+/* The yard uses the same visual language and information order as the rolling-stock deck. */
+#ui .rv-yard-intro { display: grid; gap: 3px; padding: 9px 10px; border-left: 3px solid var(--gold); background: linear-gradient(90deg, rgba(232,193,112,.11), rgba(255,255,255,.018)); }
+#ui .rv-yard-intro b { color: var(--gold); font-family: 'Cinzel', Georgia, serif; }
+#ui .rv-yard-intro span, #ui .rv-loco-explain { color: var(--fg2); font-size: calc(11 * var(--u)); line-height: 1.4; }
+#ui .rv-yard-rules { border: 1px solid var(--line); padding: 6px 9px; background: rgba(0,0,0,.16); }
+#ui .rv-yard-rules summary { color: var(--fg2); cursor: pointer; font-size: calc(10 * var(--u)); font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+#ui .rv-yard-rules[open] summary { margin-bottom: 6px; color: var(--gold); }
+#ui .rv-yard-section { color: var(--rv-brass); border-bottom: 1px solid var(--rv-deck-line); padding-bottom: 4px; }
+#ui .rv-shop-train { display: grid; grid-template-columns: repeat(auto-fit, minmax(178px, 1fr)); gap: 7px; overflow: visible; padding: 0; }
+#ui .rv-shop-car { min-width: 0; padding: 7px; gap: 5px; text-align: left; border-radius: 2px; border-top: 2px solid var(--accent); background: linear-gradient(180deg, rgba(24,30,49,.98), rgba(8,11,21,.98)); }
+#ui .rv-shop-car-head { display: grid; grid-template-columns: 22px minmax(0,1fr); align-items: center; gap: 6px; }
+#ui .rv-shop-car-index { display: grid; place-items: center; width: 22px; height: 22px; border: 1px solid var(--accent); border-radius: 50%; font: 700 calc(9 * var(--u))/1 ui-monospace, Consolas, monospace; }
+#ui .rv-shop-car .rv-sc-name { min-width: 0; justify-content: space-between; color: var(--fg); letter-spacing: .02em; text-align: left; }
+#ui .rv-shop-car .rv-sc-name b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#ui .rv-shop-car-visual { height: 54px; display: grid; place-items: center; overflow: hidden; border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent); background: #080b15; }
+#ui .rv-shop-car-visual .rv-car-art { width: 100%; height: 100%; object-fit: contain; }
+#ui .rv-shop-car-fallback { color: var(--accent); font: 900 calc(16 * var(--u))/1 ui-monospace, Consolas, monospace; letter-spacing: .18em; }
+#ui .rv-shop-car-health { display: flex; justify-content: space-between; font-size: calc(9 * var(--u)); color: var(--fg3); text-transform: uppercase; letter-spacing: .1em; }
+#ui .rv-shop-car .rv-sc-btns { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 3px; }
+#ui .rv-shop-car .rv-sc-btns .rv-btn { min-height: 28px; }
+#ui .rv-shop-car > .rv-upgrade, #ui .rv-shop-car > .rv-loco-jump { width: 100%; min-height: 31px; }
+#ui .rv-loco-card { border-radius: 2px; padding: 10px; scroll-margin-top: 10px; }
+#ui .rv-loco-card:focus { outline: 2px solid var(--gold); outline-offset: 2px; }
+#ui .rv-loco-explain { margin: 0; }
+
+/* A small map-correlated branch dial makes junction choice spatial, not just textual. */
+#ui .rv-junction { display: grid; grid-template-columns: 136px minmax(0,1fr); grid-template-rows: auto auto; align-items: center; }
+#ui .rv-junction .rv-junction-head { grid-column: 1 / -1; }
+#ui .rv-junction-map { position: relative; width: 128px; height: 76px; overflow: visible; }
+#ui .rv-jm-center { position: absolute; left: 50%; top: 50%; translate: -50% -50%; z-index: 2; display: grid; place-items: center; width: 28px; height: 28px; border: 2px solid var(--gold); border-radius: 50%; color: var(--gold); background: #0b0e1a; box-shadow: 0 0 0 4px rgba(232,193,112,.12); }
+#ui .rv-jm-branch { position: absolute; left: 50%; top: 50%; width: 52px; height: 3px; transform-origin: 0 50%; transform: rotate(var(--angle)); background: linear-gradient(90deg, var(--gold), var(--line)); box-shadow: 0 0 7px color-mix(in srgb, var(--line) 50%, transparent); }
+#ui .rv-jm-branch::after { content: ''; position: absolute; right: -4px; top: -3px; width: 8px; height: 8px; border: 2px solid var(--line); border-radius: 50%; background: #0b0e1a; }
+#ui .rv-jm-branch i { position: absolute; right: -9px; top: -22px; transform: rotate(calc(-1 * var(--angle))); color: var(--fg); font: 800 9px/16px ui-monospace, Consolas, monospace; width: 16px; height: 16px; text-align: center; border: 1px solid var(--line); border-radius: 50%; background: #0b0e1a; }
+#ui .rv-jm-branch b { position: absolute; left: 23px; top: 6px; max-width: 62px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transform: rotate(calc(-1 * var(--angle))); transform-origin: left top; color: var(--line); font-size: calc(8 * var(--u)); font-weight: 700; }
+#ui .rv-junction .rv-junction-opts { justify-content: flex-start; flex-wrap: nowrap; min-width: 0; overflow-x: auto; padding: 2px; }
+#ui .rv-junction .rv-junction-opt { min-width: 174px; }
+
+@media (max-width: 1366px) {
+  #ui.rv-compact .rv-hud-top { grid-template-columns: calc(224px * var(--ui-density)) minmax(0,1fr) 225px; grid-template-rows: auto; }
+  #ui.rv-compact .rv-mission { min-height: 88px; }
+  #ui.rv-compact .rv-hud-tl { min-width: 0; }
+  #ui.rv-compact .rv-deck-stack { gap: 4px; }
+  #ui.rv-compact .rv-chips .rv-chip { min-height: 43px; padding: 4px 5px; }
+  #ui.rv-compact .rv-deck-operations > .rv-chip { min-height: 32px; }
+  #ui.rv-compact .rv-deck-operations .rv-void { min-height: 32px; }
+  #ui.rv-compact .rv-deck-operations .rv-chip .rv-chip-k, #ui.rv-compact .rv-deck-operations .rv-morale { display: none; }
+  #ui.rv-compact .rv-hud-tc { display: flex; grid-column: 3; grid-row: 1; min-width: 0; padding-top: 40px; pointer-events: none; }
+  #ui.rv-compact .rv-status { width: 100%; min-height: 43px; padding: 4px 7px; pointer-events: auto; }
+  #ui.rv-compact .rv-status-kicker, #ui.rv-compact .rv-status .rv-region, #ui.rv-compact .rv-status .rv-forecast, #ui.rv-compact .rv-status .rv-weather-effect { display: none; }
+  #ui.rv-compact .rv-status-main { justify-content: space-around; }
+}
+@media (max-width: 900px) {
+  #ui.rv-compact .rv-hud-top { grid-template-rows: 54px 84px; }
+  #ui.rv-compact .rv-hud-tl { height: 84px; }
+  #ui.rv-compact .rv-deck-stack { height: 84px; overflow-x: auto; }
+  #ui.rv-compact .rv-chips { min-width: 430px; }
+  #ui.rv-compact .rv-deck-operations { min-width: 480px; }
+  #ui.rv-compact .rv-hud-tc { display: none; }
+  #ui .rv-junction { grid-template-columns: 105px minmax(0,1fr); }
+  #ui .rv-junction-map { width: 100px; }
+  #ui .rv-jm-branch { width: 38px; }
+}
+@media (max-width: 600px) {
+  #ui { --side-w: calc(100vw - 20px); --shop-w: calc(100vw - 20px); }
+  #ui .rv-shop-train { grid-template-columns: 1fr; }
+  #ui .rv-junction { grid-template-columns: 1fr; }
+  #ui .rv-junction-map { display: none; }
+}

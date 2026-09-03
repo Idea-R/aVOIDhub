@@ -9,6 +9,8 @@ import { DEFAULT_SETTINGS } from '../core/storage';
 
 export function applySettings(ui: UiShared, s: Settings): void {
   const root = ui.root;
+  const uiScale = Math.max(0.75, Math.min(1.1, Number.isFinite(s.uiScale) ? s.uiScale : DEFAULT_SETTINGS.uiScale));
+  root.style.setProperty('--ui-density', String(uiScale));
   setReducedMotion(!!s.reducedMotion);
   root.classList.toggle('rv-large', !!s.largeText);
   root.classList.toggle('rv-contrast', !!s.highContrast);
@@ -79,6 +81,26 @@ export function createSettings(ui: UiShared): HTMLElement {
     return { wrap, refresh: (s: Settings) => { sel.value = String(s[key]); } };
   };
   const heading = (text: string) => ({ wrap: el('h3', { class: 'rv-settings-h', text }), refresh: () => { /* static */ } });
+  const uiScaleSlider = () => {
+    const out = el('output', { text: '75%' });
+    const input = el('input', { type: 'range', min: '75', max: '110', step: '5', 'aria-label': 'Interface size' });
+    input.addEventListener('input', () => {
+      const v = Number(input.value) / 100;
+      out.textContent = `${Math.round(v * 100)}%`;
+      store.set({ uiScale: v });
+    });
+    input.addEventListener('change', () => ui.audio().ui('click'));
+    const wrap = el('div', { class: 'rv-setting rv-ui-scale' },
+      el('label', null, 'Interface size', out), input,
+      el('small', { text: 'Changes HUD and panel footprint without shrinking readable text.' }));
+    return {
+      wrap,
+      refresh: (s: Settings) => {
+        const v = Math.round(Math.max(0.75, Math.min(1.1, s.uiScale ?? DEFAULT_SETTINGS.uiScale)) * 100);
+        input.value = String(v); out.textContent = `${v}%`;
+      },
+    };
+  };
   /** Checkbox bound to meta progress rather than Settings (checked = the scripted opening plays on the next new run). */
   const introCheck = (label: string) => {
     const input = el('input', { type: 'checkbox', 'aria-label': label });
@@ -95,6 +117,7 @@ export function createSettings(ui: UiShared): HTMLElement {
     ...VOLUME_KEYS.map(k => volumeSlider(ui, k.key, k.label + ' volume')),
     check('muted', 'Mute all', v => ui.audio().setMuted(v)),
     heading('Interface'),
+    uiScaleSlider(),
     check('compactHud', 'Compact HUD'),
     check('showLog', 'Show event log feed'),
     check('customCursor', 'Custom cursors'),

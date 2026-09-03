@@ -8,7 +8,8 @@
 import { el, btn, append, setText, setWidth, toggleClass, show, setAttr, fmtTime, clamp } from './dom';
 import type { UiShared } from './shared';
 import type { SimState, ResourceKey } from '../core/types';
-import { HEX_R, MAP_W, REGION_NAMES, TRAIN } from '../core/config';
+import { HEX_R, MAP_W, REGION_NAMES, TRAIN, WEATHER } from '../core/config';
+import { hexToWorld } from '../core/hex';
 import { ENEMY_DEFS } from '../core/enemies';
 import { gsap, D, isReduced, floatLabel, shake } from './motion';
 import { createVolumePopover } from './volume';
@@ -96,7 +97,6 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
       el('span', { class: 'rv-chip-sep', 'aria-hidden': 'true', text: '/' }),
       el('span', { class: 'rv-people-stat' }, el('small', { text: 'Crew' }), crewV), morale),
     el('span', { class: 'rv-chip-help', role: 'tooltip', text: 'Click to post an available specialist to a car. Passengers consume food; low morale puts them at risk.' }));
-  chipsEl.appendChild(peopleChip);
   const openCrewAssignment = (): void => {
     const s = ui.state();
     if (!s || !s.train.cars.length) return;
@@ -120,7 +120,6 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
     el('span', { class: 'rv-chip-top' }, el('span', { class: 'rv-chip-ico', 'aria-hidden': 'true', text: '◆' }), el('span', { class: 'rv-chip-k', text: 'Marks' })),
     el('span', { class: 'rv-chip-readout' }, marksV),
     el('span', { class: 'rv-chip-help', role: 'tooltip', text: 'Rare currency earned from elites, bounties and expeditions. Spend it at markets.' }));
-  chipsEl.appendChild(marksChip);
 
   // relic bar: one icon chip per relic owned this run, with a hover / focus tooltip
   const relicsEl = el('div', { class: 'rv-relics', role: 'group', 'aria-label': 'Relics' });
@@ -158,11 +157,12 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
   const voidDist = el('span', { class: 'rv-void-dist', text: '—' });
   const voidEl = el('div', { class: 'rv-void rv-panel', role: 'meter', 'aria-label': 'Distance to the void front', 'aria-valuemin': '0', 'aria-valuemax': '24' },
     el('span', { class: 'rv-label', text: 'Void' }), el('div', { class: 'rv-bar' }, voidFill), voidDist);
+  const operationsEl = el('div', { class: 'rv-deck-operations', 'aria-label': 'People, danger and relics' }, peopleChip, marksChip, voidEl, relicsEl);
   const tl = el('section', { class: 'rv-hud-tl', 'aria-label': 'Train manifest' },
     el('div', { class: 'rv-deck-heading' },
       el('span', { class: 'rv-deck-kicker', text: 'Train manifest' }),
       el('span', { class: 'rv-deck-rule', 'aria-hidden': 'true' })),
-    el('div', { class: 'rv-deck-content' }, chipsEl, voidEl, relicsEl));
+    el('div', { class: 'rv-deck-stack' }, chipsEl, operationsEl));
 
   // ---------- top-centre: status + boss ----------
   const regionEl = el('span', { class: 'rv-region', text: '' });
@@ -170,11 +170,13 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
   const dial = el('span', { class: 'rv-dial', 'aria-hidden': 'true' }, dialHand);
   const dayLbl = el('span', { class: 'rv-daylbl', text: '☀' });
   const weatherEl = el('span', { class: 'rv-weather', text: '' });
+  const weatherEffectEl = el('span', { class: 'rv-weather-effect', text: '' });
   const forecastEl = el('span', { class: 'rv-forecast', text: '' });
   const clockEl = el('span', { class: 'rv-clock', text: '00:00' });
   const statusEl = el('div', { class: 'rv-status rv-panel', role: 'status', 'aria-label': 'Region, time of day, weather and clock' },
     el('span', { class: 'rv-status-kicker', text: 'Line conditions' }),
-    el('span', { class: 'rv-status-main' }, regionEl, dial, dayLbl, weatherEl, forecastEl, clockEl));
+    el('span', { class: 'rv-status-main' }, regionEl, dial, dayLbl, weatherEl, forecastEl, clockEl),
+    weatherEffectEl);
   const bossName = el('span', { text: '' });
   const bossHp = el('span', { text: '' });
   const bossFill = el('i');
@@ -270,12 +272,15 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
 
   // ---------- junction chooser: replaces the stop pill while the train waits at a branch ----------
   const junctionBtns = el('div', { class: 'rv-junction-opts', role: 'group', 'aria-label': 'Branches' });
+  const junctionMap = el('div', { class: 'rv-junction-map', 'aria-label': 'Map-aligned branch dial' },
+    el('span', { class: 'rv-jm-center', 'aria-hidden': 'true', text: '◎' }));
   const junctionEl = el('div', { class: 'rv-junction rv-panel', role: 'group', 'aria-label': 'Junction — choose your line' },
     el('div', { class: 'rv-junction-head' },
       el('span', { class: 'rv-junction-ico', 'aria-hidden': 'true', text: '⑂' }),
       el('span', { class: 'rv-junction-title', text: 'Junction' }),
       el('span', { class: 'rv-junction-sub', text: 'choose your line' }),
-      el('span', { class: 'rv-junction-keys', 'aria-hidden': 'true', text: '1 · 2 · 3' })),
+      el('span', { class: 'rv-junction-keys', 'aria-hidden': 'true', text: 'branches match the map · 1 2 3' })),
+    junctionMap,
     junctionBtns);
   junctionEl.hidden = true;
   let junctionOpts: JunctionOption[] = [];
@@ -288,6 +293,23 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
     return n ? `${o.lineName} to ${n.name} (${nodeMeta(n.type).label}), ${n.distance} hex` : `${o.lineName}, dead end`;
   }
   function buildJunction(opts: JunctionOption[]): void {
+    const s = ui.state();
+    const end = s?.route.path[s.route.path.length - 1];
+    const origin = end ? hexToWorld(end[0], end[1]) : { x: 0, y: 0 };
+    junctionMap.replaceChildren(
+      el('span', { class: 'rv-jm-center', 'aria-hidden': 'true', text: '◎' }),
+      ...opts.map((o, i) => {
+        const at = hexToWorld(o.col, o.row);
+        const angle = Math.atan2((at.y - origin.y) * 0.62, at.x - origin.x);
+        const name = o.next?.name ?? o.lineName;
+        return el('span', {
+          class: 'rv-jm-branch',
+          style: `--angle:${angle}rad;--line:${lineCss(o.line)}`,
+          title: optionLabel(o),
+          'aria-hidden': 'true',
+        }, el('i', { text: KEY_HINT[i] ?? '' }), el('b', { text: name }));
+      }),
+    );
     junctionBtns.replaceChildren(...opts.map((o, i) => {
       const n = o.next;
       const flavour = lineFlavour(o.line);
@@ -479,6 +501,16 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
     setText(dayLbl, s.isNight ? '☾ night' : '☀ day');
     const w = s.weather;
     setText(weatherEl, `${WEATHER_ICON[w.kind] ?? '○'} ${w.kind}`);
+    const wd = WEATHER[w.kind];
+    const intensity = clamp(w.intensity ?? 1, 0, 1);
+    const speedMul = 1 - (1 - wd.speedMul) * intensity;
+    const rangeMul = 1 - (1 - wd.rangeMul) * intensity;
+    const cooling = wd.cooling * intensity;
+    const weatherHelp = `${w.kind}: speed ${Math.round(speedMul * 100)}%, weapon range ${Math.round(rangeMul * 100)}%, ${cooling >= 0 ? '+' : ''}${Number(cooling.toFixed(1))} cooling`;
+    const pct = (v: number) => `${v >= 0 ? '+' : '−'}${Math.abs(Math.round(v * 100))}%`;
+    setText(weatherEffectEl, w.kind === 'clear' ? 'No weather penalties' : `Speed ${pct(speedMul - 1)} · Range ${pct(rangeMul - 1)} · Cooling ${cooling >= 0 ? '+' : ''}${Number(cooling.toFixed(1))}`);
+    setAttr(weatherEl, 'title', weatherHelp);
+    setAttr(statusEl, 'aria-label', `${REGION_NAMES[clamp(s.region, 0, 3)] ?? ''}, ${s.isNight ? 'night' : 'day'}, ${weatherHelp}, ${fmtTime(s.time)}`);
     const hasSignal = s.train.cars.some(c => c.type === 'signal' && c.hp > 0 && !c.disabled);
     setText(forecastEl, hasSignal && w.next && w.next !== w.kind ? `next: ${w.next} in ${Math.max(0, Math.ceil(w.timer))}s` : '');
     setText(clockEl, fmtTime(s.time));

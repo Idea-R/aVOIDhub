@@ -7,6 +7,7 @@ import { MAX_CARS, TRAIN } from '../core/config';
 import { repairCost } from './inspector';
 import { gsap, D, isReduced } from './motion';
 import { levelOf, levelPips, levelEffect, hasUpgrades, hasLocoUpgrades, carUpgradeCost, locoUpgradeCost, locoLevel, upgradeApi, LOCO_TRACKS, MAX_LEVEL, ROMAN } from './levels';
+import { carArtFor } from './carArt';
 
 export interface Shop { el: HTMLElement; update(s: SimState, force?: boolean): void; reset(): void }
 
@@ -84,12 +85,15 @@ export function createShop(ui: UiShared): Shop {
     const locoUp = hasLocoUpgrades(sim);
     const api = upgradeApi(sim);
 
-    sections.push(el('div', { class: 'rv-rules' },
+    sections.push(el('div', { class: 'rv-yard-intro' },
+      el('b', { text: 'Service the consist, then improve it.' }),
+      el('span', { text: 'Each car has its own repair and level controls. The locomotive uses four permanent engine-system tracks below.' })),
+    el('details', { class: 'rv-rules rv-yard-rules' },
+      el('summary', { text: 'Train system rules' }),
       el('span', null, el('b', { class: 'rv-tip', title: 'A generator (locomotive, boiler, reactor) powers cars within 3 positions. If demand exceeds output, every consumer in the span runs at output/demand.', text: 'Power' }), ` reaches ±${TRAIN.powerRange} cars; overload → brownout.`),
       el('span', null, el('b', { class: 'rv-tip', title: 'Weapons need an Armory, Cargo Hold, Foundry or Armoured Cargo within 2 positions or they cannot fire.', text: 'Ammo' }), ` suppliers reach ±${TRAIN.ammoRange} cars.`),
       el('span', null, el('b', { class: 'rv-tip', title: 'Heat diffuses 15%/s of the difference to adjacent cars. ≥80 damages, ≥100 catches fire. Radiators cool neighbours.', text: 'Heat' }), ' spreads to neighbours — pad hot cars with radiators.'),
-      el('span', null, el('b', { class: 'rv-tip', title: 'Boarders walk one car toward the locomotive every 4 s. Armour Plate stops them; Barracks and Flamethrowers clear adjacent cars.', text: 'Boarders' }), ' walk forward; put a shield near the rear.'),
-    ));
+      el('span', null, el('b', { class: 'rv-tip', title: 'Boarders walk one car toward the locomotive every 4 s. Armour Plate stops them; Barracks and Flamethrowers clear adjacent cars.', text: 'Boarders' }), ' walk forward; put a shield near the rear.')));
 
     // current train
     const trainEl = el('div', { class: 'rv-shop-train', role: 'list', 'aria-label': 'Current train' });
@@ -98,10 +102,16 @@ export function createShop(ui: UiShared): Shop {
       const cost = repairCost(car);
       const lvl = levelOf(car);
       const hpFill = el('i');
+      const artSrc = carArtFor(car.type, lvl);
       const chip = el('div', { class: 'rv-shop-car', role: 'listitem', style: `--accent:${hexColor(def.color)}` },
-        el('span', { class: 'rv-sc-name' }, `${i + 1} ${def.short}`, levelPips(lvl, 'rv-sc-lvl')),
-        el('span', { class: 'rv-dim', text: `${Math.ceil(car.hp)}/${car.maxHp}` }),
-        el('div', { class: 'rv-bar rv-hp', title: 'Hull' }, hpFill),
+        el('div', { class: 'rv-shop-car-head' },
+          el('span', { class: 'rv-shop-car-index', text: String(i + 1) }),
+          el('span', { class: 'rv-sc-name' }, el('b', { text: def.name }), levelPips(lvl, 'rv-sc-lvl'))),
+        el('div', { class: 'rv-shop-car-visual' },
+          artSrc ? el('img', { class: 'rv-car-art', src: artSrc, alt: '', draggable: 'false' }) : el('span', { class: 'rv-shop-car-fallback', text: def.short })),
+        el('div', { class: 'rv-shop-car-health' },
+          el('span', { text: 'Hull' }), el('span', { class: 'rv-dim', text: `${Math.ceil(car.hp)}/${car.maxHp}` })),
+        el('div', { class: 'rv-bar rv-hp', title: 'Hull integrity' }, hpFill),
       );
       const pct = car.maxHp > 0 ? (car.hp / car.maxHp) * 100 : 0;
       const old = prevHp.get(car.id);
@@ -128,6 +138,13 @@ export function createShop(ui: UiShared): Shop {
       fix.disabled = cost <= 0 || scrap < 1;
       btns.appendChild(fix);
       chip.appendChild(btns);
+      if (i === 0 && locoUp) {
+        chip.appendChild(btn('Engine systems ↓', () => {
+          const target = body.querySelector<HTMLElement>('.rv-loco-card');
+          target?.scrollIntoView({ behavior: isReduced() ? 'auto' : 'smooth', block: 'start' });
+          target?.focus({ preventScroll: true });
+        }, { class: 'rv-small rv-loco-jump', aria: 'Show locomotive upgrade systems' }));
+      }
       if (upgrades && i > 0) {
         const uc = carUpgradeCost(sim, i);
         const maxed = uc < 0 || lvl >= MAX_LEVEL;
@@ -145,7 +162,7 @@ export function createShop(ui: UiShared): Shop {
       chip.addEventListener('click', (e) => { if ((e.target as HTMLElement).tagName !== 'BUTTON') ui.selectCar(i, true); });
       trainEl.appendChild(chip);
     });
-    sections.push(el('div', { class: 'rv-label', text: `Your train (${t.cars.length}/${MAX_CARS})` }), trainEl);
+    sections.push(el('div', { class: 'rv-label rv-yard-section', text: `Rolling stock · ${t.cars.length}/${MAX_CARS} cars` }), trainEl);
 
     // upgrades: locomotive tracks
     if (locoUp) {
@@ -169,9 +186,10 @@ export function createShop(ui: UiShared): Shop {
           buy,
         ));
       }
-      sections.push(el('div', { class: 'rv-label rv-tier', text: 'Upgrades' }),
-        el('div', { class: 'rv-loco-card', style: `--accent:${hexColor(CAR_DEFS.locomotive.color)}` },
+      sections.push(el('div', { class: 'rv-label rv-tier rv-yard-section', text: 'Locomotive systems · engine only' }),
+        el('div', { class: 'rv-loco-card', style: `--accent:${hexColor(CAR_DEFS.locomotive.color)}`, tabindex: '-1' },
           el('div', { class: 'rv-si-name' }, el('span', { class: 'rv-si-short', text: CAR_DEFS.locomotive.short }), 'Locomotive', el('span', { class: 'rv-dim rv-lt-hint', text: 'four tracks · 3 levels each' })),
+          el('p', { class: 'rv-loco-explain', text: 'These upgrades affect the locomotive and whole-train performance. They are separate from the Level I–III upgrades on the rolling-stock cards above.' }),
           tracks,
           upgrades ? el('div', { class: 'rv-hint', text: 'Cars upgrade from their chip above: +25% max HP per level; weapons +20% damage, generators +1 power, radiators +2 cooling, storage +20%, coaches +4 passengers.' }) : undefined,
         ));

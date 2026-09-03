@@ -8,7 +8,7 @@ const KEY_SAVE = 'railavoid.save.v1';
 
 export const DEFAULT_SETTINGS: Settings = {
   masterVolume: 0.8, musicVolume: 0.6, sfxVolume: 0.8, ambienceVolume: 0.7, uiVolume: 0.7, muted: false,
-  reducedMotion: false, screenShake: true, highContrast: false, largeText: false,
+  reducedMotion: false, screenShake: true, highContrast: false, largeText: false, uiScale: 0.75,
   colorblind: 'none', quality: 'auto', showTutorial: true, autoFollowRail: true, showSeedField: false, showLog: false, compactHud: false, customCursor: true,
 };
 
