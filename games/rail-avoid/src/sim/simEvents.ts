@@ -93,6 +93,50 @@ export function chooseEventOption(ctx: SimContext, index: number): boolean {
     case 'node_site:0': summary = 'Choose your crew.'; state.activeEvent = null; state.phase = 'running'; ctx.bus.defer('event:resolved', { defId: def.id, option: index, summary }); ctx.bus.defer('phase:change', { phase: 'running' }); return true; // the UI shows the crew picker and calls startExpedition(crewIds); cancelling simply continues the run
     case 'node_site:1': addResource(ctx, 'scrap', 6); addResource(ctx, 'ammo', 4); summary = 'A quick sweep of the edge.'; break;
     case 'node_site:2': morale(2); summary = 'Not today.'; break;
+    case 'mystery_cache:0': {
+      const roll = rng.int(0, 3);
+      if (roll === 0) { addResource(ctx, 'scrap', 22); summary = 'The chest holds a machinist\'s salvage kit: +22 scrap.'; }
+      else if (roll === 1) { addResource(ctx, 'ammo', 34); summary = 'Sealed ammunition tins fill the chest: +34 ammo.'; }
+      else if (roll === 2) { addMarks(ctx, 5, 'signal lockbox'); summary = 'Five Void Marks hum beneath the false bottom.'; }
+      else { summary = 'A wrapped relic waits inside.'; state.activeEvent = null; state.phase = 'running'; ctx.bus.defer('event:resolved', { defId: def.id, option: index, summary }); offerRelics(ctx, 'mystery cache'); return true; }
+      break;
+    }
+    case 'mystery_cache:1': addResource(ctx, 'scrap', 12); summary = 'The lockbox fittings come away cleanly.'; break;
+    case 'mystery_cache:2': morale(2); summary = 'Some mysteries are safer unopened.'; break;
+    case 'mystery_away:0': summary = 'Choose your away team.'; state.activeEvent = null; state.phase = 'running'; ctx.bus.defer('event:resolved', { defId: def.id, option: index, summary }); ctx.bus.defer('phase:change', { phase: 'running' }); return true;
+    case 'mystery_away:1': addResource(ctx, 'scrap', 7); addResource(ctx, 'ammo', 5); summary = 'A careful sweep finds loose stores.'; break;
+    case 'mystery_away:2': morale(2); summary = 'The lights recede behind the last car.'; break;
+    case 'mystery_ambush:0': {
+      const region = Math.max(0, Math.min(3, state.region));
+      const comp = region < 2 ? ['raider', 'raider', 'hound', 'raider'] : ['raider', 'crawler', 'harpy', 'wisp'];
+      state.activeEvent = null; state.phase = 'running'; ctx.bus.defer('phase:change', { phase: 'running' });
+      t.stopped = false; t.stopReason = 'none'; t.stopTimer = 0;
+      spawnWave(ctx, comp as any, rng.chance(0.5) ? 'north' : 'south');
+      addMarks(ctx, 3, 'false signal');
+      summary = 'The throttle opens as the ambush closes in.';
+      ctx.bus.defer('event:resolved', { defId: def.id, option: index, summary });
+      return true;
+    }
+    case 'mystery_ambush:1': addResource(ctx, 'scrap', -14); summary = 'The decoy clatters down the siding. The attackers follow it.'; break;
+    case 'mystery_ambush:2': morale(-8); summary = 'The consist reverses clear, shaken but intact.'; break;
+    case 'mystery_survivor:0': addResource(ctx, 'food', -4); addCrew(state, 'gunner', 'Nils'); ctx.bus.defer('crew:joined', { specialty: 'gunner', name: 'Nils' }); summary = 'Nils and her lantern come aboard.'; break;
+    case 'mystery_survivor:1': addResource(ctx, 'food', -5); addResource(ctx, 'ammo', 24); summary = 'A hot meal for two sealed ammunition cases.'; break;
+    case 'mystery_survivor:2': morale(-3); summary = 'Her lantern dwindles behind the train.'; break;
+    case 'mystery_weapon:0': {
+      if (t.cars.length >= 10) { addResource(ctx, 'scrap', 10); summary = 'No room in the consist; the crew recovers 10 scrap instead.'; break; }
+      addResource(ctx, 'scrap', -18);
+      const type: CarType = state.region >= 2 ? 'flak' : 'gatling';
+      const car = addCar(ctx, type);
+      if (car) {
+        car.hp = Math.max(1, Math.round(car.maxHp * 0.45));
+        addResource(ctx, 'ammo', 12);
+        ctx.bus.defer('car:bought', { type });
+        summary = `A damaged ${type === 'flak' ? 'Flak Battery' : 'Gatling Turret'} joins the consist with 12 ammo.`;
+      } else { addResource(ctx, 'scrap', 18); summary = 'The coupling fails; the repair scrap is recovered.'; }
+      break;
+    }
+    case 'mystery_weapon:1': addResource(ctx, 'scrap', 16); addResource(ctx, 'ammo', 12); summary = 'The mounting yields useful parts and ammunition.'; break;
+    case 'mystery_weapon:2': addResource(ctx, 'rails', 4); summary = 'The forgotten siding is added to the track plan.'; break;
     case 'node_crossroads:0': {
       const region = Math.max(0, Math.min(3, state.region));
       const comp = region === 0 ? ['raider', 'raider', 'raider', 'hound', 'hound', 'raider'] : region === 1 ? ['crawler', 'raider', 'raider', 'sapper', 'hound', 'hound'] : region === 2 ? ['harpy', 'harpy', 'wisp', 'raider', 'raider', 'crawler'] : ['wisp', 'wisp', 'harpy', 'crawler', 'raider', 'raider'];
@@ -119,7 +163,7 @@ export function chooseEventOption(ctx: SimContext, index: number): boolean {
     default: summary = 'Resolved.';
   }
   state.stats.eventsResolved++;
-  if (hasRelic(state, 'conductors_watch') && !def.id.startsWith('node_')) addMarks(ctx, 2, 'conductors watch');
+  if (hasRelic(state, 'conductors_watch') && !def.id.startsWith('node_') && !def.id.startsWith('mystery_')) addMarks(ctx, 2, 'conductors watch');
   log(state, `${def.title}: ${summary}`, def.negative ? 'warn' : 'good');
   state.activeEvent = null;
   state.phase = 'running';

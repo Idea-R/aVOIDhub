@@ -16,6 +16,7 @@
     "verify:hud": "node verify/hud-sprint-check.mjs",
     "verify:inspector": "node verify/inspector-pan-check.mjs",
     "verify:usability": "node verify/usability-check.mjs",
+    "verify:junction": "node verify/junction-direction-check.mjs",
     "verify:expedition": "node verify/expedition-art-check.mjs",
     "perf:headed": "node verify/perf-headed.mjs"
   },

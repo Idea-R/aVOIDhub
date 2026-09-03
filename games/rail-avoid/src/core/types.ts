@@ -24,7 +24,7 @@ export interface Tile {
 
 export type SettlementType =
   | 'start' | 'village' | 'depot' | 'mine' | 'farm' | 'fuel' | 'clinic' | 'armory' | 'yard' | 'terminus'
-  | 'watchtower' | 'shrine' | 'wreck' | 'market' | 'site' | 'crossroads';
+  | 'watchtower' | 'shrine' | 'wreck' | 'market' | 'site' | 'mystery' | 'crossroads';
 
 export interface ResourceBundle {
   rails?: number;

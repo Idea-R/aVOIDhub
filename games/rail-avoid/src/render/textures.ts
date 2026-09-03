@@ -198,6 +198,8 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   glyph('gl_market', d => d.rect(1, 3, 10, 2).circle(2.5, 5.5, 1.5).circle(6, 5.5, 1.5).circle(9.5, 5.5, 1.5).rect(2, 7, 8, 4).fill(0x0b0e1a).rect(4, 8.5, 4, 1));
   // expedition site: a stone doorway / arch with a dark opening
   glyph('gl_site', d => d.rect(1.5, 5.5, 9, 5.5).circle(6, 5.8, 4.5).fill(0x0b0e1a).rect(4.2, 7, 3.6, 4).circle(6, 7.2, 1.8));
+  // unknown event: intentionally unreadable until the train reaches it
+  glyph('gl_mystery', d => { d.line(2.1, 0xffffff).seg(3, 3, 4.5, 1.5).seg(4.5, 1.5, 7.5, 1.5).seg(7.5, 1.5, 9, 3).seg(9, 3, 8.5, 5).seg(8.5, 5, 6, 7).seg(6, 7, 6, 8.5); d.fill(0xffffff).circle(6, 10.7, 1.1); });
   // crossroads hub: crossed tracks (four-way) with a junction ring at the centre
   glyph('gl_crossroads', d => {
     d.line(2, 0xffffff).seg(1.5, 1.5, 10.5, 10.5).seg(10.5, 1.5, 1.5, 10.5);

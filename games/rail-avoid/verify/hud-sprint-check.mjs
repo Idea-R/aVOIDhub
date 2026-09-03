@@ -79,6 +79,19 @@ assert(initial.loadedArtCount === initial.authoredArtCount, `only ${initial.load
 assert(initial.artSources.filter(Boolean).every(src => /(?:\/art\/cars\/.+\.webp|\/assets\/.+\.webp|^embedded-webp:)/.test(src)), `unexpected rolling-stock art source: ${initial.artSources.join(',')}`);
 assert(initial.hullRows === initial.carCount && initial.heatRows === initial.carCount, 'every train card must label hull and heat');
 
+// Newly authored specialist cars must be wired into real cards, not only present on disk.
+await page.evaluate(() => ['flak', 'cannon', 'radiator', 'medical'].forEach(type => window.__RAIL.addCar(type)));
+await page.waitForFunction(() => ['flak', 'cannon', 'radiator', 'medical'].every(type => {
+  const img = document.querySelector(`#ui .rv-car-type-${type} .rv-car-art`);
+  return img instanceof HTMLImageElement && img.complete && img.naturalWidth > 0;
+}), null, { timeout: 8000 });
+const specialistArt = await page.evaluate(() => ['flak', 'cannon', 'radiator', 'medical'].map(type => ({
+  type,
+  loaded: (() => { const img = document.querySelector(`#ui .rv-car-type-${type} .rv-car-art`); return img instanceof HTMLImageElement && img.complete && img.naturalWidth > 0; })(),
+  source: (() => { const src = document.querySelector(`#ui .rv-car-type-${type} .rv-car-art`)?.getAttribute('src') || ''; return src.startsWith('data:') ? `embedded-webp:${src.length}` : src; })(),
+})));
+assert(specialistArt.every(x => x.loaded && x.source), `specialist rolling-stock art missing: ${JSON.stringify(specialistArt)}`);
+
 // Authored art must follow the upgrade state without requiring a new run.
 await page.evaluate(() => {
   const carIndex = window.__RAIL.state.train.cars.findIndex(c => c.type === 'gatling');
@@ -156,7 +169,7 @@ assert(assigned.carIndex > 0, `crew was not posted: ${assigned.carIndex}`);
 assert(/Mara/i.test(assigned.cardCrew), `posted crew is not visible on train card: ${assigned.cardCrew}`);
 assert(!assigned.stillReady, 'crew-ready callout remained after the last specialist was posted');
 await page.screenshot({ path: path.join(out, 'hud_1920x1080_assigned.png') });
-results.push({ viewport: '1920x1080', initial, upgradeArt, posting, assigned });
+results.push({ viewport: '1920x1080', initial, specialistArt, upgradeArt, posting, assigned });
 await page.close();
 
 for (const [width, height] of [[1366, 768], [1280, 720], [800, 600]]) {

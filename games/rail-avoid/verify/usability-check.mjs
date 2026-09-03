@@ -33,8 +33,22 @@ for (let i = 0; i < 8; i++) {
   if (playing) await page.evaluate(() => { try { window.__RAIL.view.skipCinematic(); } catch {} });
 }
 await page.waitForFunction(() => !window.__RAIL.view?.isCinematicPlaying(), null, { timeout: 10000 });
+const startedRunning = await page.evaluate(() => window.__RAIL.state.phase === 'running');
+assert(startedRunning, 'a new run did not begin in the running state');
 await page.evaluate(() => window.__RAIL.pause());
 await page.waitForTimeout(1000); // command-deck entrance animation must settle before geometry checks
+const paused = await page.evaluate(() => ({
+  phase: window.__RAIL.state.phase,
+  callout: !document.querySelector('#ui .rv-paused-callout')?.hidden,
+  calloutText: document.querySelector('#ui .rv-paused-callout')?.textContent?.replace(/\s+/g, ' ').trim() || '',
+  topControl: document.querySelector('#ui .rv-speed button[aria-label^="Resume"]')?.textContent?.trim() || '',
+}));
+assert(paused.phase === 'paused' && paused.callout, `paused journey has no central recovery action: ${JSON.stringify(paused)}`);
+assert(/Journey paused/i.test(paused.calloutText) && /Resume journey/i.test(paused.calloutText), `paused callout is unclear: ${paused.calloutText}`);
+assert(paused.topControl === '▶', `top time control does not become Resume while paused: ${paused.topControl}`);
+await page.locator('#ui .rv-paused-callout button').click();
+await page.waitForFunction(() => window.__RAIL.state.phase === 'running', null, { timeout: 3000 });
+await page.evaluate(() => window.__RAIL.pause());
 
 const desktop = await page.evaluate(() => {
   const root = document.querySelector('#ui');
@@ -79,7 +93,48 @@ if (click) {
   await page.waitForTimeout(350);
   const after = await page.evaluate(() => window.__RAIL.state.route.path.length);
   assert(after > click.before, `settlement click did not extend route (${click.before} -> ${after})`);
+
+  // The route rail should wait for deliberate hover and then unfold, rather than
+  // flashing its contents into existence instantly.
+  await page.evaluate(() => {
+    const R = window.__RAIL;
+    const s = R.state;
+    s.route.blocked = false; s.train.reversing = false;
+    s.train.stopped = false; s.train.stopReason = 'none';
+    // Emit real phase transitions so the paused render loop recomputes responsive layout.
+    R.resume(); R.pause();
+  });
+  await page.mouse.move(900, 500);
+  await page.waitForTimeout(650);
+  const route = page.locator('#ui .rv-route');
+  const collapsedWidth = await route.evaluate(n => n.getBoundingClientRect().width);
+  await route.hover();
+  await page.waitForTimeout(75);
+  const intentWidth = await route.evaluate(n => n.getBoundingClientRect().width);
+  await page.waitForTimeout(600);
+  const openWidth = await route.evaluate(n => n.getBoundingClientRect().width);
+  assert(collapsedWidth <= 48, `route rail did not collapse (${collapsedWidth}px)`);
+  assert(intentWidth < 90, `route rail expanded before hover intent elapsed (${intentWidth}px)`);
+  assert(openWidth > 180, `route rail did not smoothly expand (${openWidth}px)`);
 }
+
+// A concealed track node must reveal a purpose-built encounter card only after it fires.
+await page.evaluate(() => { window.__RAIL.resume(); window.__RAIL.triggerEvent('mystery_cache'); });
+await page.waitForFunction(() => {
+  const n = document.querySelector('#ui .rv-event.rv-mystery-event');
+  return n && !n.closest('[hidden]');
+}, null, { timeout: 4000 });
+await page.waitForTimeout(1100);
+const mysteryCard = await page.evaluate(() => ({
+  wire: document.querySelector('#ui .rv-event .rv-wire')?.textContent || '',
+  title: document.querySelector('#ui .rv-event h2')?.textContent || '',
+  choices: document.querySelectorAll('#ui .rv-event .rv-option').length,
+  mark: document.querySelector('#ui .rv-event .rv-mystery-mark')?.textContent || '',
+}));
+assert(/Unknown signal/i.test(mysteryCard.wire) && mysteryCard.choices === 3 && !!mysteryCard.mark, `mystery event reveal is incomplete: ${JSON.stringify(mysteryCard)}`);
+await page.screenshot({ path: path.join(out, 'mystery-cache-1664x920.png') });
+await page.evaluate(() => window.__RAIL.state.phase === 'event' && window.__RAIL.sim.chooseEventOption(1));
+await page.waitForTimeout(150);
 
 // Force the repair-yard presentation after interaction verification.
 await page.evaluate(() => {

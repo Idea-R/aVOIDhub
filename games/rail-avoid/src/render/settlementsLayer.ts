@@ -81,6 +81,8 @@ const CLUSTERS: Record<SettlementType, string[]> = {
   market: ['b_stall', 'b_stall2', 'b_crates', 'b_house2', 'b_crates'],
   // expedition site: a ruined bunker / temple front with a green-lit doorway among broken walls and columns
   site: ['b_site_gate', 'b_ruin_wall', 'b_ruin_pillar', 'b_ruin_wall', 'b_ruin_pillar'],
+  // unknown track event: an unreadable signal, locked freight and a small abandoned platform
+  mystery: ['b_lantern_post', 'b_crates', 'b_shed', 'b_crates', 'b_railstack'],
   // crossroads hub: fortified junction station (always the full set — two towers flank the platform,
   // gate and gantry straddle the track)
   crossroads: ['b_xr_platform', 'b_xr_tower', 'b_xr_gate', 'b_xr_gantry', 'b_xr_tower'],

@@ -11,6 +11,7 @@ import { hasRelic } from './loot';
 import { DIRECTOR, UPGRADES } from '../core/config';
 import type { LocoUpgradeKind } from '../core/types';
 import { damageEnemy, locoPos } from './helpers';
+import { MYSTERY_EVENTS } from '../core/passengerEvents';
 
 export function onArrive(ctx: SimContext, s: Settlement): void {
   const { state } = ctx;
@@ -71,8 +72,14 @@ export function onArrive(ctx: SimContext, s: Settlement): void {
   }
   onSettlementForBounty(ctx, s, delivered);
   maybePostBounty(ctx, s);
-  if (s.type === 'shrine' || s.type === 'market' || s.type === 'wreck' || s.type === 'site' || s.type === 'crossroads') {
-    const id = 'node_' + s.type;
+  if (s.type === 'shrine' || s.type === 'market' || s.type === 'wreck' || s.type === 'site' || s.type === 'mystery' || s.type === 'crossroads') {
+    let id = 'node_' + s.type;
+    if (s.type === 'mystery') {
+      let pool = MYSTERY_EVENTS.filter(e => !state.usedEvents.includes(e.id));
+      if (pool.length === 0) pool = MYSTERY_EVENTS.slice();
+      id = ctx.rng.events.pick(pool).id;
+      state.usedEvents.push(id);
+    }
     state.activeEvent = { defId: id, startedAt: state.time };
     state.phase = 'event';
     ctx.bus.defer('phase:change', { phase: 'event' });

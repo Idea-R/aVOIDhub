@@ -55,7 +55,7 @@ const RES: Array<{ key: ResourceKey; label: string; icon: string; help: string }
 ];
 const WEATHER_ICON: Record<string, string> = { clear: '○', rain: '☂', fog: '≋', storm: '⚡', ashfall: '☁' };
 
-export function createHud(ui: UiShared, actions: { openPause(): void; toggleReverse(): void; firstJunction?(): void }): Hud {
+export function createHud(ui: UiShared, actions: { openPause(): void; toggleReverse(): void }): Hud {
   // ---------- mission ticket: the run's north star ----------
   const missionSub = el('span', { class: 'rv-mission-sub', text: 'Region 1 / 4' });
   const missionFill = el('i');
@@ -235,17 +235,19 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
       el('span', { class: 'rv-line-fl', text: lineFlavour(id) }))));
   const routeEl = el('div', { class: 'rv-route rv-panel', role: 'group', 'aria-label': 'Route planning', tabindex: '-1' },
     el('div', { class: 'rv-route-head' }, el('span', { class: 'rv-route-ico', 'aria-hidden': 'true', text: '⌖' }), el('span', { class: 'rv-label', text: 'Route' })),
-    onLineEl,
-    el('div', { class: 'rv-kv rv-ahead' }, el('span', { text: 'Planned ahead' }), el('span', null, aheadV, ' hex')),
-    el('div', { class: 'rv-kv rv-range' }, el('span', { text: 'Plan range' }), el('span', null, rangeV, ' hex')),
-    legendEl,
-    el('div', { class: 'rv-route-btns' },
-      railBtn('↶', 'Undo', () => { const sim = ui.sim(); if (!sim) return; const r = sim.unplanLast(); ui.audio().ui(r.ok ? 'click' : 'error'); if (!r.ok && r.reason) ui.notify(r.reason, 'warn'); }, { aria: 'Undo last planned hex (Backspace)' }),
-      railBtn('✕', 'Clear', () => { const sim = ui.sim(); if (!sim) return; ui.audio().ui('click'); sim.clearPlan(); }, { aria: 'Clear planned route' }),
-      railBtn('⌂', 'Center', () => { ui.audio().ui('click'); ui.view()?.centerOnTrain(); }, { aria: 'Center camera on train (F)' }),
-      followBtn,
-      reverseBtn,
-      logBtn,
+    el('div', { class: 'rv-route-details' },
+      onLineEl,
+      el('div', { class: 'rv-kv rv-ahead' }, el('span', { text: 'Planned ahead' }), el('span', null, aheadV, ' hex')),
+      el('div', { class: 'rv-kv rv-range' }, el('span', { text: 'Plan range' }), el('span', null, rangeV, ' hex')),
+      legendEl,
+      el('div', { class: 'rv-route-btns' },
+        railBtn('↶', 'Undo', () => { const sim = ui.sim(); if (!sim) return; const r = sim.unplanLast(); ui.audio().ui(r.ok ? 'click' : 'error'); if (!r.ok && r.reason) ui.notify(r.reason, 'warn'); }, { aria: 'Undo last planned hex (Backspace)' }),
+        railBtn('✕', 'Clear', () => { const sim = ui.sim(); if (!sim) return; ui.audio().ui('click'); sim.clearPlan(); }, { aria: 'Clear planned route' }),
+        railBtn('⌂', 'Center', () => { ui.audio().ui('click'); ui.view()?.centerOnTrain(); }, { aria: 'Center camera on train (F)' }),
+        followBtn,
+        reverseBtn,
+        logBtn,
+      ),
     ),
   );
   const logEl = el('div', { class: 'rv-log', role: 'log', 'aria-live': 'polite', 'aria-label': 'Event log' });
@@ -269,6 +271,12 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
     el('div', { class: 'rv-stop-main' }, stopIco, stopText, stopType, havenEl, departBtn),
     pressureEl);
   stopEl.hidden = true;
+  const resumeBtn = btn('Resume journey', () => { ui.audio().ui('confirm'); ui.sim()?.resume(); }, { class: 'rv-small rv-primary', aria: 'Resume the journey (Space)' });
+  const pausedEl = el('div', { class: 'rv-paused-callout rv-panel', role: 'status', 'aria-label': 'Journey paused' },
+    el('span', { class: 'rv-paused-icon', 'aria-hidden': 'true', text: 'Ⅱ' }),
+    el('span', { class: 'rv-paused-copy' }, el('b', { text: 'Journey paused' }), el('span', { text: 'Time and threats are stopped.' })),
+    resumeBtn);
+  pausedEl.hidden = true;
 
   // ---------- junction chooser: replaces the stop pill while the train waits at a branch ----------
   const junctionBtns = el('div', { class: 'rv-junction-opts', role: 'group', 'aria-label': 'Branches' });
@@ -278,19 +286,38 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
     el('div', { class: 'rv-junction-head' },
       el('span', { class: 'rv-junction-ico', 'aria-hidden': 'true', text: '⑂' }),
       el('span', { class: 'rv-junction-title', text: 'Junction' }),
-      el('span', { class: 'rv-junction-sub', text: 'choose your line' }),
+      el('span', { class: 'rv-junction-sub', text: 'train held · choose a route to continue' }),
       el('span', { class: 'rv-junction-keys', 'aria-hidden': 'true', text: 'branches match the map · 1 2 3' })),
     junctionMap,
     junctionBtns);
   junctionEl.hidden = true;
   let junctionOpts: JunctionOption[] = [];
   let junctionSig = '';
-  let junctionSeen = false;      // first junction of the run → announcement card
   const KEY_HINT = ['1', '2', '3', '4', '5', '6'];
   const PAD_HINT = ['A', 'B', 'X'];
   function optionLabel(o: JunctionOption): string {
     const n = o.next;
     return n ? `${o.lineName} to ${n.name} (${nodeMeta(n.type).label}), ${n.distance} hex` : `${o.lineName}, dead end`;
+  }
+  function orderedJunction(opts: JunctionOption[]): JunctionOption[] {
+    const s = ui.state();
+    const end = s?.route.path[s.route.path.length - 1];
+    if (!end) return [...opts];
+    // Controls read left-to-right exactly as the branch endpoints appear on the map.
+    return [...opts].sort((a, b) => {
+      const ap = hexToWorld(a.col, a.row), bp = hexToWorld(b.col, b.row);
+      return ap.x - bp.x || ap.y - bp.y;
+    });
+  }
+  function branchDirection(o: JunctionOption, origin: { x: number; y: number }): { glyph: string; label: string; angle: number } {
+    const at = hexToWorld(o.col, o.row);
+    const angle = Math.atan2((at.y - origin.y) * 0.62, at.x - origin.x);
+    const dirs = [
+      { glyph: '→', label: 'east' }, { glyph: '↘', label: 'south-east' }, { glyph: '↓', label: 'south' }, { glyph: '↙', label: 'south-west' },
+      { glyph: '←', label: 'west' }, { glyph: '↖', label: 'north-west' }, { glyph: '↑', label: 'north' }, { glyph: '↗', label: 'north-east' },
+    ];
+    const i = (Math.round(angle / (Math.PI / 4)) + 8) % 8;
+    return { ...dirs[i], angle };
   }
   function buildJunction(opts: JunctionOption[]): void {
     const s = ui.state();
@@ -299,8 +326,7 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
     junctionMap.replaceChildren(
       el('span', { class: 'rv-jm-center', 'aria-hidden': 'true', text: '◎' }),
       ...opts.map((o, i) => {
-        const at = hexToWorld(o.col, o.row);
-        const angle = Math.atan2((at.y - origin.y) * 0.62, at.x - origin.x);
+        const { angle } = branchDirection(o, origin);
         const name = o.next?.name ?? o.lineName;
         return el('span', {
           class: 'rv-jm-branch',
@@ -313,15 +339,16 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
     junctionBtns.replaceChildren(...opts.map((o, i) => {
       const n = o.next;
       const flavour = lineFlavour(o.line);
-      const b = btn('', () => chooseJunction(i), { class: 'rv-junction-opt rv-line-' + lineKey(o.line), aria: `${KEY_HINT[i] ? KEY_HINT[i] + ': ' : ''}${optionLabel(o)}` });
+      const dir = branchDirection(o, origin);
+      const b = btn('', () => chooseJunction(i), { class: 'rv-junction-opt rv-line-' + lineKey(o.line), aria: `${KEY_HINT[i] ? KEY_HINT[i] + ': ' : ''}${dir.label}, ${optionLabel(o)}` });
       b.setAttribute('style', `--line:${lineCss(o.line)}`);
       b.dataset.col = String(o.col); b.dataset.row = String(o.row);
       append(b, [
         el('span', { class: 'rv-jo-key', 'aria-hidden': 'true', text: KEY_HINT[i] ?? '' }),
         el('span', { class: 'rv-jo-body' },
-          el('span', { class: 'rv-jo-line' }, el('i', { class: 'rv-line-sw', 'aria-hidden': 'true' }), el('b', { text: o.lineName })),
+          el('span', { class: 'rv-jo-line' }, el('i', { class: 'rv-line-sw', 'aria-hidden': 'true' }), el('b', { text: o.lineName }), el('span', { class: 'rv-jo-direction', text: `${dir.glyph} ${dir.label}` })),
           el('span', { class: 'rv-jo-next' + (n ? '' : ' rv-dim') },
-            el('span', { class: 'rv-jo-arrow', 'aria-hidden': 'true', text: '→' }),
+            el('span', { class: 'rv-jo-arrow', 'aria-hidden': 'true', text: dir.glyph }),
             n ? el('span', { class: 'rv-jo-next-name' }, el('span', { class: 'rv-jo-next-ico', 'aria-hidden': 'true', style: `color:${nodeMeta(n.type).color}`, text: nodeMeta(n.type).icon }), ` ${n.name} (${n.type})`) : el('span', { class: 'rv-jo-next-name', text: 'dead end' }),
             n ? el('span', { class: 'rv-jo-dist', text: ` · ${n.distance} hex` }) : null),
           flavour ? el('span', { class: 'rv-jo-flavour', text: flavour }) : null),
@@ -338,6 +365,8 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
     try { r = sim.planTile(o.col, o.row); } catch (e) { r = { ok: false, reason: e instanceof Error ? e.message : String(e) }; }
     ui.audio().ui(r.ok ? 'confirm' : 'error');
     if (!r.ok) { if (r.reason) ui.notify(r.reason, 'warn', 4200, 'junction'); return false; }
+    // Picking a route is an explicit continue action; do not leave the player silently paused.
+    if (ui.state()?.phase === 'paused') sim.resume();
     const b = junctionBtns.children[i] as HTMLElement | undefined;
     if (b && !isReduced()) gsap.fromTo(b, { scale: 1.06 }, { scale: 1, duration: 0.25, ease: 'power2.out', clearProps: 'transform' });
     return true;
@@ -361,7 +390,7 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
   };
   document.addEventListener('keydown', onJunctionKey, true);
 
-  const dock = el('div', { class: 'rv-dock' }, warningEl, junctionEl, stopEl);
+  const dock = el('div', { class: 'rv-dock' }, warningEl, pausedEl, junctionEl, stopEl);
 
   const root = el('div', { class: 'rv-hud' }, top, left, dock);
 
@@ -519,11 +548,20 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
 
   function updateSpeed(s: SimState): void {
     const key = s.phase === 'paused' ? 0 : s.speedMul;
+    // Modal state can change without phase/speed changing, so keep this outside the
+    // render-signature early return. The callout must never linger behind a modal.
+    show(pausedEl, s.phase === 'paused' && !ui.anyModal());
     if (key === lastSpeed && s.phase === lastPhase) return;
     lastSpeed = key; lastPhase = s.phase;
     for (const { mul, b } of speedBtns) {
       const pressed = mul === 0 ? s.phase === 'paused' || s.speedMul === 0 : (s.phase !== 'paused' && s.speedMul === mul);
       setAttr(b, 'aria-pressed', pressed ? 'true' : 'false');
+      if (mul === 0) {
+        const paused = s.phase === 'paused';
+        setText(b, paused ? '▶' : '⏸');
+        setAttr(b, 'aria-label', paused ? 'Resume journey (Space)' : 'Pause journey (Space)');
+        setAttr(b, 'title', paused ? 'Resume journey (Space)' : 'Pause journey (Space)');
+      }
     }
   }
 
@@ -633,7 +671,7 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
     const sig = `${end ? end[0] + ',' + end[1] : ''}|${p.length}|${s.train.stopReason}|${Object.keys(s.route.railLines ?? {}).length}`;
     if (sig !== junctionSig || now - junctionAt > 2000) {
       junctionAt = now;
-      const opts = readJunctionOptions(ui.sim(), s);
+      const opts = orderedJunction(readJunctionOptions(ui.sim(), s));
       const optSig = sig + '|' + opts.map(o => `${o.col},${o.row},${o.line},${o.next?.id ?? ''},${o.next?.distance ?? ''}`).join(';');
       if (optSig !== junctionSig) {
         junctionSig = optSig;
@@ -648,7 +686,6 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
         gsap.fromTo(junctionEl, { y: 22, opacity: 0 }, { y: 0, opacity: 1, duration: 0.45, ease: 'back.out(1.5)', clearProps: 'transform,opacity' });
         gsap.fromTo(Array.from(junctionBtns.children), { y: 10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, stagger: 0.07, delay: 0.1, ease: 'power3.out', clearProps: 'transform,opacity' });
       }
-      if (!junctionSeen) { junctionSeen = true; try { actions.firstJunction?.(); } catch { /* */ } }
     }
     return true;
   }
@@ -752,8 +789,8 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
     for (const k of Object.keys(pending) as ResourceKey[]) delete pending[k];
     lootKeys.clear(); relicSig = ''; relicsEl.replaceChildren(); relicsEl.hidden = true;
     logLines.length = 0; logEl.replaceChildren();
-    show(warningEl, false); show(bossEl, false); show(stopEl, false); show(junctionEl, false);
-    junctionSig = ''; junctionOpts = []; junctionSeen = false; junctionAt = 0; lastLine = undefined;
+    show(warningEl, false); show(bossEl, false); show(stopEl, false); show(pausedEl, false); show(junctionEl, false);
+    junctionSig = ''; junctionOpts = []; junctionAt = 0; lastLine = undefined;
     volume.close();
   }
 

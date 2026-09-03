@@ -166,6 +166,56 @@ export const SITE_EVENT: PassengerEventDef = {
 };
 NODE_EVENTS.push(SITE_EVENT);
 
+/** Concealed encounters placed directly on the three main lines. */
+export const MYSTERY_EVENTS: PassengerEventDef[] = [
+  {
+    id: 'mystery_cache', title: 'A Lockbox by the Line', negative: false,
+    text: 'A signal lantern burns beside an iron-bound railway chest. No crew, no footprints, and no name on the manifest.',
+    options: [
+      { label: 'Break the seal', desc: 'Open it. The contents could be salvage, ammunition, Void Marks, or a relic.' },
+      { label: 'Strip the fittings', desc: 'Take the certain prize: +12 scrap.' },
+      { label: 'Leave the lonely box', desc: 'Keep moving. Morale +2.' },
+    ],
+  },
+  {
+    id: 'mystery_away', title: 'Lights Under the Platform', negative: true,
+    text: 'Lanterns move beneath an abandoned platform. Someone has scratched three fresh tally marks into the stone.',
+    options: [
+      { label: 'Send an away team', desc: 'Choose up to three crew for a close-quarters expedition. Win salvage and a relic.' },
+      { label: 'Sweep the platform edge', desc: '+7 scrap and +5 ammunition. Nothing risked.' },
+      { label: 'Sound the whistle and roll', desc: 'Leave the lights behind. Morale +2.' },
+    ],
+  },
+  {
+    id: 'mystery_ambush', title: 'The False Signal', negative: true,
+    text: 'The green lamp turns red as barricades rise on both sides of the train. Shapes are already moving through the smoke.',
+    options: [
+      { label: 'Punch through', desc: 'Resume immediately into a train ambush. Survive it for bonus Void Marks.' },
+      { label: 'Throw a scrap decoy', desc: '-14 scrap. Draw the attackers off and depart safely.', requires: { resource: 'scrap', amount: 14 } },
+      { label: 'Reverse under fire', desc: 'Avoid the main force, but the retreat costs 8 morale.' },
+    ],
+  },
+  {
+    id: 'mystery_survivor', title: 'One Lantern in the Rain', negative: false,
+    text: 'A lone rail gunner waits beside a ruined handcar, keeping a hooded lantern dry beneath her coat.',
+    options: [
+      { label: 'Make room for her', desc: '-4 food. Nils the Gunner joins your crew.', requires: { resource: 'food', amount: 4 } },
+      { label: 'Trade for her ammunition', desc: '-5 food, +24 ammunition.', requires: { resource: 'food', amount: 5 } },
+      { label: 'Wish her luck', desc: 'The train moves on. Morale -3.' },
+    ],
+  },
+  {
+    id: 'mystery_weapon', title: 'A Gun Car in the Weeds', negative: false,
+    text: 'A damaged weapon car sits on a forgotten siding. Its wheels can turn, but the coupling and feed system need work.',
+    options: [
+      { label: 'Repair and couple it', desc: '-18 scrap. Add a damaged region-appropriate weapon car with starting ammunition.', requires: { resource: 'scrap', amount: 18 } },
+      { label: 'Strip the weapon mount', desc: '+16 scrap and +12 ammunition.' },
+      { label: 'Mark it on the chart', desc: '+4 rails from the abandoned siding.' },
+    ],
+  },
+];
+NODE_EVENTS.push(...MYSTERY_EVENTS);
+
 export const CROSSROADS_EVENT: PassengerEventDef = {
   id: 'node_crossroads', title: 'The Crossroads', negative: true,
   text: 'Every line meets here, and everyone knows it. Barricades on the platform, eyes in the towers, and a toll-keeper who has already counted your cars.',

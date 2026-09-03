@@ -50,6 +50,7 @@ export const SETTLEMENT_COLORS: Record<SettlementType, number> = {
   wreck: 0xb5734a,
   market: 0xf0a05a,
   site: 0x5fd8a0,
+  mystery: 0xc9a0ff,
   crossroads: CROSSROADS,
 };
 

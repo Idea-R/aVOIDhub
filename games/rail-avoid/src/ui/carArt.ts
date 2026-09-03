@@ -7,6 +7,10 @@ import gatlingV2 from '/art/cars/gatling-v2.webp?url&inline';
 import gatlingV3 from '/art/cars/gatling-v3.webp?url&inline';
 import cargoV1 from '/art/cars/cargo-v1.webp?url&inline';
 import coachV1 from '/art/cars/coach-v1.webp?url&inline';
+import flakV1 from '/art/cars/flak-v1.webp?url&inline';
+import cannonV1 from '/art/cars/cannon-v1.webp?url&inline';
+import radiatorV1 from '/art/cars/radiator-v1.webp?url&inline';
+import medicalV1 from '/art/cars/medical-v1.webp?url&inline';
 
 /**
  * Authored rolling-stock art is level-aware. Missing types intentionally fall back
@@ -19,6 +23,10 @@ const CAR_ART: Partial<Record<CarType, readonly string[]>> = {
   gatling: [gatlingV1, gatlingV2, gatlingV3],
   cargo: [cargoV1],
   coach: [coachV1],
+  flak: [flakV1],
+  cannon: [cannonV1],
+  radiator: [radiatorV1],
+  medical: [medicalV1],
 };
 
 export function carArtFor(type: CarType, level = 1): string | null {

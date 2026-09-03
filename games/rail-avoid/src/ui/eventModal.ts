@@ -36,7 +36,8 @@ export function createEventModal(ui: UiShared): EventModal {
 
   function render(def: PassengerEventDef, s: SimState | null): void {
     optionButtons = [];
-    box.className = 'rv-panel rv-modal rv-event' + (def.negative ? ' rv-negative' : '');
+    const mystery = def.id.startsWith('mystery_');
+    box.className = 'rv-panel rv-modal rv-event' + (def.negative ? ' rv-negative' : '') + (mystery ? ' rv-mystery-event' : '');
     const options = el('div', { class: 'rv-options', role: 'group', 'aria-label': 'Choices' });
     def.options.forEach((o, i) => {
       const why = el('span', { class: 'rv-opt-why' });
@@ -59,8 +60,12 @@ export function createEventModal(ui: UiShared): EventModal {
       optionButtons.push({ btn: b, why, opt: o });
     });
     const h2 = el('h2', { text: def.title });
+    const mysteryMarks: Record<string, string> = {
+      mystery_cache: '▣', mystery_away: '⚔', mystery_ambush: '⚠', mystery_survivor: '♟', mystery_weapon: '⌁',
+    };
     box.replaceChildren(
-      el('div', { class: 'rv-label rv-wire', text: def.negative ? 'Trouble aboard' : 'Aboard the train' }),
+      el('div', { class: 'rv-label rv-wire', text: mystery ? 'Unknown signal · identity revealed' : (def.negative ? 'Trouble aboard' : 'Aboard the train') }),
+      ...(mystery ? [el('div', { class: 'rv-mystery-mark', 'aria-hidden': 'true', text: mysteryMarks[def.id] ?? '?' })] : []),
       h2,
       el('p', { class: 'rv-event-text', text: def.text }),
       options,
