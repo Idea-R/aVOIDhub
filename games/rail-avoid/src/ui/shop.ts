@@ -21,7 +21,10 @@ function nums(def: CarDef): HTMLElement {
   if (def.ammoSupplier) parts.push(['ammo', 'supplier']);
   const st = Object.entries(def.storage).filter(([, v]) => (v ?? 0) > 0);
   if (st.length) parts.push(['store', st.map(([k, v]) => `+${v} ${k}`).join(' ')]);
-  if (def.weapon) parts.push(['dmg', `${def.weapon.damage}/${def.weapon.cooldown}s`, ]);
+  if (def.weapon) {
+    parts.push(['dmg', `${def.weapon.damage}/${def.weapon.cooldown}s`, ]);
+    parts.push(['feed', def.weapon.ammoPerShot > 0 ? `supplier ≤${TRAIN.ammoRange}` : 'self-fed']);
+  }
   return el('div', { class: 'rv-si-nums' }, ...parts.map(([k, v]) => el('span', null, k + ' ', el('b', { text: v }))));
 }
 
@@ -91,7 +94,7 @@ export function createShop(ui: UiShared): Shop {
     el('details', { class: 'rv-rules rv-yard-rules' },
       el('summary', { text: 'Train system rules' }),
       el('span', null, el('b', { class: 'rv-tip', title: 'A generator (locomotive, boiler, reactor) powers cars within 3 positions. If demand exceeds output, every consumer in the span runs at output/demand.', text: 'Power' }), ` reaches ±${TRAIN.powerRange} cars; overload → brownout.`),
-      el('span', null, el('b', { class: 'rv-tip', title: 'Weapons need an Armory, Cargo Hold, Foundry or Armoured Cargo within 2 positions or they cannot fire.', text: 'Ammo' }), ` suppliers reach ±${TRAIN.ammoRange} cars.`),
+      el('span', null, el('b', { class: 'rv-tip', title: 'Ammo in the top bar is shared stock. Ballistic weapons still need a Cargo Hold, Foundry, or Armoured Cargo within 2 train positions to deliver it.', text: 'Ammo stock' }), ` is global; a supplier car must be within ±${TRAIN.ammoRange} positions of each ballistic weapon.`),
       el('span', null, el('b', { class: 'rv-tip', title: 'Heat diffuses 15%/s of the difference to adjacent cars. ≥80 damages, ≥100 catches fire. Radiators cool neighbours.', text: 'Heat' }), ' spreads to neighbours — pad hot cars with radiators.'),
       el('span', null, el('b', { class: 'rv-tip', title: 'Boarders walk one car toward the locomotive every 4 s. Armour Plate stops them; Barracks and Flamethrowers clear adjacent cars.', text: 'Boarders' }), ' walk forward; put a shield near the rear.')));
 
@@ -159,7 +162,9 @@ export function createShop(ui: UiShared): Shop {
         up.disabled = maxed || scrap < uc;
         chip.appendChild(up);
       }
-      chip.addEventListener('click', (e) => { if ((e.target as HTMLElement).tagName !== 'BUTTON') ui.selectCar(i, true); });
+      // The yard card is already the car editor. Selecting it may highlight the model,
+      // but must not open the separate inspector over this workspace.
+      chip.addEventListener('click', (e) => { if ((e.target as HTMLElement).tagName !== 'BUTTON') ui.selectCar(i, false); });
       trainEl.appendChild(chip);
     });
     sections.push(el('div', { class: 'rv-label rv-yard-section', text: `Rolling stock · ${t.cars.length}/${MAX_CARS} cars` }), trainEl);
@@ -207,7 +212,10 @@ export function createShop(ui: UiShared): Shop {
           const ok = sim.buyCar(def.type as CarType);
           ui.audio().ui(ok ? 'confirm' : 'error');
           if (!ok) ui.notify(full ? 'Train is at maximum length.' : 'Not enough scrap.', 'warn');
-          else flyChip(buy, def);
+          else {
+            flyChip(buy, def);
+            if (def.weapon?.ammoPerShot) ui.notify(`${def.name} loaded with commissioning ammo. Keep it within ${TRAIN.ammoRange} cars of a Cargo Hold, Foundry, or Armoured Cargo.`, 'good', 6000, 'weapon-supply');
+          }
           sig = '';
         }, { class: 'rv-small rv-primary', aria: `Buy ${def.name} for ${def.cost} scrap` });
         buy.disabled = poor || full;

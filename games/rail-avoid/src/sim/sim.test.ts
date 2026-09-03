@@ -116,6 +116,15 @@ describe('upgrades and nodes', () => {
     expect(s.train.cars.at(-1)?.type).toBe('caboose');
     expect(s.train.cars.at(-2)?.type).toBe('cannon');
   });
+  it('commissions purchased ballistic weapons with shared ammo stock', () => {
+    const sim = createSim(TEST_SEED, new EventBus());
+    const s = sim.state;
+    s.phase = 'shop';
+    sim.debug.grant({ scrap: 200 });
+    s.train.resources.ammo = 0;
+    expect(sim.buyCar('flak')).toBe(true);
+    expect(s.train.resources.ammo).toBe(12);
+  });
   it('upgrades cars and the locomotive at a yard and applies their effects', () => {
     const bus = new EventBus();
     const sim = createSim(TEST_SEED, bus);

@@ -307,6 +307,10 @@
 #ui.rv-log-on { --rv-left-w: 300px; }
 #ui.rv-inspector-open { --rv-right-w: calc(var(--side-w) + 20px); }
 #ui.rv-shop-open { --rv-right-w: calc(var(--shop-w) + 20px); }
+/* Repair Yard is the train workspace: its own rolling-stock cards replace the dock,
+   and the inspector cannot stack on top of it. */
+#ui.rv-shop-open .rv-dock,
+#ui.rv-shop-open > .rv-inspector { display: none !important; }
 
 #ui .rv-hud { position: absolute; inset: 0; pointer-events: none; }
 #ui .rv-hud .rv-panel, #ui .rv-hud .rv-chip, #ui .rv-hud .rv-btn, #ui .rv-hud .rv-log-line { pointer-events: auto; }

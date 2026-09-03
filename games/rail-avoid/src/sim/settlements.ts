@@ -164,8 +164,11 @@ export function buyCar(ctx: SimContext, type: CarType, insertAt?: number): boole
   }
   const car = addCar(ctx, type, at);
   if (!car) return false;
+  // A purchased ballistic weapon arrives commissioned, not dry. This adds shared
+  // stock; it still needs a live supplier car within TRAIN.ammoRange to feed it.
+  const loaded = def.weapon && def.weapon.ammoPerShot > 0 ? addResource(ctx, 'ammo', 12) : 0;
   ctx.bus.defer('car:bought', { type });
-  log(state, `Coupled a ${def.name}`, 'good');
+  log(state, `Coupled a ${def.name}${loaded > 0 ? ` · +${Math.round(loaded)} ammo` : ''}`, 'good');
   return true;
 }
 

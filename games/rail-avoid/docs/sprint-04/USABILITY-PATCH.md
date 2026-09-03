@@ -13,11 +13,14 @@ Reduce command-deck crowding, make map planning more direct, and explain the gam
 - Junction choices include a radial map dial whose spokes and labels follow real branch directions.
 - Weather HUD names the current mechanical penalties/bonuses. Fog uses discrete moving cloud banks instead of a solid screen tint.
 - The locomotive gains a deliberately weak, ammo-free close-range conductor guard. Weapon cars remain the meaningful offense, but one destroyed Gatling no longer leaves a run entirely helpless.
+- Repair Yard entry now closes the car inspector and collapses the rolling-stock deck. Yard cards select in place instead of opening a second workspace over the first.
+- Ballistic purchases include 12 commissioning ammo. Weapon copy now distinguishes the shared top-bar stock from the required Cargo Hold, Foundry or Armoured Cargo supply link within two car positions.
 
 ## Verification gates
 
 - Unit tests cover the locomotive fallback weapon and long settlement-route planning.
 - Browser acceptance checks the default scale, settings control, 1664×920 and 1280×720 deck fit, canvas settlement routing, repair-yard content and overflow, weather status, and console errors.
+- The yard gate asserts that neither the train deck nor inspector can render over the Repair Yard, including after selecting a yard card.
 - Existing HUD, car-inspector/right-drag, campaign smoke, production build and standalone gates must remain green before release.
 
 ## Explicit follow-ups
