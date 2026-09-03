@@ -10,6 +10,7 @@ describe('worldgen', () => {
     expect(a.settlements.map(s => s.name + s.col + s.row)).toEqual(b.settlements.map(s => s.name + s.col + s.row));
     expect(a.railLinks).toEqual(b.railLinks);
     expect(a.spine).toEqual(b.spine);
+    expect(a.leadIn).toEqual(b.leadIn);
   });
   it('has a connected rail spine from start to terminus and enough settlements', () => {
     const w = generateWorld(TEST_SEED);
@@ -17,6 +18,12 @@ describe('worldgen', () => {
     expect(w.spine[0]).toEqual(w.start);
     expect(w.spine[w.spine.length - 1]).toEqual(w.terminus);
     const links = new Set(w.railLinks);
+    expect(w.leadIn.at(-1)).toEqual(w.start);
+    for (let i = 0; i + 1 < w.leadIn.length; i++) {
+      const [a, b] = [w.leadIn[i], w.leadIn[i + 1]];
+      expect(links.has(edgeKey(a[0], a[1], b[0], b[1]))).toBe(true);
+      expect(neighbors(a[0], a[1]).some(n => n[0] === b[0] && n[1] === b[1])).toBe(true);
+    }
     for (let i = 0; i + 1 < w.spine.length; i++) {
       const [a, b] = [w.spine[i], w.spine[i + 1]];
       expect(links.has(edgeKey(a[0], a[1], b[0], b[1]))).toBe(true);

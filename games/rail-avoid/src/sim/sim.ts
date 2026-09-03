@@ -341,6 +341,16 @@ export class Sim implements SimApi {
       if (!st.pendingEliteRelic) st.pendingEliteRelic = 0;
       if (st.expedition === undefined) st.expedition = null;
       if (st.phaseBeforeExpedition === undefined) st.phaseBeforeExpedition = null;
+      // Older saves begin their route history at the depot, before the opening
+      // consist used the authored approach rail. Restore that missing history
+      // without changing the locomotive's current position or progress.
+      const generated = generateWorld(st.seed);
+      const first = st.route.path[0];
+      if (first && first[0] === generated.start[0] && first[1] === generated.start[1] && generated.leadIn.length > 1) {
+        const prefix = generated.leadIn.slice(0, -1);
+        st.route.path.unshift(...prefix);
+        st.train.routeIndex += prefix.length;
+      }
       this.rng.world.state = st.rngState.world >>> 0; this.rng.waves.state = st.rngState.waves >>> 0;
       this.rng.events.state = st.rngState.events >>> 0; this.rng.combat.state = st.rngState.combat >>> 0;
       this.ended = false;
