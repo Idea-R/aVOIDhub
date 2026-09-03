@@ -144,6 +144,7 @@ function offersFor(type: SettlementType, rng: Rng, region: number): ResourceBund
     case 'market': return {};
     case 'shrine': return {};
     case 'site': return {};
+    case 'mystery': return {};
     case 'crossroads': return { ammo: Math.round(rng.range(10, 16) * m) };
     default: return {};
   }
@@ -271,7 +272,7 @@ export function generateWorld(seed: number): WorldGen {
     for (const s of settlements) if (hexDistance(s.col, s.row, col, row) < minDist) return null;
     const id = 's' + settlements.length;
     const s: Settlement = {
-      id, name: type === 'start' ? 'Lastlight Depot' : type === 'terminus' ? 'The Last Gate' : type === 'crossroads' ? nameFor(rng, usedNames) + ' Crossroads' : nameFor(rng, usedNames),
+      id, name: type === 'start' ? 'Lastlight Depot' : type === 'terminus' ? 'The Last Gate' : type === 'mystery' ? 'Unknown Signal' : type === 'crossroads' ? nameFor(rng, usedNames) + ' Crossroads' : nameFor(rng, usedNames),
       type, col, row, region, offers: offersFor(type, rng, region),
       passengers: type === 'village' ? rng.int(6, 14) : type === 'clinic' ? rng.int(2, 5) : type === 'farm' ? rng.int(0, 4) : 0,
       crew: crewFor(type, rng), deadline: 0, visited: type === 'start', consumed: false, rescued: false,
@@ -286,9 +287,9 @@ export function generateWorld(seed: number): WorldGen {
   for (let i = 0; i < hubs.length; i++) place('crossroads', hubs[i][0], hubs[i][1], i);
 
   const LINE_TYPES: SettlementType[][] = [
-    ['yard', 'fuel', 'shrine', 'wreck', 'fuel', 'depot'],                 // central: balanced
-    ['mine', 'armory', 'depot', 'site', 'watchtower', 'mine'],            // northern: rich, dangerous
-    ['village', 'farm', 'clinic', 'market', 'village', 'site'],           // southern: passengers, calm
+    ['yard', 'fuel', 'shrine', 'mystery', 'wreck', 'fuel', 'depot'],                 // central: balanced
+    ['mine', 'armory', 'depot', 'mystery', 'site', 'watchtower', 'mine'],            // northern: rich, dangerous
+    ['village', 'farm', 'clinic', 'mystery', 'market', 'village', 'site'],           // southern: passengers, calm
   ];
   const OFF_LINE: Set<SettlementType> = new Set(['site', 'farm', 'wreck']);
   for (let reg = 0; reg < REGIONS; reg++) {
@@ -324,6 +325,16 @@ export function generateWorld(seed: number): WorldGen {
       for (let tries = 0; tries < 300 && !ok; tries++) {
         const col = rng.int(c0 + 1, c1 - 1), row = rng.int(1, MAP_H - 2);
         ok = !!place('yard', col, row, reg, 1);
+      }
+    }
+    // Every region gets at least one unknown event directly on a main line.
+    if (!settlements.some(s => s.region === reg && s.type === 'mystery')) {
+      let ok = false;
+      for (const line of rng.shuffle([...linePaths])) {
+        for (const pt of rng.shuffle(line.filter(q => regionOf(q[0]) === reg))) {
+          if (place('mystery', pt[0], pt[1], reg, 2)) { ok = true; break; }
+        }
+        if (ok) break;
       }
     }
   }

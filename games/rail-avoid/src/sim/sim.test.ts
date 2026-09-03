@@ -157,7 +157,16 @@ describe('upgrades and nodes', () => {
     const bus = new EventBus();
     const sim = createSim(TEST_SEED, bus);
     const types = new Set(sim.state.settlements.map(x => x.type));
-    for (const t of ['watchtower', 'shrine', 'wreck', 'market']) expect(types.has(t as any)).toBe(true);
+    for (const t of ['watchtower', 'shrine', 'wreck', 'market', 'mystery']) expect(types.has(t as any)).toBe(true);
+    for (let region = 0; region < 4; region++) {
+      const mysteries = sim.state.settlements.filter(x => x.type === 'mystery' && x.region === region);
+      expect(mysteries.length).toBeGreaterThan(0);
+      for (const node of mysteries) {
+        const key = `${node.col},${node.row}`;
+        expect(sim.state.route.railLinks.some(link => link.startsWith(key + '|') || link.endsWith('|' + key))).toBe(true);
+        expect(node.name).toBe('Unknown Signal');
+      }
+    }
     const json = JSON.parse(sim.serialize());
     delete json.state.train.locoUpgrades; for (const c of json.state.train.cars) delete c.level;
     const copy = createSim(TEST_SEED, new EventBus());
@@ -212,5 +221,20 @@ describe('player-legibility safeguards', () => {
     const before = sim.state.route.path.length;
     expect(sim.planPathTo(target.col, target.row).ok).toBe(true);
     expect(sim.state.route.path.length).toBeGreaterThan(before);
+  });
+  it('resolves concealed weapon-car and survivor encounters as authored rewards', () => {
+    const bus = new EventBus();
+    const sim = createSim(TEST_SEED, bus);
+    sim.debug.grant({ scrap: 100, food: 20 });
+    const carsBefore = sim.state.train.cars.length;
+    sim.debug.triggerEvent('mystery_weapon');
+    expect(sim.chooseEventOption(0)).toBe(true);
+    expect(sim.state.train.cars.length).toBe(carsBefore + 1);
+    expect(sim.state.train.cars.at(-1)?.type).toBe('gatling');
+    const crewBefore = sim.state.train.crew.length;
+    sim.debug.triggerEvent('mystery_survivor');
+    expect(sim.chooseEventOption(0)).toBe(true);
+    expect(sim.state.train.crew.length).toBe(crewBefore + 1);
+    expect(sim.state.train.crew.at(-1)?.name).toBe('Nils');
   });
 });

@@ -25,6 +25,10 @@ Detailed plan: `docs/sprint-04/PLAN.md`. Review: `docs/sprint-04/REVIEW.md`.
 - [x] Give the locomotive a weak, ammo-free conductor guard so losing the only weapon car is not an unrecoverable combat state.
 - [x] Make the Repair Yard an exclusive workspace that automatically collapses the rolling-stock deck and car inspector.
 - [x] Clarify that ballistic weapons draw from the shared ammo reserve only when Cargo Hold, Foundry or Armoured Cargo is within two car positions; include 12 commissioning ammo with a newly bought ballistic weapon.
+- [x] Sort junction choices by the branches' real map positions, label their compass direction and make a selection explicitly resume a paused journey.
+- [x] Put a prominent Resume action in the play area whenever time is paused; the top pause control also changes to a play symbol.
+- [x] Slow the route rail's hover reveal and animate its contents as one component instead of instantly popping rows in and out.
+- [x] Remove the redundant full-screen first-junction announcement that competed with the actionable junction dial.
 
 Verification and implementation notes: `docs/sprint-04/USABILITY-PATCH.md`.
 
@@ -76,9 +80,10 @@ Sprint 03 (readability and crew discovery) is archived in `docs/sprint-03/`.
 
 ## 3. Journey nodes (Slay the Spire density)
 - [x] 4 new node types: Watchtower (early warning), Shrine (boon choice), Wreck (salvage / free car), Market (trade).
-- [x] 17 events (14 passenger + 3 node). Target 45–50, in tiers: common (25), region-exclusive (4 × 4), rare (6), shrine-style (6).
+- [x] 24 events: 14 passenger, 5 fixed-location and 5 concealed-signal encounters. Target 45–50, in tiers: common (25), region-exclusive (4 × 4), rare (6), shrine-style (6).
 - [ ] Each event gets a painted card illustration (generated on-brand: violet void, gold rail, ink-and-wash miniature look) and a small consequence tag row.
-- [ ] Event "rooms" on the map: a `?` marker beside the track that only resolves when passed; some chain into follow-ups later in the run.
+- [x] First event-room pass: `?` signals sit directly on every region's main lines and conceal cache/relic, crew combat, train ambush, distressed crew and damaged weapon-car outcomes until arrival.
+- [ ] Add region-specific concealed-event pools and multi-stop follow-up chains.
 - [ ] Boss "hangar" nodes with a pre-fight prep choice (Spire elite-style rewards).
 - [ ] Weather-specific event pools: obscured threats and navigation dilemmas in fog, washouts/rescues in rain, heat and visibility incidents in ashfall and storms. Always preview the mechanical consequence before a choice.
 - [ ] Author bridge track tiles for legal water crossings instead of letting ordinary track terminate visually at a shoreline.
@@ -89,7 +94,8 @@ Sprint 03 (readability and crew discovery) is archived in `docs/sprint-03/`.
 - [ ] Opening cutscene: 25 s shot list (void swallowing Lastlight, train pulling out, title card) with the Suno theme; skippable, once per profile.
 - [x] Component-level command-deck HUD rebuild while preserving the current world style.
 - [x] First production rolling-stock art slice: starter consist plus visible Gatling upgrade progression.
-- [ ] Complete authored rolling-stock art for the remaining purchasable cars and their meaningful level-III silhouettes.
+- [x] Second production rolling-stock art slice: Flak Battery, Cannon Car, Radiator Car and Medical Car (10 of 22 car types now authored).
+- [ ] Complete authored rolling-stock art for the remaining 12 car types and their meaningful level-III silhouettes.
 - [ ] Generated production key art for the title, catalog card and each region's title card.
 - [ ] Boss intro vignettes (2–3 panels) and a short victory sequence at the Last Gate.
 - [ ] Major bosses appear as authored world avatars that approach the train, then hand off to the Away Team combat layer. Keep roaming elites as readable open-world pressure rather than converting every threat into a modal battle.

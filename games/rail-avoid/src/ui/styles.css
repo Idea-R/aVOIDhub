@@ -430,13 +430,13 @@
 /* left rail: route panel (+ log) */
 /* top-anchored so hover-expansion only grows right/down and never moves the panel out from under the pointer */
 #ui .rv-left { position: absolute; left: 0; top: var(--rv-top-h); bottom: 0; width: var(--rv-left-w); display: flex; flex-direction: column; justify-content: flex-start; padding: 10px; }
-#ui .rv-route { position: relative; width: 234px; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; transition: width 180ms cubic-bezier(0.2, 0.8, 0.2, 1), padding 180ms; z-index: 2; }
+#ui .rv-route { position: relative; width: 234px; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; overflow: hidden; transition: width 380ms cubic-bezier(0.22, 0.72, 0.18, 1), padding 380ms cubic-bezier(0.22, 0.72, 0.18, 1); z-index: 2; }
 #ui .rv-route-head { display: flex; align-items: center; gap: 6px; }
+#ui .rv-route-details { display: flex; flex-direction: column; gap: 6px; max-height: 320px; opacity: 1; transform: translateX(0); visibility: visible; transition: max-height 420ms cubic-bezier(0.22, 0.72, 0.18, 1), opacity 240ms ease 160ms, transform 340ms cubic-bezier(0.22, 0.72, 0.18, 1), visibility 0s; }
 #ui .rv-route-ico { color: var(--gold); font-size: calc(14 * var(--u)); line-height: 1; }
 #ui .rv-route .rv-kv { display: flex; justify-content: space-between; font-size: calc(12 * var(--u)); }
 #ui .rv-route .rv-kv b { font-variant-numeric: tabular-nums; }
-#ui .rv-route .rv-range { display: none; color: var(--fg2); }
-#ui .rv-route:hover .rv-range, #ui .rv-route:focus-within .rv-range { display: flex; }
+#ui .rv-route .rv-range { display: flex; color: var(--fg2); }
 #ui .rv-route .rv-route-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
 #ui .rv-railbtn { display: inline-flex; align-items: center; justify-content: flex-start; gap: 6px; }
 #ui .rv-railbtn .rv-rb-ico { width: 1.2em; text-align: center; color: var(--gold); font-size: calc(12 * var(--u)); }
@@ -445,12 +445,9 @@
 /* collapsed: slim 44 px icon strip; hover / focus or "must act" states expand it */
 #ui.rv-rail-collapsed .rv-route:not(:hover):not(:focus-within) { width: 44px; padding: 6px 4px; gap: 4px; }
 #ui.rv-rail-collapsed .rv-route:not(:hover):not(:focus-within) .rv-route-head { justify-content: center; }
-#ui.rv-rail-collapsed .rv-route:not(:hover):not(:focus-within) .rv-route-head .rv-label,
-#ui.rv-rail-collapsed .rv-route:not(:hover):not(:focus-within) .rv-kv,
-#ui.rv-rail-collapsed .rv-route:not(:hover):not(:focus-within) .rv-rb-lbl { display: none; }
-#ui.rv-rail-collapsed .rv-route:not(:hover):not(:focus-within) .rv-route-btns { grid-template-columns: 1fr; gap: 3px; }
-#ui.rv-rail-collapsed .rv-route:not(:hover):not(:focus-within) .rv-railbtn { justify-content: center; width: 34px; height: 30px; padding: 0; }
-#ui.rv-rail-collapsed .rv-route:not(:hover):not(:focus-within) .rv-railbtn .rv-rb-ico { font-size: calc(13 * var(--u)); }
+#ui.rv-rail-collapsed .rv-route:not(:hover):not(:focus-within) .rv-route-details { max-height: 0; opacity: 0; transform: translateX(-12px); visibility: hidden; pointer-events: none; transition-delay: 0s, 0s, 0s, 420ms; }
+#ui.rv-rail-collapsed .rv-route:hover, #ui.rv-rail-collapsed .rv-route:focus-within { transition-delay: 140ms; }
+#ui.rv-rail-collapsed .rv-route:hover .rv-route-details, #ui.rv-rail-collapsed .rv-route:focus-within .rv-route-details { transition-delay: 140ms, 260ms, 160ms, 140ms; }
 #ui .rv-btn.rv-reversing { background: linear-gradient(180deg, rgba(255, 176, 64, 0.42), rgba(255, 176, 64, 0.18)); border-color: #ffb040; color: #ffd28a; font-weight: 700; animation: rv-amber 1s ease-in-out infinite; }
 #ui .rv-btn.rv-reversing .rv-rb-ico { color: #ffd28a; }
 @keyframes rv-amber { 0%, 100% { box-shadow: 0 0 0 0 rgba(255, 176, 64, 0); } 50% { box-shadow: 0 0 0 3px rgba(255, 176, 64, 0.35), 0 0 18px rgba(255, 176, 64, 0.5); } }
@@ -465,6 +462,11 @@
 
 /* bottom dock: wave banner → stop pill → strip, centred in the remaining width */
 #ui .rv-dock { position: absolute; left: var(--rv-left-w); right: var(--rv-right-w); bottom: 10px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+#ui .rv-paused-callout { display: flex; align-items: center; gap: 10px; padding: 7px 9px 7px 12px; border-color: var(--info); box-shadow: 0 0 0 1px rgba(111,183,232,.22), 0 10px 30px rgba(0,0,0,.42); }
+#ui .rv-paused-icon { color: var(--info); font-weight: 900; letter-spacing: -.14em; }
+#ui .rv-paused-copy { display: flex; flex-direction: column; line-height: 1.15; }
+#ui .rv-paused-copy b { color: var(--fg); font-size: calc(12 * var(--u)); text-transform: uppercase; letter-spacing: .12em; }
+#ui .rv-paused-copy span { color: var(--fg2); font-size: calc(10.5 * var(--u)); }
 
 #ui .rv-warning {
   padding: 6px 16px; color: var(--danger); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
@@ -733,6 +735,8 @@
 /* a coach-mark under a modal card is noise; it comes back when the card closes */
 #ui:has(> .rv-overlay.rv-zone:not([hidden])) .rv-tutorial-layer { visibility: hidden; }
 #ui .rv-event .rv-event-text { font-size: calc(14 * var(--u)); color: var(--fg); line-height: 1.5; }
+#ui .rv-event.rv-mystery-event { border-color: rgba(201,160,255,.72); box-shadow: 0 0 0 1px rgba(201,160,255,.2), 0 18px 70px rgba(16,8,35,.62); }
+#ui .rv-event .rv-mystery-mark { float: left; display: grid; place-items: center; width: calc(52 * var(--u)); height: calc(52 * var(--u)); margin: 3px calc(14 * var(--u)) 4px 0; border: 1px solid rgba(201,160,255,.62); border-radius: 50%; background: radial-gradient(circle, rgba(124,87,215,.3), rgba(21,17,39,.9) 70%); color: #d9bcff; font-family: Georgia, serif; font-size: calc(27 * var(--u)); text-shadow: 0 0 14px rgba(201,160,255,.7); }
 #ui .rv-event .rv-option { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; text-transform: none; letter-spacing: 0; width: 100%; padding: 8px 12px; white-space: normal; }
 #ui .rv-event .rv-option .rv-opt-label { font-weight: 700; color: var(--gold); letter-spacing: 0.04em; }
 #ui .rv-event .rv-option .rv-opt-desc { font-size: calc(12 * var(--u)); color: var(--fg2); }
@@ -1018,8 +1022,6 @@ html.rv-cursors #game canvas[data-cursor="default"] { cursor: var(--rv-cur-defau
 #ui .rv-line-item .rv-line-fl { display: none; color: var(--fg3); font-style: italic; letter-spacing: 0.02em; white-space: nowrap; }
 #ui .rv-line-item .rv-line-fl::before { content: "— "; }
 #ui .rv-line-item:hover .rv-line-fl, #ui .rv-line-item:focus-visible .rv-line-fl { display: inline; }
-#ui.rv-rail-collapsed .rv-route:not(:hover):not(:focus-within) .rv-online,
-#ui.rv-rail-collapsed .rv-route:not(:hover):not(:focus-within) .rv-line-legend { display: none; }
 #ui.rv-compact .rv-line-item { padding: 1px 6px 1px 4px; font-size: calc(9.5 * var(--u)); }
 
 /* settlement tooltip: line tag */
@@ -1047,6 +1049,7 @@ html.rv-cursors #game canvas[data-cursor="default"] { cursor: var(--rv-cur-defau
 #ui .rv-junction .rv-jo-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
 #ui .rv-junction .rv-jo-line { display: inline-flex; align-items: center; gap: 6px; color: var(--line); font-size: calc(12 * var(--u)); letter-spacing: 0.06em; text-transform: uppercase; }
 #ui .rv-junction .rv-jo-line b { font-weight: 800; }
+#ui .rv-junction .rv-jo-direction { margin-left: auto; color: var(--fg); font: 700 calc(9 * var(--u))/1 ui-monospace, Consolas, monospace; letter-spacing: .06em; }
 #ui .rv-junction .rv-jo-next { display: inline-flex; align-items: center; gap: 3px; font-size: calc(11.5 * var(--u)); color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #ui .rv-junction .rv-jo-next.rv-dim { color: var(--fg3); font-style: italic; }
 #ui .rv-junction .rv-jo-arrow { color: var(--fg3); }

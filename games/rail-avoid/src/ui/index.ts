@@ -53,8 +53,6 @@ export function createUI(ctx: AppContext): UiApi {
   // ---------- build screens ----------
   const hud = createHud(ui, {
     openPause: () => openPause(), toggleReverse: () => toggleReverse(),
-    // first junction of a run: the chooser docks and the announcement card explains it once
-    firstJunction: () => { if (ui.runActive()) announcer.announce({ cat: 'Junction', title: 'Choose your line', body: 'Each line has its own character. Click a branch, press 1-3, or A / B / X on a pad.', tone: 'gold', hold: 3.2 }); },
   });
   const layout = createLayout(ui, hud.zones);
   const cards = createHoverCards(ui, layout);
@@ -97,7 +95,7 @@ export function createUI(ctx: AppContext): UiApi {
   const eventModal = createEventModal(ui);
   const crewPicker = createCrewPicker(ui, {
     // the sim keeps the site event active after "Send an expedition": cancelling returns to the site card
-    onCancel: () => { const s = ui.state(); if (s && s.phase === 'event' && s.activeEvent?.defId === 'node_site') eventModal.show('node_site'); },
+    onCancel: () => { const s = ui.state(); if (s && s.phase === 'event' && (s.activeEvent?.defId === 'node_site' || s.activeEvent?.defId === 'mystery_away')) eventModal.show(s.activeEvent.defId); },
   });
   const pause = createPause(ui, {
     restart: () => { const s = ui.state(); ctx.newRun(s ? s.seed : undefined); },
@@ -296,7 +294,7 @@ export function createUI(ctx: AppContext): UiApi {
     bus.on('bounty:failed', ({ id, title }) => { bounties.flash(id, 'failed'); say('Bounty failed', title, 'The poster will not be paying.', 'bad'); }),
     bus.on('expedition:end', (p) => { pendingExpeditionEnd = p; }),
     bus.on('event:resolved', ({ defId, option, summary }) => {
-      if (defId === 'node_site' && option === 0) { if (ui.runActive()) crewPicker.open(); return; }
+      if ((defId === 'node_site' || defId === 'mystery_away') && option === 0) { if (ui.runActive()) crewPicker.open(); return; }
       const def = eventById(defId);
       if (summary) say('Event', def?.title ?? 'Aboard the train', summary, def?.negative ? 'bad' : 'gold');
     }),

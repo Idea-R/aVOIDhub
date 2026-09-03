@@ -100,11 +100,25 @@ for (const [width, height] of [[1664, 920], [1280, 720]]) {
   await page.mouse.move(startX - 150, startY + 55, { steps: 8 });
   await page.mouse.up({ button: 'right' });
   await page.waitForTimeout(150);
-  const after = await page.evaluate(() => {
+  let after = await page.evaluate(() => {
     const scene = window.__RAIL.view.__scene;
     return { x: scene.cameras.main.scrollX, y: scene.cameras.main.scrollY, following: window.__RAIL.view.isFollowing() };
   });
-  const cameraDelta = Math.hypot(after.x - before.x, after.y - before.y);
+  let cameraDelta = Math.hypot(after.x - before.x, after.y - before.y);
+  // A centered compact viewport can begin against two camera bounds. If the first
+  // drag points out of bounds, verify the opposite in-bounds direction instead.
+  if (cameraDelta <= 20) {
+    await page.mouse.move(startX, startY);
+    await page.mouse.down({ button: 'right' });
+    await page.mouse.move(startX + 150, startY - 55, { steps: 8 });
+    await page.mouse.up({ button: 'right' });
+    await page.waitForTimeout(150);
+    after = await page.evaluate(() => {
+      const scene = window.__RAIL.view.__scene;
+      return { x: scene.cameras.main.scrollX, y: scene.cameras.main.scrollY, following: window.__RAIL.view.isFollowing() };
+    });
+    cameraDelta = Math.hypot(after.x - before.x, after.y - before.y);
+  }
   assert(box && cameraDelta > 20, `${width}: right-drag did not move the camera (${cameraDelta.toFixed(1)}px)`);
   assert(after.following === false, `${width}: right-drag did not release follow-camera mode`);
   assert(pageErrors.length === 0, `${width}: page errors: ${pageErrors.join(' | ')}`);
