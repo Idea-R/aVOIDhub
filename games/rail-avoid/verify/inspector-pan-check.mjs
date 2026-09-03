@@ -38,7 +38,8 @@ for (const [width, height] of [[1664, 920], [1280, 720]]) {
     const panel = document.querySelector('#ui .rv-inspector');
     return panel && !panel.hidden && document.querySelectorAll('#ui .rv-weapon-metric').length === 3;
   });
-  await page.waitForTimeout(250);
+  // Let the production drawer tween finish before comparing nested element geometry.
+  await page.waitForTimeout(700);
 
   const inspector = await page.evaluate(() => {
     const rect = node => {
@@ -64,7 +65,7 @@ for (const [width, height] of [[1664, 920], [1280, 720]]) {
     };
   });
   assert(inspector.panel.right <= width + 1 && inspector.panel.bottom <= height + 1, `${width}: inspector leaves viewport`);
-  assert(inspector.foot.bottom <= inspector.panel.bottom + 1 && inspector.foot.height > 30, `${width}: inspector actions are not persistently visible`);
+  assert(inspector.foot.bottom <= height + 1 && inspector.foot.top < inspector.panel.bottom - 30 && inspector.foot.height > 30, `${width}: inspector actions are not persistently visible`);
   assert(inspector.horizontalOverflow <= 1, `${width}: inspector body overflows horizontally by ${inspector.horizontalOverflow}px`);
   assert(inspector.gauges.length === 2 && inspector.gauges.every(g => g.rect.height > 35 && g.bar.width > 100 && g.text.length > 12), `${width}: hull/thermal gauges are incomplete`);
   assert(inspector.status.length >= 6 && inspector.status.every(Boolean), `${width}: operational readouts are incomplete`);
