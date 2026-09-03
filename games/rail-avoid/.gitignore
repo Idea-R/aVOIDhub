@@ -7,4 +7,5 @@ verify/report.json
 verify/report.md
 verify/run.log
 verify/hud-sprint-report.json
+verify/inspector-pan-report.json
 verify/screenshots/**/*.png

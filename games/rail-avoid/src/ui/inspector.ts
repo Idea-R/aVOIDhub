@@ -81,23 +81,36 @@ export function createInspector(ui: UiShared): Inspector {
     const powerText = el('span'); const ammoText = el('span'); const boardText = el('span'); const statusText = el('span');
     const heroStatus = el('span', { class: 'rv-inspector-status', text: 'Operational' });
     const paxText = def.passengerCap > 0 ? el('span') : null;
-    const kv = el('div', { class: 'rv-kv-grid' },
-      el('span', { class: 'rv-k', text: 'Hull' }), el('span', { class: 'rv-v' }, el('div', { class: 'rv-bar' }, hpFill), hpText),
-      el('span', { class: 'rv-k', text: 'Heat' }), el('span', { class: 'rv-v' }, el('div', { class: 'rv-bar' }, heatFill), heatText),
-      el('span', { class: 'rv-k', text: 'Power' }), el('span', { class: 'rv-v' }, powerText),
-      el('span', { class: 'rv-k', text: 'Ammo' }), el('span', { class: 'rv-v' }, ammoText),
-      ...(paxText ? [el('span', { class: 'rv-k', text: 'Passengers' }), el('span', { class: 'rv-v' }, paxText)] : []),
-      el('span', { class: 'rv-k', text: 'Boarders' }), el('span', { class: 'rv-v' }, boardText),
-      el('span', { class: 'rv-k', text: 'Status' }), el('span', { class: 'rv-v' }, statusText),
-      el('span', { class: 'rv-k', text: 'Weight' }), el('span', { class: 'rv-v', text: `${def.weight} t` }),
-      el('span', { class: 'rv-k', text: 'Level' }), el('span', { class: 'rv-v', title: levelEffect(car.type) }, levelPips(lvl), el('span', { class: 'rv-dim', text: lvl >= MAX_LEVEL ? 'max' : `${ROMAN[lvl]} · ${levelEffect(car.type)}` })),
+    const statusCell = (label: string, value: HTMLElement | string, extra = '') => el('div', { class: `rv-insp-status-cell${extra ? ` ${extra}` : ''}` },
+      el('span', { class: 'rv-insp-status-label', text: label }),
+      typeof value === 'string' ? el('strong', { text: value }) : value,
     );
-    if (def.powerGen > 0) kv.append(el('span', { class: 'rv-k', text: 'Generates' }), el('span', { class: 'rv-v', text: `+${def.powerGen} power (range ${TRAIN.powerRange})` }));
-    if (def.heatGen > 0 || def.cooling > 0) kv.append(el('span', { class: 'rv-k', text: 'Thermal' }), el('span', { class: 'rv-v', text: `${def.heatGen > 0 ? `+${def.heatGen} heat/s active` : ''}${def.cooling > 0 ? ` −${def.cooling}/s cooling` : ''}`.trim() }));
+    const telemetry = el('section', { class: 'rv-insp-telemetry', 'aria-label': 'Car condition' },
+      el('article', { class: 'rv-insp-gauge rv-insp-hull' },
+        el('div', { class: 'rv-insp-gauge-head' }, el('span', { text: 'Hull integrity' }), el('strong', null, hpText)),
+        el('div', { class: 'rv-bar', role: 'meter', 'aria-label': 'Hull integrity' }, hpFill)),
+      el('article', { class: 'rv-insp-gauge rv-insp-heat' },
+        el('div', { class: 'rv-insp-gauge-head' }, el('span', { text: 'Thermal load' }), el('strong', null, heatText)),
+        el('div', { class: 'rv-bar', role: 'meter', 'aria-label': 'Thermal load' }, heatFill)),
+    );
+    const statusGrid = el('section', { class: 'rv-insp-status-grid', 'aria-label': 'System status' },
+      statusCell('Power grid', powerText),
+      statusCell('Ammunition', ammoText),
+      ...(paxText ? [statusCell('Passengers', paxText)] : []),
+      statusCell('Boarders', boardText),
+      statusCell('Current state', statusText, 'rv-insp-state'),
+      statusCell('Mass', `${def.weight} t`),
+      statusCell('Upgrade', el('span', { class: 'rv-insp-level', title: levelEffect(car.type) }, levelPips(lvl), el('span', { text: lvl >= MAX_LEVEL ? 'Maximum' : `Level ${ROMAN[lvl]}` }))),
+    );
+    const capabilityRows: HTMLElement[] = [];
+    const capability = (label: string, value: string) => capabilityRows.push(el('div', { class: 'rv-insp-capability' },
+      el('span', { text: label }), el('strong', { text: value })));
+    if (def.powerGen > 0) capability('Generation', `+${def.powerGen} power · ${TRAIN.powerRange}-car range`);
+    if (def.heatGen > 0 || def.cooling > 0) capability('Thermal', `${def.heatGen > 0 ? `+${def.heatGen} heat/s active` : ''}${def.cooling > 0 ? ` −${def.cooling}/s cooling` : ''}`.trim());
     const storage = Object.entries(def.storage).filter(([, v]) => (v ?? 0) > 0);
-    if (storage.length) kv.append(el('span', { class: 'rv-k', text: 'Storage' }), el('span', { class: 'rv-v', text: storage.map(([k, v]) => `+${v} ${k}`).join(', ') }));
-    if (def.ammoSupplier) kv.append(el('span', { class: 'rv-k', text: 'Supplies' }), el('span', { class: 'rv-v', text: `ammo to weapons within ${TRAIN.ammoRange} cars` }));
-    if (def.planRangeBonus || def.trackCostBonus) kv.append(el('span', { class: 'rv-k', text: 'Planning' }), el('span', { class: 'rv-v', text: `${def.planRangeBonus ? `+${def.planRangeBonus} range` : ''} ${def.trackCostBonus ? `${def.trackCostBonus} track cost` : ''}`.trim() }));
+    if (storage.length) capability('Storage', storage.map(([k, v]) => `+${v} ${k}`).join(' · '));
+    if (def.ammoSupplier) capability('Supply line', `Weapons within ${TRAIN.ammoRange} cars`);
+    if (def.planRangeBonus || def.trackCostBonus) capability('Planning', `${def.planRangeBonus ? `+${def.planRangeBonus} range` : ''} ${def.trackCostBonus ? `${def.trackCostBonus} track cost` : ''}`.trim());
 
     const artSrc = carArtFor(car.type, lvl);
     const heroMachine = artSrc
@@ -115,20 +128,26 @@ export function createInspector(ui: UiShared): Inspector {
         el('span', { class: 'rv-inspector-role', text: carRole(car) }),
         heroStatus,
         el('p', { class: 'rv-desc', text: def.desc })));
-    const sections: HTMLElement[] = [hero, kv];
+    const sections: HTMLElement[] = [hero, telemetry, statusGrid];
+    if (capabilityRows.length) sections.push(el('section', { class: 'rv-insp-capabilities', 'aria-label': 'Car capabilities' }, ...capabilityRows));
 
+    let weaponSection: HTMLElement | null = null;
     if (def.weapon) {
       const w = def.weapon;
       const targets = [w.hitsGround && 'ground', w.hitsAir && 'air', w.hitsPhase && 'wisps'].filter(Boolean).join(' + ');
-      sections.push(el('div', { class: 'rv-label', text: 'Weapon' }), el('div', { class: 'rv-kv-grid' },
-        el('span', { class: 'rv-k', text: 'Type' }), el('span', { class: 'rv-v', text: `${cap(w.kind)} (${w.damageClass})` }),
-        el('span', { class: 'rv-k', text: 'Damage' }), el('span', { class: 'rv-v', text: `${w.damage}${w.aoe ? ` splash ${w.aoe}px` : ''}${w.chain ? ` chain ×${w.chain}` : ''}` }),
-        el('span', { class: 'rv-k', text: 'Rate' }), el('span', { class: 'rv-v', text: `${(1 / w.cooldown).toFixed(2)}/s (${w.cooldown}s)` }),
-        el('span', { class: 'rv-k', text: 'Range' }), el('span', { class: 'rv-v', text: `${w.range} px` }),
-        el('span', { class: 'rv-k', text: 'Targets' }), el('span', { class: 'rv-v', text: targets || 'none' }),
-        el('span', { class: 'rv-k', text: 'Ammo' }), el('span', { class: 'rv-v', text: w.ammoPerShot ? `${w.ammoPerShot}/shot` : 'none needed' }),
-        el('span', { class: 'rv-k', text: 'Heat' }), el('span', { class: 'rv-v', text: `+${w.heatPerShot}/shot` }),
-      ));
+      const weaponMetric = (label: string, value: string) => el('div', { class: 'rv-weapon-metric' }, el('span', { text: label }), el('strong', { text: value }));
+      weaponSection = el('section', { class: 'rv-insp-module rv-insp-weapon' },
+        el('div', { class: 'rv-insp-module-head' },
+          el('div', null, el('span', { class: 'rv-label', text: 'Weapon system' }), el('strong', { text: `${cap(w.kind)} · ${cap(w.damageClass)}` })),
+          el('span', { class: 'rv-insp-targets', text: targets || 'no valid targets' })),
+        el('div', { class: 'rv-weapon-grid' },
+          weaponMetric('Damage', `${w.damage}${w.aoe ? ` + ${w.aoe}px splash` : ''}${w.chain ? ` · chain ×${w.chain}` : ''}`),
+          weaponMetric('Fire rate', `${(1 / w.cooldown).toFixed(2)} / sec`),
+          weaponMetric('Range', `${w.range} px`)),
+        el('div', { class: 'rv-weapon-costs' },
+          el('span', { text: w.ammoPerShot ? `${w.ammoPerShot} ammo / shot` : 'No ammunition needed' }),
+          el('span', { text: `+${w.heatPerShot} heat / shot` })),
+      );
     }
 
     // crew slot
@@ -143,7 +162,7 @@ export function createInspector(ui: UiShared): Inspector {
     unassignBtn.disabled = !current;
     const slotLead = current
       ? `${current.name} · ${cap(current.specialty)} · ${Math.round(current.hp)} HP`
-      : i === 0 ? 'The Conductor commands from here.' : unassigned.length ? `${unassigned.length} specialist${unassigned.length === 1 ? '' : 's'} ready to post.` : 'No available specialist. Unassign one from another car first.';
+      : i === 0 ? 'The Conductor commands from here.' : unassigned.length ? `${unassigned.length} specialist${unassigned.length === 1 ? '' : 's'} ready to post.` : 'Crew berth open';
     const slotEffect = current ? CREW_EFFECT[current.specialty] : 'Posting is immediate and can be changed at any time.';
     const choices = el('div', { class: 'rv-crew-choices', role: 'list', 'aria-label': 'Available specialists' });
     if (i > 0 && unassigned.length) {
@@ -169,30 +188,37 @@ export function createInspector(ui: UiShared): Inspector {
         choices.appendChild(choice);
       }
     } else if (i > 0 && !current) {
-      choices.appendChild(el('div', { class: 'rv-crew-empty', text: 'No specialist is waiting. Open another car to unassign its crew, or rescue more people along the line.' }));
+      choices.appendChild(el('div', { class: 'rv-crew-empty' },
+        el('strong', { text: 'No specialist waiting' }),
+        el('span', { text: 'Unassign crew from another car or rescue a specialist along the line.' })));
     }
-    sections.push(el('section', { class: 'rv-crew-slot' },
+    sections.push(el('section', { class: 'rv-crew-slot rv-insp-module' },
       el('div', { class: 'rv-crew-slot-head' },
         current?.specialty === 'conductor' ? el('img', { class: 'rv-crew-portrait', src: conductorPortrait, alt: 'The Conductor' }) : el('span', { class: 'rv-crew-ready-lamp', 'aria-hidden': 'true' }),
         el('div', null,
-        el('div', { class: 'rv-label', text: current ? 'Crew posted here' : 'Crew slot' }),
+        el('div', { class: 'rv-label', text: current ? 'Crew posted here' : 'Crew berth' }),
         el('strong', { text: slotLead }))),
       el('div', { class: 'rv-crew-effect', text: slotEffect }),
       current && current.specialty !== 'conductor' ? el('div', { class: 'rv-row rv-crew-controls' }, unassignBtn) : null,
       choices.childElementCount ? el('div', { class: 'rv-crew-posting' }, el('div', { class: 'rv-label', text: 'Available specialists' }), choices) : null,
     ));
+    if (weaponSection) sections.push(weaponSection);
 
     // crew roster
     const crewHp: Array<{ id: string; el: HTMLElement }> = [];
     if (s.train.crew.length) {
-      const list = el('div', { class: 'rv-col', style: 'gap:3px' });
+      const list = el('div', { class: 'rv-col rv-insp-roster-list' });
       for (const c of s.train.crew) {
         const hpEl = el('span', { class: 'rv-where', text: `${Math.round(c.hp)} hp · ${WHERE(c, s)}` });
         crewHp.push({ id: c.id, el: hpEl });
         list.appendChild(el('div', { class: 'rv-crew-line', title: CREW_EFFECT[c.specialty] },
           el('span', null, c.name, ' ', el('span', { class: 'rv-spec', text: c.specialty }), el('small', { text: CREW_EFFECT[c.specialty] })), hpEl));
       }
-      sections.push(el('div', { class: 'rv-label', text: `Crew (${s.train.crew.length})` }), list);
+      sections.push(el('details', { class: 'rv-insp-roster' },
+        el('summary', null,
+          el('span', { text: 'Train crew' }),
+          el('strong', { text: `${s.train.crew.length} aboard` })),
+        list));
     }
     body.replaceChildren(...sections);
 
