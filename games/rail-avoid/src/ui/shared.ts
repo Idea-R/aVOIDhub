@@ -153,6 +153,7 @@ export class UiShared {
   private syncLayoutClasses(): void {
     this.root.classList.toggle('rv-inspector-open', this.isOpen('inspector'));
     this.root.classList.toggle('rv-shop-open', this.isOpen('shop'));
+    this.root.classList.toggle('rv-modal-open', this.stack.length > 0);
   }
   topModal(): PanelName | null { return this.stack.length ? this.stack[this.stack.length - 1] : null; }
   anyModal(): boolean { return this.stack.length > 0; }

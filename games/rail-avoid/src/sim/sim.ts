@@ -43,11 +43,11 @@ function emptyStats(): Stats {
 const TUTORIAL: string[] = [
   'Click a glowing hex ahead of the locomotive to lay track. Old rail lines (grey) are free; new track costs rails.',
   'The train follows your plan. Plan several hexes ahead — it never waits long.',
-  'The void is behind you and never stops. Keep moving east. The VOID meter shows your margin.',
+  'Your objective is always east: reach the Last Gate. The mission ticket shows progress; the VOID meter shows your safety margin.',
   'Enemies inbound! Turrets fire on their own. Watch AMMO supply and HEAT on the train strip below.',
-  'Settlements give cargo, passengers and crew. Passengers need coach space and eat food.',
+  'CREW READY means a specialist is waiting. Click that ticket or any car, then use Crew Slot to post them. Their bonus starts immediately.',
   'Boarders on the train! Barracks and flamethrowers clear adjacent cars. Press D to detach the rear car in an emergency.',
-  'Repair yard: buy, sell and reorder cars. Power reaches 3 cars, ammo suppliers reach 2, heat spreads to neighbours.',
+  'At a repair yard, repair before expanding. Power reaches 3 cars, ammo suppliers reach 2, and heat spreads to neighbours.',
   'Junction: click the branch you want to follow. Branches lead to resources — and ambushes.',
   'New region: armoured crawlers resist bullets; cannons and tesla coils crack them. Sappers mine your planned track — a Scout Car reveals them.',
   'The Void Frontier: wisps and the Void Maw ignore bullets and shells. Only Tesla coils and flamethrowers hurt them — and they need full power.',
@@ -231,8 +231,12 @@ export class Sim implements SimApi {
     if (s.route.path.length > 1) this.showTutorial(1);
     if (s.time > 25) this.showTutorial(2);
     if (s.director.warning) this.showTutorial(3);
+    if (s.train.crew.some(c => c.carIndex < 0)) this.showTutorial(4);
     if (s.train.cars.some(c => c.boarders.length > 0)) this.showTutorial(5);
+    if (s.phase === 'shop') this.showTutorial(6);
     if (s.train.stopped && s.train.stopReason === 'junction') this.showTutorial(7);
+    if (s.region >= 1) this.showTutorial(8);
+    if (s.region >= 3) this.showTutorial(9);
   }
 
   // ---------- flow ----------

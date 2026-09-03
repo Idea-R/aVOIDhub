@@ -1,11 +1,12 @@
 /** Bottom train strip: one chip per car, diff-based updates. Lives in the HUD dock. */
 import { el, setText, setWidth, toggleClass, setAttr, hexColor } from './dom';
 import type { UiShared } from './shared';
-import type { SimState, Car, CrewSpecialty } from '../core/types';
+import type { SimState, Car, Crew, CrewSpecialty } from '../core/types';
 import { CAR_DEFS } from '../core/cars';
 import { MAX_CARS, TRAIN } from '../core/config';
 import { gsap, D, isReduced, popIn, shake } from './motion';
 import { levelOf, ROMAN } from './levels';
+import { carArtFor } from './carArt';
 
 const CREW_CODE: Record<CrewSpecialty, string> = { engineer: 'EN', gunner: 'GU', medic: 'MD', surveyor: 'SV', mechanic: 'MC', quartermaster: 'QM', conductor: 'CD' };
 
@@ -13,9 +14,12 @@ interface Chip {
   id: string;
   root: HTMLButtonElement;
   hpBar: HTMLElement; hpFill: HTMLElement;
+  hpText: HTMLElement;
   heatFill: HTMLElement;
+  heatText: HTMLElement;
   badges: HTMLElement;
   crew: HTMLElement;
+  state: HTMLElement;
   pips: HTMLElement[];
   sig: string;
 }
@@ -23,20 +27,71 @@ interface Chip {
 export interface StripHooks { hover?(index: number, x: number, y: number): void; leave?(): void }
 export interface Strip { el: HTMLElement; update(s: SimState, force?: boolean): void; reset(): void; carsEl: HTMLElement; hit(carIndex: number): void }
 
+function carRole(car: Car): string {
+  const def = CAR_DEFS[car.type];
+  if (car.type === 'locomotive') return 'Command';
+  if (def.weapon) return 'Defense';
+  if (def.powerGen > 0) return 'Power';
+  if (def.cooling > 0) return 'Cooling';
+  if (def.passengerCap > 0) return 'Passenger';
+  if (Object.values(def.storage).some(v => (v ?? 0) > 0)) return 'Logistics';
+  if (def.planRangeBonus || def.trackCostBonus) return 'Navigation';
+  return 'Support';
+}
+
+function carShape(car: Car): string {
+  const def = CAR_DEFS[car.type];
+  if (car.type === 'locomotive') return 'engine';
+  if (def.weapon) return 'weapon';
+  if (def.powerGen > 0) return 'generator';
+  if (def.cooling > 0) return 'cooler';
+  if (def.passengerCap > 0) return 'coach';
+  if (Object.values(def.storage).some(v => (v ?? 0) > 0)) return 'cargo';
+  return 'utility';
+}
+
 export function createStrip(ui: UiShared, hooks: StripHooks = {}): Strip {
   const weightV = el('b', { text: '0' });
   const powerV = el('b', { text: '0/0' });
   const speedV = el('b', { text: '0.00' });
   const countV = el('b', { text: '0' });
+  const crewReadyV = el('b', { text: '0' });
+  const crewReady = el('button', { class: 'rv-crew-ready', type: 'button', 'aria-label': 'Assign available crew to a train car' },
+    el('span', { class: 'rv-crew-ready-lamp', 'aria-hidden': 'true' }),
+    crewReadyV,
+    el('span', { text: ' crew ready' }),
+    el('span', { class: 'rv-crew-ready-cta', text: 'Assign to a car →' }),
+  );
+  crewReady.hidden = true;
+  crewReady.addEventListener('click', () => {
+    const s = ui.state();
+    if (!s) return;
+    let i = s.train.cars.findIndex((c, n) => n > 0 && !c.crewId && c.hp > 0);
+    if (i < 0) i = s.train.cars.length > 1 ? 1 : 0;
+    ui.audio().ui('open');
+    ui.selectCar(i, true);
+    ui.notify('Choose a specialist under Crew Slot. Their posting changes the car or the whole train.', 'info', 4800, 'crew-help');
+    window.setTimeout(() => {
+      const choice = ui.root.querySelector<HTMLElement>('.rv-crew-choice:not(:disabled)');
+      choice?.scrollIntoView({ block: 'nearest' });
+      choice?.focus({ preventScroll: true });
+    }, 260);
+  });
+  const metric = (label: string, value: HTMLElement, suffix = '', title = '') => el('span', { class: 'rv-stat', title },
+    el('span', { class: 'rv-stat-k', text: label }),
+    el('span', { class: 'rv-stat-readout' }, value, suffix));
   const head = el('div', { class: 'rv-strip-head' },
-    el('span', { class: 'rv-label', text: 'Train' }),
-    el('span', { class: 'rv-stat' }, el('span', { class: 'rv-stat-k', text: 'cars ' }), countV, ' / ' + MAX_CARS),
-    el('span', { class: 'rv-stat' }, el('span', { class: 'rv-stat-k', text: 'weight ' }), weightV, ' t'),
-    el('span', { class: 'rv-stat', title: 'Power generated / power demanded' }, el('span', { class: 'rv-stat-k', text: 'power ' }), powerV),
-    el('span', { class: 'rv-stat' }, el('span', { class: 'rv-stat-k', text: 'speed ' }), speedV, ' hex/s'),
+    el('div', { class: 'rv-strip-brand' },
+      el('span', { class: 'rv-strip-kicker', text: 'Rolling stock command' }),
+      el('strong', { text: 'The Eastbound' })),
+    el('div', { class: 'rv-strip-stats' },
+      metric('Formation', countV, ` / ${MAX_CARS}`),
+      metric('Mass', weightV, ' t'),
+      metric('Power grid', powerV, '', 'Power generated / power demanded'),
+      metric('Ground speed', speedV, ' hex/s')),
   );
   const carsEl = el('div', { class: 'rv-cars', role: 'listbox', 'aria-label': 'Train cars, locomotive first' });
-  const root = el('div', { class: 'rv-strip rv-panel' }, head, carsEl);
+  const root = el('div', { class: 'rv-strip rv-panel' }, head, crewReady, carsEl);
 
   let chips: Chip[] = [];
   let flows: HTMLElement[] = [];
@@ -77,21 +132,47 @@ export function createStrip(ui: UiShared, hooks: StripHooks = {}): Strip {
       }
       const hpFill = el('i');
       const heatFill = el('i');
+      const hpText = el('b', { text: '100%' });
+      const heatText = el('b', { text: '0' });
       const hpBar = el('div', { class: 'rv-bar rv-hp', title: 'Hull' }, hpFill);
       const badges = el('span', { class: 'rv-car-badges' });
-      const crew = el('span', { class: 'rv-crewb', 'aria-hidden': 'true' });
+      const crew = el('span', { class: 'rv-crewb', 'aria-hidden': 'true' },
+        el('span', { class: 'rv-crew-socket-icon', text: '+' }),
+        el('span', { class: 'rv-crew-socket-copy', text: '' }));
       crew.hidden = true;
+      const state = el('span', { class: 'rv-car-state', text: 'Operational' });
       const pips = [1, 2, 3].map(() => el('i'));
       const pipsEl = el('span', { class: 'rv-pips rv-car-lvl', 'aria-hidden': 'true' }, ...pips);
+      const artSrc = carArtFor(car.type, levelOf(car));
+      const machine = artSrc
+        ? el('img', { class: 'rv-car-art', src: artSrc, alt: '', draggable: 'false' })
+        : el('span', { class: 'rv-machine' },
+            el('i', { class: 'rv-machine-top' }),
+            el('i', { class: 'rv-machine-body' }),
+            el('i', { class: 'rv-machine-detail' }),
+            el('i', { class: 'rv-machine-wheel rv-wheel-a' }),
+            el('i', { class: 'rv-machine-wheel rv-wheel-b' }));
       const chip = el('button', {
-        class: 'rv-car', type: 'button', role: 'option', 'data-i': String(i),
+        class: `rv-car rv-car-${carShape(car)} rv-car-type-${car.type}`, type: 'button', role: 'option', 'data-i': String(i),
         style: `--accent:${hexColor(def.color)}`,
         'aria-label': `${def.name}, car ${i + 1}`,
       },
-        el('span', { class: 'rv-car-short' }, def.short, pipsEl, el('span', { class: 'rv-car-idx', text: String(i + 1) })),
-        hpBar,
-        el('div', { class: 'rv-bar rv-heat', title: 'Heat' }, heatFill),
-        badges, crew,
+        el('span', { class: 'rv-car-head' },
+          el('span', { class: 'rv-car-idx', text: String(i + 1) }),
+          el('span', { class: 'rv-car-identity' },
+            el('span', { class: 'rv-car-name', text: def.name }),
+            el('span', { class: 'rv-car-role', text: carRole(car) })),
+          el('span', { class: 'rv-car-short' }, def.short, pipsEl)),
+        el('span', { class: 'rv-car-visual', 'aria-hidden': 'true' },
+          machine,
+          crew),
+        el('span', { class: 'rv-car-readouts' },
+          el('span', { class: 'rv-car-meter rv-car-hull' },
+            el('span', { class: 'rv-car-meter-top' }, el('span', { class: 'rv-car-meter-label', text: 'Hull integrity' }), hpText), hpBar),
+          el('span', { class: 'rv-car-meter rv-car-thermal' },
+            el('span', { class: 'rv-car-meter-top' }, el('span', { class: 'rv-car-meter-label', text: 'Thermal load' }), heatText),
+            el('span', { class: 'rv-bar rv-heat', title: 'Heat' }, heatFill))),
+        el('span', { class: 'rv-car-foot' }, state, badges),
       );
       chip.addEventListener('click', () => { ui.audio().ui('click'); ui.selectCar(i, true); });
       chip.addEventListener('mouseenter', (e) => { ui.audio().ui('hover'); hooks.hover?.(i, e.clientX, e.clientY); });
@@ -99,7 +180,7 @@ export function createStrip(ui: UiShared, hooks: StripHooks = {}): Strip {
       chip.addEventListener('focus', () => { const r = chip.getBoundingClientRect(); hooks.hover?.(i, r.left + r.width / 2, r.top); });
       chip.addEventListener('blur', () => hooks.leave?.());
       carsEl.appendChild(chip);
-      chips.push({ id: car.id, root: chip, hpBar, hpFill, heatFill, badges, crew, pips, sig: '' });
+      chips.push({ id: car.id, root: chip, hpBar, hpFill, hpText, heatFill, heatText, badges, crew, state, pips, sig: '' });
     });
     animateDiff(prev, chips);
     // power spans (generators reach ±3 cars)
@@ -137,17 +218,17 @@ export function createStrip(ui: UiShared, hooks: StripHooks = {}): Strip {
     const parts: string[] = [];
     if (def.powerUse > 0) {
       const pr = car.derived?.powerRatio ?? 1;
-      parts.push(`<span class="rv-badge rv-power${pr < 0.999 ? ' rv-dimmed' : ''}" title="Power ${Math.round(pr * 100)}%">⚡${Math.round(pr * 100)}%</span>`);
+      parts.push(`<span class="rv-badge rv-power${pr < 0.999 ? ' rv-dimmed' : ''}" title="Power ${Math.round(pr * 100)}%">PWR ${Math.round(pr * 100)}%</span>`);
     }
     if (def.weapon && def.weapon.ammoPerShot > 0) {
       const has = !!car.derived?.hasAmmoSupply;
-      parts.push(`<span class="rv-badge rv-ammo${has ? '' : ' rv-noammo'}" title="${has ? 'Ammo supplied' : 'No ammo supplier within 2 cars'}">●</span>`);
+      parts.push(`<span class="rv-badge rv-ammo${has ? '' : ' rv-noammo'}" title="${has ? 'Ammo supplied' : 'No ammo supplier within 2 cars'}">${has ? 'AMMO' : 'NO AMMO'}</span>`);
     }
-    if (car.boarders.length > 0) parts.push(`<span class="rv-badge rv-boarders" title="${car.boarders.length} boarders inside">⚔${car.boarders.length}</span>`);
-    if (car.onFire) parts.push('<span class="rv-badge rv-fireb" title="On fire">🔥</span>');
-    if (car.disabled) parts.push('<span class="rv-badge rv-dis" title="Disabled">✕</span>');
-    if (def.passengerCap > 0) parts.push(`<span class="rv-badge rv-pax" title="Passengers">⚇${car.passengers}</span>`);
-    if (car.derived?.marinesEngaged) parts.push('<span class="rv-badge" title="Marines engaged">⚔</span>');
+    if (car.boarders.length > 0) parts.push(`<span class="rv-badge rv-boarders" title="${car.boarders.length} boarders inside">BOARDERS ${car.boarders.length}</span>`);
+    if (car.onFire) parts.push('<span class="rv-badge rv-fireb" title="On fire">FIRE</span>');
+    if (car.disabled) parts.push('<span class="rv-badge rv-dis" title="Disabled">OFFLINE</span>');
+    if (def.passengerCap > 0) parts.push(`<span class="rv-badge rv-pax" title="Passengers">PAX ${car.passengers}</span>`);
+    if (car.derived?.marinesEngaged) parts.push('<span class="rv-badge" title="Marines engaged">MARINES</span>');
     if (i === 0 && car.hp <= 0) parts.push('<span class="rv-badge rv-dis">DEAD</span>');
     return parts.join('');
   }
@@ -155,38 +236,60 @@ export function createStrip(ui: UiShared, hooks: StripHooks = {}): Strip {
   function updateChips(s: SimState): void {
     const sel = ui.selectedCar();
     const cars = s.train.cars;
-    const crewByCar = new Map<number, CrewSpecialty>();
-    for (const c of s.train.crew) if (c.carIndex >= 0) crewByCar.set(c.carIndex, c.specialty);
+    const crewByCar = new Map<number, Crew>();
+    for (const c of s.train.crew) if (c.carIndex >= 0) crewByCar.set(c.carIndex, c);
+    const readyCount = s.train.crew.filter(c => c.carIndex < 0).length;
     for (let i = 0; i < chips.length; i++) {
       const car = cars[i]; const ch = chips[i];
       if (!car) continue;
       const def = CAR_DEFS[car.type];
       const hpR = car.maxHp > 0 ? car.hp / car.maxHp : 0;
-      const crewSpec = crewByCar.get(i);
+      const crewMember = crewByCar.get(i);
+      const crewSpec = crewMember?.specialty;
       const lvl = levelOf(car);
       const sig = [Math.round(hpR * 100), Math.round(car.heat), Math.round((car.derived?.powerRatio ?? 1) * 100), car.derived?.hasAmmoSupply ? 1 : 0,
-        car.boarders.length, car.onFire ? 1 : 0, car.disabled ? 1 : 0, car.passengers, crewSpec ?? '', sel === i ? 1 : 0, car.derived?.marinesEngaged ? 1 : 0, lvl, car.maxHp].join(',');
+        car.boarders.length, car.onFire ? 1 : 0, car.disabled ? 1 : 0, car.passengers, crewMember?.id ?? '', readyCount, sel === i ? 1 : 0, car.derived?.marinesEngaged ? 1 : 0, lvl, car.maxHp].join(',');
       if (sig === ch.sig) continue;
       ch.sig = sig;
       setWidth(ch.hpFill, hpR * 100);
+      setText(ch.hpText, `${Math.round(hpR * 100)}%`);
       toggleClass(ch.hpBar, 'rv-mid', hpR < 0.6 && hpR >= 0.3);
       toggleClass(ch.hpBar, 'rv-lowhp', hpR < 0.3);
       setWidth(ch.heatFill, Math.min(120, car.heat) / 120 * 100);
+      setText(ch.heatText, car.onFire ? 'FIRE' : car.heat >= TRAIN.heatDamageAt ? 'HOT' : String(Math.round(car.heat)));
       // heat ramps gold → orange → red
       const hue = Math.round(48 - 48 * Math.min(1, car.heat / TRAIN.heatFireAt));
       const heatBg = car.heat >= TRAIN.heatFireAt ? 'var(--danger)' : `hsl(${hue} 92% 56%)`;
       if (ch.heatFill.style.background !== heatBg) ch.heatFill.style.background = heatBg;
       const html = badgesFor(car, i);
       if (ch.badges.innerHTML !== html) ch.badges.innerHTML = html;
-      if (crewSpec) { ch.crew.hidden = false; setText(ch.crew, CREW_CODE[crewSpec]); ch.crew.title = crewSpec; }
-      else ch.crew.hidden = true;
+      const state = car.hp <= 0 ? 'Destroyed' : car.onFire ? 'Fire aboard' : car.boarders.length ? 'Boarded' : car.disabled ? 'Offline' : def.weapon && def.weapon.ammoPerShot > 0 && !car.derived?.hasAmmoSupply ? 'Needs supply' : (def.powerUse > 0 && (car.derived?.powerRatio ?? 1) < .999) ? 'Brownout' : 'Operational';
+      setText(ch.state, state);
+      if (crewMember && crewSpec) {
+        ch.crew.hidden = false;
+        const icon = ch.crew.querySelector<HTMLElement>('.rv-crew-socket-icon');
+        const copy = ch.crew.querySelector<HTMLElement>('.rv-crew-socket-copy');
+        if (icon) setText(icon, CREW_CODE[crewSpec]);
+        if (copy) setText(copy, crewMember.name.split(/\s+/)[0]);
+        ch.crew.title = `${crewMember.name}, ${crewSpec}`;
+        toggleClass(ch.crew, 'rv-open', false);
+      } else if (i > 0 && readyCount > 0 && car.hp > 0) {
+        ch.crew.hidden = false;
+        const icon = ch.crew.querySelector<HTMLElement>('.rv-crew-socket-icon');
+        const copy = ch.crew.querySelector<HTMLElement>('.rv-crew-socket-copy');
+        if (icon) setText(icon, '+');
+        if (copy) setText(copy, 'Post crew');
+        ch.crew.title = 'Open this car to post an available specialist';
+        toggleClass(ch.crew, 'rv-open', true);
+      } else ch.crew.hidden = true;
       ch.pips.forEach((p, k) => toggleClass(p, 'rv-on', k < lvl));
       toggleClass(ch.root, 'rv-selected', sel === i);
       toggleClass(ch.root, 'rv-fire', car.onFire);
       toggleClass(ch.root, 'rv-disabled', car.disabled);
       toggleClass(ch.root, 'rv-dead', car.hp <= 0);
+      toggleClass(ch.root, 'rv-can-post', !crewMember && i > 0 && readyCount > 0 && car.hp > 0);
       setAttr(ch.root, 'aria-selected', sel === i ? 'true' : 'false');
-      setAttr(ch.root, 'aria-label', `${def.name}${lvl > 1 ? ` level ${ROMAN[lvl]}` : ''}, car ${i + 1}, hull ${Math.round(hpR * 100)}%, heat ${Math.round(car.heat)}${car.boarders.length ? `, ${car.boarders.length} boarders` : ''}${car.onFire ? ', on fire' : ''}`);
+      setAttr(ch.root, 'aria-label', `${def.name}${lvl > 1 ? ` level ${ROMAN[lvl]}` : ''}, car ${i + 1}, hull ${Math.round(hpR * 100)}%, heat ${Math.round(car.heat)}${crewMember ? `, ${crewMember.name} posted` : readyCount > 0 && i > 0 ? ', crew slot open' : ''}${car.boarders.length ? `, ${car.boarders.length} boarders` : ''}${car.onFire ? ', on fire' : ''}`);
     }
     for (let i = 0; i < flows.length; i++) {
       const a = cars[i], b = cars[i + 1];
@@ -203,13 +306,19 @@ export function createStrip(ui: UiShared, hooks: StripHooks = {}): Strip {
   function update(s: SimState, force = false): void {
     const now = performance.now();
     const cars = s.train.cars;
-    const sig = cars.map(c => c.id + ':' + c.type).join('|');
+    const sig = cars.map(c => c.id + ':' + c.type + ':' + levelOf(c)).join('|');
     if (sig !== structSig) { structSig = sig; build(s); force = true; }
     const sel = ui.selectedCar();
     if (!force && now - lastUpdate < 200 && sel === selectedShown) return;
     lastUpdate = now; selectedShown = sel;
     updateChips(s);
     const t = s.train;
+    const ready = t.crew.filter(c => c.carIndex < 0).length;
+    if (ready > 0) {
+      setText(crewReadyV, String(ready));
+      crewReady.hidden = false;
+      setAttr(crewReady, 'aria-label', `${ready} crew ${ready === 1 ? 'member is' : 'members are'} ready. Assign to a train car.`);
+    } else crewReady.hidden = true;
     const headSig = `${cars.length}|${Math.round(t.totalWeight)}|${t.totalPowerGen}|${t.totalPowerUse}|${t.speed.toFixed(2)}`;
     if (headSig !== lastHead) {
       lastHead = headSig;

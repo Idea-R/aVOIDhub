@@ -24,7 +24,7 @@ export const TERRAIN_SPEED: Record<Terrain, number> = {
 };
 
 export const TRAIN = {
-  baseSpeed: 0.38,          // hex/s at power/weight ratio 1 (~2.6 s per hex)
+  baseSpeed: 0.42,          // hex/s at power/weight ratio 1 (~2.4 s per hex)
   minSpeedFactor: 0.45,
   maxSpeedFactor: 1.3,
   weightPerPower: 16,       // tons that 1 power hauls at factor 1
@@ -34,7 +34,7 @@ export const TRAIN = {
   basePlanRange: 8,
   reverseSpeedMul: 0.5,     // without a caboose
   baseCapacity: { rails: 60, scrap: 60, coal: 60, ammo: 100, food: 40 } as Record<ResourceKey, number>,
-  startResources: { rails: 30, scrap: 30, coal: 50, ammo: 90, food: 24 } as Record<ResourceKey, number>,
+  startResources: { rails: 36, scrap: 42, coal: 58, ammo: 100, food: 30 } as Record<ResourceKey, number>,
   powerRange: 3,
   ammoRange: 2,
   heatDiffusion: 0.15,
@@ -57,6 +57,7 @@ export const TRAIN = {
   settlementStopTime: 12,
   autoDepart: true,
   splitOnDestroy: true,
+  splitProtectionRegions: 2, // starter emergency couplers reconnect cars through the Rust Reaches
   detachLureTime: 20,
   crewHeal: 2,
   mechanicRepair: 1,
@@ -77,7 +78,7 @@ export const DAY = {
   cycleSeconds: 240,
   nightStart: 0.55,
   nightEnd: 0.95,
-  nightAggression: 1.3,
+  nightAggression: 1.2,
 };
 
 export const WEATHER: Record<WeatherKind, { minDur: number; maxDur: number; speedMul: number; rangeMul: number; cooling: number; regions: number[] }> = {
@@ -89,15 +90,16 @@ export const WEATHER: Record<WeatherKind, { minDur: number; maxDur: number; spee
 };
 
 export const DIRECTOR = {
-  baseInterval: [38, 34, 30, 27],      // seconds between waves per region
-  budgetPerWave: [10, 19, 30, 42],
+  baseInterval: [46, 42, 36, 31],      // seconds between waves per region
+  budgetPerWave: [9, 14, 23, 35],
   havenMilitiaDps: 14,                 // settlement defenders while the train is stopped there
   havenRadius: 330,
-  budgetGrowthPerMin: [1.2, 1.8, 2.4, 3.2],
+  budgetGrowthPerMin: [0.8, 1.2, 1.8, 2.5],
   threatMul: 1.6,                      // multiplied by tile threat
   stopPressureMul: 1.8,
   adaptiveBias: 0.55,
   warningLead: 6,
+  havenDepartureGrace: 12,             // never release a banked wave immediately after a safe stop
   maxEnemies: 60,
   spawnDistance: 520,
 };
@@ -141,7 +143,7 @@ export const LOOT = {
   maxDrops: 40,
   eliteMarks: [2, 4],
   bossMarks: 8,
-  eliteChancePerWave: [0, 0.45, 0.6, 0.7],
+  eliteChancePerWave: [0, 0.25, 0.5, 0.65],
   eliteHpMul: 1.6,
 };
 

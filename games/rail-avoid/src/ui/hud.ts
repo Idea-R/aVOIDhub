@@ -8,7 +8,7 @@
 import { el, btn, append, setText, setWidth, toggleClass, show, setAttr, fmtTime, clamp } from './dom';
 import type { UiShared } from './shared';
 import type { SimState, ResourceKey } from '../core/types';
-import { HEX_R, REGION_NAMES, TRAIN } from '../core/config';
+import { HEX_R, MAP_W, REGION_NAMES, TRAIN } from '../core/config';
 import { ENEMY_DEFS } from '../core/enemies';
 import { gsap, D, isReduced, floatLabel, shake } from './motion';
 import { createVolumePopover } from './volume';
@@ -45,26 +45,43 @@ export interface Hud {
   hide(): void;
 }
 
-const RES: Array<{ key: ResourceKey; label: string; icon: string }> = [
-  { key: 'rails', label: 'Rails', icon: '═' },
-  { key: 'scrap', label: 'Scrap', icon: '⚙' },
-  { key: 'coal', label: 'Coal', icon: '⬢' },
-  { key: 'ammo', label: 'Ammo', icon: '➤' },
-  { key: 'food', label: 'Food', icon: '✿' },
+const RES: Array<{ key: ResourceKey; label: string; icon: string; help: string }> = [
+  { key: 'rails', label: 'Rails', icon: '═', help: 'Spent to lay new track. Existing railway is free.' },
+  { key: 'scrap', label: 'Scrap', icon: '⚙', help: 'Repairs hulls and buys or upgrades cars at yards.' },
+  { key: 'coal', label: 'Coal', icon: '⬢', help: 'Fuel burned as the train moves. Heavy trains use more.' },
+  { key: 'ammo', label: 'Ammo', icon: '➤', help: 'Consumed by guns. Weapons also need a supplier within two cars.' },
+  { key: 'food', label: 'Food', icon: '✿', help: 'Feeds passengers and protects morale during long runs.' },
 ];
 const WEATHER_ICON: Record<string, string> = { clear: '○', rain: '☂', fog: '≋', storm: '⚡', ashfall: '☁' };
 
 export function createHud(ui: UiShared, actions: { openPause(): void; toggleReverse(): void; firstJunction?(): void }): Hud {
+  // ---------- mission ticket: the run's north star ----------
+  const missionSub = el('span', { class: 'rv-mission-sub', text: 'Region 1 / 4' });
+  const missionFill = el('i');
+  const missionEl = el('div', { class: 'rv-mission rv-panel', role: 'status', 'aria-label': 'Objective: reach the Last Gate to the east' },
+    el('div', { class: 'rv-mission-head' },
+      el('span', { class: 'rv-mission-roundel', 'aria-hidden': 'true', text: 'RA' }),
+      el('span', { class: 'rv-mission-k', text: 'Eastbound directive' }),
+      el('span', { class: 'rv-mission-live', text: 'Live run' })),
+    el('strong', { text: 'Reach the Last Gate' }),
+    el('div', { class: 'rv-mission-foot' }, missionSub, el('span', { class: 'rv-mission-track', 'aria-hidden': 'true' }, missionFill)),
+  );
+
   // ---------- top-left: resources ----------
-  const chips: Record<string, { el: HTMLElement; v: HTMLElement; cap: HTMLElement; flashTimer: number }> = {};
+  const chips: Record<string, { el: HTMLElement; v: HTMLElement; cap: HTMLElement; fill: HTMLElement; flashTimer: number }> = {};
   const chipsEl = el('div', { class: 'rv-chips', role: 'group', 'aria-label': 'Resources' });
   for (const r of RES) {
     const v = el('span', { class: 'rv-chip-v', text: '0' });
     const capEl = el('span', { class: 'rv-chip-cap', text: '/0' });
-    const chip = el('div', { class: 'rv-chip', 'data-key': r.key, 'aria-label': r.label, title: r.label },
-      el('span', { class: 'rv-chip-ico', 'aria-hidden': 'true', text: r.icon }),
-      el('span', { class: 'rv-chip-k', text: r.label }), v, capEl);
-    chips[r.key] = { el: chip, v, cap: capEl, flashTimer: 0 };
+    const fill = el('i');
+    const chip = el('div', { class: 'rv-chip', 'data-key': r.key, 'aria-label': r.label, title: `${r.label}: ${r.help}`, tabindex: '0' },
+      el('span', { class: 'rv-chip-top' },
+        el('span', { class: 'rv-chip-ico', 'aria-hidden': 'true', text: r.icon }),
+        el('span', { class: 'rv-chip-k', text: r.label })),
+      el('span', { class: 'rv-chip-readout' }, v, capEl),
+      el('span', { class: 'rv-chip-bar', 'aria-hidden': 'true' }, fill),
+      el('span', { class: 'rv-chip-help', role: 'tooltip', text: r.help }));
+    chips[r.key] = { el: chip, v, cap: capEl, fill, flashTimer: 0 };
     chipsEl.appendChild(chip);
   }
   // passengers + crew merged into one chip: ⚇ 12/20 · ⚒ 3 · ☺ 80
@@ -72,15 +89,37 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
   const paxCap = el('span', { class: 'rv-chip-cap', text: '/0' });
   const crewV = el('span', { class: 'rv-chip-v rv-chip-crew', text: '0' });
   const morale = el('span', { class: 'rv-morale', text: '' });
-  const peopleChip = el('div', { class: 'rv-chip rv-chip-people', title: 'Passengers aboard / capacity · crew specialists (posted) · morale', 'aria-label': 'Passengers and crew' },
-    el('span', { class: 'rv-chip-ico', 'aria-hidden': 'true', text: '⚇' }), el('span', { class: 'rv-chip-k', text: 'Pax' }), paxV, paxCap,
-    el('span', { class: 'rv-chip-sep', 'aria-hidden': 'true', text: '·' }),
-    el('span', { class: 'rv-chip-ico', 'aria-hidden': 'true', text: '⚒' }), el('span', { class: 'rv-chip-k', text: 'Crew' }), crewV, morale);
+  const peopleChip = el('div', { class: 'rv-chip rv-chip-people', title: 'Passengers, morale and crew. Activate to open crew assignment.', 'aria-label': 'Passengers and crew', tabindex: '0', role: 'button' },
+    el('span', { class: 'rv-chip-top' }, el('span', { class: 'rv-chip-ico', 'aria-hidden': 'true', text: '⚇' }), el('span', { class: 'rv-chip-k', text: 'People' })),
+    el('span', { class: 'rv-people-readout' },
+      el('span', { class: 'rv-people-stat' }, el('small', { text: 'Pax' }), paxV, paxCap),
+      el('span', { class: 'rv-chip-sep', 'aria-hidden': 'true', text: '/' }),
+      el('span', { class: 'rv-people-stat' }, el('small', { text: 'Crew' }), crewV), morale),
+    el('span', { class: 'rv-chip-help', role: 'tooltip', text: 'Click to post an available specialist to a car. Passengers consume food; low morale puts them at risk.' }));
   chipsEl.appendChild(peopleChip);
+  const openCrewAssignment = (): void => {
+    const s = ui.state();
+    if (!s || !s.train.cars.length) return;
+    const ready = s.train.crew.some(c => c.carIndex < 0);
+    let target = s.train.cars.findIndex((c, i) => i > 0 && !c.crewId && c.hp > 0);
+    if (target < 0) target = s.train.cars.length > 1 ? 1 : 0;
+    ui.audio().ui('open');
+    ui.selectCar(target, true);
+    ui.notify(ready ? 'Crew ready: choose a specialist in the highlighted Crew Slot.' : 'Crew roster opened. Select any car to change its posting.', 'info', 4200, 'crew-help');
+    window.setTimeout(() => {
+      const choice = ui.root.querySelector<HTMLElement>('.rv-crew-choice:not(:disabled)');
+      choice?.scrollIntoView({ block: 'nearest' });
+      choice?.focus({ preventScroll: true });
+    }, 260);
+  };
+  peopleChip.addEventListener('click', openCrewAssignment);
+  peopleChip.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openCrewAssignment(); } });
   // Void Marks: the rare currency (markets sell relics for it, shrines take it)
   const marksV = el('span', { class: 'rv-chip-v', text: '0' });
   const marksChip = el('div', { class: 'rv-chip rv-chip-marks', title: 'Void Marks — rare currency from elites, bounties and expeditions. Markets sell relics for marks.', 'aria-label': 'Void Marks', tabindex: '0' },
-    el('span', { class: 'rv-chip-ico', 'aria-hidden': 'true', text: '◆' }), el('span', { class: 'rv-chip-k', text: 'Marks' }), marksV);
+    el('span', { class: 'rv-chip-top' }, el('span', { class: 'rv-chip-ico', 'aria-hidden': 'true', text: '◆' }), el('span', { class: 'rv-chip-k', text: 'Marks' })),
+    el('span', { class: 'rv-chip-readout' }, marksV),
+    el('span', { class: 'rv-chip-help', role: 'tooltip', text: 'Rare currency earned from elites, bounties and expeditions. Spend it at markets.' }));
   chipsEl.appendChild(marksChip);
 
   // relic bar: one icon chip per relic owned this run, with a hover / focus tooltip
@@ -119,7 +158,11 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
   const voidDist = el('span', { class: 'rv-void-dist', text: '—' });
   const voidEl = el('div', { class: 'rv-void rv-panel', role: 'meter', 'aria-label': 'Distance to the void front', 'aria-valuemin': '0', 'aria-valuemax': '24' },
     el('span', { class: 'rv-label', text: 'Void' }), el('div', { class: 'rv-bar' }, voidFill), voidDist);
-  const tl = el('div', { class: 'rv-hud-tl' }, chipsEl, voidEl, relicsEl);
+  const tl = el('section', { class: 'rv-hud-tl', 'aria-label': 'Train manifest' },
+    el('div', { class: 'rv-deck-heading' },
+      el('span', { class: 'rv-deck-kicker', text: 'Train manifest' }),
+      el('span', { class: 'rv-deck-rule', 'aria-hidden': 'true' })),
+    el('div', { class: 'rv-deck-content' }, chipsEl, voidEl, relicsEl));
 
   // ---------- top-centre: status + boss ----------
   const regionEl = el('span', { class: 'rv-region', text: '' });
@@ -129,7 +172,9 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
   const weatherEl = el('span', { class: 'rv-weather', text: '' });
   const forecastEl = el('span', { class: 'rv-forecast', text: '' });
   const clockEl = el('span', { class: 'rv-clock', text: '00:00' });
-  const statusEl = el('div', { class: 'rv-status rv-panel', role: 'status', 'aria-label': 'Region, time of day, weather and clock' }, regionEl, dial, dayLbl, weatherEl, forecastEl, clockEl);
+  const statusEl = el('div', { class: 'rv-status rv-panel', role: 'status', 'aria-label': 'Region, time of day, weather and clock' },
+    el('span', { class: 'rv-status-kicker', text: 'Line conditions' }),
+    el('span', { class: 'rv-status-main' }, regionEl, dial, dayLbl, weatherEl, forecastEl, clockEl));
   const bossName = el('span', { text: '' });
   const bossHp = el('span', { text: '' });
   const bossFill = el('i');
@@ -156,9 +201,13 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
   if (ui.isDev) speedEl.appendChild(mkSpeed(4, '4×', 'Quadruple speed (3, dev)'));
   const volume = createVolumePopover(ui);
   const menuBtn = btn('Menu', () => { ui.audio().ui('open'); actions.openPause(); }, { aria: 'Open menu (Esc)' });
-  const tr = el('div', { class: 'rv-hud-tr' }, el('div', { class: 'rv-row' }, volume.button, speedEl, menuBtn), volume.pop);
+  const tr = el('div', { class: 'rv-hud-tr' },
+    el('div', { class: 'rv-deck-heading' },
+      el('span', { class: 'rv-deck-kicker', text: 'Time controls' }),
+      el('span', { class: 'rv-deck-rule', 'aria-hidden': 'true' })),
+    el('div', { class: 'rv-row rv-command-actions' }, volume.button, speedEl, menuBtn), volume.pop);
 
-  const top = el('div', { class: 'rv-hud-top' }, tl, tc, tr);
+  const top = el('div', { class: 'rv-hud-top' }, missionEl, tl, tc, tr);
 
   // ---------- left rail: route panel (+ log) ----------
   const aheadV = el('b', { text: '0' });
@@ -356,7 +405,7 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
     floatLabel(marksChip, `${up ? '+' : '−'}${Math.round(Math.abs(delta))} ◆`, up ? 'rv-void-text rv-float-loot' : 'rv-danger-text');
   }
 
-  const groups = (): HTMLElement[] => [tl, tc, tr, routeEl, logEl, ...(Array.from(dock.children) as HTMLElement[])];
+  const groups = (): HTMLElement[] => [missionEl, tl, tc, tr, routeEl, logEl, ...(Array.from(dock.children) as HTMLElement[])];
   function enter(delay = 0): void {
     root.classList.remove('rv-hud-off');
     groups().forEach((e, i) => {
@@ -396,19 +445,30 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
       const v = Math.floor(t.resources[r.key] ?? 0), capV = Math.floor(t.capacity[r.key] ?? 0);
       setText(c.v, String(v));
       setText(c.cap, '/' + capV);
+      setWidth(c.fill, capV > 0 ? clamp(v / capV, 0, 1) * 100 : 0);
       const low = capV > 0 ? v <= Math.max(3, capV * 0.15) : v <= 3;
       toggleClass(c.el, 'rv-low', low);
       toggleClass(c.el, 'rv-full', capV > 0 && v >= capV);
-      setAttr(c.el, 'aria-label', `${r.label} ${v} of ${capV}${low ? ', low' : ''}`);
+      setAttr(c.el, 'aria-label', `${r.label} ${v} of ${capV}${low ? ', low' : ''}. ${r.help}`);
     }
     setText(paxV, String(t.passengers));
     setText(paxCap, '/' + t.passengerCap);
     const m = Math.round(t.morale);
     setText(morale, t.passengers > 0 ? `☺ ${m}` : '');
-    setText(crewV, t.crew.length ? `${t.crew.length}` : '0');
+    setText(crewV, t.crew.length ? `${assigned}/${t.crew.length}` : '0');
     setAttr(crewV, 'title', t.crew.length ? `${assigned} of ${t.crew.length} specialists posted to cars` : 'No crew specialists yet');
     toggleClass(peopleChip, 'rv-low', t.passengers > 0 && m < 30);
+    toggleClass(peopleChip, 'rv-action', t.crew.some(c => c.carIndex < 0));
     setAttr(peopleChip, 'aria-label', `Passengers ${t.passengers} of ${t.passengerCap}, morale ${m}, crew ${t.crew.length} (${assigned} posted)`);
+  }
+
+  function updateMission(s: SimState): void {
+    const p = s.route.path[Math.min(s.train.routeIndex, s.route.path.length - 1)];
+    const col = p?.[0] ?? 0;
+    const left = Math.max(0, MAP_W - 1 - col);
+    setText(missionSub, `Region ${clamp(s.region + 1, 1, 4)} / 4 · ${left} hex east`);
+    setWidth(missionFill, clamp(col / (MAP_W - 1), 0, 1) * 100);
+    setAttr(missionEl, 'aria-label', `Objective: reach the Last Gate. Region ${s.region + 1} of 4, about ${left} hex east.`);
   }
 
   function updateStatus(s: SimState): void {
@@ -641,6 +701,7 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
   }
 
   function update(s: SimState, _now: number): void {
+    updateMission(s);
     updateResources(s);
     updateRelics(s);
     updateStatus(s);
@@ -664,7 +725,7 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
     volume.close();
   }
 
-  const anchors: Record<string, HTMLElement> = { resources: chipsEl, void: voidEl, status: statusEl, speed: speedEl, menu: menuBtn, route: routeEl, stop: stopEl, junction: junctionEl, lines: legendEl, log: logEl, hud: root, top, dock, left, speaker: volume.button, marks: marksChip, relics: relicsEl };
+  const anchors: Record<string, HTMLElement> = { mission: missionEl, resources: chipsEl, people: peopleChip, void: voidEl, status: statusEl, speed: speedEl, menu: menuBtn, route: routeEl, stop: stopEl, junction: junctionEl, lines: legendEl, log: logEl, hud: root, top, dock, left, speaker: volume.button, marks: marksChip, relics: relicsEl };
   return {
     el: root, zones: { top, left, dock }, update, flashResource, flashLoot, popMarks, shakeRoute, anchors, reset, enter, hide,
     closePopovers() { if (volume.isOpen()) { volume.close(); return true; } return false; },

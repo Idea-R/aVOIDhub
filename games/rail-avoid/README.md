@@ -35,35 +35,35 @@ The score is seven instrumental tracks generated with Suno for this project (`pu
 
 ```bash
 npm install
-npm run dev              # http://localhost:5173
-npm run build            # typecheck + production build into dist/
-npm run preview          # serve dist/ on http://localhost:4173
+npm run dev              # http://localhost:5178/RAILaVOID/
+npm run build            # typecheck + production build into ../../dist/RAILaVOID/
+npm run preview          # http://localhost:4173/RAILaVOID/
 npm run verify           # build, launch headless Chromium, run every gate, write verify/report.md
 npm run build:standalone # single-file build: dist-standalone/railavoid.html (runs from file://)
 ```
 
 ### Launching Chrome
 
-Start the dev server (`npm run dev`) or preview server (`npm run preview`, port 4173) first, then:
+Start the dev server (`npm run dev`) or preview server (`npm run preview`) first, then:
 
 **Windows** (cmd / PowerShell)
 
 ```bat
-start chrome http://localhost:5173
-"C:\Program Files\Google\Chrome\Application\chrome.exe" --new-window http://localhost:5173
+start chrome http://localhost:5178/RAILaVOID/
+"C:\Program Files\Google\Chrome\Application\chrome.exe" --new-window http://localhost:5178/RAILaVOID/
 ```
 
 **macOS**
 
 ```bash
-open -a "Google Chrome" http://localhost:5173
+open -a "Google Chrome" http://localhost:5178/RAILaVOID/
 ```
 
 **Linux**
 
 ```bash
-google-chrome http://localhost:5173
-# or: chromium http://localhost:5173
+google-chrome http://localhost:5178/RAILaVOID/
+# or: chromium http://localhost:5178/RAILaVOID/
 ```
 
 **Standalone single file** (after `npm run build:standalone`, no server needed)
@@ -77,7 +77,7 @@ open -a "Google Chrome" dist-standalone/railavoid.html      # macOS
 google-chrome "$PWD/dist-standalone/railavoid.html"         # Linux
 ```
 
-Replace `5173` with `4173` to open the preview build.
+Replace `5178` with `4173` to open the preview build.
 
 ## Controls
 
@@ -111,11 +111,10 @@ Replace `5173` with `4173` to open the preview build.
 
 ## Deploy
 
-The game ships inside the aVOID platform repo (`C:\devVOID-main`, GitHub `Idea-R/aVOIDhub`, Netlify site avoidgame.io). To publish: copy this folder into `games/rail-avoid` (keep that folder's `package.json`/`vite.config.ts`, exclude node_modules/dist/verify screenshots), run `npm run build:platform:netlify` at the repo root, commit and push `main`; Netlify builds in about a minute. `DIRECTION.md` holds the current master plan and hand-off prompts.
+This directory is the canonical RAILaVOID workspace in the aVOID monorepo. From the repository root, run `npm run build --workspace=@avoid/rail-avoid` to build only the game or `npm run build:platform:netlify` to execute the same full-site build used for production. Changes go through a short-lived branch and pull request into `main`; Netlify then publishes the platform. The public route is `https://avoidgame.io/railavoid/`, which redirects to the packaged `/RAILaVOID/` bundle. `DIRECTION.md` holds the master direction and `docs/sprint-*` records the delivery plan and verification.
 
 ## Dev shortcuts
-
-Load the game with `?dev` (for example `http://localhost:5173/?dev`) to allow 4x speed and to mark the page as a dev session (`window.__RAIL_DEV === true`).
+Load the game with `?dev` (for example `http://localhost:5178/RAILaVOID/?dev`) to allow 4x speed and to mark the page as a dev session (`window.__RAIL_DEV === true`).
 
 `window.__RAIL` is always installed and drives the verification harness:
 
@@ -146,4 +145,4 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the sim / presentation split, determi
 
 ## License and attributions
 
-All art, audio and content are generated procedurally in code. Third-party libraries and their licenses are listed in [ATTRIBUTIONS.md](ATTRIBUTIONS.md).
+The game combines original authored/generated art and audio with procedural rendering and fallbacks. Third-party libraries and their licenses are listed in [ATTRIBUTIONS.md](ATTRIBUTIONS.md).

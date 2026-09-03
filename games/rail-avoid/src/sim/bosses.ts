@@ -27,11 +27,12 @@ const WAGON_SHELL_SPEED = 300;
 const WAGON_SHELL_AOE = 30;
 const WAGON_RAID_INTERVAL = 9;
 const WAGON_RAIDERS = 3;
-const WAGON_RAM_INTERVAL = 12;
-const WAGON_RAM_DAMAGE = 40;
+const WAGON_RAM_INTERVAL = 16;
+const WAGON_RAM_DAMAGE = 25;
 const WAGON_SWERVE_TIME = 1.2;
 const WAGON_SWERVE_DEPTH = 130;
 const WAGON_STOPPED_RATE = 1.5;   // fire rate multiplier while the train is stopped
+const WAGON_ESCAPE_COL = 2 * REGION_W + 18; // a fast train can outrun the rival line instead of damage-racing forever
 const WAGON_LOOT_SCRAP = 30, WAGON_LOOT_AMMO = 20;
 
 const BROOD_HOUND_INTERVAL = 8;
@@ -212,6 +213,20 @@ function fireAtCar(ctx: SimContext, e: Enemy, idx: number, kind: 'enemy_shell' |
 function updateWagon(ctx: SimContext, e: Enemy): void {
   const { state, dt } = ctx;
   const def = ENEMY_DEFS.boss_wagon;
+  const tile = state.route.path[Math.min(state.train.routeIndex, state.route.path.length - 1)];
+  if (tile && tile[0] >= WAGON_ESCAPE_COL) {
+    const i = state.enemies.indexOf(e);
+    if (i >= 0) state.enemies.splice(i, 1);
+    state.boss.active = false;
+    state.boss.enemyId = null;
+    state.boss.type = null;
+    state.boss.phase = 0;
+    state.boss.timer = 0;
+    if (state.boss.defeated.indexOf('boss_wagon') < 0) state.boss.defeated.push('boss_wagon');
+    ctx.bus.defer('ui:notify', { text: 'The Iron Wagon falls behind — the rival line ends here.', kind: 'good' });
+    log(state, 'The Iron Wagon falls behind at the end of its rival line.', 'good');
+    return;
+  }
   const lp = locoPos(state);
   const v = trainVelocity(state);
 

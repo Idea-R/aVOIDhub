@@ -3,7 +3,7 @@
 #ui {
   --ui-scale: 1;
   --u: calc(1px * var(--ui-scale));
-  --fs: calc(13 * var(--u));
+  --fs: calc(14 * var(--u));
   --bg: rgba(11, 14, 26, 0.86);
   --bg2: rgba(17, 21, 38, 0.92);
   --bg3: rgba(24, 29, 50, 0.95);
@@ -19,6 +19,9 @@
   --void: #6d5fd6;
   --heat: #ff8f3a;
   --radius: 10px;
+  --desk-edge: rgba(232, 193, 112, 0.42);
+  --desk-inset: rgba(255, 255, 255, 0.035);
+  --desk-raised: linear-gradient(180deg, rgba(25, 31, 51, 0.97), rgba(10, 13, 24, 0.96));
   --blur: blur(6px);
   --tr: 160ms;
   font-family: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
@@ -73,12 +76,12 @@
 
 /* --- primitives --- */
 #ui .rv-panel {
-  background: var(--bg);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
+  background: linear-gradient(180deg, rgba(14, 18, 32, 0.94), rgba(8, 11, 21, 0.92));
+  border: 1px solid rgba(73, 87, 129, 0.82);
+  border-radius: 7px;
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.045), inset 0 0 0 1px rgba(232, 193, 112, 0.04), 0 8px 30px rgba(0, 0, 0, 0.35);
 }
 #ui .rv-label {
   font-size: calc(10 * var(--u));
@@ -92,7 +95,7 @@
   position: relative;
   overflow: hidden;
   font: inherit;
-  font-size: calc(12 * var(--u));
+  font-size: calc(13 * var(--u));
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--fg);
@@ -124,7 +127,7 @@
 /* danger: coral outline, fills on hover */
 #ui .rv-btn.rv-danger { background: rgba(232, 111, 111, 0.08); border-color: var(--danger); color: var(--danger); }
 #ui .rv-btn.rv-danger:hover:not(:disabled) { background: rgba(232, 111, 111, 0.32); border-color: #ff9a9a; color: #fff; box-shadow: 0 6px 22px rgba(232, 111, 111, 0.35); }
-#ui .rv-btn.rv-small { padding: calc(3 * var(--u)) calc(8 * var(--u)); font-size: calc(11 * var(--u)); }
+#ui .rv-btn.rv-small { min-height: calc(34 * var(--u)); padding: calc(5 * var(--u)) calc(9 * var(--u)); font-size: calc(12 * var(--u)); }
 #ui .rv-btn.rv-icon { padding: calc(4 * var(--u)) calc(8 * var(--u)); min-width: calc(30 * var(--u)); }
 #ui .rv-btn[aria-pressed="true"] { background: rgba(232, 193, 112, 0.28); border-color: var(--gold); color: var(--gold); }
 #ui .rv-btn.rv-big { font-size: calc(15 * var(--u)); padding: calc(11 * var(--u)) calc(26 * var(--u)); min-width: calc(230 * var(--u)); }
@@ -285,7 +288,7 @@
    top bar (full width) · left rail · right rail (inspector / shop, below the top bar) · bottom dock.
    layout.ts measures the live sizes into --rv-top-h / --rv-dock-h; the classes below set the rest. */
 #ui {
-  --side-w: min(360px, 38vw);
+  --side-w: min(420px, 42vw);
   --shop-w: min(560px, 44vw);
   --rv-top-h: 56px;
   --rv-dock-h: 150px;
@@ -304,11 +307,17 @@
 /* top bar */
 #ui .rv-hud-top {
   position: absolute; top: 0; left: 0; right: 0;
-  display: flex; align-items: flex-start; gap: 10px;
+  z-index: 3; display: flex; align-items: flex-start; gap: 8px;
   padding: 8px 10px 6px;
-  background: linear-gradient(180deg, rgba(7, 9, 18, 0.78), rgba(7, 9, 18, 0.32) 70%, transparent);
+  background: linear-gradient(180deg, rgba(7, 9, 18, 0.94), rgba(7, 9, 18, 0.62) 76%, transparent);
 }
-#ui .rv-hud-tl { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; flex: 1 1 auto; min-width: 0; }
+#ui .rv-mission { flex: 0 0 260px; min-height: 58px; padding: 8px 12px 7px; display: flex; flex-direction: column; justify-content: center; border-color: rgba(232, 193, 112, 0.72); background: linear-gradient(105deg, rgba(232, 220, 184, 0.15), rgba(11, 14, 26, 0.96) 55%); }
+#ui .rv-mission-k { color: var(--gold); font-size: calc(10 * var(--u)); font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; }
+#ui .rv-mission strong { font-family: 'Cinzel', Georgia, serif; font-size: calc(16 * var(--u)); line-height: 1.2; letter-spacing: 0.035em; color: var(--fg); }
+#ui .rv-mission-foot { margin-top: 4px; display: flex; align-items: center; gap: 8px; color: var(--fg2); font-size: calc(12 * var(--u)); white-space: nowrap; }
+#ui .rv-mission-track { position: relative; flex: 1 1 auto; height: 4px; min-width: 48px; overflow: hidden; background: rgba(255,255,255,0.09); border-radius: 2px; }
+#ui .rv-mission-track i { position: absolute; inset: 0 auto 0 0; width: 0; background: linear-gradient(90deg, var(--gold), #fff0bd); transition: width 600ms ease; }
+#ui .rv-hud-tl { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; flex: 1 1 auto; min-width: 500px; }
 #ui .rv-hud-tc { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 0 1 auto; }
 #ui .rv-hud-tr { position: relative; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex: 0 0 auto; margin-left: auto; }
 #ui .rv-hud-tr > .rv-row { gap: 6px; }
@@ -319,34 +328,58 @@
   #ui .rv-hud-tr { order: 3; margin-left: 0; }
 }
 
-#ui .rv-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+#ui .rv-chips { display: flex; flex-wrap: nowrap; gap: 4px; }
 #ui .rv-chip {
   position: relative;
-  display: inline-flex; align-items: baseline; gap: 5px;
-  padding: 4px 9px;
-  background: var(--bg); border: 1px solid var(--line); border-radius: 999px;
+  width: calc(82 * var(--u)); min-height: calc(58 * var(--u)); display: inline-flex; flex-direction: column; align-items: stretch; justify-content: center; gap: 2px;
+  padding: 5px 8px 6px;
+  background: var(--desk-raised); border: 1px solid var(--line); border-top: 2px solid rgba(232, 193, 112, 0.62); border-radius: 5px;
   backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
   font-variant-numeric: tabular-nums;
   transition: border-color var(--tr), box-shadow var(--tr);
   white-space: nowrap;
 }
+#ui .rv-chip-top { display: flex; align-items: center; gap: 5px; min-width: 0; }
+#ui .rv-chip-readout { display: flex; align-items: baseline; justify-content: flex-end; line-height: 1; }
+#ui .rv-chip-bar { position: relative; display: block; width: 100%; height: 3px; overflow: hidden; background: rgba(255,255,255,.08); border-radius: 2px; }
+#ui .rv-chip-bar i { position: absolute; inset: 0 auto 0 0; width: 0; background: currentColor; transition: width 300ms ease; }
+#ui .rv-chip[data-key="rails"] .rv-chip-bar { color: var(--info); }
+#ui .rv-chip[data-key="scrap"] .rv-chip-bar { color: #a9b3cc; }
+#ui .rv-chip[data-key="coal"] .rv-chip-bar { color: #777b8d; }
+#ui .rv-chip[data-key="ammo"] .rv-chip-bar { color: var(--danger); }
+#ui .rv-chip[data-key="food"] .rv-chip-bar { color: var(--good); }
+#ui .rv-chip-people { width: calc(148 * var(--u)); cursor: pointer; }
+#ui .rv-people-readout { display: flex; align-items: baseline; gap: 5px; white-space: nowrap; }
+#ui .rv-people-stat { display: inline-flex; align-items: baseline; gap: 2px; }
+#ui .rv-people-stat small { color: var(--fg3); font-size: calc(9 * var(--u)); letter-spacing: .08em; text-transform: uppercase; }
+#ui .rv-chip-marks { width: calc(70 * var(--u)); }
+#ui .rv-chip:hover, #ui .rv-chip:focus-visible { z-index: 7; border-color: var(--gold); }
+#ui .rv-chip-help { position: absolute; left: -1px; top: calc(100% + 8px); width: 224px; padding: 8px 10px; display: none; white-space: normal; background: var(--bg3); border: 1px solid var(--gold); border-radius: 5px; color: var(--fg); font-size: calc(12 * var(--u)); line-height: 1.4; box-shadow: 0 10px 28px rgba(0,0,0,.55); }
+#ui .rv-chip:hover .rv-chip-help, #ui .rv-chip:focus-visible .rv-chip-help { display: block; }
+#ui .rv-chip[data-key="rails"] { border-top-color: var(--info); }
+#ui .rv-chip[data-key="scrap"] { border-top-color: #a9b3cc; }
+#ui .rv-chip[data-key="coal"] { border-top-color: #777b8d; }
+#ui .rv-chip[data-key="ammo"] { border-top-color: var(--danger); }
+#ui .rv-chip[data-key="food"] { border-top-color: var(--good); }
 #ui .rv-chip:has(.rv-float) { z-index: 3; } /* delta label must paint over the neighbouring chip */
-#ui .rv-chip .rv-chip-ico { font-size: calc(12 * var(--u)); }
-#ui .rv-chip .rv-chip-k { font-size: calc(9 * var(--u)); letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg3); }
-#ui .rv-chip .rv-chip-v { font-weight: 700; font-size: calc(13 * var(--u)); }
-#ui .rv-chip .rv-chip-cap { color: var(--fg3); font-size: calc(10 * var(--u)); }
+#ui .rv-chip .rv-chip-ico { font-size: calc(14 * var(--u)); }
+#ui .rv-chip .rv-chip-k { font-size: calc(10 * var(--u)); letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg2); }
+#ui .rv-chip .rv-chip-v { font-weight: 800; font-size: calc(17 * var(--u)); line-height: 1; }
+#ui .rv-chip .rv-chip-cap { color: var(--fg3); font-size: calc(11 * var(--u)); }
 #ui .rv-chip .rv-chip-sep { color: var(--fg3); margin: 0 1px; }
 #ui .rv-chip .rv-chip-crew { color: var(--gold); }
 #ui .rv-chip.rv-low { border-color: var(--danger); animation: rv-pulse-red 1.1s ease-in-out infinite; }
 #ui .rv-chip.rv-low .rv-chip-v { color: var(--danger); }
 #ui .rv-chip.rv-full { border-color: var(--gold); }
 #ui .rv-chip.rv-full .rv-chip-v { color: var(--gold); }
+#ui .rv-chip.rv-action { border-color: var(--gold); cursor: pointer; animation: rv-crew-ready 1.8s ease-in-out infinite; }
 #ui .rv-chip.rv-flash-up { box-shadow: 0 0 0 2px rgba(111, 191, 115, 0.6), 0 0 14px rgba(111, 191, 115, 0.5); }
 #ui .rv-chip.rv-flash-down { box-shadow: 0 0 0 2px rgba(232, 111, 111, 0.6), 0 0 14px rgba(232, 111, 111, 0.5); }
 @keyframes rv-pulse-red { 0%, 100% { box-shadow: 0 0 0 0 rgba(232, 111, 111, 0); } 50% { box-shadow: 0 0 0 3px rgba(232, 111, 111, 0.35); } }
+@keyframes rv-crew-ready { 0%, 100% { box-shadow: 0 0 0 rgba(232,193,112,0); } 50% { box-shadow: 0 0 14px rgba(232,193,112,.38); } }
 #ui .rv-morale { font-size: calc(10 * var(--u)); color: var(--fg3); margin-left: 2px; }
 
-#ui .rv-void { display: flex; align-items: center; gap: 8px; padding: 4px 10px; width: min(240px, 20vw); }
+#ui .rv-void { min-height: 42px; display: flex; align-items: center; gap: 8px; padding: 5px 10px; width: min(220px, 18vw); border-color: rgba(109,95,214,.72); }
 #ui .rv-void .rv-label { color: var(--void); }
 #ui .rv-void .rv-bar { flex: 1 1 auto; height: 7px; }
 #ui .rv-void .rv-bar > i { background: linear-gradient(90deg, var(--void), #9a8cff); transition: width 700ms cubic-bezier(0.2, 0.8, 0.2, 1), background 300ms; }
@@ -358,8 +391,8 @@
 #ui .rv-void.rv-critical .rv-void-dist { animation: rv-shake 0.18s linear infinite; }
 @keyframes rv-shake { 0% { transform: translate(0, 0); } 25% { transform: translate(1px, -1px); } 50% { transform: translate(-1px, 1px); } 75% { transform: translate(1px, 1px); } 100% { transform: translate(-1px, 0); } }
 
-#ui .rv-status { display: flex; align-items: center; gap: 12px; padding: 5px 14px; white-space: nowrap; }
-#ui .rv-region { font-size: calc(12 * var(--u)); letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold); font-weight: 600; }
+#ui .rv-status { min-height: 44px; display: flex; align-items: center; gap: 12px; padding: 6px 14px; white-space: nowrap; }
+#ui .rv-region { font-family: 'Cinzel', Georgia, serif; font-size: calc(13 * var(--u)); letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); font-weight: 700; }
 #ui .rv-dial { position: relative; width: 20px; height: 20px; border-radius: 50%; background: conic-gradient(from 0deg, #f0d48a 0 50%, #2b2657 50% 100%); border: 1px solid var(--line2); }
 #ui .rv-dial i { position: absolute; left: 50%; top: 50%; width: 2px; height: 9px; margin-left: -1px; margin-top: -9px; background: #fff; transform-origin: 50% 100%; border-radius: 1px; }
 #ui .rv-daylbl { font-size: calc(11 * var(--u)); color: var(--fg2); }
@@ -460,23 +493,36 @@
 #ui .rv-strip {
   position: relative;
   max-width: 100%;
-  padding: 8px 12px 14px;
-  display: flex; flex-direction: column; gap: 4px;
+  padding: 9px 12px 14px;
+  display: flex; flex-direction: column; gap: 6px;
+  border-top-color: var(--desk-edge);
 }
 #ui .rv-strip-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-#ui .rv-strip-head .rv-stat { font-size: calc(10 * var(--u)); color: var(--fg3); letter-spacing: 0.1em; text-transform: uppercase; font-variant-numeric: tabular-nums; white-space: nowrap; }
+#ui .rv-strip-head .rv-stat { font-size: calc(11 * var(--u)); color: var(--fg3); letter-spacing: 0.1em; text-transform: uppercase; font-variant-numeric: tabular-nums; white-space: nowrap; }
 #ui .rv-strip-head .rv-stat b { color: var(--fg2); }
-#ui .rv-cars { position: relative; display: flex; align-items: center; gap: 0; overflow-x: auto; overflow-y: hidden; padding-bottom: 6px; scrollbar-width: thin; }
+#ui .rv-crew-ready { width: 100%; min-height: 34px; display: flex; align-items: center; gap: 6px; padding: 5px 9px; color: #241b0a; background: linear-gradient(90deg, #e8c170, #f4dca8); border: 1px solid #fff0c7; border-radius: 4px; font: inherit; font-size: calc(12 * var(--u)); letter-spacing: .08em; text-transform: uppercase; cursor: pointer; box-shadow: 0 0 18px rgba(232,193,112,.25); }
+#ui .rv-crew-ready:hover { filter: brightness(1.1); transform: translateY(-1px); }
+#ui .rv-crew-ready-lamp { width: 9px; height: 9px; flex: 0 0 auto; border-radius: 50%; background: #2b8f55; border: 1px solid #153d26; box-shadow: 0 0 8px #67e29a; }
+#ui .rv-crew-ready-cta { margin-left: auto; font-weight: 900; }
+#ui .rv-cars { position: relative; display: flex; align-items: stretch; gap: 0; overflow-x: auto; overflow-y: hidden; padding: 3px 2px 8px; scrollbar-width: thin; }
 #ui .rv-car {
   position: relative;
-  display: flex; flex-direction: column; gap: 3px;
-  width: calc(68 * var(--u)); min-width: calc(68 * var(--u));
-  padding: 4px 5px;
+  display: flex; flex-direction: column; gap: 4px;
+  width: calc(116 * var(--u)); min-width: calc(116 * var(--u));
+  min-height: calc(82 * var(--u)); padding: 7px 8px 6px;
   font: inherit; color: var(--fg);
-  background: var(--bg2); border: 1px solid var(--line); border-radius: 7px;
+  background: var(--desk-raised); border: 1px solid var(--line); border-top: 2px solid var(--accent, var(--line2)); border-radius: 7px;
   cursor: pointer; text-align: left;
   transition: border-color var(--tr), transform var(--tr);
 }
+#ui .rv-car-head { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; align-items: center; gap: 5px; min-width: 0; }
+#ui .rv-car .rv-car-idx { display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; color: var(--fg2); background: rgba(255,255,255,.055); border: 1px solid var(--line); border-radius: 3px; font: 700 calc(9 * var(--u))/1 ui-monospace, Consolas, monospace; }
+#ui .rv-car .rv-car-name { overflow: hidden; color: var(--fg); font-size: calc(10 * var(--u)); font-weight: 800; letter-spacing: .055em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+#ui .rv-car .rv-car-short { color: var(--accent, var(--fg2)); display: inline-flex; align-items: center; gap: 3px; font-size: calc(8 * var(--u)); font-weight: 800; letter-spacing: .1em; }
+#ui .rv-car-meter { display: grid; grid-template-columns: 26px 26px minmax(28px, 1fr); align-items: center; gap: 4px; min-height: 10px; }
+#ui .rv-car-meter-label { color: var(--fg3); font-size: calc(8 * var(--u)); letter-spacing: .08em; text-transform: uppercase; }
+#ui .rv-car-meter b { color: var(--fg2); font: 700 calc(9 * var(--u))/1 ui-monospace, Consolas, monospace; text-align: right; }
+#ui .rv-car-foot { display: flex; align-items: flex-end; gap: 4px; min-height: 16px; margin-top: auto; min-width: 0; }
 #ui .rv-car:hover { border-color: var(--line2); transform: translateY(-2px); }
 #ui .rv-car.rv-selected { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), 0 0 16px rgba(232, 193, 112, 0.35); }
 @property --rv-ang { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
@@ -496,15 +542,13 @@
 #ui .rv-car.rv-fire { border-color: var(--heat); box-shadow: 0 0 12px rgba(255, 143, 58, 0.35); }
 #ui .rv-car.rv-disabled { opacity: 0.6; }
 #ui .rv-car.rv-dead { opacity: 0.35; }
-#ui .rv-car .rv-car-short { font-size: calc(10 * var(--u)); letter-spacing: 0.12em; font-weight: 800; color: var(--accent, var(--fg2)); display: flex; justify-content: space-between; align-items: center; gap: 3px; }
-#ui .rv-car .rv-car-idx { color: var(--fg3); font-weight: 400; font-size: calc(9 * var(--u)); margin-left: auto; }
 #ui .rv-car .rv-bar { height: 4px; }
 #ui .rv-car .rv-bar.rv-heat > i { background: linear-gradient(90deg, var(--heat), var(--danger)); }
 #ui .rv-car .rv-bar.rv-hp > i { background: var(--good); }
 #ui .rv-car .rv-bar.rv-hp.rv-mid > i { background: var(--gold); }
 #ui .rv-car .rv-bar.rv-hp.rv-lowhp > i { background: var(--danger); }
-#ui .rv-car .rv-car-badges { display: flex; gap: 3px; flex-wrap: wrap; min-height: 1.2em; font-size: calc(10 * var(--u)); line-height: 1.2; }
-#ui .rv-car .rv-badge { display: inline-flex; align-items: center; gap: 1px; padding: 0 3px; border-radius: 4px; background: rgba(255, 255, 255, 0.06); color: var(--fg2); }
+#ui .rv-car .rv-car-badges { display: flex; gap: 3px; min-width: 0; flex: 1 1 auto; flex-wrap: wrap; font-size: calc(8 * var(--u)); line-height: 1.2; }
+#ui .rv-car .rv-badge { display: inline-flex; align-items: center; gap: 1px; padding: 1px 3px; border-radius: 3px; background: rgba(255, 255, 255, 0.06); color: var(--fg2); font-weight: 700; letter-spacing: .04em; white-space: nowrap; }
 #ui .rv-car .rv-badge.rv-power { color: var(--gold); }
 #ui .rv-car .rv-badge.rv-power.rv-dimmed { color: var(--fg3); opacity: 0.6; }
 #ui .rv-car .rv-badge.rv-ammo { color: var(--good); }
@@ -513,7 +557,9 @@
 #ui .rv-car .rv-badge.rv-fireb { color: var(--heat); }
 #ui .rv-car .rv-badge.rv-dis { color: var(--danger); }
 #ui .rv-car .rv-badge.rv-pax { color: #d6b4f0; }
-#ui .rv-car .rv-crewb { position: absolute; top: -6px; right: -5px; width: 16px; height: 16px; border-radius: 50%; background: var(--gold); color: #1a1408; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; border: 1px solid #0b0e1a; }
+#ui .rv-car .rv-crewb { flex: 0 0 auto; max-width: 72px; min-height: 16px; padding: 1px 4px; overflow: hidden; border-radius: 3px; background: var(--gold); color: #1a1408; font-size: calc(8 * var(--u)); font-weight: 900; letter-spacing: .04em; text-overflow: ellipsis; white-space: nowrap; }
+#ui .rv-car .rv-crewb.rv-open { background: transparent; border: 1px solid var(--gold); color: var(--gold); animation: rv-crew-ready 1.8s ease-in-out infinite; }
+#ui .rv-car.rv-can-post { border-bottom-color: rgba(232,193,112,.78); }
 #ui .rv-flow { width: calc(14 * var(--u)); min-width: calc(14 * var(--u)); text-align: center; font-size: calc(11 * var(--u)); color: var(--fg3); transition: color var(--tr); }
 #ui .rv-flow.rv-hot { color: var(--heat); font-weight: 700; }
 #ui .rv-power-span { position: absolute; bottom: 0; height: 2px; background: var(--gold); opacity: 0.6; border-radius: 1px; pointer-events: none; }
@@ -529,13 +575,25 @@
 #ui .rv-insp-lvl { margin-left: 8px; }
 #ui .rv-sc-lvl { margin-left: 4px; }
 
-/* between 1366 and 1500 px the chip labels go first so the top bar stays a single row */
-@media (max-width: 1500px) { #ui .rv-chip .rv-chip-k { display: none; } #ui .rv-void { width: min(200px, 16vw); } }
+/* between 1366 and 1500 px the resource cards tighten but retain their labels */
+@media (max-width: 1500px) {
+  #ui .rv-mission { flex-basis: 225px; }
+  #ui .rv-chip { width: calc(66 * var(--u)); padding-inline: 6px; }
+  #ui .rv-chip-people { width: calc(112 * var(--u)); }
+  #ui .rv-chip-marks { width: calc(58 * var(--u)); }
+  #ui .rv-chip .rv-chip-k { font-size: calc(8 * var(--u)); letter-spacing: .09em; }
+  #ui .rv-chip .rv-chip-v { font-size: calc(14 * var(--u)); }
+  #ui .rv-people-stat small, #ui .rv-morale { display: none; }
+  #ui .rv-void { width: min(150px, 12vw); }
+  #ui .rv-status { padding-inline: 9px; gap: 7px; }
+}
 
 /* --- compact HUD (Settings.compactHud or viewport < 1366 px) --- */
-#ui.rv-compact .rv-chip { padding: 3px 7px; gap: 4px; }
-#ui.rv-compact .rv-chip .rv-chip-k, #ui.rv-compact .rv-morale { display: none; }
-#ui.rv-compact .rv-chip .rv-chip-v { font-size: calc(12 * var(--u)); }
+#ui.rv-compact .rv-chip { width: calc(56 * var(--u)); min-height: 42px; padding: 3px 5px; gap: 2px; }
+#ui.rv-compact .rv-chip-people { width: calc(86 * var(--u)); }
+#ui.rv-compact .rv-chip-marks { width: calc(48 * var(--u)); }
+#ui.rv-compact .rv-chip .rv-chip-k, #ui.rv-compact .rv-morale, #ui.rv-compact .rv-chip .rv-chip-cap { display: none; }
+#ui.rv-compact .rv-chip .rv-chip-v { font-size: calc(13 * var(--u)); }
 #ui.rv-compact .rv-void { width: min(220px, 24vw); padding: 3px 8px; }
 #ui.rv-compact .rv-void .rv-label { display: none; }
 #ui.rv-compact .rv-status { gap: 8px; padding: 4px 10px; }
@@ -544,11 +602,14 @@
 #ui.rv-compact .rv-strip-head .rv-stat-k { display: none; }
 #ui.rv-compact .rv-strip-head .rv-label { font-size: calc(9 * var(--u)); }
 #ui.rv-compact .rv-cars { padding-bottom: 4px; }
-#ui.rv-compact .rv-car { width: calc(48 * var(--u)); min-width: calc(48 * var(--u)); height: 28px; padding: 3px 4px 2px; gap: 2px; justify-content: space-between; }
-#ui.rv-compact .rv-car .rv-car-short { font-size: calc(9 * var(--u)); letter-spacing: 0.08em; }
-#ui.rv-compact .rv-car .rv-car-idx, #ui.rv-compact .rv-car .rv-car-badges, #ui.rv-compact .rv-car .rv-bar.rv-heat { display: none; }
+#ui.rv-compact .rv-car { width: calc(76 * var(--u)); min-width: calc(76 * var(--u)); min-height: 54px; padding: 4px 5px; gap: 3px; }
+#ui.rv-compact .rv-car-head { grid-template-columns: 14px minmax(0, 1fr); gap: 3px; }
+#ui.rv-compact .rv-car .rv-car-idx { width: 14px; height: 14px; font-size: calc(8 * var(--u)); }
+#ui.rv-compact .rv-car .rv-car-name { font-size: calc(8 * var(--u)); }
+#ui.rv-compact .rv-car .rv-car-short, #ui.rv-compact .rv-car .rv-car-badges, #ui.rv-compact .rv-car-thermal, #ui.rv-compact .rv-car-meter-label { display: none; }
+#ui.rv-compact .rv-car-meter { grid-template-columns: 24px 1fr; }
 #ui.rv-compact .rv-car .rv-bar { height: 3px; }
-#ui.rv-compact .rv-car .rv-crewb { width: 13px; height: 13px; font-size: 8px; top: -5px; right: -4px; }
+#ui.rv-compact .rv-car .rv-crewb { max-width: 64px; font-size: calc(7 * var(--u)); }
 #ui.rv-compact .rv-flow { width: 10px; min-width: 10px; }
 #ui.rv-compact .rv-stop { padding: 5px 12px; min-width: 200px; }
 #ui.rv-compact .rv-warning { padding: 4px 12px; font-size: calc(11 * var(--u)); }
@@ -585,14 +646,35 @@
 #ui .rv-side-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
 #ui .rv-side-head h2 { margin: 0; font-size: calc(14 * var(--u)); letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); display: flex; align-items: center; }
 #ui .rv-side-head .rv-side-sub { font-size: calc(10 * var(--u)); letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg3); text-align: right; }
-#ui .rv-side-body { flex: 1 1 auto; overflow: auto; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; scrollbar-width: thin; }
+#ui .rv-side-body { flex: 1 1 auto; overflow: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 12px; scrollbar-width: thin; }
 #ui .rv-side-foot { padding: 8px 12px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 6px; }
-#ui .rv-kv-grid { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: calc(12 * var(--u)); align-items: center; }
+#ui .rv-kv-grid { display: grid; grid-template-columns: auto 1fr; gap: 5px 12px; padding: 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--desk-inset); font-size: calc(13 * var(--u)); align-items: center; }
 #ui .rv-kv-grid .rv-k { color: var(--fg3); letter-spacing: 0.1em; text-transform: uppercase; font-size: calc(10 * var(--u)); }
 #ui .rv-kv-grid .rv-v { font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 #ui .rv-kv-grid .rv-bar { flex: 1 1 auto; }
-#ui .rv-desc { color: var(--fg2); font-size: calc(12 * var(--u)); }
-#ui .rv-crew-line { display: flex; justify-content: space-between; gap: 6px; font-size: calc(12 * var(--u)); padding: 3px 6px; border-radius: 5px; background: rgba(255, 255, 255, 0.03); }
+#ui .rv-desc { margin: 0; color: var(--fg2); font-size: calc(13 * var(--u)); line-height: 1.45; }
+#ui .rv-crew-slot { display: flex; flex-direction: column; gap: 10px; padding: 12px; border: 1px solid rgba(232,193,112,.62); border-radius: 6px; background: linear-gradient(135deg, rgba(232,193,112,.13), rgba(255,255,255,.025)); }
+#ui .rv-crew-slot-head { display: flex; align-items: center; gap: 9px; }
+#ui .rv-crew-portrait { width: 64px; height: 80px; flex: 0 0 auto; object-fit: cover; object-position: 50% 18%; border: 1px solid var(--gold); border-radius: 4px; box-shadow: 0 5px 16px rgba(0,0,0,.4); }
+#ui .rv-crew-slot-head strong { display: block; margin-top: 1px; font-size: calc(13 * var(--u)); color: var(--fg); }
+#ui .rv-crew-effect { padding-left: 18px; color: var(--gold); font-size: calc(13 * var(--u)); line-height: 1.35; }
+#ui .rv-crew-controls { align-items: stretch; flex-wrap: wrap; }
+#ui .rv-crew-posting { display: flex; flex-direction: column; gap: 6px; padding-top: 4px; border-top: 1px solid rgba(232,193,112,.24); }
+#ui .rv-crew-choices { display: flex; flex-direction: column; gap: 6px; }
+#ui .rv-crew-choice { width: 100%; display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; align-items: center; gap: 9px; padding: 8px; color: var(--fg); background: rgba(8,11,21,.55); border: 1px solid var(--line2); border-radius: 5px; font: inherit; text-align: left; cursor: pointer; transition: border-color var(--tr), background var(--tr), transform var(--tr); }
+#ui .rv-crew-choice:hover, #ui .rv-crew-choice:focus-visible { border-color: var(--gold); background: rgba(232,193,112,.09); transform: translateY(-1px); }
+#ui .rv-crew-choice:active { transform: translateY(1px); }
+#ui .rv-crew-choice-mark { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 1px solid var(--gold); border-radius: 4px; color: var(--gold); background: rgba(232,193,112,.08); font: 800 calc(10 * var(--u))/1 ui-monospace, Consolas, monospace; }
+#ui .rv-crew-choice-copy { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+#ui .rv-crew-choice-head { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+#ui .rv-crew-choice-head strong { color: var(--fg); font-size: calc(13 * var(--u)); }
+#ui .rv-crew-choice-head span { color: var(--gold); font-size: calc(10 * var(--u)); text-transform: uppercase; }
+#ui .rv-crew-choice-head b { margin-left: auto; color: var(--fg3); font: 600 calc(9 * var(--u))/1 ui-monospace, Consolas, monospace; }
+#ui .rv-crew-choice-effect { color: var(--fg2); font-size: calc(11 * var(--u)); line-height: 1.3; }
+#ui .rv-crew-choice-action { color: var(--gold); font-size: calc(10 * var(--u)); font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
+#ui .rv-crew-empty { padding: 9px; color: var(--fg2); background: rgba(255,255,255,.025); border: 1px dashed var(--line2); border-radius: 5px; font-size: calc(11 * var(--u)); line-height: 1.4; }
+#ui .rv-crew-line { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; font-size: calc(12 * var(--u)); padding: 6px 8px; border-radius: 5px; background: rgba(255, 255, 255, 0.03); }
+#ui .rv-crew-line small { display: block; max-width: 190px; margin-top: 2px; color: var(--fg3); font-size: calc(10 * var(--u)); line-height: 1.25; }
 #ui .rv-crew-line .rv-spec { color: var(--gold); text-transform: capitalize; }
 #ui .rv-crew-line .rv-where { color: var(--fg3); }
 
@@ -685,14 +767,14 @@
 #ui .rv-tutorial-layer > * { pointer-events: auto; }
 #ui .rv-tutorial-layer.rv-hud-off { opacity: 0; }
 #ui .rv-tutorial-layer.rv-hud-off > * { pointer-events: none !important; }
-#ui .rv-coach { position: absolute; width: min(268px, 70vw); padding: 8px 10px; border-color: var(--gold); display: flex; flex-direction: column; gap: 5px; --arrow-x: 24px; }
+#ui .rv-coach { position: absolute; width: min(350px, 78vw); padding: 11px 13px; border-color: var(--gold); display: flex; flex-direction: column; gap: 7px; --arrow-x: 24px; }
 #ui .rv-coach .rv-coach-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-#ui .rv-coach .rv-coach-step { font-size: calc(9 * var(--u)); letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); }
+#ui .rv-coach .rv-coach-step { font-size: calc(10 * var(--u)); letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); }
 #ui .rv-coach .rv-coach-dots { display: flex; gap: 4px; }
 #ui .rv-coach .rv-coach-dots i { width: 6px; height: 6px; border-radius: 50%; background: rgba(255, 255, 255, 0.14); }
 #ui .rv-coach .rv-coach-dots i.rv-done { background: rgba(232, 193, 112, 0.5); }
 #ui .rv-coach .rv-coach-dots i.rv-cur { background: var(--gold); box-shadow: 0 0 6px rgba(232, 193, 112, 0.8); }
-#ui .rv-coach .rv-coach-text { font-size: calc(12 * var(--u)); color: var(--fg); line-height: 1.4; }
+#ui .rv-coach .rv-coach-text { font-size: calc(14 * var(--u)); color: var(--fg); line-height: 1.45; }
 #ui .rv-coach .rv-actions { display: flex; gap: 6px; justify-content: flex-end; }
 #ui .rv-coach::after { content: ''; position: absolute; width: 10px; height: 10px; background: var(--bg); border-left: 1px solid var(--gold); border-top: 1px solid var(--gold); transform: rotate(45deg); left: var(--arrow-x); top: -6px; }
 #ui .rv-coach.rv-arrow-bottom::after { top: auto; bottom: -6px; transform: rotate(225deg); }
@@ -965,3 +1047,585 @@ html.rv-cursors #game canvas[data-cursor="default"] { cursor: var(--rv-cur-defau
 #ui.rv-compact .rv-junction .rv-junction-opt { min-width: 168px; max-width: 250px; padding: 4px 8px 4px 6px; gap: 6px; }
 #ui.rv-compact .rv-junction .rv-jo-flavour, #ui.rv-compact .rv-junction .rv-junction-sub, #ui.rv-compact .rv-junction .rv-jo-pad { display: none; }
 @media (max-width: 1100px) { #ui .rv-junction .rv-junction-opt { min-width: 150px; max-width: 220px; } }
+
+/* ==================================================================================
+   COMMAND DECK REDESIGN
+   The world keeps its transit-map identity; the HUD becomes a tactile railway control
+   desk. These are new compositions, not a cosmetic pass over the old card strip.
+   ================================================================================== */
+#ui {
+  --rv-brass: #d9a94d;
+  --rv-brass-hi: #ffe1a0;
+  --rv-ink: rgba(5, 8, 16, .97);
+  --rv-steel: #7583a5;
+  --rv-deck-line: rgba(157, 174, 213, .28);
+  --rv-panel-cut: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
+  --side-w: min(460px, 44vw);
+}
+
+/* Top command deck --------------------------------------------------------------- */
+#ui .rv-hud-top {
+  display: grid;
+  grid-template-columns: minmax(270px, 320px) minmax(660px, 1fr) minmax(260px, auto);
+  grid-template-rows: auto 1fr;
+  align-items: stretch;
+  column-gap: 12px;
+  row-gap: 6px;
+  padding: 10px 12px 12px;
+  background:
+    linear-gradient(90deg, rgba(217,169,77,.08) 1px, transparent 1px) 0 0 / 42px 100%,
+    linear-gradient(180deg, rgba(5,8,16,.985) 0%, rgba(7,10,20,.94) 78%, rgba(7,10,20,.35) 92%, transparent 100%);
+  border-top: 3px solid var(--rv-brass);
+}
+#ui .rv-hud-top::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 5px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--rv-brass), var(--rv-deck-line) 24%, var(--rv-deck-line) 76%, var(--rv-brass));
+  opacity: .62;
+  pointer-events: none;
+}
+#ui .rv-mission {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  min-height: 104px;
+  padding: 13px 16px 12px 19px;
+  justify-content: flex-start;
+  border: 0;
+  border-left: 4px solid var(--rv-brass);
+  border-radius: 0;
+  clip-path: var(--rv-panel-cut);
+  background:
+    linear-gradient(125deg, rgba(217,169,77,.18), transparent 42%),
+    linear-gradient(180deg, rgba(28,34,54,.98), rgba(8,11,22,.98));
+  box-shadow: inset 0 0 0 1px rgba(217,169,77,.42), 0 12px 30px rgba(0,0,0,.38);
+}
+#ui .rv-mission-head { display: flex; align-items: center; gap: 9px; min-width: 0; }
+#ui .rv-mission-roundel {
+  display: grid;
+  place-items: center;
+  width: 31px;
+  height: 31px;
+  flex: 0 0 31px;
+  border: 2px solid var(--rv-brass);
+  border-radius: 50%;
+  color: var(--rv-brass-hi);
+  background: #101626;
+  font: 900 calc(9 * var(--u))/1 ui-monospace, Consolas, monospace;
+  letter-spacing: -.04em;
+  box-shadow: 0 0 0 3px rgba(217,169,77,.12);
+}
+#ui .rv-mission-k { flex: 1 1 auto; font-size: calc(9 * var(--u)); color: var(--rv-brass-hi); }
+#ui .rv-mission-live {
+  padding: 2px 6px;
+  border: 1px solid rgba(111,191,115,.55);
+  color: var(--good);
+  background: rgba(111,191,115,.09);
+  font-size: calc(8 * var(--u));
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+#ui .rv-mission strong {
+  margin: 9px 0 4px;
+  font-size: calc(20 * var(--u));
+  line-height: 1.05;
+  letter-spacing: .015em;
+  text-shadow: 0 2px 12px rgba(0,0,0,.5);
+}
+#ui .rv-mission-foot { margin-top: auto; font-size: calc(11 * var(--u)); }
+#ui .rv-mission-track { height: 7px; border: 1px solid rgba(217,169,77,.18); background: rgba(0,0,0,.46); }
+#ui .rv-mission-track i { background: linear-gradient(90deg, #a9782d, var(--rv-brass-hi)); box-shadow: 0 0 9px rgba(217,169,77,.5); }
+
+#ui .rv-hud-tl {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 0;
+  gap: 5px;
+}
+#ui .rv-deck-heading { display: flex; align-items: center; gap: 8px; min-height: 13px; }
+#ui .rv-deck-kicker {
+  flex: 0 0 auto;
+  color: var(--rv-steel);
+  font: 800 calc(8 * var(--u))/1 ui-monospace, Consolas, monospace;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+#ui .rv-deck-rule { height: 1px; flex: 1 1 auto; background: var(--rv-deck-line); }
+#ui .rv-deck-content { display: flex; align-items: stretch; gap: 7px; min-width: 0; }
+#ui .rv-chips { display: flex; flex: 1 1 auto; gap: 5px; min-width: 0; }
+#ui .rv-chip {
+  width: auto;
+  min-width: 74px;
+  flex: 1 1 82px;
+  min-height: 74px;
+  padding: 8px 9px 9px;
+  gap: 4px;
+  overflow: visible;
+  border: 0;
+  border-bottom: 3px solid var(--accent-line, var(--rv-steel));
+  border-radius: 2px;
+  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 0 100%);
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.075), transparent 36%),
+    linear-gradient(180deg, rgba(29,36,58,.98), rgba(10,14,27,.98));
+  box-shadow: inset 0 0 0 1px rgba(126,145,190,.25), inset 0 -10px 24px rgba(0,0,0,.18), 0 8px 20px rgba(0,0,0,.28);
+}
+#ui .rv-chip[data-key="rails"] { --accent-line: var(--info); }
+#ui .rv-chip[data-key="scrap"] { --accent-line: #a9b3cc; }
+#ui .rv-chip[data-key="coal"] { --accent-line: #777b8d; }
+#ui .rv-chip[data-key="ammo"] { --accent-line: var(--danger); }
+#ui .rv-chip[data-key="food"] { --accent-line: var(--good); }
+#ui .rv-chip-people { --accent-line: var(--rv-brass); flex-basis: 132px; min-width: 118px; }
+#ui .rv-chip-marks { --accent-line: var(--void); flex: 0 1 74px; min-width: 62px; }
+#ui .rv-chip-top { justify-content: flex-start; gap: 6px; }
+#ui .rv-chip .rv-chip-ico {
+  display: grid;
+  place-items: center;
+  width: 23px;
+  height: 23px;
+  flex: 0 0 23px;
+  border: 1px solid color-mix(in srgb, var(--accent-line) 60%, transparent);
+  color: var(--accent-line);
+  background: rgba(0,0,0,.22);
+  font-size: calc(12 * var(--u));
+}
+#ui .rv-chip .rv-chip-k { color: #bbc4db; font-size: calc(10 * var(--u)); font-weight: 800; }
+#ui .rv-chip-readout { justify-content: flex-start; padding-left: 29px; }
+#ui .rv-chip .rv-chip-v { color: #f5f7ff; font-size: calc(20 * var(--u)); font-family: ui-monospace, Consolas, monospace; }
+#ui .rv-chip .rv-chip-cap { font-size: calc(9 * var(--u)); }
+#ui .rv-chip-bar { height: 4px; margin-top: auto; border-radius: 0; background: rgba(0,0,0,.5); }
+#ui .rv-chip-bar i { background: var(--accent-line); box-shadow: 0 0 8px color-mix(in srgb, var(--accent-line) 55%, transparent); }
+#ui .rv-people-readout { min-height: 23px; align-items: center; padding-left: 2px; }
+#ui .rv-people-stat { gap: 3px; }
+#ui .rv-chip-help { top: calc(100% + 11px); clip-path: var(--rv-panel-cut); border-radius: 0; }
+
+#ui .rv-void {
+  width: clamp(130px, 10vw, 184px);
+  min-width: 130px;
+  min-height: 74px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto 1fr;
+  align-content: center;
+  padding: 10px 12px;
+  gap: 7px 8px;
+  border: 0;
+  border-left: 3px solid var(--void);
+  border-radius: 2px;
+  clip-path: var(--rv-panel-cut);
+  background: linear-gradient(135deg, rgba(109,95,214,.2), rgba(10,13,26,.98) 58%);
+  box-shadow: inset 0 0 0 1px rgba(109,95,214,.44), 0 8px 20px rgba(0,0,0,.28);
+}
+#ui .rv-void .rv-label { font-weight: 900; letter-spacing: .2em; }
+#ui .rv-void .rv-void-dist { min-width: 0; font-size: calc(12 * var(--u)); color: #d8d2ff; }
+#ui .rv-void .rv-bar { grid-column: 1 / -1; height: 10px; border-radius: 1px; background: rgba(0,0,0,.5); }
+
+#ui .rv-hud-tc { grid-column: 3; grid-row: 2; align-items: stretch; min-width: 260px; }
+#ui .rv-status {
+  min-height: 54px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 5px;
+  padding: 7px 10px;
+  border-radius: 2px;
+  clip-path: var(--rv-panel-cut);
+}
+#ui .rv-status-kicker { color: var(--rv-steel); font-size: calc(8 * var(--u)); font-weight: 800; letter-spacing: .17em; text-transform: uppercase; }
+#ui .rv-status-main { display: flex; align-items: center; justify-content: space-between; gap: 7px; }
+#ui .rv-region { font-size: calc(12 * var(--u)); }
+#ui .rv-hud-tr { grid-column: 3; grid-row: 1; align-items: stretch; margin: 0; gap: 4px; }
+#ui .rv-command-actions { justify-content: flex-end; gap: 5px; }
+#ui .rv-speed { min-height: 34px; border-radius: 2px; background: rgba(12,16,30,.92); }
+#ui .rv-speed .rv-btn, #ui .rv-command-actions > .rv-btn { border-radius: 2px; }
+
+/* Rolling-stock schematic -------------------------------------------------------- */
+#ui .rv-dock { gap: 8px; bottom: 8px; }
+#ui .rv-strip {
+  width: min(1480px, calc(100vw - var(--rv-left-w) - var(--rv-right-w) - 28px));
+  max-width: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 12px;
+  padding: 10px 12px 13px;
+  overflow: hidden;
+  border: 0;
+  border-top: 3px solid var(--rv-brass);
+  border-radius: 2px;
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+  background:
+    linear-gradient(90deg, rgba(217,169,77,.06) 1px, transparent 1px) 0 0 / 36px 100%,
+    linear-gradient(180deg, rgba(18,23,39,.985), rgba(5,8,16,.985));
+  box-shadow: inset 0 0 0 1px rgba(126,145,190,.3), 0 16px 36px rgba(0,0,0,.48);
+}
+#ui .rv-strip-head { min-width: 0; justify-content: flex-start; gap: 22px; }
+#ui .rv-strip-brand { min-width: 176px; display: flex; flex-direction: column; line-height: 1; }
+#ui .rv-strip-kicker { color: var(--rv-steel); font-size: calc(8 * var(--u)); font-weight: 800; letter-spacing: .18em; text-transform: uppercase; }
+#ui .rv-strip-brand strong { margin-top: 4px; font: 700 calc(18 * var(--u))/1 'Cinzel', Georgia, serif; color: var(--rv-brass-hi); letter-spacing: .055em; }
+#ui .rv-strip-stats { display: flex; gap: 6px; min-width: 0; }
+#ui .rv-strip-head .rv-stat {
+  min-width: 96px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px 9px;
+  border-left: 1px solid var(--rv-deck-line);
+  color: var(--rv-steel);
+  font-size: calc(8 * var(--u));
+}
+#ui .rv-strip-head .rv-stat-k { display: block; }
+#ui .rv-strip-head .rv-stat-readout { color: var(--fg); font: 800 calc(13 * var(--u))/1.1 ui-monospace, Consolas, monospace; letter-spacing: 0; text-transform: none; }
+#ui .rv-strip-head .rv-stat b { color: #fff; font-weight: 900; }
+#ui .rv-crew-ready {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: stretch;
+  width: auto;
+  min-width: 235px;
+  min-height: 48px;
+  padding: 8px 12px;
+  border-radius: 2px;
+  clip-path: polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px);
+  font-size: calc(11 * var(--u));
+  letter-spacing: .1em;
+  background: linear-gradient(105deg, #f0cb75, #b98430);
+  box-shadow: inset 0 0 0 1px #ffe8ab, 0 0 24px rgba(217,169,77,.24);
+}
+#ui .rv-cars {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  padding: 6px 3px 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x proximity;
+}
+#ui .rv-car {
+  position: relative;
+  width: calc(184 * var(--u));
+  min-width: calc(184 * var(--u));
+  min-height: calc(146 * var(--u));
+  display: grid;
+  grid-template-rows: auto 47px auto 1fr;
+  gap: 7px;
+  padding: 9px 10px 8px;
+  overflow: hidden;
+  scroll-snap-align: start;
+  border: 0;
+  border-bottom: 3px solid var(--accent);
+  border-radius: 2px;
+  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 0 100%);
+  background:
+    linear-gradient(150deg, color-mix(in srgb, var(--accent) 12%, transparent), transparent 34%),
+    linear-gradient(180deg, rgba(29,35,55,.99), rgba(10,13,24,.99));
+  box-shadow: inset 0 0 0 1px rgba(122,140,180,.32), inset 0 -20px 30px rgba(0,0,0,.18);
+  transition: filter var(--tr), transform var(--tr), box-shadow var(--tr);
+}
+#ui .rv-car::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 26px;
+  height: 26px;
+  background: linear-gradient(225deg, rgba(255,255,255,.09), transparent 54%);
+  pointer-events: none;
+}
+#ui .rv-car:hover { border-color: transparent; filter: brightness(1.12); transform: translateY(-3px); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 70%, white 10%), 0 10px 20px rgba(0,0,0,.35); }
+#ui .rv-car.rv-selected { border-color: var(--accent); box-shadow: inset 0 0 0 2px var(--accent), 0 0 0 1px rgba(0,0,0,.7), 0 0 24px color-mix(in srgb, var(--accent) 35%, transparent); }
+#ui .rv-car.rv-selected::before {
+  inset: auto 8px 0;
+  height: 3px;
+  padding: 0;
+  border-radius: 0;
+  background: var(--rv-brass-hi);
+  mask: none;
+  -webkit-mask: none;
+  animation: rv-selected-track 1.2s ease-in-out infinite;
+}
+@keyframes rv-selected-track { 0%,100% { opacity: .45; } 50% { opacity: 1; box-shadow: 0 0 12px var(--rv-brass); } }
+#ui .rv-car-head { grid-template-columns: 25px minmax(0,1fr) auto; gap: 8px; }
+#ui .rv-car .rv-car-idx {
+  width: 25px;
+  height: 25px;
+  border: 1px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(0,0,0,.34);
+  font-size: calc(10 * var(--u));
+}
+#ui .rv-car-identity { display: flex; flex-direction: column; min-width: 0; }
+#ui .rv-car .rv-car-name { font-size: calc(11 * var(--u)); letter-spacing: .04em; }
+#ui .rv-car-role { color: var(--rv-steel); font-size: calc(8 * var(--u)); font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+#ui .rv-car .rv-car-short { flex-direction: column; align-items: flex-end; font-size: calc(8 * var(--u)); }
+#ui .rv-car-visual { position: relative; display: block; min-width: 0; }
+#ui .rv-machine { position: absolute; left: 2px; right: 2px; bottom: 5px; height: 33px; filter: drop-shadow(0 5px 5px rgba(0,0,0,.52)); }
+#ui .rv-machine-body { position: absolute; left: 5px; right: 5px; bottom: 7px; height: 20px; border: 1px solid color-mix(in srgb, var(--accent) 72%, #bac6de); background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 38%, #273047), color-mix(in srgb, var(--accent) 18%, #111727)); }
+#ui .rv-machine-top { position: absolute; left: 22px; right: 22px; bottom: 27px; height: 7px; border: 1px solid color-mix(in srgb, var(--accent) 70%, #aab6cf); border-bottom: 0; background: color-mix(in srgb, var(--accent) 24%, #161d30); }
+#ui .rv-machine-detail { position: absolute; left: 16px; right: 16px; bottom: 13px; height: 8px; opacity: .9; background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--accent) 70%, #dce3ef) 0 8px, transparent 8px 14px); }
+#ui .rv-machine-wheel { position: absolute; bottom: 0; width: 13px; height: 13px; border: 3px solid #77829c; border-radius: 50%; background: #080b14; box-shadow: inset 0 0 0 2px #161c2b; }
+#ui .rv-wheel-a { left: 19px; }
+#ui .rv-wheel-b { right: 19px; }
+#ui .rv-car-engine .rv-machine-body { left: 8px; right: 22px; height: 23px; border-radius: 9px 1px 1px 1px; }
+#ui .rv-car-engine .rv-machine-top { left: 24px; right: auto; width: 31px; height: 15px; }
+#ui .rv-car-engine .rv-machine-top::after { content: ''; position: absolute; right: -38px; bottom: -16px; width: 9px; height: 29px; background: var(--accent); clip-path: polygon(25% 0,75% 0,100% 35%,72% 44%,72% 100%,28% 100%,28% 44%,0 35%); }
+#ui .rv-car-engine .rv-machine-detail { left: 18px; right: 40px; border-radius: 7px; background: linear-gradient(90deg, rgba(255,255,255,.22), transparent); }
+#ui .rv-car-weapon .rv-machine-top { left: 55px; right: auto; width: 30px; height: 10px; border-radius: 50% 50% 2px 2px; }
+#ui .rv-car-weapon .rv-machine-top::after { content: ''; position: absolute; left: 25px; top: 3px; width: 35px; height: 3px; background: var(--accent); transform: rotate(-8deg); transform-origin: left center; }
+#ui .rv-car-generator .rv-machine-top { left: 28px; right: 28px; height: 12px; background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--accent) 45%, #1a2134) 0 12px, transparent 12px 18px); }
+#ui .rv-car-cooler .rv-machine-detail { height: 12px; bottom: 11px; background: repeating-linear-gradient(90deg, var(--accent) 0 2px, transparent 2px 6px); }
+#ui .rv-car-coach .rv-machine-detail { background: repeating-linear-gradient(90deg, #cad5ea 0 10px, transparent 10px 15px); opacity: .55; }
+#ui .rv-car-cargo .rv-machine-top { left: 12px; right: 12px; bottom: 27px; height: 4px; }
+#ui .rv-car-cargo .rv-machine-detail { background: repeating-linear-gradient(90deg, transparent 0 10px, color-mix(in srgb, var(--accent) 60%, #66728d) 10px 12px); }
+#ui .rv-crewb {
+  position: absolute;
+  z-index: 2;
+  right: 2px;
+  top: 1px;
+  max-width: 92px;
+  min-height: 27px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 7px 3px 3px;
+  border: 1px solid var(--rv-brass);
+  border-radius: 15px;
+  background: rgba(8,11,20,.94);
+  color: var(--rv-brass-hi);
+  font-size: calc(8 * var(--u));
+  letter-spacing: .05em;
+}
+#ui .rv-crew-socket-icon { display: grid; place-items: center; width: 19px; height: 19px; flex: 0 0 19px; border-radius: 50%; background: var(--rv-brass); color: #171007; font-weight: 900; }
+#ui .rv-crew-socket-copy { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#ui .rv-car .rv-crewb.rv-open { border-style: dashed; background: rgba(217,169,77,.09); color: var(--rv-brass-hi); animation: rv-crew-ready 1.6s ease-in-out infinite; }
+#ui .rv-car .rv-crewb.rv-open .rv-crew-socket-icon { background: transparent; border: 1px solid var(--rv-brass); color: var(--rv-brass-hi); }
+#ui .rv-car-readouts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+#ui .rv-car-meter { display: flex; flex-direction: column; gap: 3px; min-height: 0; }
+#ui .rv-car-meter-top { display: flex; align-items: baseline; justify-content: space-between; gap: 5px; }
+#ui .rv-car-meter-label { color: var(--rv-steel); font-size: calc(7 * var(--u)); letter-spacing: .1em; white-space: nowrap; }
+#ui .rv-car-meter b { color: var(--fg); font-size: calc(8 * var(--u)); }
+#ui .rv-car .rv-bar { width: 100%; height: 5px; border-radius: 0; background: rgba(0,0,0,.55); }
+#ui .rv-car-foot { align-items: center; align-self: end; min-height: 18px; gap: 5px; }
+#ui .rv-car-state { flex: 0 0 auto; color: var(--good); font-size: calc(8 * var(--u)); font-weight: 900; letter-spacing: .09em; text-transform: uppercase; }
+#ui .rv-car.rv-fire .rv-car-state, #ui .rv-car.rv-dead .rv-car-state { color: var(--danger); }
+#ui .rv-car.rv-disabled .rv-car-state { color: var(--gold); }
+#ui .rv-car .rv-car-badges { justify-content: flex-end; flex-wrap: nowrap; overflow: hidden; }
+#ui .rv-car .rv-badge { padding: 2px 4px; border-radius: 1px; background: rgba(255,255,255,.055); font-size: calc(7 * var(--u)); }
+#ui .rv-flow { align-self: center; width: 13px; min-width: 13px; color: var(--rv-brass); font-size: calc(14 * var(--u)); }
+#ui .rv-power-span { bottom: 1px; height: 3px; background: var(--rv-brass); }
+
+/* Equipment-bay inspector -------------------------------------------------------- */
+#ui .rv-inspector {
+  border: 0;
+  border-top: 3px solid var(--rv-brass);
+  border-radius: 2px;
+  clip-path: polygon(0 0, calc(100% - 11px) 0, 100% 11px, 100% 100%, 0 100%);
+  background:
+    linear-gradient(90deg, rgba(217,169,77,.045) 1px, transparent 1px) 0 0 / 34px 100%,
+    linear-gradient(180deg, rgba(14,18,31,.99), rgba(6,9,17,.99));
+}
+#ui .rv-inspector .rv-side-head { min-height: 69px; padding: 11px 14px; border-color: var(--rv-deck-line); background: rgba(255,255,255,.025); }
+#ui .rv-side-title { min-width: 0; display: flex; flex-direction: column; }
+#ui .rv-inspector .rv-side-sub { order: -1; color: var(--rv-brass); text-align: left; font-size: calc(8 * var(--u)); }
+#ui .rv-inspector .rv-side-head h2 { margin-top: 3px; color: var(--fg); font: 700 calc(18 * var(--u))/1.05 'Cinzel', Georgia, serif; letter-spacing: .04em; text-transform: none; }
+#ui .rv-inspector .rv-side-body { gap: 14px; padding: 13px 14px 18px; }
+#ui .rv-inspector-hero {
+  --accent: var(--rv-brass);
+  position: relative;
+  min-height: 126px;
+  display: grid;
+  grid-template-columns: 150px minmax(0,1fr);
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+  border-left: 3px solid var(--accent);
+  background: linear-gradient(120deg, color-mix(in srgb, var(--accent) 15%, transparent), rgba(255,255,255,.025) 50%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 36%, transparent);
+  clip-path: var(--rv-panel-cut);
+}
+#ui .rv-inspector-machine { position: relative; height: 84px; border-bottom: 2px solid rgba(217,169,77,.25); }
+#ui .rv-inspector-machine .rv-machine { left: 0; right: 0; bottom: 10px; transform: scale(1.12); transform-origin: center bottom; }
+#ui .rv-inspector-hero-copy { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+#ui .rv-inspector-role { color: var(--rv-steel); font-size: calc(9 * var(--u)); font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+#ui .rv-inspector-status { padding: 3px 7px; border: 1px solid currentColor; color: var(--good); font-size: calc(9 * var(--u)); font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
+#ui .rv-inspector-status[data-tone="warn"] { color: var(--gold); }
+#ui .rv-inspector-status[data-tone="danger"] { color: var(--danger); }
+#ui .rv-inspector-hero .rv-desc { font-size: calc(11 * var(--u)); line-height: 1.35; }
+#ui .rv-inspector .rv-kv-grid {
+  grid-template-columns: 92px minmax(0,1fr);
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 2px;
+  background: rgba(4,7,14,.42);
+}
+#ui .rv-inspector .rv-kv-grid > .rv-k,
+#ui .rv-inspector .rv-kv-grid > .rv-v { min-height: 34px; display: flex; align-items: center; padding: 7px 10px; border-bottom: 1px solid rgba(117,131,165,.13); }
+#ui .rv-inspector .rv-kv-grid > .rv-k { color: var(--rv-steel); background: rgba(117,131,165,.06); font-size: calc(9 * var(--u)); }
+#ui .rv-inspector .rv-kv-grid > .rv-v { font-size: calc(12 * var(--u)); }
+#ui .rv-inspector .rv-kv-grid .rv-bar { min-width: 100px; height: 7px; border-radius: 0; }
+#ui .rv-inspector .rv-crew-slot {
+  gap: 12px;
+  padding: 14px;
+  border: 0;
+  border-left: 3px solid var(--rv-brass);
+  border-radius: 0;
+  clip-path: var(--rv-panel-cut);
+  background: linear-gradient(120deg, rgba(217,169,77,.17), rgba(255,255,255,.025) 48%);
+  box-shadow: inset 0 0 0 1px rgba(217,169,77,.38);
+}
+#ui .rv-inspector .rv-crew-ready-lamp { width: 36px; height: 36px; border: 2px solid #172a20; box-shadow: 0 0 0 4px rgba(111,191,115,.1), 0 0 14px rgba(111,191,115,.45); }
+#ui .rv-inspector .rv-crew-slot-head strong { font-size: calc(14 * var(--u)); }
+#ui .rv-inspector .rv-crew-effect { padding: 9px 10px; border-left: 2px solid var(--rv-brass); background: rgba(0,0,0,.2); }
+#ui .rv-inspector .rv-crew-choice { grid-template-columns: 42px minmax(0,1fr) auto; min-height: 64px; padding: 9px 10px; border-radius: 2px; clip-path: var(--rv-panel-cut); }
+#ui .rv-inspector .rv-crew-choice-mark { width: 42px; height: 42px; border-radius: 50%; font-size: calc(11 * var(--u)); }
+#ui .rv-inspector .rv-crew-choice-action { padding: 5px 8px; border: 1px solid var(--rv-brass); background: rgba(217,169,77,.08); }
+#ui .rv-inspector .rv-side-foot { padding: 10px 12px; border-color: var(--rv-deck-line); background: rgba(0,0,0,.25); }
+
+/* Responsive compositions ------------------------------------------------------- */
+@media (max-width: 1660px) {
+  #ui .rv-hud-top { grid-template-columns: minmax(235px, 270px) minmax(590px, 1fr) minmax(235px, auto); }
+  #ui .rv-mission { min-height: 96px; padding-inline: 14px; }
+  #ui .rv-mission strong { font-size: calc(17 * var(--u)); }
+  #ui .rv-chip { min-width: 63px; padding-inline: 7px; }
+  #ui .rv-chip-people { min-width: 105px; }
+  #ui .rv-chip .rv-chip-v { font-size: calc(17 * var(--u)); }
+  #ui .rv-chip .rv-chip-k { font-size: calc(9 * var(--u)); }
+  #ui .rv-chip .rv-chip-ico { width: 20px; height: 20px; flex-basis: 20px; }
+  #ui .rv-chip-readout { padding-left: 26px; }
+  #ui .rv-void { min-width: 112px; width: 126px; }
+  #ui .rv-forecast { display: none; }
+}
+
+#ui.rv-compact .rv-hud-top {
+  grid-template-columns: 224px minmax(490px,1fr) 226px;
+  grid-template-rows: auto;
+  gap: 7px;
+  padding: 7px 8px 10px;
+}
+#ui.rv-compact .rv-mission { grid-row: 1; min-height: 73px; padding: 8px 10px 7px 13px; }
+#ui.rv-compact .rv-mission-roundel { width: 24px; height: 24px; flex-basis: 24px; }
+#ui.rv-compact .rv-mission-live { display: none; }
+#ui.rv-compact .rv-mission strong { margin: 5px 0 2px; font-size: calc(15 * var(--u)); }
+#ui.rv-compact .rv-mission-foot { font-size: calc(9 * var(--u)); }
+#ui.rv-compact .rv-hud-tl { grid-row: 1; }
+#ui.rv-compact .rv-deck-heading { display: none; }
+#ui.rv-compact .rv-deck-content { height: 73px; gap: 4px; }
+#ui.rv-compact .rv-chip { width: auto; min-width: 55px; min-height: 73px; padding: 6px; gap: 3px; }
+#ui.rv-compact .rv-chip-people { min-width: 86px; }
+#ui.rv-compact .rv-chip-marks { min-width: 48px; }
+#ui.rv-compact .rv-chip .rv-chip-k { display: block; font-size: calc(7 * var(--u)); }
+#ui.rv-compact .rv-chip .rv-chip-cap { display: inline; }
+#ui.rv-compact .rv-chip .rv-chip-v { font-size: calc(14 * var(--u)); }
+#ui.rv-compact .rv-chip .rv-chip-ico { width: 17px; height: 17px; flex-basis: 17px; font-size: calc(9 * var(--u)); }
+#ui.rv-compact .rv-chip-readout { padding-left: 21px; }
+#ui.rv-compact .rv-people-stat small, #ui.rv-compact .rv-morale { display: none; }
+#ui.rv-compact .rv-void { min-width: 82px; width: 96px; min-height: 73px; padding: 7px; }
+#ui.rv-compact .rv-void .rv-label { display: block; font-size: calc(8 * var(--u)); }
+#ui.rv-compact .rv-void .rv-void-dist { font-size: calc(9 * var(--u)); }
+#ui.rv-compact .rv-hud-tr { grid-row: 1; justify-content: flex-start; }
+#ui.rv-compact .rv-command-actions { justify-content: flex-end; }
+#ui.rv-compact .rv-hud-tc { display: none; }
+#ui.rv-compact .rv-strip { width: calc(100vw - var(--rv-left-w) - var(--rv-right-w) - 20px); padding: 8px 9px 10px; }
+#ui.rv-compact .rv-strip-brand { min-width: 132px; }
+#ui.rv-compact .rv-strip-brand strong { font-size: calc(14 * var(--u)); }
+#ui.rv-compact .rv-strip-head { gap: 10px; }
+#ui.rv-compact .rv-strip-stats { gap: 2px; }
+#ui.rv-compact .rv-strip-head .rv-stat { min-width: 72px; padding: 3px 6px; }
+#ui.rv-compact .rv-strip-head .rv-stat-k { display: block; font-size: calc(7 * var(--u)); }
+#ui.rv-compact .rv-strip-head .rv-stat-readout { font-size: calc(10 * var(--u)); }
+#ui.rv-compact .rv-crew-ready { min-width: 180px; min-height: 40px; font-size: calc(9 * var(--u)); }
+#ui.rv-compact .rv-cars { padding-bottom: 5px; }
+#ui.rv-compact .rv-car { width: calc(152 * var(--u)); min-width: calc(152 * var(--u)); min-height: calc(120 * var(--u)); grid-template-rows: auto 37px auto 1fr; gap: 5px; padding: 7px; }
+#ui.rv-compact .rv-car-head { grid-template-columns: 21px minmax(0,1fr) auto; gap: 5px; }
+#ui.rv-compact .rv-car .rv-car-idx { width: 21px; height: 21px; font-size: calc(8 * var(--u)); }
+#ui.rv-compact .rv-car .rv-car-name { font-size: calc(9 * var(--u)); }
+#ui.rv-compact .rv-car-role { font-size: calc(6.5 * var(--u)); }
+#ui.rv-compact .rv-car .rv-car-short { display: flex; }
+#ui.rv-compact .rv-car .rv-car-badges { display: flex; }
+#ui.rv-compact .rv-car-thermal, #ui.rv-compact .rv-car-meter-label { display: flex; }
+#ui.rv-compact .rv-car-meter { display: flex; }
+#ui.rv-compact .rv-car .rv-crewb { max-width: 76px; min-height: 23px; font-size: calc(7 * var(--u)); }
+#ui.rv-compact .rv-crew-socket-icon { width: 16px; height: 16px; flex-basis: 16px; }
+#ui.rv-compact .rv-car-state { font-size: calc(7 * var(--u)); }
+
+@media (max-width: 1180px) {
+  #ui.rv-compact .rv-hud-top { grid-template-columns: 210px minmax(0,1fr) 188px; }
+  #ui.rv-compact .rv-chip-people { min-width: 76px; }
+  #ui.rv-compact .rv-chip-marks { min-width: 42px; }
+  #ui.rv-compact .rv-chip .rv-chip-cap { display: none; }
+  #ui.rv-compact .rv-void { min-width: 72px; width: 78px; }
+  #ui.rv-compact .rv-command-actions > .rv-btn:last-of-type { padding-inline: 7px; }
+  #ui.rv-compact .rv-strip-brand { display: none; }
+  #ui.rv-compact .rv-strip-head .rv-stat { min-width: 66px; }
+}
+
+@media (max-width: 900px) {
+  #ui.rv-compact .rv-hud-top {
+    grid-template-columns: minmax(0,1fr) auto;
+    grid-template-rows: 58px 61px;
+    row-gap: 5px;
+  }
+  #ui.rv-compact .rv-mission { grid-column: 1; grid-row: 1; min-height: 58px; }
+  #ui.rv-compact .rv-mission-head { gap: 6px; }
+  #ui.rv-compact .rv-mission strong { font-size: calc(13 * var(--u)); }
+  #ui.rv-compact .rv-mission-foot { margin-top: 2px; }
+  #ui.rv-compact .rv-hud-tr { grid-column: 2; grid-row: 1; }
+  #ui.rv-compact .rv-hud-tl { grid-column: 1 / -1; grid-row: 2; overflow: hidden; }
+  #ui.rv-compact .rv-deck-content { height: 61px; overflow-x: auto; overflow-y: hidden; }
+  #ui.rv-compact .rv-chips { min-width: 560px; }
+  #ui.rv-compact .rv-chip { min-height: 58px; }
+  #ui.rv-compact .rv-chip .rv-chip-k { display: none; }
+  #ui.rv-compact .rv-chip-readout { padding-left: 0; justify-content: center; }
+  #ui.rv-compact .rv-void { min-height: 58px; min-width: 96px; }
+  #ui.rv-compact .rv-strip { grid-template-columns: 1fr; }
+  #ui.rv-compact .rv-strip-head { grid-column: 1; }
+  #ui.rv-compact .rv-crew-ready { grid-column: 1; grid-row: 2; width: 100%; min-height: 34px; }
+  #ui.rv-compact .rv-cars { grid-column: 1; }
+  #ui.rv-compact .rv-strip-head .rv-stat:nth-child(2) { display: none; }
+  #ui .rv-inspector-hero { grid-template-columns: 112px minmax(0,1fr); }
+}
+
+/* Generated rolling-stock art ---------------------------------------------------
+   The dark edge-to-edge plate is intentional: it avoids alpha halos at tiny HUD
+   scale and disappears into the enamel card. Unauthored cars retain CSS schematics. */
+#ui .rv-car-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: 50% 58%;
+  pointer-events: none;
+  filter: saturate(.96) contrast(1.04) drop-shadow(0 4px 4px rgba(0,0,0,.34));
+}
+#ui .rv-car:has(.rv-car-art) { grid-template-rows: auto 58px auto 1fr; }
+#ui .rv-car:has(.rv-car-art) .rv-car-visual {
+  margin: -3px -5px -1px;
+  overflow: hidden;
+  background: #0b0e1a;
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--accent) 35%, transparent);
+}
+#ui .rv-car:has(.rv-car-art) .rv-crewb { top: 0; right: 3px; background: rgba(7,10,20,.93); }
+#ui .rv-inspector-hero.rv-has-car-art { grid-template-columns: minmax(176px, 1.15fr) minmax(0, 1fr); }
+#ui .rv-inspector-hero.rv-has-car-art .rv-inspector-machine {
+  height: 98px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--accent) 34%, transparent);
+  background: #0b0e1a;
+}
+#ui .rv-inspector-hero .rv-inspector-machine > .rv-car-art { object-position: 50% 54%; }
+#ui.rv-compact .rv-car:has(.rv-car-art) { grid-template-rows: auto 45px auto 1fr; }
+#ui.rv-compact .rv-car:has(.rv-car-art) .rv-car-visual { margin-inline: -3px; }
+@media (max-width: 900px) {
+  #ui .rv-inspector-hero.rv-has-car-art { grid-template-columns: 132px minmax(0,1fr); }
+  #ui .rv-inspector-hero.rv-has-car-art .rv-inspector-machine { height: 78px; }
+}

@@ -131,6 +131,10 @@ export function depart(ctx: SimContext): void {
   t.stopped = false;
   t.stopReason = 'none';
   t.stopTimer = 0;
+  // A haven is a true reset beat: do not dump a wave that was nearly due before arrival
+  // onto the player the instant the last carriage clears the platform.
+  state.director.nextWaveIn = Math.max(state.director.nextWaveIn, DIRECTOR.havenDepartureGrace);
+  state.director.warning = null;
   if (state.phase === 'shop') { state.phase = 'running'; ctx.bus.defer('phase:change', { phase: 'running' }); ctx.bus.defer('ui:openPanel', { panel: 'none' }); }
   ctx.bus.defer('settlement:depart', { id: s?.id ?? '' });
   ctx.bus.defer('train:start', {});
@@ -150,7 +154,15 @@ export function buyCar(ctx: SimContext, type: CarType, insertAt?: number): boole
   if (state.train.cars.length >= MAX_CARS) { ctx.bus.defer('ui:notify', { text: `Maximum ${MAX_CARS} cars`, kind: 'warn' }); return false; }
   if (state.train.resources.scrap < def.cost) { ctx.bus.defer('ui:notify', { text: `Need ${def.cost} scrap`, kind: 'warn' }); return false; }
   addResource(ctx, 'scrap', -def.cost);
-  const car = addCar(ctx, type, insertAt);
+  // Keep the caboose doing its advertised job as the rear guard. A newly bought car
+  // slots in ahead of it by default, which also avoids silently putting early weapons
+  // outside the starter Cargo Hold's two-car ammo-supply range.
+  let at = insertAt;
+  if (at === undefined && type !== 'caboose') {
+    const caboose = state.train.cars.findIndex(c => c.type === 'caboose');
+    if (caboose > 0) at = caboose;
+  }
+  const car = addCar(ctx, type, at);
   if (!car) return false;
   ctx.bus.defer('car:bought', { type });
   log(state, `Coupled a ${def.name}`, 'good');

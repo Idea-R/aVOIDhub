@@ -1,11 +1,11 @@
 {
   "project": "RAILaVOID",
   "version": "1.0.0",
-  "updated": "2026-09-02T16:30:00Z",
+  "updated": "2026-09-03T09:38:00Z",
   "gates": {
     "build": "pass",
     "typecheck": "pass (0 errors)",
-    "unit_tests": "pass (20 tests incl. three-line worldgen, junction options, relics, expeditions, bounties, upgrades)",
+    "unit_tests": "pass (21 tests; 1 optional skipped; includes three-line worldgen, junction options, relics, expeditions, bounties, upgrades)",
     "boot": "pass",
     "start_tutorial": "pass",
     "controls": "pass (click-plan, undo, pause/resume, speed, mute, Tab panel)",
@@ -18,11 +18,13 @@
     "resize": "pass (1280x720, 800x600, 1920x1080)",
     "determinism": "pass (identical state after 30 s for seed 12345)",
     "screenshots": "pass (none blank)",
-    "standalone_file_build": "pass (dist-standalone/railavoid.html boots from file:// with no errors)",
+    "standalone_file_build": "pass (2.97 MB dist-standalone/railavoid.html boots from file://; all 6 starter-car images load as embedded WebP data URLs; optional track manifest uses procedural fallback)",
     "perf_headless": "note (14-18 fps under SwiftShader software GL; not representative)",
     "perf_headed_gpu": "pass (avg 53 fps, min 39 fps during a 17-enemy night-rain wave at 1920x1080 on a shared RTX 3080; auto quality steps down when needed)",
-    "ui_overlap": "pass (verify/ui-overlap.mjs: zero overlaps at 1920x1080, 1600x900, 1366x768, 1280x720 with shop and inspector open)",
-    "deploy": "live at https://avoidgame.io/railavoid/ (aVOIDhub platform catalog)",
+    "ui_overlap": "pass (verify/ui-overlap.mjs: zero overlaps at 1920x1080, 1600x900, 1366x768, 1280x720 with shop and inspector open; announcement cards included)",
+    "hud_sprint": "pass (component-level command deck, authored art on all six starter cars, Gatling level I-III art switching, equipment-bay inspector, direct crew posting/focus handoff, responsive bounds at 1920/1366/1280/800)",
+    "generated_car_art": "pass (8 optimized WebP runtime assets; complete starter consist plus Gatling II/III; procedural fallback retained for unillustrated car types)",
+    "deploy": "pass (Netlify production is maintained at https://avoidgame.io/railavoid/; release candidates must pass the remote HUD/art/crew/responsive gate)",
     "progression": "pass (relic choice, expedition flow, salvage drops driven through window.__RAIL)"
   },
   "performance": {
@@ -62,7 +64,7 @@
     "expeditions": "timed-hit turn-based crew scenes at 8 Expedition Sites; 4 on-foot foe types; 7 crew specials; void creeps 8 s per round",
     "loot": "salvage drops (scrap/ammo/rails), elites from region 2 with relic choice + Void Marks",
     "opening": "five-shot scripted opening (~24 s, skippable, reduced-motion variant) on a profile's first run and from the title menu",
-    "brand": "BRAND.md: palette, Cinzel/Special Elite, ink-and-wash transit-poster direction, asset specs, image-agent prompts"
+    "brand": "BRAND.md plus docs/sprint-04/ASSET-MANIFEST.md: palette, Cinzel/Special Elite, ink-and-gouache rolling-stock direction, generation prompts and asset mapping"
   },
   "screenshots": [
     "verify/screenshots/title.png",
@@ -76,14 +78,15 @@
     "verify/screenshots/victory.png",
     "verify/screenshots/defeat.png",
     "verify/screenshots/resize_800x600.png",
-    "verify/screenshots/standalone.png"
+    "verify/screenshots/standalone.png",
+    "verify/screenshots/sprint-04/hud_1920x1080_assigned.png"
   ],
   "knownProblems": [
     "The combat track (Boarding Party) is a 44 s take and loops audibly; the longer second take is in the Suno workspace.",
     "Headless SwiftShader verification measures 10-18 fps; real numbers come from `npm run perf:headed`.",
     "A bee-line run finishes in ~15 minutes at the new pace; exploring branches, yards and nodes stretches it to 25+.",
     "Event cards have no illustrations yet; expedition foes are silhouettes (procedural).",
-    "Art assets (key art, event cards, relic icons, cutscene frames) still procedural; BRAND.md prompts are ready for the image agent."
+    "The six-car starter consist and Gatling upgrades now have authored art; the remaining 17 car types, key art, events, relic icons and cutscene frames still use procedural or text-only presentation."
   ],
-  "nextWeakestArea": "Human playtest of line choice (are Northern rewards worth the threat?), expedition depth, illustrated relic/event art"
+  "nextWeakestArea": "Sprint 05 Away Team: persistent crew identities and progression, authored crew/foe/miniboss art, deeper action-time expedition rules, and a command-deck-quality combat UI"
 }

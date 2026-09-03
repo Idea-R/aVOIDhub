@@ -152,7 +152,7 @@ export function destroyCar(ctx: SimContext, idx: number, source: string): void {
   if (state.phase === 'defeat') return;
   // split: everything behind is lost
   const lostCount = t.cars.length - idx - 1;
-  if (TRAIN.splitOnDestroy && lostCount > 0 && !(t.relics ?? []).includes('iron_couplings')) {
+  if (TRAIN.splitOnDestroy && state.region >= TRAIN.splitProtectionRegions && lostCount > 0 && !(t.relics ?? []).includes('iron_couplings')) {
     let lostPassengers = 0;
     for (let i = idx + 1; i < t.cars.length; i++) {
       lostPassengers += t.cars[i].passengers;

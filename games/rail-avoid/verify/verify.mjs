@@ -3,7 +3,7 @@
  * RAILaVOID verification harness.
  *
  *   npm run verify                 build, serve dist with `vite preview`, run every gate
- *   node verify/verify.mjs --dev   connect to a running dev server (VERIFY_URL or http://localhost:5173)
+ *   node verify/verify.mjs --dev   connect to a running dev server (VERIFY_URL or http://localhost:5178/RAILaVOID/)
  *   node verify/verify.mjs --url=http://host:port   connect to any URL (no build)
  *   node verify/verify.mjs --no-build               skip `npm run build` (still serves dist/)
  *   node verify/verify.mjs --headed                 show the browser
@@ -15,6 +15,7 @@
  */
 import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import http from 'node:http';
 import { fileURLToPath } from 'node:url';
@@ -29,26 +30,27 @@ const opt = (name, def) => {
 
 if (flag('help') || flag('h')) {
   console.log(`RAILaVOID verify harness
-usage: node verify/verify.mjs [--dev] [--url=URL] [--no-build] [--headed] [--seed=12345] [--port=4173]
+usage: node verify/verify.mjs [--dev] [--url=URL] [--no-build] [--headed] [--seed=12345] [--port=4179]
 
-  --dev        connect to VERIFY_URL or http://localhost:5173 (no build, no preview server)
+  --dev        connect to VERIFY_URL or http://localhost:5178/RAILaVOID/ (no build, no preview server)
   --url=URL    connect to URL (no build, no preview server)
   --no-build   skip 'npm run build' but still serve dist/ with vite preview
   --headed     run Chromium with a window
   --seed=N     run seed (default 12345 = TEST_SEED)
-  --port=N     preview port (default 4173)
+  --port=N     preview port (default 4179)
   --help       this text`);
   process.exit(0);
 }
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const require = createRequire(import.meta.url);
 const VERIFY_DIR = path.join(ROOT, 'verify');
 const SHOT_DIR = path.join(VERIFY_DIR, 'screenshots');
-const PORT = parseInt(opt('port', '4173'), 10);
+const PORT = parseInt(opt('port', '4179'), 10);
 const SEED = parseInt(opt('seed', '12345'), 10);
 const HEADED = flag('headed');
 const DEV = flag('dev');
-const EXPLICIT_URL = opt('url', null) || (DEV ? (process.env.VERIFY_URL || 'http://localhost:5173') : null);
+const EXPLICIT_URL = opt('url', null) || (DEV ? (process.env.VERIFY_URL || 'http://localhost:5178/RAILaVOID/') : null);
 const BASE_URL = EXPLICIT_URL || `http://localhost:${PORT}`;
 const PAGE_URL = BASE_URL + (BASE_URL.includes('?') ? '&dev' : '/?dev');
 const NO_BUILD = flag('no-build') || !!EXPLICIT_URL;
@@ -128,7 +130,8 @@ function runBuild() {
 
 let server = null;
 function startPreview() {
-  const viteBin = path.join(ROOT, 'node_modules', 'vite', 'bin', 'vite.js');
+  const vitePackage = require.resolve('vite/package.json');
+  const viteBin = path.join(path.dirname(vitePackage), 'bin', 'vite.js');
   server = spawn(process.execPath, [viteBin, 'preview', '--port', String(PORT), '--strictPort'], {
     cwd: ROOT, stdio: ['ignore', 'pipe', 'pipe'],
   });
@@ -363,8 +366,8 @@ async function main() {
   await gate('controls', async (g) => {
     if (!(await requireRail(page, g))) return;
     if (!(await ensureRunning(page, g, false))) return;
-    await evalRail(page, R => { R.autopilot.setEnabled(false); R.setSpeed(1); if (R.sim.isPaused()) R.resume(); try { R.view && R.view.skipCinematic(); } catch {} });
-    await sleep(600); // let the run-intro cinematic release the keys
+    await evalRail(page, R => { R.autopilot.setEnabled(false); R.setSpeed(1); if (R.sim.isPaused()) R.resume(); try { R.view && R.view.skipCinematic(); R.view && R.view.centerOnTrain(); } catch {} });
+    await sleep(900); // let the run-intro camera settle and release the keys
     // pause while planning so the train cannot start traversing the freshly planned tile before Backspace
     await evalRail(page, R => R.pause());
     await sleep(200);
@@ -372,8 +375,11 @@ async function main() {
     const target = await evalRail(page, R => {
       const opts = R.sim.plannableTiles();
       if (!opts.length || !R.view) return null;
-      const best = opts.reduce((a, b) => (b.col > a.col ? b : a));
-      const p = R.view.hexToScreen(best.col, best.row);
+      const visible = opts.map(o => ({ o, p: R.view.hexToScreen(o.col, o.row) }))
+        .filter(x => x.p.x > 280 && x.p.x < innerWidth - 50 && x.p.y > 120 && x.p.y < innerHeight - 190);
+      const picked = visible.sort((a, b) => b.o.col - a.o.col || a.o.row - b.o.row)[0];
+      if (!picked) return null;
+      const best = picked.o, p = picked.p;
       return { col: best.col, row: best.row, x: p.x, y: p.y, before: R.state.route.path.length, cost: best.cost };
     });
     if (!target) g.fail('no plannable tile or view missing');
@@ -540,9 +546,13 @@ async function main() {
 
   await gate('progression', async (g) => {
     if (!(await requireRail(page, g))) return;
-    if (!(await ensureRunning(page, g))) return;
-    await evalRail(page, R => { R.autopilot.setEnabled(false); R.setSpeed(1); try { R.view && R.view.skipCinematic(); } catch {} });
+    // Isolate progression from the boss gate. Boss tests deliberately leave relic choices and a
+    // battle-worn crew behind, which makes exact relic deltas and expedition outcomes order-dependent.
+    await evalRail(page, (R, seed) => { R.newRun(seed); R.autopilot.setEnabled(false); }, SEED);
+    if (!(await pollRail(page, R => R.state.phase === 'running', 15000))) { g.fail('fresh progression run did not start'); return; }
+    await evalRail(page, R => { R.setSpeed(1); try { R.view && R.view.skipCinematic(); } catch {} });
     // relic choice
+    const relicsBefore = await evalRail(page, R => R.state.train.relics.length);
     await evalRail(page, R => R.sim.debug.offerRelics());
     const relicPhase = await pollRail(page, R => R.state.phase === 'relic', 3000);
     g.assert(relicPhase, 'offerRelics did not enter phase relic');
@@ -551,7 +561,7 @@ async function main() {
     const relicOk = await evalRail(page, R => R.sim.chooseRelic(0));
     g.assert(relicOk, 'chooseRelic(0) failed');
     const relics = await evalRail(page, R => R.state.train.relics.length);
-    g.assert(relics === 1, 'relic not recorded (' + relics + ')');
+    g.assert(relics === relicsBefore + 1, `relic count did not advance (${relicsBefore} -> ${relics})`);
     // expedition: drive through the API with perfect timing
     await evalRail(page, R => R.sim.debug.startExpedition());
     const exp = await pollRail(page, R => R.state.phase === 'expedition', 3000);
