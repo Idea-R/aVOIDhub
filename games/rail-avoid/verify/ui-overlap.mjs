@@ -32,6 +32,7 @@ const BOXES = {
   strip: '#ui .rv-strip',
   toast: '#ui .rv-toast',
   tutorial: '#ui .rv-coach',
+  announcement: '#ui .rv-announce',
   eventmodal: '#ui .rv-event',
 };
 

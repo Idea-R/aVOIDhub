@@ -104,6 +104,17 @@ describe('reverse', () => {
 });
 
 describe('upgrades and nodes', () => {
+  it('keeps the caboose as rear guard when a new car is bought', () => {
+    const sim = createSim(TEST_SEED, new EventBus());
+    const s = sim.state;
+    s.phase = 'shop';
+    sim.debug.grant({ scrap: 200 });
+    expect(sim.buyCar('caboose')).toBe(true);
+    expect(s.train.cars.at(-1)?.type).toBe('caboose');
+    expect(sim.buyCar('cannon')).toBe(true);
+    expect(s.train.cars.at(-1)?.type).toBe('caboose');
+    expect(s.train.cars.at(-2)?.type).toBe('cannon');
+  });
   it('upgrades cars and the locomotive at a yard and applies their effects', () => {
     const bus = new EventBus();
     const sim = createSim(TEST_SEED, bus);

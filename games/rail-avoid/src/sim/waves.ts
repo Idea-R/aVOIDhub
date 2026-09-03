@@ -19,8 +19,8 @@ import { spawnEnemy, tileAt, hasCar, locoPos, log } from './helpers';
 
 type Dir = 'west' | 'north' | 'south' | 'east';
 
-const GRACE_PERIOD = 45;        // s: no waves at the start of a run
-const FIRST_WAVE_DELAY = 20;    // s after the grace period (interval-seconds, pressure-scaled)
+const GRACE_PERIOD = 55;        // s: enough time to learn route planning before combat
+const FIRST_WAVE_DELAY = 22;    // s after the grace period (interval-seconds, pressure-scaled)
 const MIN_WAVE = 2;
 const MAX_WAVE = 14;
 const MAX_SAPPERS = 2;

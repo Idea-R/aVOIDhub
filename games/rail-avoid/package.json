@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit",
     "build:standalone": "node scripts/standalone.mjs",
     "check:standalone": "node verify/standalone-check.mjs",
+    "verify:hud": "node verify/hud-sprint-check.mjs",
     "perf:headed": "node verify/perf-headed.mjs"
   },
   "dependencies": {

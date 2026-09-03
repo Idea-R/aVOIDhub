@@ -1,9 +1,11 @@
 # RAILaVOID — Brand & Art Direction
 
-A guide for humans and image agents. Everything generated for RAILaVOID (cutscene frames, event cards, relic icons, region title cards, key art, catalog thumbnails) should read as one hand: **a hand-printed transit poster of a miniature world that is being eaten by the void.**
+A guide for humans and image agents. Everything generated for RAILaVOID (cutscene frames, event cards, relic icons, region title cards, key art, catalog thumbnails) should read as one hand: **a warmly painted model-railway storybook inside the graphic discipline of a hand-printed transit poster, being eaten by the void.**
+
+The Sprint 02 art study selected **Signal Box Storybook** for characters, cars and world art, with **Hand-Printed Transit Poster** retained for HUD, menus, tickets and typography. This hybrid gives the crew enough warmth to become characters without losing the clean route language that makes the strategy readable.
 
 ## 1. The idea in one line
-Elegant transit diagram meets lively miniature diorama, painted in ink-and-wash, framed like a railway ticket, with the void bleeding in violet from the west.
+An expressive painted model railway operated through an enamel signal box and framed like a screenprinted ticket, with the void bleeding in violet from the west.
 
 ## 2. Palette (use these exact values)
 | Role | Hex | Use |
@@ -28,7 +30,8 @@ Rule of thumb per image: 70% navy/ink darks, 20% one region colour, 10% gold, an
 
 ## 4. Visual language
 - **Camera**: 3/4 isometric tilt (about 30° elevation) for world scenes; straight-on "poster" framing for cards; low heroic angle for the train.
-- **Rendering**: ink linework with watercolour/gouache wash, visible paper grain, flat colour blocks with one soft light source (dusk or lantern light), rim light in gold on the train, violet rim light where the void is near.
+- **Rendering**: ink linework with watercolour/gouache wash over model-railway forms, visible paper grain, flat colour blocks with one soft light source (dusk or lantern light), rim light in gold on the train, violet rim light where the void is near. Crew can be expressive at medium distance; avoid close-up realism.
+- **Interface**: deep navy enamel plates, brass hairlines, warm cream ticket stock, signal lamps, lever/route-diagram motifs, square-cut corners. Use pills only for status tags. The map stays dominant; controls read as railway hardware, not futuristic glass.
 - **The train**: stubby toy-like proportions, deep-navy body, gold trim lines that grow with upgrades, red rear lanterns, coloured car roofs by role (coral weapons, ice medical, cream coaches, amber boiler). Steam is thick, cream, a little cartoonish.
 - **The void**: not black, but a violet-black gradient with erosion tendrils, floating rock shards, faint star-nebula inside, hexes crumbling at the edge.
 - **Settlements**: tiny clustered buildings with warm window lights; a white station ring marker as the "diagram" layer floats above them.
@@ -55,7 +58,7 @@ File locations: `public/art/events/<eventId>.webp`, `public/art/relics/<relicId>
 Paste this as the system/style preamble, then append one of the subject prompts below.
 
 ```
-Style: hand-printed transit poster meets ink-and-wash miniature diorama. Isometric 3/4 tilt for world scenes; poster framing for cards. Deep navy ground (#0b0e1a), gold accents (#e8c170), void violet (#6d5fd6) intrusion from the left edge, one warm lantern or dusk light source, visible paper grain, flat gouache colour blocks with ink outlines, subtle bloom on lights. Stubby toy-like steam train in navy with gold trim and coloured car roofs. Settlements are tiny clustered buildings with warm windows. The void is violet-black with crumbling hex tiles and floating shards. Composition: single focal point, 15% empty space at the top, gold hairline frame with a punched ticket hole and violet corner ticks. No readable text, no UI, no photorealism, no neon, no close-up faces. Muted saturation except gold and violet.
+Style: Signal Box Storybook world art inside a hand-printed transit-poster frame. Painted model-railway forms with ink-and-gouache surfaces; isometric 3/4 tilt for world scenes and straight-on poster framing for cards. Deep navy ground (#0b0e1a), brass-gold accents (#e8c170), void violet (#6d5fd6) intrusion from the left edge, warm station lamps, visible paper grain and restrained halftone. Stubby expressive steam train in navy with gold trim and coloured car roofs; small readable crew silhouettes with one specialty prop each. Settlements are tiny clustered buildings with warm windows. The void is violet-black with crumbling hex tiles and floating shards. Composition: one focal point, 15% empty space at the top, gold hairline frame with a punched ticket hole and violet corner ticks. No readable text, no UI, no photorealism, no neon, no glossy 3D. Muted saturation except gold and violet.
 ```
 
 ## 8. Subject prompts

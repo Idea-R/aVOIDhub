@@ -2,8 +2,33 @@
 
 Status after the first public early-access deploy (avoidgame.io/railavoid). Ordered by player impact.
 
+## Completed sprint: Command Deck Rebuild
+
+- [x] Replace the top stat ribbon with a two-tier command deck.
+- [x] Replace compressed train cards with large rolling-stock schematics.
+- [x] Embed crew stations, operational state, hull, heat, power, and supply directly in each car.
+- [x] Recompose the car inspector as a matching equipment bay.
+- [x] Generate and integrate authored art for the six-car starter consist, with Gatling I–III upgrade variants and procedural fallbacks for the wider roster.
+- [x] Preserve direct crew focus/posting and existing game controls.
+- [x] Complete focused, overlap, full-game, build, and standalone verification.
+
+Detailed plan: `docs/sprint-04/PLAN.md`. Review: `docs/sprint-04/REVIEW.md`.
+
+## Next sprint: Away Team
+
+- [ ] Establish deterministic expedition fixtures and a dedicated browser verification command.
+- [ ] Add persistent crew identity, XP, five levels and two authored unlock decisions.
+- [ ] Rebuild expedition rules around party positions, visible enemy intents, Tempo and four shared conditions.
+- [ ] Generate consistent portrait/combat art for seven crew, four standard foes and four region minibosses.
+- [ ] Replace the current expedition layout with a command-deck-quality party rail, stage, threat desk and action deck.
+- [ ] Balance standard encounters and minibosses, then complete campaign, standalone and production verification.
+
+Detailed plan: `docs/sprint-05/PLAN.md`. Art/content matrix: `docs/sprint-05/CONTENT-MATRIX.md`.
+
+Sprint 03 (readability and crew discovery) is archived in `docs/sprint-03/`.
+
 ## 1. Feel and pacing (in progress)
-- [x] Faster train (0.38 hex/s), shorter settlement stops (12 s), safe havens, reversing.
+- [x] Faster train (0.42 hex/s), shorter settlement stops (12 s), 12 s post-haven wave grace, reversing.
 - [x] Custom cursors, hover feedback on settlements/cars/hexes, no-overlap HUD layout, compact HUD, volume mixer (ambience/UI), log hidden by default.
 - [ ] "Express" toggle: 1.5× default sim speed for veterans, saved in settings.
 - [x] Three main lines (Central / Northern / Southern) with crossovers; junction chooser shows line names and the next settlement on each branch.
@@ -15,7 +40,15 @@ Status after the first public early-access deploy (avoidgame.io/railavoid). Orde
 - [ ] Specialisation choice at level III (e.g. Gatling → Twin-Link (rate) or Hardened (armour-piercing)).
 - [ ] Coupling rules: heavy cars slow cornering on hills; armoured cars protect neighbours from shells.
 - [ ] Field repairs between yards: Mechanic crew can spend scrap while moving (slow), Repair Drone car (tier 2) heals neighbours; hull "dent" states visible on the model.
-- [ ] Crew as characters: portraits, two traits each, a short bark line on assignment.
+- [x] Crew assignment discovery pass: persistent CREW READY ticket, direct car-inspector handoff, specialist effect copy, crew-posting tutorial.
+- [ ] Crew as characters: generated portraits, two specialties/traits each, a short bark line on assignment.
+
+### Future feature: Inside the train / Crew View
+- [ ] Phase A — schematic cutaway: click **View Crew** or zoom into a car; show a performant 2D cutaway with crew station, assignment slot, health, level, XP and specialty effects. Reuse one interior shell per car role and sprite-sheet crew at 8–12 fps.
+- [ ] Phase B — living train: crew walk only between a small set of authored stations; no free pathfinding. Suspend off-screen animation and cap the active interior at 8 crew / 12 ambient props / 24 particles.
+- [ ] Phase C — crew progression: XP from distance travelled, settlements survived, battles and expeditions; levels unlock one of two specialty upgrades plus a secondary trait. Avoid random stat soup—every choice must change a visible job.
+- [ ] Phase D — synergies and incidents: Gunner + weapon, Engineer + generator, Mechanic + damaged hull, Medic + occupied coach, Surveyor + Scout, Quartermaster + Cargo. Interior events and bark lines reflect current assignments.
+- [ ] Performance gate: Crew View must hold 60 fps on the project reference machine, allocate no per-frame DOM nodes, pool sprites, and simulate off-screen crew at coarse 0.5 s ticks.
 
 ## 3. Journey nodes (Slay the Spire density)
 - [x] 4 new node types: Watchtower (early warning), Shrine (boon choice), Wreck (salvage / free car), Market (trade).
@@ -27,12 +60,17 @@ Status after the first public early-access deploy (avoidgame.io/railavoid). Orde
 ## 4. Presentation
 - [x] Cinematic run intro, region cards, boss intros, victory/defeat cameras, letterbox cards.
 - [ ] Opening cutscene: 25 s shot list (void swallowing Lastlight, train pulling out, title card) with the Suno theme; skippable, once per profile.
-- [ ] Generated key art for the title, catalog card and each region's title card.
+- [x] Component-level command-deck HUD rebuild while preserving the current world style.
+- [x] First production rolling-stock art slice: starter consist plus visible Gatling upgrade progression.
+- [ ] Complete authored rolling-stock art for the remaining purchasable cars and their meaningful level-III silhouettes.
+- [ ] Generated production key art for the title, catalog card and each region's title card.
 - [ ] Boss intro vignettes (2–3 panels) and a short victory sequence at the Last Gate.
 - [ ] Menus: unified panel system with tabs (Train / Crew / Journey log / Settings), controller focus rings, and a map overview (minimap with void front and settlement deadlines).
 
 ## 5. Balance
-- [ ] Human playtest pass per region with telemetry (deaths by cause, time per region, scrap spent per car type).
+- [x] First deterministic pacing pass: faster train, larger starting reserve, lighter early waves/elites, safer starter hulls, post-haven grace, first-boss escape route and counter messaging.
+- [x] New purchases couple ahead of the Caboose, preserving its rear-guard role and keeping an early Cannon inside Cargo ammo range.
+- [ ] Human playtest pass per region with telemetry (deaths by cause, time per region, scrap spent per car type). Current deterministic probe now reaches the Brood Mother instead of dying at the Iron Wagon; validate across player skill levels.
 - [ ] Region 3–4 pressure vs. Tesla/Flak affordability; Void Maw readability.
 - [ ] Difficulty presets (Scenic / Standard / Blackout) and daily seed.
 

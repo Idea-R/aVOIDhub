@@ -72,9 +72,10 @@ export function createUI(ctx: AppContext): UiApi {
     // steps anchored above the strip sit above the stop pill instead when it is showing, so the two never overlap
     const aboveStrip = a.junction && !a.junction.hidden ? a.junction : a.stop && !a.stop.hidden ? a.stop : strip.el;
     const map: Array<{ el: HTMLElement; side: 'below' | 'above' }> = [
-      { el: a.route, side: 'below' }, { el: a.route, side: 'below' }, { el: a.resources, side: 'below' },
-      { el: aboveStrip, side: 'above' }, { el: aboveStrip, side: 'above' }, { el: a.void, side: 'below' },
-      { el: a.status, side: 'below' }, { el: a.speed, side: 'below' }, { el: a.menu, side: 'below' },
+      { el: a.route, side: 'below' }, { el: a.route, side: 'below' }, { el: a.mission, side: 'below' },
+      { el: aboveStrip, side: 'above' }, { el: strip.el, side: 'above' }, { el: strip.el, side: 'above' },
+      { el: strip.el, side: 'above' }, { el: a.junction, side: 'above' }, { el: strip.el, side: 'above' },
+      { el: strip.el, side: 'above' },
     ];
     return map[step] ?? { el: a.status, side: 'below' };
   }, () => layout.freeZone());
@@ -265,9 +266,9 @@ export function createUI(ctx: AppContext): UiApi {
   // announcements: the big notices; small toasts stay for minor resource lines
   const say = (cat: string, title: string, body?: string, tone?: 'gold' | 'void' | 'good' | 'bad' | 'info', hold?: number): void => { if (ui.runActive()) announcer.announce({ cat, title, body, tone, hold }); };
   const CREW_LINE: Record<string, string> = {
-    conductor: 'Keeps the whistle and the timetable.', engineer: 'Knows the boiler by its moods.', gunner: 'Counts shells in her sleep.',
-    medic: 'Bandages first, questions later.', surveyor: 'Reads the land like a timetable.', mechanic: 'Never met a bogie he could not shim.',
-    quartermaster: 'Every crate accounted for. Every favour, too.',
+    conductor: 'Leads the train and every expedition.', engineer: '+2 train power; stronger still on a generator.', gunner: '+35% fire rate and +15% range on a weapon.',
+    medic: 'Heals the whole crew while posted.', surveyor: '+2 planning range and safer routes while posted.', mechanic: 'Repairs the assigned car continuously.',
+    quartermaster: '+30% capacity for every resource while posted.',
   };
   let pendingExpeditionEnd: { outcome: string; summary: string; rounds: number } | null = null;
   const cinematicSoon = (fn: () => void): void => { window.setTimeout(() => { const v = ui.view(); if (v && v.isCinematicPlaying()) return; fn(); }, 220); };
@@ -301,7 +302,7 @@ export function createUI(ctx: AppContext): UiApi {
     bus.on('tutorial:step', ({ step, text }) => { if (ui.runActive()) tutorial.show(step, text); }),
     bus.on('ui:notify', ({ text, kind }) => note(text, kind)),
     bus.on('wave:warning', ({ type, from, in: secs }) => { const n = ENEMY_DEFS[type]?.name ?? type; note(`${n}s incoming from the ${String(from).toUpperCase()} in ${Math.ceil(secs)}s`, 'warn', 3000, 'wave'); }),
-    bus.on('boss:spawn', ({ name }) => cinematicSoon(() => say('Boss', name, 'It blocks the line. Fight it or find a way around.', 'bad', 3.4))),
+    bus.on('boss:spawn', ({ type, name }) => cinematicSoon(() => say('Boss', name, type === 'boss_wagon' ? 'Armoured target: cannon shells hit hardest. Keep moving while it lines up a ram.' : 'It blocks the line. Fight it or find a way around.', 'bad', 4.2))),
     bus.on('boss:died', ({ type }) => say('Boss', `${ENEMY_DEFS[type]?.name ?? 'Boss'} destroyed`, 'The line ahead is clear.', 'good')),
     bus.on('settlement:reached', ({ id, name, type, rewards, passengers, crew }) => {
       lastSettlement = id; lastSettlementAt = performance.now();
@@ -325,7 +326,7 @@ export function createUI(ctx: AppContext): UiApi {
     bus.on('ui:openPanel', ({ panel }) => openPanel(panel)),
     bus.on('resource:change', ({ key, delta }) => hud.flashResource(key, delta)),
     bus.on('resource:empty', ({ key }) => note(`Out of ${key}!`, 'bad', 4200, 'empty:' + key)),
-    bus.on('crew:joined', ({ specialty, name }) => say('Crew', `${name} the ${specialty} joins`, CREW_LINE[specialty] ?? 'Another pair of hands on the line.', 'good')),
+    bus.on('crew:joined', ({ specialty, name }) => say('Crew ready', `${name} · ${specialty}`, `${CREW_LINE[specialty] ?? 'Another pair of hands on the line.'} Use the CREW READY ticket to post them.`, 'good')),
     bus.on('passengers:board', ({ count }) => { if (count >= 6) say('Passengers', `${count} passengers board`, 'Find them food, and a yard to deliver them to.', 'info'); else note(`${count} passengers boarded`, 'info', 4200, settlementGroup()); }),
     bus.on('passengers:delivered', ({ count, reward }) => note(`${count} passengers delivered — ${fmtRewards(reward) || 'thanks'}`, 'good', 5000, settlementGroup())),
     bus.on('passengers:lost', ({ count, cause }) => note(`${count} passengers lost (${cause})`, 'bad')),
