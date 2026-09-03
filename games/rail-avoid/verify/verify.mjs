@@ -570,7 +570,7 @@ async function main() {
     await shot(page, 'expedition', g);
     let steps = 0;
     while (steps++ < 80) {
-      const st = await evalRail(page, R => { const x = R.state.expedition; if (!x) return 'none'; if (x.outcome) return x.outcome; if (x.pending) { R.sim.expeditionResolve('perfect'); return 'resolved'; } if (x.turn === 'player') { R.sim.expeditionAction('strike'); return 'acted'; } return 'wait'; });
+      const st = await evalRail(page, R => { const x = R.state.expedition; if (!x) return 'none'; if (x.outcome) return x.outcome; if (x.awaitingAdvance) { R.sim.advanceExpedition(true); return 'descended'; } if (x.pending) { R.sim.expeditionResolve('perfect'); return 'resolved'; } if (x.turn === 'player') { R.sim.expeditionAction('strike'); return 'acted'; } return 'wait'; });
       if (st === 'won' || st === 'lost' || st === 'fled' || st === 'none') { g.note('expedition outcome=' + st + ' after ' + steps + ' steps'); break; }
       await sleep(60);
     }

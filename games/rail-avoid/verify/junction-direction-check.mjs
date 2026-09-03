@@ -34,6 +34,7 @@ await page.evaluate(() => {
     if (s.phase === 'expedition') {
       const x = s.expedition;
       if (x?.outcome) R.sim.endExpedition();
+      else if (x?.awaitingAdvance) R.sim.advanceExpedition(true);
       else if (x?.pending) R.sim.expeditionResolve('good');
       else R.sim.expeditionAction('strike');
     }

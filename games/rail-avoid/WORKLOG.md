@@ -33,3 +33,7 @@
 - Ran the focused HUD acceptance suite against the custom production domain: all six generated car images loaded, Gatling I→III art changed, crew posting/focus passed, responsive bounds passed at 1920/1366/1280/800, and there were no page errors.
 - Audited the current expedition system: four silhouette foes, a shared timing-ring interaction, specialty actions, six-round Void pressure, no persistent crew levels/unlocks, and a combat log carrying information that should be visible in the stage UI.
 - Planned Sprint 05, `Away Team`, covering persistent character identity, XP/unlocks, positions/intents/Tempo/status rules, seven crew art sets, four foe sets, four region minibosses, a complete expedition UI rebuild, and staged verification.
+- Implemented the first Sprint 05 encounter-depth slice: four painted scene backplates, scene-led mystery/site cards, staged ruin progression, formation pressure, turn-consuming swaps, a retreat-or-descend decision and four authored enemy portrait plates.
+- Rejected two fake-transparent monster batches after alpha inspection and deliberately shipped compact navy portrait plates instead; true-alpha combat masters remain pending.
+- Added deterministic formation, swap and stage-reward tests plus a browser gate for event art, scene transitions, portraits, depth decisions and 1280×720 layout.
+- Defined ADS as a future shared-platform, server-role-gated staging studio rather than a game-local authentication system.

@@ -5,8 +5,16 @@ import type { SimState, PassengerEventDef, PassengerEventOption } from '../core/
 import { eventById } from '../core/passengerEvents';
 import { CAR_DEFS } from '../core/cars';
 import { gsap, D, isReduced, rowsIn } from './motion';
+import lanternCamp from '/art/scenes/lantern-camp-v1.webp?url&inline';
+import ruinApproach from '/art/scenes/ruin-approach-v1.webp?url&inline';
 
 export interface EventModal { el: HTMLElement; show(defId?: string): void; update(s: SimState): void }
+
+function sceneFor(defId: string): { src: string; alt: string } | null {
+  if (defId === 'node_site' || defId === 'mystery_away') return { src: ruinApproach, alt: 'The train waits beside an ancient ruin entrance.' };
+  if (['mystery_cache', 'mystery_survivor', 'mystery_weapon', 'mystery_ambush'].includes(defId)) return { src: lanternCamp, alt: 'A lantern-lit camp beside the railway.' };
+  return null;
+}
 
 function unmet(s: SimState, o: PassengerEventOption): string | null {
   const r = o.requires;
@@ -60,17 +68,27 @@ export function createEventModal(ui: UiShared): EventModal {
       optionButtons.push({ btn: b, why, opt: o });
     });
     const h2 = el('h2', { text: def.title });
+    const scene = sceneFor(def.id);
     const mysteryMarks: Record<string, string> = {
       mystery_cache: '▣', mystery_away: '⚔', mystery_ambush: '⚠', mystery_survivor: '♟', mystery_weapon: '⌁',
     };
-    box.replaceChildren(
-      el('div', { class: 'rv-label rv-wire', text: mystery ? 'Unknown signal · identity revealed' : (def.negative ? 'Trouble aboard' : 'Aboard the train') }),
+    const heading = el('div', { class: 'rv-event-heading' },
       ...(mystery ? [el('div', { class: 'rv-mystery-mark', 'aria-hidden': 'true', text: mysteryMarks[def.id] ?? '?' })] : []),
-      h2,
+      el('div', { class: 'rv-event-heading-copy' },
+        el('div', { class: 'rv-label rv-wire', text: mystery ? 'Unknown signal · identity revealed' : (def.negative ? 'Trouble aboard' : 'Aboard the train') }),
+        h2,
+      ),
+    );
+    const decision = el('div', { class: 'rv-event-decision' },
       el('p', { class: 'rv-event-text', text: def.text }),
       options,
       el('div', { class: 'rv-hint', text: 'Press 1-3 to choose. The train waits while you decide.' }),
     );
+    const body = el('div', { class: scene ? 'rv-event-body rv-has-scene' : 'rv-event-body' },
+      ...(scene ? [el('figure', { class: 'rv-event-scene' }, el('img', { src: scene.src, alt: scene.alt }))] : []),
+      decision,
+    );
+    box.replaceChildren(heading, body);
     if (s) update(s);
     pendingWire = () => telegram(def.title, h2, options);
   }

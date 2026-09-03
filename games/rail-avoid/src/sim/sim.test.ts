@@ -96,7 +96,7 @@ describe('sim', () => {
     for (let i = 0; i < 400; i++) {
       if (sim.state.phase === 'relic') sim.chooseRelic(0);
       if (sim.state.phase === 'event') { if (!sim.chooseEventOption(2)) if (!sim.chooseEventOption(1)) sim.chooseEventOption(0); }
-      if (sim.state.phase === 'expedition') { const x = sim.state.expedition!; if (x.outcome) sim.endExpedition(); else if (x.pending) sim.expeditionResolve('good'); else sim.expeditionAction('strike'); }
+      if (sim.state.phase === 'expedition') { const x = sim.state.expedition!; if (x.outcome) sim.endExpedition(); else if (x.awaitingAdvance) sim.advanceExpedition(true); else if (x.pending) sim.expeditionResolve('good'); else sim.expeditionAction('strike'); }
       if (i % 10 === 0) { const o = sim.plannableTiles(); if (o.length) sim.planTile(o[0].col, o[0].row); }
       sim.update(0.05);
     }

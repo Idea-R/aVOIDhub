@@ -1,6 +1,6 @@
 # Sprint 05 — Away Team
 
-Status: in progress. The Conductor portrait/combat-master vertical slice and dedicated browser art gate are implemented; the fixture matrix and system rebuild follow.
+Status: in progress. The first encounter-depth slice is implemented: painted event scenes, two/three-stage ruins, formation pressure, swapping, four enemy portrait plates, and a dedicated browser acceptance gate. Persistent XP, intents, Tempo, conditions, crew art and minibosses remain.
 
 ## Outcome
 
@@ -68,6 +68,14 @@ Exit gate:
 
 ## Phase 2 — Combat rules rebuild
 
+Current slice:
+
+- [x] Add front, middle and rear positions with explicit damage/pressure rules.
+- [x] Add a turn-consuming Swap action with keyboard and gamepad-safe UI flow.
+- [x] Split standard ruins into two stages and later-region ruins into three, with wounds carrying forward.
+- [x] Add a clear risk decision between stages: continue for the final reward or withdraw safely.
+- [ ] Add the visible intent queue, Tempo, cooldowns and four shared conditions described below.
+
 Work:
 
 - Add three party positions: front, middle and rear. Position changes legal targets and enemy threat, not movement simulation.
@@ -94,6 +102,15 @@ Exit gate:
 - Minibosses cannot be removed by Bribe, stun-lock or a single perfect opening turn.
 
 ## Phase 3 — Art system and vertical slice
+
+Current slice:
+
+- [x] Generate and integrate four distinct environment backplates plus a lantern-camp event scene.
+- [x] Generate and integrate framed navy portrait plates for all four standard foes.
+- [x] Reject two fake-alpha batches rather than shipping baked checkerboards.
+- [ ] Produce true-alpha combat masters after the portrait direction is approved.
+
+Asset recipes and hashes: `ASSET-MANIFEST.md`.
 
 Work:
 

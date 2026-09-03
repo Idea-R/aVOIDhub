@@ -112,3 +112,12 @@ Sprint 03 (readability and crew discovery) is archived in `docs/sprint-03/`.
 - [x] Live at avoidgame.io/railavoid via the aVOIDhub platform catalog.
 - [ ] Platform leaderboard adapter (score scope → "platform") once the run summary is bounded and replayable.
 - [ ] Longer combat track (second Suno take) and per-region ambient stems.
+
+### Agent Development Studio (ADS)
+
+- [ ] Build ADS as a shared aVOID Games platform tool, not a second RailAVOID login. Reuse the existing `/login` session and require the server-assigned Supabase `app_metadata.platform_role=admin` role; never expose a client-side admin selector.
+- [ ] Verify the `shane@ideas-realized.com` account in the shared platform before assigning or changing any production role. Account creation and role grants require a separate, explicitly confirmed platform operation.
+- [ ] Ship a staging-only RailAVOID workspace first: deterministic seed launcher, region/settlement teleport, encounter and boss fixture palette, scene/portrait browser, train composition editor, asset-placement coordinates, and snapshot/restore.
+- [ ] Separate staging data from production runs and leaderboards. Every mutating tool shows the active environment and seed; production mutation is out of scope for the first ADS release.
+- [ ] Add content validation for missing art, unreachable encounter choices, invalid rewards, enemy intent loops, and viewport collisions before an encounter can be promoted.
+- [ ] After the encounter-depth slice is proven, expand ADS into a reusable game-owner portal for other aVOID titles rather than hard-coding RailAVOID assumptions into platform auth.
