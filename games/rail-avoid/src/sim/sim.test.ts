@@ -3,6 +3,28 @@ import { EventBus } from '../core/events';
 import { createSim } from './sim';
 import { TEST_SEED } from '../core/config';
 import { CAR_DEFS } from '../core/cars';
+import { edgeKey, hexToWorld } from '../core/hex';
+
+function distanceToSegment(px: number, py: number, ax: number, ay: number, bx: number, by: number): number {
+  const dx = bx - ax, dy = by - ay;
+  const len2 = dx * dx + dy * dy;
+  const t = len2 > 0 ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / len2)) : 0;
+  return Math.hypot(px - (ax + dx * t), py - (ay + dy * t));
+}
+
+function expectConsistOnRoute(sim: ReturnType<typeof createSim>): void {
+  const s = sim.state;
+  const traversedEnd = Math.min(s.route.path.length - 1, s.train.routeIndex + (s.train.progress > 0 ? 1 : 0));
+  const segments = s.route.path.slice(0, traversedEnd + 1).slice(1).map((b, i) => {
+    const a = s.route.path[i];
+    expect(new Set([...s.route.railLinks, ...s.route.builtLinks]).has(edgeKey(a[0], a[1], b[0], b[1]))).toBe(true);
+    return [hexToWorld(a[0], a[1]), hexToWorld(b[0], b[1])] as const;
+  });
+  for (let i = 0; i < s.train.cars.length; i++) {
+    const distance = Math.min(...segments.map(([a, b]) => distanceToSegment(s.train.trailX[i], s.train.trailY[i], a.x, a.y, b.x, b.y)));
+    expect(distance, `car ${i} left the route`).toBeLessThan(0.01);
+  }
+}
 
 function run(seed: number, seconds: number, plan = true) {
   const bus = new EventBus();
@@ -115,6 +137,36 @@ describe('upgrades and nodes', () => {
     expect(sim.buyCar('cannon')).toBe(true);
     expect(s.train.cars.at(-1)?.type).toBe('caboose');
     expect(s.train.cars.at(-2)?.type).toBe('cannon');
+  });
+  it('keeps every car on real rail while the opening branch is selected', () => {
+    const opening = createSim(TEST_SEED, new EventBus());
+    const startIndex = opening.state.train.routeIndex;
+    expect(startIndex).toBeGreaterThan(0);
+    expectConsistOnRoute(opening);
+
+    const firstChoices = opening.plannableTiles();
+    expect(firstChoices.length).toBeGreaterThan(1);
+    for (let branch = 0; branch < firstChoices.length; branch++) {
+      const sim = createSim(TEST_SEED, new EventBus());
+      const choice = sim.plannableTiles()[branch];
+      expect(sim.planTile(choice.col, choice.row).ok).toBe(true);
+      for (let i = 0; i < 300; i++) {
+        sim.update(0.05);
+        expectConsistOnRoute(sim);
+      }
+    }
+  });
+  it('repairs missing opening rail history in existing saves', () => {
+    const original = createSim(TEST_SEED, new EventBus());
+    const saved = JSON.parse(original.serialize());
+    const oldStartIndex = saved.state.train.routeIndex;
+    saved.state.route.path = saved.state.route.path.slice(oldStartIndex);
+    saved.state.train.routeIndex = 0;
+
+    const restored = createSim(TEST_SEED, new EventBus());
+    expect(restored.restore(JSON.stringify(saved))).toBe(true);
+    expect(restored.state.train.routeIndex).toBe(oldStartIndex);
+    expectConsistOnRoute(restored);
   });
   it('commissions purchased ballistic weapons with shared ammo stock', () => {
     const sim = createSim(TEST_SEED, new EventBus());

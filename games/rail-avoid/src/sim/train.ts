@@ -13,7 +13,7 @@ const CREW_NAMES = ['Ada', 'Bram', 'Cass', 'Dov', 'Elka', 'Finn', 'Greta', 'Hale
 
 export function initTrain(state: SimState): TrainState {
   const t: TrainState = {
-    cars: [], routeIndex: 0, progress: 0, speed: 0, speedTarget: 0, moving: false, stopped: true, stopReason: 'no_route',
+    cars: [], routeIndex: Math.max(0, state.route.path.length - 1), progress: 0, speed: 0, speedTarget: 0, moving: false, stopped: true, stopReason: 'no_route',
     stopTimer: 0, stopPressure: 0, hounds: 0, reversing: false, locoUpgrades: { speed: 0, power: 0, frame: 0, crew: 0 }, watchUntil: 0, relics: [], marks: 0,
     resources: { ...TRAIN.startResources }, capacity: { ...TRAIN.baseCapacity },
     passengers: 0, passengerCap: 0, passengersDelivered: 0, morale: 80, crew: [],

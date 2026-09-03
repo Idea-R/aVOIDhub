@@ -11,6 +11,8 @@ export interface WorldGen {
   railLines: Record<string, number>;
   spine: Array<[number, number]>;
   lines: Array<Array<[number, number]>>;
+  /** Ordered pre-laid approach ending at start, used as the consist's initial route history. */
+  leadIn: Array<[number, number]>;
   start: [number, number];
   terminus: [number, number];
   loopTiles: Array<[number, number]>;
@@ -382,7 +384,7 @@ export function generateWorld(seed: number): WorldGen {
     s.deadline = Math.max(0, (w.x - voidFront[s.row]) / VOID.baseSpeed);
   }
 
-  return { tiles, settlements, railLinks: [...links].sort(), railLines: lineOf, spine, lines: linePaths, start, terminus, loopTiles: ring, voidFront };
+  return { tiles, settlements, railLinks: [...links].sort(), railLines: lineOf, spine, lines: linePaths, leadIn, start, terminus, loopTiles: ring, voidFront };
 }
 
 export function worldToState(state: SimState, w: WorldGen): void {
@@ -390,7 +392,10 @@ export function worldToState(state: SimState, w: WorldGen): void {
   state.settlements = w.settlements;
   state.route.railLinks = w.railLinks;
   state.route.railLines = w.railLines;
-  state.route.path = [w.start];
+  // The consist already occupies the approach track when a run begins. Keeping
+  // that real rail geometry in route history prevents the first selected branch
+  // from being extrapolated backwards through the trailing cars.
+  state.route.path = w.leadIn.slice();
   state.void.front = w.voidFront;
   state.boss.loopTiles = w.loopTiles;
 }
