@@ -137,6 +137,31 @@ assert(compact.topRight <= 1282 && compact.controlsLayoutRight <= 1282, `compact
 assert(compact.statusVisible && /fog/i.test(compact.weather), 'compact weather/status readout is missing');
 await page.screenshot({ path: path.join(out, 'fog-1280x720.png') });
 
+// Returning from an active Repair Yard must make the title an exclusive mode immediately,
+// including while the side-panel exit animation would normally still be in flight.
+await page.evaluate(() => window.__RAIL.quitToTitle());
+await page.waitForTimeout(40);
+const titleExclusive = await page.evaluate(() => {
+  const root = document.querySelector('#ui');
+  const title = document.querySelector('#ui [data-panel="title"], #ui .rv-title');
+  const shop = document.querySelector('#ui [data-panel="shop"]');
+  const inspector = document.querySelector('#ui [data-panel="inspector"]');
+  const visible = (n) => !!n && !n.hidden && getComputedStyle(n).display !== 'none' && getComputedStyle(n).visibility !== 'hidden';
+  return {
+    titleMode: root?.classList.contains('rv-title-mode') ?? false,
+    titleVisible: visible(title),
+    shopVisible: visible(shop),
+    inspectorVisible: visible(inspector),
+    shopLayoutClass: root?.classList.contains('rv-shop-open') ?? true,
+    inspectorLayoutClass: root?.classList.contains('rv-inspector-open') ?? true,
+  };
+});
+assert(titleExclusive.titleMode && titleExclusive.titleVisible, 'title mode did not become active');
+assert(!titleExclusive.shopVisible && !titleExclusive.inspectorVisible, 'gameplay side panel leaked onto the title screen');
+assert(!titleExclusive.shopLayoutClass && !titleExclusive.inspectorLayoutClass, 'stale side-panel layout class survived the title transition');
+console.log('title', JSON.stringify(titleExclusive));
+await page.screenshot({ path: path.join(out, 'title-exclusive-1280x720.png') });
+
 assert(errors.length === 0, `browser errors: ${errors.slice(0, 3).join(' | ')}`);
 await browser.close();
 if (failures.length) {
@@ -144,4 +169,4 @@ if (failures.length) {
   for (const f of failures) console.error(`- ${f}`);
   process.exit(1);
 }
-console.log('PASS interface scale, two-tier manifest, settlement click, repair yard, compact weather');
+console.log('PASS interface scale, two-tier manifest, settlement click, repair yard, compact weather, exclusive title');
