@@ -68,6 +68,13 @@
 
 #ui *, #ui *::before, #ui *::after { box-sizing: border-box; }
 #ui [hidden] { display: none !important; }
+/* The title is an exclusive app mode. This is a defensive visual fence around the
+   panel state machine: even an interrupted exit tween cannot expose gameplay chrome. */
+#ui.rv-title-mode { --rv-right-w: 0px; --rv-left-w: 0px; }
+#ui.rv-title-mode > .rv-side,
+#ui.rv-title-mode > .rv-hud,
+#ui.rv-title-mode > .rv-tutorial-layer,
+#ui.rv-title-mode > .rv-announce { display: none !important; }
 #ui .rv-svg-defs { position: absolute; width: 0; height: 0; overflow: hidden; pointer-events: none; }
 
 /* --- pointer-event passthrough: containers are transparent, leaves are interactive (HUD rules live below) --- */

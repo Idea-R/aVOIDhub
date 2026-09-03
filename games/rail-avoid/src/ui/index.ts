@@ -102,12 +102,14 @@ export function createUI(ctx: AppContext): UiApi {
   const pause = createPause(ui, {
     restart: () => { const s = ui.state(); ctx.newRun(s ? s.seed : undefined); },
     newSeed: () => ctx.newRun(),
-    quit: () => { ctx.quitToTitle(); showTitle(); },
+    // AppContext owns the title transition. Calling showTitle() again here used to
+    // race the side-panel close animation and could strand an empty yard over the title.
+    quit: () => ctx.quitToTitle(),
   });
   const results = createResults(ui, {
     again: (seed) => ctx.newRun(seed),
     newRun: () => ctx.newRun(),
-    title: () => { ctx.quitToTitle(); showTitle(); },
+    title: () => ctx.quitToTitle(),
   });
   const input = createInput(ui, {
     togglePause: () => togglePause(),
@@ -151,6 +153,7 @@ export function createUI(ctx: AppContext): UiApi {
   let lastPhase = '';
 
   function beginRun(): void {
+    ui.root.classList.remove('rv-title-mode');
     ui.runActiveFlag = true;
     ui.closeAll();
     hud.reset(); strip.reset(); inspector.reset(); shop.reset(); mood.reset(); bounties.reset(); announcer.reset();
@@ -167,10 +170,16 @@ export function createUI(ctx: AppContext): UiApi {
   }
   function showTitle(): void {
     ui.runActiveFlag = false;
+    // Title is an exclusive application mode. Apply the visual fence before animated
+    // panels begin closing so no gameplay chrome can flash or become stranded over it.
+    ui.root.classList.add('rv-title-mode');
     ui.closeAll();
     tutorial.hide();
     hud.el.hidden = true;
     ui.selectCar(-1);
+    shop.reset();
+    inspector.reset();
+    ui.root.classList.remove('rv-shop-open', 'rv-inspector-open');
     mood.reset();
     announcer.reset();
     ui.open('title');
@@ -244,7 +253,7 @@ export function createUI(ctx: AppContext): UiApi {
   function openPanel(p: 'train' | 'shop' | 'settings' | 'pause' | 'none'): void {
     switch (p) {
       case 'train': toggleInspector(); break;
-      case 'shop': { const s = ui.state(); if (s && s.phase === 'shop') ui.open('shop'); else ui.notify('The shop is only open at repair yards.', 'warn'); break; }
+      case 'shop': { const s = ui.state(); if (ui.runActive() && s && s.phase === 'shop') ui.open('shop'); else if (ui.runActive()) ui.notify('The shop is only open at repair yards.', 'warn'); break; }
       case 'settings': ui.open('settings'); break;
       case 'pause': openPause(); break;
       case 'none': for (const n of ['pause', 'settings', 'howto', 'confirm', 'inspector'] as PanelName[]) ui.close(n); ui.selectCar(-1); break;
