@@ -93,6 +93,9 @@ await page.waitForTimeout(500);
 const yard = await page.evaluate(() => {
   const panel = document.querySelector('#ui [data-panel="shop"]');
   const body = panel?.querySelector('.rv-side-body');
+  const dock = document.querySelector('#ui .rv-dock');
+  const inspector = document.querySelector('#ui [data-panel="inspector"]');
+  const rendered = (n) => !!n && !n.hidden && getComputedStyle(n).display !== 'none' && getComputedStyle(n).visibility !== 'hidden';
   return {
     visible: !!panel && !panel.hidden,
     cards: panel?.querySelectorAll('.rv-shop-car').length ?? 0,
@@ -100,6 +103,8 @@ const yard = await page.evaluate(() => {
     loco: panel?.querySelector('.rv-loco-card')?.textContent ?? '',
     jump: panel?.querySelector('.rv-loco-jump')?.textContent ?? '',
     horizontalOverflow: body ? body.scrollWidth > body.clientWidth + 2 : true,
+    dockVisible: rendered(dock),
+    inspectorVisible: rendered(inspector),
   };
 });
 assert(yard.visible, 'repair yard did not open');
@@ -107,6 +112,16 @@ assert(yard.cards >= 6 && yard.visuals === yard.cards, 'repair-yard rolling-stoc
 assert(/four tracks/i.test(yard.loco) && /separate/i.test(yard.loco), 'locomotive upgrade explanation is missing');
 assert(/engine systems/i.test(yard.jump), 'locomotive card has no engine-system jump');
 assert(!yard.horizontalOverflow, 'repair-yard body has horizontal overflow');
+assert(!yard.dockVisible && !yard.inspectorVisible, 'repair yard did not collapse conflicting train workspaces');
+
+// Yard cards select rolling stock in place; they must not reopen the inspector over the yard.
+await page.locator('#ui [data-panel="shop"] .rv-shop-car').first().click({ position: { x: 16, y: 16 } });
+await page.waitForTimeout(100);
+const yardCardExclusive = await page.evaluate(() => {
+  const inspector = document.querySelector('#ui [data-panel="inspector"]');
+  return !inspector || inspector.hidden || getComputedStyle(inspector).display === 'none';
+});
+assert(yardCardExclusive, 'selecting a repair-yard card opened the inspector over the yard');
 await page.screenshot({ path: path.join(out, 'repair-yard-1664x920.png') });
 
 // Compact command deck must retain controls and weather while staying inside 1280 px.
@@ -169,4 +184,4 @@ if (failures.length) {
   for (const f of failures) console.error(`- ${f}`);
   process.exit(1);
 }
-console.log('PASS interface scale, two-tier manifest, settlement click, repair yard, compact weather, exclusive title');
+console.log('PASS interface scale, two-tier manifest, settlement click, exclusive repair yard, compact weather, exclusive title');

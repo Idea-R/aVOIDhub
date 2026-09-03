@@ -222,7 +222,7 @@ export function createStrip(ui: UiShared, hooks: StripHooks = {}): Strip {
     }
     if (def.weapon && def.weapon.ammoPerShot > 0) {
       const has = !!car.derived?.hasAmmoSupply;
-      parts.push(`<span class="rv-badge rv-ammo${has ? '' : ' rv-noammo'}" title="${has ? 'Ammo supplied' : 'No ammo supplier within 2 cars'}">${has ? 'AMMO' : 'NO AMMO'}</span>`);
+      parts.push(`<span class="rv-badge rv-ammo${has ? '' : ' rv-noammo'}" title="${has ? 'Connected to shared ammo stock' : 'No Cargo Hold, Foundry, or Armoured Cargo within 2 cars'}">${has ? 'SUPPLIED' : 'NO SUPPLY'}</span>`);
     }
     if (car.boarders.length > 0) parts.push(`<span class="rv-badge rv-boarders" title="${car.boarders.length} boarders inside">BOARDERS ${car.boarders.length}</span>`);
     if (car.onFire) parts.push('<span class="rv-badge rv-fireb" title="On fire">FIRE</span>');

@@ -19,6 +19,7 @@ import { SPECIALS } from '../sim/expedition';
 import { EXPEDITION } from '../core/config';
 import { gsap, D, isReduced, shake, Particles, popIn } from './motion';
 import { crewSilhouette, foeSilhouette } from './silhouettes';
+import conductorCombat from '/art/crew/conductor-combat.webp?url&inline';
 
 export interface ExpeditionScene {
   el: HTMLElement;
@@ -129,7 +130,9 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
       const hpFill = el('i');
       const hpText = el('span', { class: 'rv-exp-hp-text', text: `${a.hp}/${a.maxHp}` });
       const guard = el('span', { class: 'rv-exp-guard', title: 'Guarding: next hit halved', text: '⛨' });
-      const fig = el('div', { class: 'rv-exp-fig', html: crewSilhouette(a.specialty, 118) });
+      const fig = a.specialty === 'conductor'
+        ? el('div', { class: 'rv-exp-fig rv-exp-fig-authored' }, el('img', { src: conductorCombat, alt: '', 'aria-hidden': 'true' }))
+        : el('div', { class: 'rv-exp-fig', html: crewSilhouette(a.specialty, 118) });
       const card = el('div', { class: 'rv-exp-actor', style: `--accent:${ACTOR_COLORS[a.specialty] ?? '#e8c170'}`, 'data-index': String(i), 'aria-label': `${a.name}, ${a.specialty}` },
         el('span', { class: 'rv-exp-turn', 'aria-hidden': 'true', text: '▶' }),
         fig,

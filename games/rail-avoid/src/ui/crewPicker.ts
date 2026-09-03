@@ -9,6 +9,7 @@ import { SPECIALS } from '../sim/expedition';
 import { EXPEDITION } from '../core/config';
 import { gsap, D, isReduced, rowsIn, shake } from './motion';
 import { crewSilhouette } from './silhouettes';
+import conductorPortrait from '/art/crew/conductor.webp?url&inline';
 
 export interface CrewPicker { el: HTMLElement; open(): void; gamepad(button: number): boolean }
 
@@ -39,7 +40,9 @@ export function createCrewPicker(ui: UiShared, hooks: { onCancel(): void }): Cre
         'aria-label': `${c.name}, ${c.specialty}, ${Math.round(c.hp)} HP${locked ? ', always goes' : ''}`,
       },
         el('span', { class: 'rv-cp-key', 'aria-hidden': 'true', text: String(i + 1) }),
-        el('span', { class: 'rv-cp-fig', 'aria-hidden': 'true', html: crewSilhouette(c.specialty, 42) }),
+        c.specialty === 'conductor'
+          ? el('span', { class: 'rv-cp-fig rv-cp-portrait', 'aria-hidden': 'true' }, el('img', { src: conductorPortrait, alt: '' }))
+          : el('span', { class: 'rv-cp-fig', 'aria-hidden': 'true', html: crewSilhouette(c.specialty, 42) }),
         el('span', { class: 'rv-cp-main' },
           el('span', { class: 'rv-cp-name' }, el('b', { text: c.name }), el('span', { class: 'rv-cp-spec', text: cap(c.specialty) }), locked ? el('span', { class: 'rv-cp-tag', text: 'always goes' }) : null),
           el('span', { class: 'rv-cp-hp' }, el('span', { class: 'rv-bar' }, el('i', { style: `width:${Math.round(hpR * 100)}%;background:${hpR < 0.35 ? 'var(--danger)' : hpR < 0.6 ? 'var(--gold)' : 'var(--good)'}` })), el('span', { text: `${Math.round(c.hp)} HP` })),

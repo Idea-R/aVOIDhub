@@ -359,7 +359,12 @@ export function createUI(ctx: AppContext): UiApi {
 
   function handlePhase(phase: string): void {
     if (!ui.runActive()) return;
-    if (phase === 'shop') ui.open('shop'); else if (ui.isOpen('shop')) ui.close('shop');
+    if (phase === 'shop') {
+      // The yard already contains the full consist and every car action. Close the
+      // inspector before opening it so a second train surface cannot hide underneath.
+      ui.selectCar(-1);
+      ui.open('shop');
+    } else if (ui.isOpen('shop')) ui.close('shop');
     if (phase === 'event') eventModal.show(); else if (ui.isOpen('event')) ui.close('event');
     if (phase === 'relic') relics.show(); else if (ui.isOpen('relic')) ui.close('relic');
     if (phase === 'expedition') expedition.show();

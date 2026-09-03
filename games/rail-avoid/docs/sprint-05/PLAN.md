@@ -1,6 +1,6 @@
 # Sprint 05 — Away Team
 
-Status: planned, ready for implementation after the Sprint 04 production release.
+Status: in progress. The Conductor portrait/combat-master vertical slice and dedicated browser art gate are implemented; the fixture matrix and system rebuild follow.
 
 ## Outcome
 
@@ -44,6 +44,12 @@ Work:
 - Levels 2 and 4 each offer one of two authored unlocks. The choice changes an action, target rule or status—not a hidden percentage.
 - Add `FoeDefinition`: rank, region, stats, intent deck, resistances, asset key and reward profile.
 - Keep the combat state serializable and deterministic. Art URLs and display copy live in definitions, not saves.
+- Introduce explicit crew stations on cars rather than a single implicit assignment:
+  - Most cars begin with one station.
+  - Selected work cars unlock station two at level II; Barracks/crew accommodation can reach three.
+  - The locomotive gains its second station only through a dedicated **Cab Crew** engine upgrade.
+  - Conductor remains a unique command role, Gunner specializes in weapon operation, and Hand is the general-purpose baseline for close defense, reload and emergency repair.
+- Preserve weapon-car identity: ordinary manned cars gain a modest defensive response, not the range or damage of a purpose-built weapon car.
 
 Initial level rhythm:
 
@@ -104,6 +110,7 @@ Vertical-slice gate:
 - Full-body cutouts have clean edges against all four region backdrops.
 - No image exceeds 220 KB at runtime without a documented exception.
 - Art remains readable at 1280×720 and under color-blind modes.
+- Portrait and combat-master variants are reviewed together so the same face, clothing and signature prop survive every crop.
 
 Full asset matrix: `CONTENT-MATRIX.md`.
 
@@ -117,6 +124,7 @@ Composition:
 - **Right threat desk:** selected enemy dossier, current intent, following intent and resistance/status details.
 - **Bottom action deck:** three large action cards plus a contextual retreat control. Cards show effect, target, cost, cooldown and input pattern before selection.
 - **Combat record:** collapsed by default; expands as a railway telegraph drawer. It supports diagnosis but does not carry essential battle information.
+- **Result docket:** replace the sparse centered result modal with a full-width after-action composition showing surviving crew portraits, wounds/XP, rewards, recruit joins and the next decision without relying on the combat log.
 
 Required invisible states:
 
@@ -130,6 +138,7 @@ Exit gate:
 - Every unfamiliar icon has hover and focus help.
 - No overlap or clipped primary action at 1920×1080, 1600×900, 1366×768, 1280×720 and 800×600.
 - Screen-reader announcements name actor, action, target, result and changed HP/status without duplicating animation chatter.
+- Victory and defeat remain visually connected to the stage while avoiding the large dead zones and tiny silhouette/cards in the current result screen.
 
 ## Phase 5 — Roster, monsters and minibosses
 

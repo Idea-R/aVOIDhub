@@ -23,10 +23,12 @@ Detailed plan: `docs/sprint-04/PLAN.md`. Review: `docs/sprint-04/REVIEW.md`.
 - [x] Add a map-oriented junction dial with track direction and destination labels.
 - [x] Replace the fog colour film with discrete drifting cloud banks and expose each weather effect in the HUD.
 - [x] Give the locomotive a weak, ammo-free conductor guard so losing the only weapon car is not an unrecoverable combat state.
+- [x] Make the Repair Yard an exclusive workspace that automatically collapses the rolling-stock deck and car inspector.
+- [x] Clarify that ballistic weapons draw from the shared ammo reserve only when Cargo Hold, Foundry or Armoured Cargo is within two car positions; include 12 commissioning ammo with a newly bought ballistic weapon.
 
 Verification and implementation notes: `docs/sprint-04/USABILITY-PATCH.md`.
 
-## Next sprint: Away Team
+## Next sprint: Away Team (in progress)
 
 - [ ] Establish deterministic expedition fixtures and a dedicated browser verification command.
 - [ ] Add persistent crew identity, XP, five levels and two authored unlock decisions.
@@ -55,6 +57,15 @@ Sprint 03 (readability and crew discovery) is archived in `docs/sprint-03/`.
 - [ ] Field repairs between yards: Mechanic crew can spend scrap while moving (slow), Repair Drone car (tier 2) heals neighbours; hull "dent" states visible on the model.
 - [x] Crew assignment discovery pass: persistent CREW READY ticket, direct car-inspector handoff, specialist effect copy, crew-posting tutorial.
 - [ ] Crew as characters: generated portraits, two specialties/traits each, a short bark line on assignment.
+- [ ] Add capacity-based crew stations rather than one universal slot: most cars start at one; selected level-II work cars unlock a second; Barracks/crew accommodation can reach three; the locomotive's second station requires a dedicated **Cab Crew** engine upgrade.
+- [ ] Make roles legible and useful across the consist: Conductor is a unique command role, Gunners operate and improve weapons, and Hands provide modest close-defense/repair/reload value on ordinary cars. Posted crew may give a car a weak defensive response, but do not turn every logistics car into a full turret.
+- [ ] Add visible car-to-car supply tracing in Train and Yard views so selecting a weapon highlights the supplier feeding it and any broken adjacency link.
+
+### Service geography
+
+- [x] Full Repair Yards repair, buy, sell, upgrade and reorder the consist.
+- [ ] Add clearly marked **Rail Sidings** at selected non-yard settlements for reorder-only service. Target at least one useful siding per region, preview it in route information and preserve Repair Yards as the only place for structural upgrades.
+- [ ] Add a route-map service legend and settlement tooltip that distinguishes Yard, Siding, Market and Haven before arrival.
 
 ### Future feature: Inside the train / Crew View
 - [ ] Phase A — schematic cutaway: click **View Crew** or zoom into a car; show a performant 2D cutaway with crew station, assignment slot, health, level, XP and specialty effects. Reuse one interior shell per car role and sprite-sheet crew at 8–12 fps.
@@ -70,6 +81,8 @@ Sprint 03 (readability and crew discovery) is archived in `docs/sprint-03/`.
 - [ ] Event "rooms" on the map: a `?` marker beside the track that only resolves when passed; some chain into follow-ups later in the run.
 - [ ] Boss "hangar" nodes with a pre-fight prep choice (Spire elite-style rewards).
 - [ ] Weather-specific event pools: obscured threats and navigation dilemmas in fog, washouts/rescues in rain, heat and visibility incidents in ashfall and storms. Always preview the mechanical consequence before a choice.
+- [ ] Author bridge track tiles for legal water crossings instead of letting ordinary track terminate visually at a shoreline.
+- [ ] Add water-edge destinations—dock, ferry landing, fishing camp, rescue and smuggler berth—with events tied to their shoreline placement. Open water remains impassable except at authored bridge/ferry links.
 
 ## 4. Presentation
 - [x] Cinematic run intro, region cards, boss intros, victory/defeat cameras, letterbox cards.
