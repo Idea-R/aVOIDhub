@@ -5,14 +5,22 @@ import type { SimState, PassengerEventDef, PassengerEventOption } from '../core/
 import { eventById } from '../core/passengerEvents';
 import { CAR_DEFS } from '../core/cars';
 import { gsap, D, isReduced, rowsIn } from './motion';
-import lanternCamp from '/art/scenes/lantern-camp-v1.webp?url&inline';
-import ruinApproach from '/art/scenes/ruin-approach-v1.webp?url&inline';
+import lanternCamp from '/art/scenes/lantern-camp-v2.webp?url&inline';
+import ruinApproach from '/art/scenes/ruin-approach-v2.webp?url&inline';
+import falseSignal from '/art/scenes/false-signal-v2.webp?url&inline';
+import rainboundSurvivor from '/art/scenes/rainbound-survivor-v2.webp?url&inline';
+import abandonedGunCar from '/art/scenes/abandoned-gun-car-v2.webp?url&inline';
+import watersideRailDock from '/art/scenes/waterside-rail-dock-v2.webp?url&inline';
 
 export interface EventModal { el: HTMLElement; show(defId?: string): void; update(s: SimState): void }
 
 function sceneFor(defId: string): { src: string; alt: string } | null {
   if (defId === 'node_site' || defId === 'mystery_away') return { src: ruinApproach, alt: 'The train waits beside an ancient ruin entrance.' };
-  if (['mystery_cache', 'mystery_survivor', 'mystery_weapon', 'mystery_ambush'].includes(defId)) return { src: lanternCamp, alt: 'A lantern-lit camp beside the railway.' };
+  if (defId === 'mystery_ambush') return { src: falseSignal, alt: 'Raiders spring a barricade around a false railway signal.' };
+  if (defId === 'mystery_survivor') return { src: rainboundSurvivor, alt: 'A lone rail gunner waits beside a wrecked handcar in the rain.' };
+  if (defId === 'mystery_weapon') return { src: abandonedGunCar, alt: 'A damaged gun car waits on an overgrown siding.' };
+  if (defId === 'mystery_dock') return { src: watersideRailDock, alt: 'A lantern-lit rail dock and fishing settlement beside dark water.' };
+  if (defId === 'mystery_cache') return { src: lanternCamp, alt: 'A lantern-lit camp beside the railway.' };
   return null;
 }
 
@@ -70,7 +78,7 @@ export function createEventModal(ui: UiShared): EventModal {
     const h2 = el('h2', { text: def.title });
     const scene = sceneFor(def.id);
     const mysteryMarks: Record<string, string> = {
-      mystery_cache: '▣', mystery_away: '⚔', mystery_ambush: '⚠', mystery_survivor: '♟', mystery_weapon: '⌁',
+      mystery_cache: '▣', mystery_away: '⚔', mystery_ambush: '⚠', mystery_survivor: '♟', mystery_weapon: '⌁', mystery_dock: '≋',
     };
     const heading = el('div', { class: 'rv-event-heading' },
       ...(mystery ? [el('div', { class: 'rv-mystery-mark', 'aria-hidden': 'true', text: mysteryMarks[def.id] ?? '?' })] : []),
@@ -85,7 +93,7 @@ export function createEventModal(ui: UiShared): EventModal {
       el('div', { class: 'rv-hint', text: 'Press 1-3 to choose. The train waits while you decide.' }),
     );
     const body = el('div', { class: scene ? 'rv-event-body rv-has-scene' : 'rv-event-body' },
-      ...(scene ? [el('figure', { class: 'rv-event-scene' }, el('img', { src: scene.src, alt: scene.alt }))] : []),
+      ...(scene ? [el('figure', { class: 'rv-event-scene' }, el('img', { src: scene.src, alt: scene.alt, 'data-scene': def.id }))] : []),
       decision,
     );
     box.replaceChildren(heading, body);

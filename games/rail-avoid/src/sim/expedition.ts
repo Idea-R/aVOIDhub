@@ -17,6 +17,10 @@ const FOES: Record<string, { name: string; hp: number; atk: number; speed: numbe
   hound: { name: 'Void Hound', hp: 18, atk: 4, speed: 2, range: 'melee', desc: 'Melee · bites twice. Fast, fragile, front-hunting.' },
   shade: { name: 'Void Shade', hp: 34, atk: 8, speed: 1, range: 'ranged', desc: 'Ranged · reaches for the rear. Hates fire and light.' },
   brute: { name: 'Scrap Brute', hp: 48, atk: 10, speed: 1, range: 'melee', desc: 'Melee · slow, armoured, and drawn to the front.' },
+  fusilier: { name: 'Ash Cult Fusilier', hp: 28, atk: 7, speed: 1, range: 'ranged', desc: 'Ranged · sights down the rear line. Fragile under pressure.' },
+  crawler: { name: 'Rail-Maw Crawler', hp: 22, atk: 5, speed: 2, range: 'melee', desc: 'Melee · attacks twice and tears into the front line.' },
+  wraith: { name: 'Lantern Wraith', hp: 30, atk: 9, speed: 1, range: 'ranged', desc: 'Ranged · its signal beam seeks the rear line.' },
+  sentinel: { name: 'Iron Sentinel', hp: 56, atk: 11, speed: 1, range: 'melee', desc: 'Melee · a plated guardian that crushes the front.' },
 };
 
 const STAGE_KEYS: ExpeditionStageKey[] = ['ruin_approach', 'buried_concourse', 'void_sanctum'];
@@ -43,21 +47,22 @@ export function expeditionTargetWeight(position: ExpeditionPosition, range: 'mel
   return position === 'rear' ? 5 : position === 'middle' ? 2 : 1;
 }
 
-function stageRoster(region: number, stage: number): string[] {
+/** Pure roster contract used by deterministic tests and future ADS encounter previews. */
+export function expeditionStageRoster(region: number, stage: number): string[] {
   const rosters: string[][][] = [
-    [['thug'], ['hound']],
-    [['thug', 'hound'], ['thug', 'thug']],
-    [['thug', 'hound'], ['shade', 'hound'], ['brute', 'thug']],
-    [['shade', 'hound'], ['brute', 'thug'], ['brute', 'shade']],
+    [['thug'], ['hound', 'crawler']],
+    [['thug', 'crawler'], ['fusilier', 'thug']],
+    [['crawler', 'hound'], ['wraith', 'fusilier'], ['sentinel', 'thug']],
+    [['fusilier', 'hound'], ['wraith', 'crawler'], ['sentinel', 'wraith']],
   ];
   const byRegion = rosters[Math.max(0, Math.min(rosters.length - 1, region))];
-  return byRegion[Math.max(0, Math.min(byRegion.length - 1, stage - 1))];
+  return [...byRegion[Math.max(0, Math.min(byRegion.length - 1, stage - 1))]];
 }
 
 function makeStageFoes(ctx: SimContext, stage: number): ExpeditionFoe[] {
   const region = ctx.state.region;
   const scale = 1 + region * 0.16 + (stage - 1) * 0.07;
-  return stageRoster(region, stage).map(key => {
+  return expeditionStageRoster(region, stage).map(key => {
     const f = FOES[key];
     const hp = Math.round(f.hp * scale);
     return { id: nextId(ctx.state, 'foe'), kind: key, name: f.name, hp, maxHp: hp, atk: Math.round(f.atk * scale), speed: f.speed, stunned: 0, desc: f.desc, range: f.range };

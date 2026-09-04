@@ -60,8 +60,8 @@
 #ui .rv-exp-fig { position: relative; display: block; line-height: 0; filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.6)); transform-origin: 50% 100%; }
 #ui .rv-exp-fig svg { display: block; }
 #ui .rv-exp-fig-authored img { display: block; width: auto; height: clamp(150px, 24vh, 238px); object-fit: contain; filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 2px var(--accent)); }
-#ui .rv-exp-fig-enemy { width: clamp(128px, 12vw, 180px); height: clamp(160px, 25vh, 240px); overflow: hidden; border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent); border-radius: 48% 48% 12px 12px; background: #070b18; box-shadow: 0 10px 28px rgba(0,0,0,.62), inset 0 0 28px rgba(7,11,24,.45); }
-#ui .rv-exp-fig-enemy img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 35%; transform: scaleX(-1); }
+#ui .rv-exp-fig-enemy { width: clamp(128px, 12vw, 180px); height: clamp(160px, 25vh, 240px); overflow: visible; background: transparent; }
+#ui .rv-exp-fig-enemy img { width: 100%; height: 100%; object-fit: contain; object-position: 50% 50%; transform: scaleX(-1); filter: drop-shadow(0 9px 13px rgba(0,0,0,.75)) drop-shadow(0 0 3px color-mix(in srgb, var(--accent) 48%, transparent)); }
 #ui .rv-exp-actor .rv-exp-fig { color: #10142a; }
 #ui .rv-exp-actor .rv-exp-fig svg { filter: drop-shadow(0 0 1px var(--accent)); }
 #ui .rv-exp-foe .rv-exp-fig { color: #0a0c18; }
@@ -103,7 +103,7 @@
 #ui .rv-exp-foe.rv-dead .rv-exp-card { opacity: 0.35; border-top-color: var(--fg3); }
 #ui .rv-exp-foe.rv-dead .rv-exp-fig { opacity: 0.25; filter: grayscale(1); }
 #ui .rv-exp-foe.rv-acting .rv-exp-fig svg { filter: drop-shadow(0 0 8px var(--danger)); }
-#ui .rv-exp-foe.rv-acting .rv-exp-fig-enemy { box-shadow: 0 0 24px rgba(232,111,111,.65); }
+#ui .rv-exp-foe.rv-acting .rv-exp-fig-enemy img { filter: drop-shadow(0 9px 13px rgba(0,0,0,.75)) drop-shadow(0 0 10px rgba(232,111,111,.75)); }
 #ui .rv-exp-key { position: absolute; top: 0; left: 50%; margin-left: -12px; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--bg3); border: 1px solid var(--line2); color: var(--fg2); font-size: calc(11 * var(--u)); font-weight: 800; z-index: 2; }
 #ui .rv-exp-foe.rv-target .rv-exp-key { background: var(--gold); color: #1a1408; border-color: var(--gold); }
 #ui .rv-exp-foe.rv-dead .rv-exp-key { display: none; }

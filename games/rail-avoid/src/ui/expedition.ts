@@ -20,13 +20,17 @@ import { EXPEDITION } from '../core/config';
 import { gsap, D, isReduced, shake, Particles, popIn } from './motion';
 import { crewSilhouette, foeSilhouette } from './silhouettes';
 import conductorCombat from '/art/crew/conductor-combat.webp?url&inline';
-import ruinApproach from '/art/scenes/ruin-approach-v1.webp?url&inline';
-import buriedConcourse from '/art/scenes/buried-concourse-v1.webp?url&inline';
-import voidSanctum from '/art/scenes/void-sanctum-v1.webp?url&inline';
-import railThug from '/art/enemies/rail-thug-v1.webp?url&inline';
-import voidHound from '/art/enemies/void-hound-v1.webp?url&inline';
-import voidShade from '/art/enemies/void-shade-v1.webp?url&inline';
-import scrapBrute from '/art/enemies/scrap-brute-v1.webp?url&inline';
+import ruinApproach from '/art/scenes/ruin-approach-v2.webp?url&inline';
+import buriedConcourse from '/art/scenes/buried-concourse-v2.webp?url&inline';
+import voidSanctum from '/art/scenes/void-sanctum-v2.webp?url&inline';
+import railThug from '/art/enemies/rail-thug-v3.webp?url&inline';
+import voidHound from '/art/enemies/void-hound-v3.webp?url&inline';
+import voidShade from '/art/enemies/void-shade-v3.webp?url&inline';
+import scrapBrute from '/art/enemies/scrap-brute-v3.webp?url&inline';
+import ashCultFusilier from '/art/enemies/ash-cult-fusilier-v3.webp?url&inline';
+import railMawCrawler from '/art/enemies/rail-maw-crawler-v3.webp?url&inline';
+import lanternWraith from '/art/enemies/lantern-wraith-v3.webp?url&inline';
+import ironSentinel from '/art/enemies/iron-sentinel-v3.webp?url&inline';
 
 export interface ExpeditionScene {
   el: HTMLElement;
@@ -39,12 +43,15 @@ export interface ExpeditionScene {
 
 const PERFECT_MS = 70;
 const GOOD_MS = 180;
-const WINDUP: Record<string, number> = { thug: 0.9, hound: 0.72, shade: 1.0, brute: 1.15 };
+const WINDUP: Record<string, number> = { thug: 0.9, hound: 0.72, shade: 1.0, brute: 1.15, fusilier: 1.05, crawler: 0.68, wraith: 1.12, sentinel: 1.2 };
 const ACTOR_COLORS: Record<string, string> = { conductor: '#e8c170', engineer: '#ff8f3a', gunner: '#e86f6f', medic: '#6fb7e8', surveyor: '#8ee29a', mechanic: '#c98a4b', quartermaster: '#d6b4f0' };
-const FOE_COLORS: Record<string, string> = { thug: '#a3a8b8', hound: '#9a8cff', shade: '#d6b4f0', brute: '#c98a4b' };
+const FOE_COLORS: Record<string, string> = { thug: '#a3a8b8', hound: '#9a8cff', shade: '#d6b4f0', brute: '#c98a4b', fusilier: '#e8a85c', crawler: '#9a8cff', wraith: '#c9a0ff', sentinel: '#79b69b' };
 const SCENE_ART: Record<string, string> = { ruin_approach: ruinApproach, buried_concourse: buriedConcourse, void_sanctum: voidSanctum };
 const STAGE_NAMES: Record<string, string> = { ruin_approach: 'Outer Works', buried_concourse: 'Buried Concourse', void_sanctum: 'Void Sanctum' };
-const FOE_ART: Record<string, string> = { thug: railThug, hound: voidHound, shade: voidShade, brute: scrapBrute };
+const FOE_ART: Record<string, string> = {
+  thug: railThug, hound: voidHound, shade: voidShade, brute: scrapBrute,
+  fusilier: ashCultFusilier, crawler: railMawCrawler, wraith: lanternWraith, sentinel: ironSentinel,
+};
 
 interface Pending { kind: string; turn: 'player' | 'enemy'; actorIndex: number; foeIndex: number; actionKind: ExpeditionActionKind }
 interface ActorCard { id: string; el: HTMLElement; fig: HTMLElement; hpFill: HTMLElement; hpText: HTMLElement; guard: HTMLElement; lane: HTMLElement; sig: string }

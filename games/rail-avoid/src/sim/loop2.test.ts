@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { EventBus } from '../core/events';
 import { createSim } from './sim';
 import { TEST_SEED } from '../core/config';
-import { expeditionTargetWeight } from './expedition';
+import { expeditionStageRoster, expeditionTargetWeight } from './expedition';
 
 function autoPhases(sim: ReturnType<typeof createSim>): void {
   const s = sim.state;
@@ -22,6 +22,13 @@ describe('loot, relics, bounties, expeditions', () => {
   it('makes formation readable: melee pressures front and ranged pressures rear', () => {
     expect(expeditionTargetWeight('front', 'melee')).toBeGreaterThan(expeditionTargetWeight('rear', 'melee'));
     expect(expeditionTargetWeight('rear', 'ranged')).toBeGreaterThan(expeditionTargetWeight('front', 'ranged'));
+  });
+
+  it('escalates from human threats to distinct deep-ruin monsters', () => {
+    expect(expeditionStageRoster(0, 1)).toEqual(['thug']);
+    expect(expeditionStageRoster(1, 2)).toContain('fusilier');
+    expect(expeditionStageRoster(2, 2)).toEqual(['wraith', 'fusilier']);
+    expect(expeditionStageRoster(3, 3)).toEqual(['sentinel', 'wraith']);
   });
 
   it('swaps two living crew positions as a full turn action', () => {

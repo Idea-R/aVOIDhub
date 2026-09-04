@@ -1,0 +1,9 @@
+Use case: background-extraction
+Asset type: RailAVOID combat avatar, native RGBA sprite
+Input image 1: edit target. It contains the approved character design, but its current alpha mask may contain gray checkerboard fringes and white pockets.
+Primary request: preserve the character and replace the entire background with genuine native transparency. Remove background both outside the silhouette and through enclosed gaps between legs, arms, chains, weapons and strips of cloth.
+Invariants: keep the exact identity, pose, proportions, costume, equipment, facing direction and navy/brass/violet color palette. Keep all limbs and equipment fully visible. Do not redesign or add objects.
+Composition: one isolated full-body character, zoomed out to fit entirely inside the central 76 percent of the canvas. Leave at least 12 percent empty transparent margin on all four sides. The whole snout, headgear, feet, weapon tips, chains, cloth tails and creature tail must be visible. Scale the character down to fit; never crop its extremities.
+Edges: clean antialiased edges. Preserve softly translucent purple spectral effects only where part of the character. No pale matte halos.
+Avoid: painted checkerboard, solid background, scene, ground plane, floor shadow, vignette, frame, text, added texture or grain.
+Output: PNG with native alpha. Empty space and internal background holes must be transparent, not merely painted white or gray.

@@ -3,6 +3,8 @@
 import { chromium } from 'playwright';
 import fs from 'node:fs';
 import path from 'node:path';
+import sharp from 'sharp';
+import { fileURLToPath } from 'node:url';
 
 const arg = process.argv.find(v => v.startsWith('--url='));
 const base = arg ? arg.slice(6) : 'http://127.0.0.1:5178/RAILaVOID';
@@ -11,6 +13,24 @@ fs.mkdirSync(out, { recursive: true });
 const failures = [];
 const assert = (ok, message) => { if (!ok) failures.push(message); };
 const errors = [];
+const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const enemyAssets = [
+  'rail-thug-v3.webp', 'void-hound-v3.webp', 'void-shade-v3.webp', 'scrap-brute-v3.webp',
+  'ash-cult-fusilier-v3.webp', 'rail-maw-crawler-v3.webp', 'lantern-wraith-v3.webp', 'iron-sentinel-v3.webp',
+];
+
+for (const filename of enemyAssets) {
+  const source = path.join(packageRoot, 'public', 'art', 'enemies', filename);
+  const image = sharp(source);
+  const metadata = await image.metadata();
+  const { data, info } = await image.ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const alphaAt = (x, y) => data[((y * info.width + x) * info.channels) + 3];
+  const corners = [alphaAt(0, 0), alphaAt(info.width - 1, 0), alphaAt(0, info.height - 1), alphaAt(info.width - 1, info.height - 1)];
+  assert(metadata.width === 480 && metadata.height === 600, `${filename} is not 480x600 (${metadata.width}x${metadata.height})`);
+  assert(metadata.hasAlpha === true, `${filename} has no real alpha channel`);
+  assert(corners.every(alpha => alpha === 0), `${filename} has an opaque canvas corner (${corners.join(',')})`);
+}
+
 const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
 const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
 page.on('pageerror', e => errors.push(e.message));
@@ -32,28 +52,37 @@ for (let i = 0; i < 8; i++) {
   await page.waitForTimeout(200);
   if (await page.evaluate(() => !!window.__RAIL.view?.isCinematicPlaying())) await page.evaluate(() => { try { window.__RAIL.view.skipCinematic(); } catch {} });
 }
-await page.evaluate(() => window.__RAIL.sim.debug.triggerEvent('mystery_cache'));
-await page.waitForFunction(() => document.querySelector('#ui .rv-event-scene img')?.complete, null, { timeout: 5000 });
-await page.waitForTimeout(1300);
-const eventScene = await page.evaluate(() => {
-  const img = document.querySelector('#ui .rv-event-scene img');
-  const card = document.querySelector('#ui .rv-event');
-  const choices = [...document.querySelectorAll('#ui .rv-event .rv-option')];
-  const c = card?.getBoundingClientRect();
-  return {
-    visible: !!img && getComputedStyle(img).display !== 'none',
-    natural: [img?.naturalWidth ?? 0, img?.naturalHeight ?? 0],
-    choices: choices.length,
-    choicesVisible: choices.every(choice => {
-      const r = choice.getBoundingClientRect();
-      return !!c && r.top >= c.top - 1 && r.bottom <= c.bottom + 1 && r.left >= c.left - 1 && r.right <= c.right + 1;
-    }),
-  };
-});
-assert(eventScene.visible && eventScene.natural[0] === 1600 && eventScene.natural[1] === 900, `encounter establishing art missing (${JSON.stringify(eventScene)})`);
-assert(eventScene.choices >= 3 && eventScene.choicesVisible, `encounter choices are clipped (${JSON.stringify(eventScene)})`);
-await page.screenshot({ path: path.join(out, 'event-lantern-camp-1280x720.png') });
-await page.evaluate(() => window.__RAIL.sim.chooseEventOption(2));
+const mysteryScenes = ['mystery_cache', 'mystery_away', 'mystery_ambush', 'mystery_survivor', 'mystery_weapon', 'mystery_dock'];
+for (const eventId of mysteryScenes) {
+  await page.evaluate(id => window.__RAIL.sim.debug.triggerEvent(id), eventId);
+  await page.waitForFunction(id => {
+    const img = document.querySelector('#ui .rv-event-scene img');
+    return img?.complete && img.getAttribute('data-scene') === id;
+  }, eventId, { timeout: 5000 });
+  await page.waitForTimeout(1300);
+  const eventScene = await page.evaluate(() => {
+    const img = document.querySelector('#ui .rv-event-scene img');
+    const card = document.querySelector('#ui .rv-event');
+    const choices = [...document.querySelectorAll('#ui .rv-event .rv-option')];
+    const c = card?.getBoundingClientRect();
+    return {
+      id: img?.getAttribute('data-scene') ?? '',
+      visible: !!img && getComputedStyle(img).display !== 'none',
+      natural: [img?.naturalWidth ?? 0, img?.naturalHeight ?? 0],
+      choices: choices.length,
+      choicesVisible: choices.every(choice => {
+        const r = choice.getBoundingClientRect();
+        return !!c && r.top >= c.top - 1 && r.bottom <= c.bottom + 1 && r.left >= c.left - 1 && r.right <= c.right + 1;
+      }),
+    };
+  });
+  assert(eventScene.id === eventId && eventScene.visible && eventScene.natural[0] === 1600 && eventScene.natural[1] === 900, `encounter establishing art missing (${JSON.stringify(eventScene)})`);
+  assert(eventScene.choices >= 3 && eventScene.choicesVisible, `encounter choices are clipped (${JSON.stringify(eventScene)})`);
+  if (eventId === 'mystery_cache' || eventId === 'mystery_dock') {
+    await page.screenshot({ path: path.join(out, `event-${eventId}-1280x720.png`) });
+  }
+  await page.evaluate(() => window.__RAIL.sim.chooseEventOption(2));
+}
 await page.evaluate(() => window.__RAIL.sim.debug.startExpedition());
 await page.waitForFunction(() => [...document.querySelectorAll('#ui .rv-exp-fig-enemy img, #ui .rv-exp-scene-art')].every(x => x.complete), null, { timeout: 10000 });
 await page.waitForTimeout(1000);
@@ -134,4 +163,4 @@ if (failures.length) {
   for (const failure of failures) console.error(`- ${failure}`);
   process.exit(1);
 }
-console.log('PASS staged scenes, enemy art, formation, swap, depth choice and 1280x720 fit');
+console.log('PASS clean mystery scenes, alpha enemy art, formation, swap, depth choice and 1280x720 fit');

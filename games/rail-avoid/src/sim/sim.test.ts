@@ -289,4 +289,13 @@ describe('player-legibility safeguards', () => {
     expect(sim.state.train.crew.length).toBe(crewBefore + 1);
     expect(sim.state.train.crew.at(-1)?.name).toBe('Nils');
   });
+
+  it('resolves the waterside dock encounter and boards stranded passengers', () => {
+    const sim = createSim(TEST_SEED, new EventBus());
+    const before = sim.state.train.passengers;
+    sim.debug.triggerEvent('mystery_dock');
+    expect(sim.chooseEventOption(1)).toBe(true);
+    expect(sim.state.train.passengers).toBeGreaterThan(before);
+    expect(sim.state.train.morale).toBeGreaterThan(80);
+  });
 });

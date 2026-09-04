@@ -213,6 +213,15 @@ export const MYSTERY_EVENTS: PassengerEventDef[] = [
       { label: 'Mark it on the chart', desc: '+4 rails from the abandoned siding.' },
     ],
   },
+  {
+    id: 'mystery_dock', title: 'The Drowned Interchange', negative: false,
+    text: 'The rails end at a storm-dark fishing dock. A steam launch waits below while families and net-menders watch the train from the lantern platform.',
+    options: [
+      { label: 'Trade for the catch', desc: '-6 scrap, +18 food.', requires: { resource: 'scrap', amount: 6 } },
+      { label: 'Take the stranded families', desc: 'Board up to 6 passengers. Morale +6.', requires: { car: 'coach' } },
+      { label: 'Strip the old bridge works', desc: '+10 rails and +8 scrap. Morale -3.' },
+    ],
+  },
 ];
 NODE_EVENTS.push(...MYSTERY_EVENTS);
 

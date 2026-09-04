@@ -1,0 +1,5 @@
+Use case: background-extraction
+Image 1 is the edit target: a finished RailAVOID combat avatar with native transparency, but an unwanted detached horizontal ground shadow below its feet.
+Change only one thing: completely remove the separate horizontal gray/black shadow and all floor/background pixels below and around the figure. That empty region must have alpha zero. There is no ground, no contact shadow, no cast shadow, no platform, no mist and no backdrop.
+Preserve the complete character exactly: face, full body, armor, costume, weapons, pose, lighting, palette and crisp antialiased silhouette. Preserve body shading inside the figure. Do not add anything. Keep the entire figure comfortably inside the canvas without cropping any gear or extremities.
+Deliver a native transparent RGBA PNG, not a painted solid background or checkerboard. Only the character and attached equipment should have nonzero alpha.
