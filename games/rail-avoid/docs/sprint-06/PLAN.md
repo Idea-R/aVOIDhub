@@ -6,7 +6,7 @@ Turn the proven illustrated-event and staged-expedition systems into a broader c
 
 ## Current review status
 
-Local integration; not deployed. The eight scene repaints use the cleaner, no-grain direction. All eight enemy avatars have now been corrected through the GPT Image 1.5 API using native `background=transparent`, inspected against light/dark backgrounds, and encoded as v3 WebPs. Rejected v2 drafts and failed native variants are preserved outside public assets. The production build passes with the new images; final release verification remains separate from this asset pass. See `NATIVE-ALPHA.md` and `NATIVE-ALPHA-HASHES.json` for provenance and review.
+Release candidate verified locally and on the hosted preview for PR #60 on 2026-09-04. The eight scene repaints use the cleaner, no-grain direction. All eight enemy avatars were corrected through GPT Image 1.5 using native `background=transparent`, inspected against light/dark backgrounds, and encoded as v3 WebPs. Rejected drafts remain outside public assets. Unit, full campaign, standalone and remote focused encounter gates pass; the preview's runtime assets match the local hashes. See `RELEASE.md` and PR #60's release-verification comment for final publication status, and `NATIVE-ALPHA.md` / `NATIVE-ALPHA-HASHES.json` for art provenance.
 
 ## Scope
 

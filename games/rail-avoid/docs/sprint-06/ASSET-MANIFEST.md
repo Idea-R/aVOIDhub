@@ -1,6 +1,6 @@
 # Sprint 06 Asset Manifest
 
-Status: native-alpha correction integrated locally. All current enemy runtime files use `-v3.webp`, generated through GPT Image 1.5 with `background=transparent`. Eight of eight native PNGs pass structural and light/dark visual review. Current source/runtime filenames and hashes are in `NATIVE-ALPHA-HASHES.json`; prompts and correction history are in `NATIVE-ALPHA.md`. The v2 enemy table below is retained only as historical provenance for rejected drafts, now stored outside public assets. Scene v2 files remain current. No deployment was performed.
+Status: native-alpha correction accepted and hosted-preview verified for release PR #60. All current enemy runtime files use `-v3.webp`, generated through GPT Image 1.5 with `background=transparent`. Eight of eight native PNGs pass structural and light/dark visual review; remote files match the accepted hashes. Current source/runtime filenames and hashes are in `NATIVE-ALPHA-HASHES.json`; prompts and correction history are in `NATIVE-ALPHA.md`. The v2 enemy table below is historical provenance for rejected drafts stored outside public assets. Scene v2 files remain current. Publication evidence is linked from `RELEASE.md`.
 
 Scenes and original enemy designs were generated with the built-in image-generation tool. Current enemy cutouts were corrected using the explicitly authorized GPT Image 1.5 API and then encoded as compact alpha WebPs. The supplied September 2 RailAVOID illustrations and the accepted Sprint 05 assets were style references.
 

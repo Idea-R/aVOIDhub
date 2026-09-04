@@ -16,7 +16,9 @@ Sprint 05 staged-expedition foundation plus Sprint 06 clean scenes, six distinct
 
 ## Release procedure
 
-Use the PR from `codex/railavoid-encounter-depth` into `Idea-R/aVOIDhub:main`. Attach the hosted preview URL, acceptance results and final production deploy ID to that PR's release-verification comment. That timestamped comment is the definitive publication record; this file alone does not claim the build is live.
+Hosted preview accepted: `https://deploy-preview-60--coruscating-squirrel-a47ad9.netlify.app`, deploy `6a9b2ed05ec6720008a307d1`, game revision `c9658abf9e6360b0993cbd0bc80f4917594a5a1a`. The remote focused expedition test passed all six mystery scenes, formation, Swap, depth decision and stage transition at 1280×720. Shared-site smoke checks passed all seven pages (hub, login, RailAVOID catalog and four games), 25 linked scripts/styles, exact candidate bundle hashes and all eight enemy runtime hashes. GitHub's shared release verification and Netlify build/header/redirect checks passed.
+
+Release PR: `https://github.com/Idea-R/aVOIDhub/pull/60`, from `codex/railavoid-encounter-depth` into `main`. Attach the final production deploy ID to that PR's release-verification comment. That timestamped comment is the definitive publication record; this file alone does not claim the build is live.
 
 Before promotion, run the focused encounter gate on the actual preview and smoke-test the hub, login, public game routes and emitted assets. After promotion, verify the custom domain serves the candidate's hashed RailAVOID bundle and repeat the focused gate. Do not publish a Rail-only folder over the shared site.
 
