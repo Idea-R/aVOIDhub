@@ -1,6 +1,6 @@
 # RAILaVOID — Improvement Roadmap
 
-Status after the first public early-access deploy (avoidgame.io/railavoid). Ordered by player impact.
+Release planning updated 2026-09-04. Current production evidence is in `docs/sprint-06/RELEASE.md`; next bounded goal is planned in `docs/sprint-07/PLAN.md`. Ordered by player impact.
 
 ## Completed sprint: Command Deck Rebuild
 
@@ -32,16 +32,19 @@ Detailed plan: `docs/sprint-04/PLAN.md`. Review: `docs/sprint-04/REVIEW.md`.
 
 Verification and implementation notes: `docs/sprint-04/USABILITY-PATCH.md`.
 
-## Next sprint: Away Team (in progress)
+## Away Team program (in progress)
 
-- [ ] Establish deterministic expedition fixtures and a dedicated browser verification command.
+- [x] Establish deterministic staged-expedition coverage and a dedicated browser verification command. A full authoring fixture palette remains ADS work.
 - [ ] Add persistent crew identity, XP, five levels and two authored unlock decisions.
 - [ ] Rebuild expedition rules around party positions, visible enemy intents, Tempo and four shared conditions.
-- [ ] Generate consistent portrait/combat art for seven crew, four standard foes and four region minibosses.
+- [x] Ship eight native-alpha enemy avatars, eight clean scene paintings, staged ruins, formation pressure and swaps.
+- [ ] Complete the remaining six crew portrait/avatar pairs and region miniboss art; the Conductor already has authored art.
 - [ ] Replace the current expedition layout with a command-deck-quality party rail, stage, threat desk and action deck.
 - [ ] Balance standard encounters and minibosses, then complete campaign, standalone and production verification.
 
 Detailed plan: `docs/sprint-05/PLAN.md`. Art/content matrix: `docs/sprint-05/CONTENT-MATRIX.md`.
+
+Sprint 06 provides six distinct illustrated unknown-signal encounters, including the new Drowned Interchange, and deeper regional enemy rosters. That dock is an encounter setting, not yet a shoreline-constrained world-map destination. Sprint 07 starts with playtest triage, consistent crew identity/art and visible enemy intents before adding more systems.
 
 Sprint 03 (readability and crew discovery) is archived in `docs/sprint-03/`.
 
@@ -80,7 +83,7 @@ Sprint 03 (readability and crew discovery) is archived in `docs/sprint-03/`.
 
 ## 3. Journey nodes (Slay the Spire density)
 - [x] 4 new node types: Watchtower (early warning), Shrine (boon choice), Wreck (salvage / free car), Market (trade).
-- [x] 24 events: 14 passenger, 5 fixed-location and 5 concealed-signal encounters. Target 45–50, in tiers: common (25), region-exclusive (4 × 4), rare (6), shrine-style (6).
+- [x] 25 events: 14 passenger, 5 fixed-location and 6 concealed-signal encounters. Target 45–50 only after the encounter loop is proven; use common, region-exclusive, rare and shrine-style pools.
 - [ ] Each event gets a painted card illustration (generated on-brand: violet void, gold rail, ink-and-wash miniature look) and a small consequence tag row.
 - [x] First event-room pass: `?` signals sit directly on every region's main lines and conceal cache/relic, crew combat, train ambush, distressed crew and damaged weapon-car outcomes until arrival.
 - [ ] Add region-specific concealed-event pools and multi-stop follow-up chains.
@@ -112,3 +115,14 @@ Sprint 03 (readability and crew discovery) is archived in `docs/sprint-03/`.
 - [x] Live at avoidgame.io/railavoid via the aVOIDhub platform catalog.
 - [ ] Platform leaderboard adapter (score scope → "platform") once the run summary is bounded and replayable.
 - [ ] Longer combat track (second Suno take) and per-region ambient stems.
+
+### Agent Development Studio (ADS)
+
+The first game-side preparation is now in place: expedition rosters are exposed as a pure deterministic contract, so a future authenticated ADS fixture picker can preview a region/stage without duplicating combat content.
+
+- [ ] Build ADS as a shared aVOID Games platform tool, not a second RailAVOID login. Reuse the existing `/login` session and require the server-assigned Supabase `app_metadata.platform_role=admin` role; never expose a client-side admin selector.
+- [ ] Verify the `shane@ideas-realized.com` account in the shared platform before assigning or changing any production role. Account creation and role grants require a separate, explicitly confirmed platform operation.
+- [ ] Ship a staging-only RailAVOID workspace first: deterministic seed launcher, region/settlement teleport, encounter and boss fixture palette, scene/portrait browser, train composition editor, asset-placement coordinates, and snapshot/restore.
+- [ ] Separate staging data from production runs and leaderboards. Every mutating tool shows the active environment and seed; production mutation is out of scope for the first ADS release.
+- [ ] Add content validation for missing art, unreachable encounter choices, invalid rewards, enemy intent loops, and viewport collisions before an encounter can be promoted.
+- [ ] After the encounter-depth slice is proven, expand ADS into a reusable game-owner portal for other aVOID titles rather than hard-coding RailAVOID assumptions into platform auth.

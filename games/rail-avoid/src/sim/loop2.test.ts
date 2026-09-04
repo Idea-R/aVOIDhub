@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { EventBus } from '../core/events';
 import { createSim } from './sim';
 import { TEST_SEED } from '../core/config';
+import { expeditionStageRoster, expeditionTargetWeight } from './expedition';
 
 function autoPhases(sim: ReturnType<typeof createSim>): void {
   const s = sim.state;
@@ -11,12 +12,55 @@ function autoPhases(sim: ReturnType<typeof createSim>): void {
   else if (s.phase === 'expedition') {
     const x = s.expedition!;
     if (x.outcome) sim.endExpedition();
+    else if (x.awaitingAdvance) sim.advanceExpedition(true);
     else if (x.pending) sim.expeditionResolve('good');
     else sim.expeditionAction('strike');
   }
 }
 
 describe('loot, relics, bounties, expeditions', () => {
+  it('makes formation readable: melee pressures front and ranged pressures rear', () => {
+    expect(expeditionTargetWeight('front', 'melee')).toBeGreaterThan(expeditionTargetWeight('rear', 'melee'));
+    expect(expeditionTargetWeight('rear', 'ranged')).toBeGreaterThan(expeditionTargetWeight('front', 'ranged'));
+  });
+
+  it('escalates from human threats to distinct deep-ruin monsters', () => {
+    expect(expeditionStageRoster(0, 1)).toEqual(['thug']);
+    expect(expeditionStageRoster(1, 2)).toContain('fusilier');
+    expect(expeditionStageRoster(2, 2)).toEqual(['wraith', 'fusilier']);
+    expect(expeditionStageRoster(3, 3)).toEqual(['sentinel', 'wraith']);
+  });
+
+  it('swaps two living crew positions as a full turn action', () => {
+    const sim = createSim(TEST_SEED, new EventBus());
+    sim.state.train.crew.push({ id: 'crew-test', name: 'Pim', specialty: 'mechanic', carIndex: -1, hp: 100 });
+    sim.debug.startExpedition();
+    const x = sim.state.expedition!;
+    expect(x.actors.map(a => a.position)).toEqual(['front', 'middle']);
+    expect(sim.expeditionAction('swap')).toBe(true);
+    expect(sim.expeditionResolve('good')).toBe(true);
+    expect(x.actors.map(a => a.position)).toEqual(['middle', 'front']);
+  });
+
+  it('offers a risk decision between cleared stages and pays no final reward early', () => {
+    const sim = createSim(TEST_SEED, new EventBus());
+    const marks = sim.state.train.marks;
+    sim.debug.startExpedition();
+    let guard = 0;
+    while (!sim.state.expedition!.awaitingAdvance && guard++ < 40) {
+      const x = sim.state.expedition!;
+      if (x.pending) sim.expeditionResolve('perfect');
+      else sim.expeditionAction('strike');
+    }
+    expect(sim.state.expedition!.stage).toBe(1);
+    expect(sim.state.expedition!.awaitingAdvance).toBe(true);
+    expect(sim.state.expedition!.outcome).toBeNull();
+    expect(sim.state.train.marks).toBe(marks);
+    expect(sim.advanceExpedition(false)).toBe(true);
+    expect(sim.state.expedition!.outcome).toBe('fled');
+    expect(sim.state.train.marks).toBe(marks);
+  });
+
   it('offers and applies relics', () => {
     const bus = new EventBus();
     const sim = createSim(TEST_SEED, bus);
@@ -61,7 +105,8 @@ describe('loot, relics, bounties, expeditions', () => {
     let guard = 0;
     while (!sim.state.expedition!.outcome && guard++ < 200) {
       const x = sim.state.expedition!;
-      if (x.pending) sim.expeditionResolve('perfect');
+      if (x.awaitingAdvance) sim.advanceExpedition(true);
+      else if (x.pending) sim.expeditionResolve('perfect');
       else if (x.turn === 'player') sim.expeditionAction('strike');
     }
     expect(sim.state.expedition!.outcome).toBe('won');
@@ -80,7 +125,8 @@ describe('loot, relics, bounties, expeditions', () => {
     let guard = 0;
     while (sim.state.expedition && !sim.state.expedition.outcome && guard++ < 400) {
       const x = sim.state.expedition;
-      if (x.pending) sim.expeditionResolve('miss');
+      if (x.awaitingAdvance) sim.advanceExpedition(true);
+      else if (x.pending) sim.expeditionResolve('miss');
       else if (x.turn === 'player') sim.expeditionAction('guard');
     }
     expect(['lost', 'fled']).toContain(sim.state.expedition!.outcome);

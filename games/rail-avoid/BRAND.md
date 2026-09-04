@@ -30,35 +30,38 @@ Rule of thumb per image: 70% navy/ink darks, 20% one region colour, 10% gold, an
 
 ## 4. Visual language
 - **Camera**: 3/4 isometric tilt (about 30° elevation) for world scenes; straight-on "poster" framing for cards; low heroic angle for the train.
-- **Rendering**: ink linework with watercolour/gouache wash over model-railway forms, visible paper grain, flat colour blocks with one soft light source (dusk or lantern light), rim light in gold on the train, violet rim light where the void is near. Crew can be expressive at medium distance; avoid close-up realism.
+- **Rendering**: confident ink linework over smooth matte gouache/model-railway forms, clean colour fields and controlled cel-like shading. No paper, canvas or film grain, stippling, noisy speckles or gritty overlays. Use one soft light source (dusk or lantern light), gold rim light on the train and restrained violet light near the void. Crew portraits can show expressive faces; avoid photorealism.
 - **Interface**: deep navy enamel plates, brass hairlines, warm cream ticket stock, signal lamps, lever/route-diagram motifs, square-cut corners. Use pills only for status tags. The map stays dominant; controls read as railway hardware, not futuristic glass.
 - **The train**: stubby toy-like proportions, deep-navy body, gold trim lines that grow with upgrades, red rear lanterns, coloured car roofs by role (coral weapons, ice medical, cream coaches, amber boiler). Steam is thick, cream, a little cartoonish.
 - **The void**: not black, but a violet-black gradient with erosion tendrils, floating rock shards, faint star-nebula inside, hexes crumbling at the edge.
 - **Settlements**: tiny clustered buildings with warm window lights; a white station ring marker as the "diagram" layer floats above them.
 - **Enemies**: silhouettes first. Raiders in patched coats with rail-spike weapons, Void Hounds as smooth violet shapes with three glowing eyes, Crawlers as beetle-tanks, Harpies as ragged rotor-winged figures, Wisps as candle flames of violet light, Sappers with backpacks of red charges.
-- **Frames**: every card sits in a gold hairline frame with a punched ticket hole, violet corner ticks, and a small Special Elite category header.
+- **Frames**: the interface supplies gold hairlines, punched-ticket motifs and violet corner ticks. Keep scene paintings border-free so they crop responsively; never bake frames or labels into combat avatars. Decorative framing belongs in a separate UI layer.
 
 ## 5. Asset specs
 | Asset | Ratio / size | Notes |
 |---|---|---|
-| Event card illustration | 3:2, 1536×1024 | one moment, one focal object, room for a header strip at top |
+| Event / expedition scene | 16:9, 1600×900 runtime | one moment, readable foreground, no baked frame or UI |
 | Relic icon | 1:1, 512×512 | single object on a dark plate, gold rim light, no text |
 | Region title card | 21:9, 2016×864 | landscape sweep with the line colour dominant |
 | Cutscene frame | 16:9, 1920×1080 | letterbox-safe: keep focal content inside the central 72% height |
 | Crew portrait | 4:5, 800×1000 | bust, dusk light, one prop per specialty |
+| Crew / enemy combat avatar | 480×600 runtime; native PNG master | full body and gear, generous transparent margins, no ground shadow or backdrop |
 | Catalog / key art | 16:9 and 1:1 crops | the train small against a huge crumbling continent |
 
-File locations: `public/art/events/<eventId>.webp`, `public/art/relics/<relicId>.webp`, `public/art/regions/<n>.webp`, `public/art/cutscenes/<name>.webp`, `public/art/crew/<specialty>.webp`. WebP at quality 82, plus a 2× version for retina where the UI shows it large.
+Current scenes: `public/art/scenes/*-v2.webp`. Current enemy cutouts: `public/art/enemies/*-v3.webp`; immutable accepted PNGs: `output/imagegen/native-alpha/`. Crew assets live in `public/art/crew/`. Future relic/region/cutscene families use their own directories. Scenes use WebP quality 82; avatars use quality 84 and alpha quality 100. Version replacements rather than silently overwriting accepted art.
+
+Transparent masters must come from native `gpt-image-1.5` output with `background=transparent` and PNG format. Verify actual alpha, full-body framing and enclosed gaps, then inspect on light and dark backgrounds. Do not substitute colour-keying, checker removal, an opaque navy plate or a painted checkerboard. See `docs/DEVELOPMENT-TOOLKIT.md` and `docs/sprint-06/NATIVE-ALPHA.md` for the working route.
 
 ## 6. Do / Don't
 **Do**: keep one focal point; let the gold frame breathe; show scale (a tiny train, a vast map); use lantern light; leave 15% dead space at the top of cards for headers.
-**Don't**: photoreal, lens flares, glossy 3D, neon cyberpunk, saturated greens, busy backgrounds, readable UI text, modern typography inside images, human faces in close-up (silhouettes and small figures only).
+**Don't**: photorealism, lens flares, glossy 3D, neon cyberpunk, saturated greens, busy backgrounds, paper grain, readable UI text or modern typography inside images. Do not use scene framing or the scene's navy ground for a transparent avatar.
 
 ## 7. Master prompt (image agent)
 Paste this as the system/style preamble, then append one of the subject prompts below.
 
 ```
-Style: Signal Box Storybook world art inside a hand-printed transit-poster frame. Painted model-railway forms with ink-and-gouache surfaces; isometric 3/4 tilt for world scenes and straight-on poster framing for cards. Deep navy ground (#0b0e1a), brass-gold accents (#e8c170), void violet (#6d5fd6) intrusion from the left edge, warm station lamps, visible paper grain and restrained halftone. Stubby expressive steam train in navy with gold trim and coloured car roofs; small readable crew silhouettes with one specialty prop each. Settlements are tiny clustered buildings with warm windows. The void is violet-black with crumbling hex tiles and floating shards. Composition: one focal point, 15% empty space at the top, gold hairline frame with a punched ticket hole and violet corner ticks. No readable text, no UI, no photorealism, no neon, no glossy 3D. Muted saturation except gold and violet.
+Style: Signal Box Storybook world art, designed for a transit-poster interface. Painted model-railway forms, precise ink contours, smooth matte gouache fields and controlled cel-like shading; isometric 3/4 tilt for world scenes. Deep navy shadows (#0b0e1a), brass-gold accents (#e8c170), restrained void violet (#6d5fd6), warm station lamps. Stubby expressive steam train in navy with gold trim and coloured car roofs. Settlements are tiny clustered buildings with warm windows. The void is violet-black with crumbling hex tiles and floating shards. One focal point and a readable foreground, no baked frame. No paper/canvas/film grain, halftone, stippling, noisy speckles, text, UI, photorealism, neon or glossy 3D. Muted saturation except gold and violet. For combat avatars, replace all scenery with native transparent alpha: full body and gear, no floor, ground shadow, vignette, frame or cropped extremities.
 ```
 
 ## 8. Subject prompts

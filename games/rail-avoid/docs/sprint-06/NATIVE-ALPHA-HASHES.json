@@ -1,0 +1,87 @@
+{
+  "model": "gpt-image-1.5",
+  "background": "transparent",
+  "treatment": "transparent-margin crop, contain resize, transparent padding, WebP encoding; no keying or alpha reconstruction",
+  "assets": [
+    {
+      "name": "rail-thug",
+      "source": "output/imagegen/native-alpha/rail-thug-v3.png",
+      "sourceSha256": "fc424335005e2fd50dc34485b7b5a9f8c0763e98ce3e4d331e39e9e986a34f9c",
+      "runtime": "public/art/enemies/rail-thug-v3.webp",
+      "runtimeSha256": "4e1c37843d7971a3986f04c15f38e98a3f1d36ac258962b7520c9f348b1baa08",
+      "bytes": 38094,
+      "width": 480,
+      "height": 600
+    },
+    {
+      "name": "void-hound",
+      "source": "output/imagegen/native-alpha/void-hound-v3.png",
+      "sourceSha256": "86cea36b149cf01c0dc6512152d0c73961633c152ed7fd934595b1857e27f7a2",
+      "runtime": "public/art/enemies/void-hound-v3.webp",
+      "runtimeSha256": "0c0e0775c9279d9d894b54cf9ddb888bb7c6b6fda36a020d76da076892c5c16f",
+      "bytes": 70358,
+      "width": 480,
+      "height": 600
+    },
+    {
+      "name": "void-shade",
+      "source": "output/imagegen/native-alpha/void-shade-v3.png",
+      "sourceSha256": "d0888847fc6fd3ab92a242240b3cc4461428808b1b8f5f05626f0655a04a7a7c",
+      "runtime": "public/art/enemies/void-shade-v3.webp",
+      "runtimeSha256": "d4653ada88dd0358c62ee755d576cc085291edba121a2992333b9f08ec1c588e",
+      "bytes": 89420,
+      "width": 480,
+      "height": 600
+    },
+    {
+      "name": "scrap-brute",
+      "source": "output/imagegen/native-alpha/scrap-brute-v3.png",
+      "sourceSha256": "794fc59b5e49fa93a7fb2a52b7d6339731b2ccc87aace8f5088d40049e98dee3",
+      "runtime": "public/art/enemies/scrap-brute-v3.webp",
+      "runtimeSha256": "7e6efbe74dea645fb71738cc0e28469195ad5be541c405738ecc6d17c59c735e",
+      "bytes": 49220,
+      "width": 480,
+      "height": 600
+    },
+    {
+      "name": "ash-cult-fusilier",
+      "source": "output/imagegen/native-alpha/ash-cult-fusilier-v3.png",
+      "sourceSha256": "d26510a1f0097ed8e97868873fe85dec92985b3860afea5b4daa8523421bc451",
+      "runtime": "public/art/enemies/ash-cult-fusilier-v3.webp",
+      "runtimeSha256": "26646bcd9c9cb26da1ea9d46cb197894f9cccba377104864fd791d780cc8d786",
+      "bytes": 33636,
+      "width": 480,
+      "height": 600
+    },
+    {
+      "name": "rail-maw-crawler",
+      "source": "output/imagegen/native-alpha/rail-maw-crawler-v3.png",
+      "sourceSha256": "8f85651effd02ef420ba338f2047c33ce6afa7c13f3756728b50a135a51b9e9f",
+      "runtime": "public/art/enemies/rail-maw-crawler-v3.webp",
+      "runtimeSha256": "06d6a57dff90498bee2e0095545b5088de4110e05d59c52b0943da8ed2367100",
+      "bytes": 45296,
+      "width": 480,
+      "height": 600
+    },
+    {
+      "name": "lantern-wraith",
+      "source": "output/imagegen/native-alpha/lantern-wraith-v3.png",
+      "sourceSha256": "cf109e270614e1c5636776eb1e5534395681a55d0fe8ea6974d75824ae65e38f",
+      "runtime": "public/art/enemies/lantern-wraith-v3.webp",
+      "runtimeSha256": "59b2c84006426a1e6cfe7c016e274afdf972407c9d370f2548e3fe7f76e83def",
+      "bytes": 69926,
+      "width": 480,
+      "height": 600
+    },
+    {
+      "name": "iron-sentinel",
+      "source": "output/imagegen/native-alpha/iron-sentinel-v3.png",
+      "sourceSha256": "e8317cf6fd639270126949b7a0b64566f5e0c4df8ca346151002697dd1477891",
+      "runtime": "public/art/enemies/iron-sentinel-v3.webp",
+      "runtimeSha256": "a8e99404735ef99ae4fb7165501c4d3311743f29d3bac48e454e9027fc5a52ec",
+      "bytes": 47310,
+      "width": 480,
+      "height": 600
+    }
+  ]
+}

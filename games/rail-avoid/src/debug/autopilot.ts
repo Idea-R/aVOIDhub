@@ -243,6 +243,7 @@ export function createAutopilot(ctx: AppContext): Autopilot {
         const anySim = ctx.sim as any; const x = ctx.sim.state.expedition;
         if (!x) break;
         if (x.outcome) { anySim.endExpedition(); notes.push('expedition end ' + x.outcome); }
+        else if (x.awaitingAdvance) { anySim.advanceExpedition(true); notes.push('expedition descend'); }
         else if (x.pending) { anySim.expeditionResolve('good'); }
         else { anySim.expeditionAction('strike'); notes.push('expedition strike'); }
         break;

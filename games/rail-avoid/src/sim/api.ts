@@ -64,6 +64,8 @@ export interface SimApi {
   /** Send crew from an Expedition Site event (option 0 of 'node_site'). */
   startExpedition(crewIds: string[]): boolean;
   expeditionAction(kind: ExpeditionActionKind, targetFoe?: number): boolean;
+  /** Continue into the next chamber after clearing a stage, or withdraw with current crew HP. */
+  advanceExpedition(continueDeeper: boolean): boolean;
   /** Report the player's timing for the pending action/blow. */
   expeditionResolve(timing: ExpeditionTiming): boolean;
   /** Dismiss the result screen and resume the run. */

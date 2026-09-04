@@ -20,6 +20,17 @@ import { EXPEDITION } from '../core/config';
 import { gsap, D, isReduced, shake, Particles, popIn } from './motion';
 import { crewSilhouette, foeSilhouette } from './silhouettes';
 import conductorCombat from '/art/crew/conductor-combat.webp?url&inline';
+import ruinApproach from '/art/scenes/ruin-approach-v2.webp?url&inline';
+import buriedConcourse from '/art/scenes/buried-concourse-v2.webp?url&inline';
+import voidSanctum from '/art/scenes/void-sanctum-v2.webp?url&inline';
+import railThug from '/art/enemies/rail-thug-v3.webp?url&inline';
+import voidHound from '/art/enemies/void-hound-v3.webp?url&inline';
+import voidShade from '/art/enemies/void-shade-v3.webp?url&inline';
+import scrapBrute from '/art/enemies/scrap-brute-v3.webp?url&inline';
+import ashCultFusilier from '/art/enemies/ash-cult-fusilier-v3.webp?url&inline';
+import railMawCrawler from '/art/enemies/rail-maw-crawler-v3.webp?url&inline';
+import lanternWraith from '/art/enemies/lantern-wraith-v3.webp?url&inline';
+import ironSentinel from '/art/enemies/iron-sentinel-v3.webp?url&inline';
 
 export interface ExpeditionScene {
   el: HTMLElement;
@@ -32,28 +43,38 @@ export interface ExpeditionScene {
 
 const PERFECT_MS = 70;
 const GOOD_MS = 180;
-const WINDUP: Record<string, number> = { thug: 0.9, hound: 0.72, shade: 1.0, brute: 1.15 };
+const WINDUP: Record<string, number> = { thug: 0.9, hound: 0.72, shade: 1.0, brute: 1.15, fusilier: 1.05, crawler: 0.68, wraith: 1.12, sentinel: 1.2 };
 const ACTOR_COLORS: Record<string, string> = { conductor: '#e8c170', engineer: '#ff8f3a', gunner: '#e86f6f', medic: '#6fb7e8', surveyor: '#8ee29a', mechanic: '#c98a4b', quartermaster: '#d6b4f0' };
-const FOE_COLORS: Record<string, string> = { thug: '#a3a8b8', hound: '#9a8cff', shade: '#d6b4f0', brute: '#c98a4b' };
+const FOE_COLORS: Record<string, string> = { thug: '#a3a8b8', hound: '#9a8cff', shade: '#d6b4f0', brute: '#c98a4b', fusilier: '#e8a85c', crawler: '#9a8cff', wraith: '#c9a0ff', sentinel: '#79b69b' };
+const SCENE_ART: Record<string, string> = { ruin_approach: ruinApproach, buried_concourse: buriedConcourse, void_sanctum: voidSanctum };
+const STAGE_NAMES: Record<string, string> = { ruin_approach: 'Outer Works', buried_concourse: 'Buried Concourse', void_sanctum: 'Void Sanctum' };
+const FOE_ART: Record<string, string> = {
+  thug: railThug, hound: voidHound, shade: voidShade, brute: scrapBrute,
+  fusilier: ashCultFusilier, crawler: railMawCrawler, wraith: lanternWraith, sentinel: ironSentinel,
+};
 
 interface Pending { kind: string; turn: 'player' | 'enemy'; actorIndex: number; foeIndex: number; actionKind: ExpeditionActionKind }
-interface ActorCard { id: string; el: HTMLElement; fig: HTMLElement; hpFill: HTMLElement; hpText: HTMLElement; guard: HTMLElement; sig: string }
+interface ActorCard { id: string; el: HTMLElement; fig: HTMLElement; hpFill: HTMLElement; hpText: HTMLElement; guard: HTMLElement; lane: HTMLElement; sig: string }
 interface FoeCard { id: string; el: HTMLButtonElement; fig: HTMLElement; hpFill: HTMLElement; hpText: HTMLElement; stun: HTMLElement; sig: string }
 
-type Mode = 'idle' | 'menu' | 'timing' | 'anim' | 'result';
+type Mode = 'idle' | 'menu' | 'timing' | 'anim' | 'intermission' | 'result';
 
 export function createExpedition(ui: UiShared): ExpeditionScene {
   // ---------- DOM ----------
   const motes = el('canvas', { class: 'rv-exp-motes', 'aria-hidden': 'true' });
   const layers = { far: el('div', { class: 'rv-exp-layer rv-exp-far', 'aria-hidden': 'true' }), mid: el('div', { class: 'rv-exp-layer rv-exp-mid', 'aria-hidden': 'true' }), near: el('div', { class: 'rv-exp-layer rv-exp-near', 'aria-hidden': 'true' }) };
-  const bg = el('div', { class: 'rv-exp-bg' }, el('div', { class: 'rv-exp-sky' }), layers.far, motes, layers.mid, el('div', { class: 'rv-exp-ground' }), layers.near, el('div', { class: 'rv-exp-vignette' }));
+  const sceneImg = el('img', { class: 'rv-exp-scene-art', alt: '', 'aria-hidden': 'true' });
+  const bg = el('div', { class: 'rv-exp-bg' }, sceneImg, el('div', { class: 'rv-exp-sky' }), layers.far, motes, layers.mid, el('div', { class: 'rv-exp-ground' }), layers.near, el('div', { class: 'rv-exp-vignette' }));
   const siteEl = el('span', { class: 'rv-exp-site', text: '' });
+  const stageEl = el('b', { text: '1 / 2' });
+  const stageNameEl = el('span', { class: 'rv-exp-stage-name', text: 'Outer Works' });
   const roundEl = el('b', { text: '1' });
   const roundMax = el('span', { text: '/ ' + EXPEDITION.maxRounds });
   const tickerText = el('span', { class: 'rv-exp-ticker-text', text: '' });
   const ticker = el('div', { class: 'rv-exp-ticker', role: 'status', 'aria-live': 'polite' }, el('span', { class: 'rv-exp-ticker-ico', 'aria-hidden': 'true', text: '▲' }), tickerText);
   const top = el('div', { class: 'rv-exp-top' },
     el('div', { class: 'rv-exp-title' }, el('span', { class: 'rv-label', text: 'Expedition' }), siteEl),
+    el('div', { class: 'rv-exp-stage-readout', 'aria-label': 'Expedition stage' }, el('span', { class: 'rv-label', text: 'Stage' }), stageEl, stageNameEl),
     el('div', { class: 'rv-exp-round', 'aria-label': 'Round' }, el('span', { class: 'rv-label', text: 'Round' }), roundEl, roundMax),
     ticker,
   );
@@ -69,7 +90,12 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
   judgeEl.hidden = true;
   const rallyEl = el('div', { class: 'rv-exp-rally', role: 'status' }, el('span', { class: 'rv-exp-rally-ico', 'aria-hidden': 'true', text: '♪' }), el('span', { text: 'RALLIED — the crew deals +50% damage this round' }));
   rallyEl.hidden = true;
-  const stage = el('div', { class: 'rv-exp-stage' }, crewEl, foesEl, fxLayer, ring, judgeEl, rallyEl);
+  const formationRules = el('div', { class: 'rv-exp-formation-rules' },
+    el('span', { text: 'FRONT +20% strike · draws melee' }),
+    el('span', { text: 'MIDDLE balanced' }),
+    el('span', { text: 'REAR +20% ranged special · draws ranged' }),
+  );
+  const stage = el('div', { class: 'rv-exp-stage' }, formationRules, crewEl, foesEl, fxLayer, ring, judgeEl, rallyEl);
   const promptEl = el('div', { class: 'rv-exp-prompt', role: 'status' });
   promptEl.hidden = true;
 
@@ -89,18 +115,21 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
   strikeBtn.dataset.autofocus = '';
   const guardBtn = actionBtn('guard', 'Guard', 'G', 'Brace: the next blow is halved.');
   const specialBtn = actionBtn('special', 'Special', 'E', '');
+  const swapBtn = actionBtn('swap', 'Swap', 'W', 'Trade lines with the next ally. Ends this turn.');
   const fleeBtn = actionBtn('flee', 'Flee', 'F', 'Back to the train. No reward.');
   const menu = el('div', { class: 'rv-exp-menu rv-panel', role: 'group', 'aria-label': 'Actions' },
     el('div', { class: 'rv-exp-menu-head' }, el('span', { class: 'rv-label', text: 'Your move' }), menuName, menuSpec, targetEl),
-    el('div', { class: 'rv-exp-actions' }, strikeBtn, guardBtn, specialBtn, fleeBtn),
-    el('div', { class: 'rv-hint', text: 'Click a foe or press 1-3 to pick a target · S / G / E / F act · Space or Enter on impact' }),
+    el('div', { class: 'rv-exp-actions' }, strikeBtn, guardBtn, specialBtn, swapBtn, fleeBtn),
+    el('div', { class: 'rv-hint', text: 'Pick target 1-3 · S strike · G guard · E special · W swap · F retreat · Space/Enter on impact' }),
   );
   menu.hidden = true;
   const logEl = el('div', { class: 'rv-exp-log rv-panel', role: 'log', 'aria-live': 'polite', 'aria-label': 'Expedition log' });
   const bottom = el('div', { class: 'rv-exp-bottom' }, menu, logEl);
   const resultEl = el('div', { class: 'rv-exp-result-ov' });
   resultEl.hidden = true;
-  const root = el('div', { class: 'rv-exp', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Expedition' }, bg, top, stage, promptEl, bottom, resultEl);
+  const stageGateEl = el('div', { class: 'rv-exp-stage-gate' });
+  stageGateEl.hidden = true;
+  const root = el('div', { class: 'rv-exp', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Expedition' }, bg, top, stage, promptEl, bottom, stageGateEl, resultEl);
 
   const particles = new Particles(motes, 70, ['109,95,214', '154,140,255', '200,120,255']);
 
@@ -126,10 +155,15 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
 
   // ---------- build ----------
   function build(xs: ExpeditionState): void {
+    sceneImg.setAttribute('src', SCENE_ART[xs.stageKey] ?? ruinApproach);
+    sceneImg.dataset.scene = xs.stageKey;
+    setText(stageEl, `${xs.stage} / ${xs.stageCount}`);
+    setText(stageNameEl, STAGE_NAMES[xs.stageKey] ?? 'Ruin Depths');
     actorCards = xs.actors.map((a, i) => {
       const hpFill = el('i');
       const hpText = el('span', { class: 'rv-exp-hp-text', text: `${a.hp}/${a.maxHp}` });
       const guard = el('span', { class: 'rv-exp-guard', title: 'Guarding: next hit halved', text: '⛨' });
+      const lane = el('span', { class: `rv-exp-lane rv-lane-${a.position}`, text: a.position });
       const fig = a.specialty === 'conductor'
         ? el('div', { class: 'rv-exp-fig rv-exp-fig-authored' }, el('img', { src: conductorCombat, alt: '', 'aria-hidden': 'true' }))
         : el('div', { class: 'rv-exp-fig', html: crewSilhouette(a.specialty, 118) });
@@ -138,18 +172,21 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
         fig,
         el('div', { class: 'rv-exp-card' },
           el('div', { class: 'rv-exp-name' }, el('b', { text: a.name }), guard),
-          el('div', { class: 'rv-exp-spec', text: cap(a.specialty) }),
+          el('div', { class: 'rv-exp-spec' }, el('span', { text: cap(a.specialty) }), lane),
           el('div', { class: 'rv-exp-hp' }, el('div', { class: 'rv-bar' }, hpFill), hpText),
         ),
         el('div', { class: 'rv-exp-downed', text: 'DOWN' }),
       );
-      return { id: a.id, el: card, fig, hpFill, hpText, guard, sig: '' };
+      return { id: a.id, el: card, fig, hpFill, hpText, guard, lane, sig: '' };
     });
     foeCards = xs.foes.map((f, i) => {
       const hpFill = el('i');
       const hpText = el('span', { class: 'rv-exp-hp-text', text: `${f.hp}/${f.maxHp}` });
       const stun = el('span', { class: 'rv-exp-stun', title: 'Stunned: skips its next attack', text: '✦ stunned' });
-      const fig = el('div', { class: 'rv-exp-fig', html: foeSilhouette(f.kind, 130) });
+      const art = FOE_ART[f.kind];
+      const fig = art
+        ? el('div', { class: 'rv-exp-fig rv-exp-fig-enemy' }, el('img', { src: art, alt: '', 'aria-hidden': 'true' }))
+        : el('div', { class: 'rv-exp-fig', html: foeSilhouette(f.kind, 130) });
       const card = el('button', { class: 'rv-exp-foe', type: 'button', style: `--accent:${FOE_COLORS[f.kind] ?? '#a3a8b8'}`, 'data-index': String(i), 'aria-label': `Target ${f.name} (${i + 1})`, tabindex: '-1' },
         el('span', { class: 'rv-exp-key', 'aria-hidden': 'true', text: String(i + 1) }),
         el('span', { class: 'rv-exp-reticle', 'aria-hidden': 'true' }),
@@ -185,7 +222,7 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
   function refresh(xs: ExpeditionState, force = false): void {
     xs.actors.forEach((a, i) => {
       const c = actorCards[i]; if (!c) return;
-      const sig = `${a.hp}|${a.guard}|${a.down}|${xs.turn === 'player' && xs.activeActor === i && !xs.outcome}`;
+      const sig = `${a.hp}|${a.guard}|${a.down}|${a.position}|${xs.turn === 'player' && xs.activeActor === i && !xs.outcome}`;
       if (!force && sig === c.sig) return;
       c.sig = sig;
       const r = a.maxHp > 0 ? a.hp / a.maxHp : 0;
@@ -195,6 +232,9 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
       toggleClass(c.el, 'rv-guarding', a.guard > 0 && !a.down);
       toggleClass(c.el, 'rv-down', a.down);
       toggleClass(c.el, 'rv-active', xs.turn === 'player' && xs.activeActor === i && !a.down && !xs.outcome);
+      c.el.style.order = String(a.position === 'front' ? 1 : a.position === 'middle' ? 2 : 3);
+      c.lane.className = `rv-exp-lane rv-lane-${a.position}`;
+      setText(c.lane, a.position);
     });
     xs.foes.forEach((f, i) => {
       const c = foeCards[i]; if (!c) return;
@@ -212,6 +252,7 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
       c.el.disabled = f.hp <= 0;
     });
     show(rallyEl, xs.rally > 0 && !xs.outcome);
+    swapBtn.disabled = xs.actors.filter(a => !a.down).length < 2;
     updateLog(xs);
   }
 
@@ -231,7 +272,7 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
 
   function updateTicker(xs: ExpeditionState): void {
     const lost = xs.rounds * EXPEDITION.voidSecondsPerRound;
-    setText(tickerText, `VOID +${EXPEDITION.voidSecondsPerRound}s / ROUND · ${lost}s of margin spent · round ${xs.round} of ${EXPEDITION.maxRounds}`);
+    setText(tickerText, `VOID +${EXPEDITION.voidSecondsPerRound}s / ROUND · ${lost}s spent · stage ${xs.stage}/${xs.stageCount} · round ${xs.round}/${EXPEDITION.maxRounds}`);
     setText(roundEl, String(Math.min(xs.round, EXPEDITION.maxRounds)));
     toggleClass(ticker, 'rv-hot', xs.round >= EXPEDITION.maxRounds - 1);
   }
@@ -239,7 +280,7 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
   // ---------- menu ----------
   function enterMenu(): void {
     const xs = x();
-    if (!xs || xs.outcome || xs.turn !== 'player' || xs.pending) return;
+    if (!xs || xs.outcome || xs.awaitingAdvance || xs.turn !== 'player' || xs.pending) return;
     mode = 'menu';
     const a = xs.actors[xs.activeActor];
     if (!a) return;
@@ -306,13 +347,14 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
     tryNext();
   }
   function tryNext(): void {
-    if (!ui.isOpen('expedition') || busy || mode === 'timing' || mode === 'result' || mode === 'anim') return;
+    if (!ui.isOpen('expedition') || busy || mode === 'timing' || mode === 'result' || mode === 'intermission' || mode === 'anim') return;
     if (performance.now() < introUntil) return;
     const p = queue.shift();
     const xs = x();
     if (!xs) return;
     if (!p) {
       if (xs.outcome) { showResult(xs); return; }
+      if (xs.awaitingAdvance) { showStageGate(xs); return; }
       if (xs.pending) { queue.push({ kind: xs.turn === 'enemy' ? (xs.pending.actorIndex < 0 ? 'skip' : 'attack') : xs.pending.kind, turn: xs.turn, actorIndex: xs.pending.actorIndex, foeIndex: xs.pending.foeIndex, actionKind: xs.pending.kind }); tryNext(); return; }
       if (xs.turn === 'player') enterMenu();
       return;
@@ -357,6 +399,20 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
       if (!isReduced()) gsap.fromTo(ac.fig, { scale: 1 }, { scale: 0.92, duration: 0.18, yoyo: true, repeat: 1, ease: 'power2.inOut', clearProps: 'transform' });
       cue('block');
       window.setTimeout(() => { ac.el.classList.remove('rv-bracing'); resolve('good'); finishStep(350); }, isReduced() ? 0 : 420);
+      return;
+    }
+    if (kind === 'swap') {
+      mode = 'anim';
+      const before = xs.actors.map(a => a.position);
+      cue('rally');
+      resolve('good');
+      xs.actors.forEach((a, i) => {
+        const card = actorCards[i];
+        if (!card || before[i] === a.position) return;
+        card.el.style.order = String(a.position === 'front' ? 1 : a.position === 'middle' ? 2 : 3);
+        if (!isReduced()) gsap.fromTo(card.el, { y: -14, opacity: 0.65 }, { y: 0, opacity: 1, duration: 0.45, ease: 'power2.out', clearProps: 'transform,opacity' });
+      });
+      finishStep(520);
       return;
     }
     if (kind === 'special' && actor.specialty === 'conductor') {
@@ -598,7 +654,42 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
     if (big) { flashScreen('rgba(111,183,232,0.35)'); sparks(over, 16, '#9fd3ff'); }
   }
 
-  // ---------- result ----------
+  // ---------- stage transition / result ----------
+  function showStageGate(xs: ExpeditionState): void {
+    if (mode === 'intermission') return;
+    mode = 'intermission';
+    hideMenu();
+    const nextKey = xs.stage === 1 ? 'buried_concourse' : 'void_sanctum';
+    const deeper = btn(`Press deeper — ${STAGE_NAMES[nextKey]}`, () => {
+      const sim = ui.sim(); if (!sim) return;
+      ui.audio().ui('confirm');
+      if (!sim.advanceExpedition(true)) { ui.audio().ui('error'); return; }
+      show(stageGateEl, false);
+      mode = 'idle'; builtFor = '';
+      show_();
+    }, { class: 'rv-primary rv-big', aria: `Continue to ${STAGE_NAMES[nextKey]}` });
+    deeper.dataset.autofocus = '';
+    const withdraw = btn('Return to the train', () => {
+      const sim = ui.sim(); if (!sim) return;
+      ui.audio().ui('close');
+      if (!sim.advanceExpedition(false)) { ui.audio().ui('error'); return; }
+      show(stageGateEl, false);
+      mode = 'idle';
+      tryNext();
+    }, { aria: 'Withdraw safely without the final reward' });
+    const card = el('div', { class: 'rv-panel rv-modal rv-exp-depth-card' },
+      el('div', { class: 'rv-label', text: `Stage ${xs.stage} of ${xs.stageCount} cleared` }),
+      el('h2', { text: 'The ruin opens beneath you' }),
+      el('p', { text: 'Wounds carry forward. Deeper chambers hold stronger enemies—and the expedition reward waits only at the end.' }),
+      el('div', { class: 'rv-exp-depth-status' }, ...xs.actors.map(a => el('span', { class: a.down ? 'rv-down' : '', text: `${a.name} · ${Math.round(a.hp)} HP · ${cap(a.position)}` }))),
+      el('div', { class: 'rv-actions' }, withdraw, deeper),
+    );
+    stageGateEl.replaceChildren(card);
+    show(stageGateEl, true);
+    popIn(card, { scale: 0.9, y: 24 }, { duration: D(0.4) });
+    window.setTimeout(() => deeper.focus({ preventScroll: true }), isReduced() ? 0 : 260);
+  }
+
   function showResult(xs: ExpeditionState): void {
     if (mode === 'result') return;
     mode = 'result';
@@ -622,7 +713,7 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
     }, { class: 'rv-primary rv-big', aria: 'Continue (Enter)' });
     cont.dataset.autofocus = '';
     const card = el('div', { class: 'rv-panel rv-modal rv-exp-result rv-res-' + outcome },
-      el('div', { class: 'rv-label', text: `Expedition · ${rounds} round${rounds === 1 ? '' : 's'} · void +${rounds * EXPEDITION.voidSecondsPerRound}s` }),
+      el('div', { class: 'rv-label', text: `Expedition · ${xs.stage}/${xs.stageCount} stages · ${rounds} round${rounds === 1 ? '' : 's'} · void +${rounds * EXPEDITION.voidSecondsPerRound}s` }),
       el('h1', { text: title }),
       el('p', { class: 'rv-exp-result-sum', text: summary }),
       rewards.length ? el('div', { class: 'rv-exp-rewards' }, ...rewards.map(r => el('span', { class: 'rv-exp-reward', text: r }))) : el('div', { class: 'rv-exp-rewards rv-dim', text: outcome === 'lost' ? 'No reward. Morale −10.' : 'No reward.' }),
@@ -640,12 +731,12 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
   function show_(): void {
     const xs = x();
     if (!xs) return;
-    const key = `${xs.siteId}|${xs.actors.map(a => a.id).join(',')}|${xs.foes.map(f => f.id).join(',')}`;
+    const key = `${xs.siteId}|${xs.stage}|${xs.actors.map(a => a.id).join(',')}|${xs.foes.map(f => f.id).join(',')}`;
     const reopen = !ui.isOpen('expedition');
     if (key !== builtFor || reopen) {
       builtFor = key;
       queue.length = 0; busy = false; mode = 'idle'; endSummary = null; stopTiming();
-      show(resultEl, false); hideMenu(); show(promptEl, false);
+      show(resultEl, false); show(stageGateEl, false); hideMenu(); show(promptEl, false);
       build(xs);
     }
     if (reopen) {
@@ -694,6 +785,10 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
       if (k === ' ' || k === 'Enter') { const b = resultEl.querySelector<HTMLButtonElement>('button'); if (b && document.activeElement !== b) { e.preventDefault(); b.click(); } }
       return;
     }
+    if (mode === 'intermission') {
+      if (k === ' ' || k === 'Enter') { const b = stageGateEl.querySelector<HTMLButtonElement>('[data-autofocus]'); if (b && document.activeElement !== b) { e.preventDefault(); b.click(); } }
+      return;
+    }
     if (mode !== 'menu') { if (k === ' ') e.preventDefault(); return; }
     const n = Number(k);
     if (n >= 1 && n <= foeCards.length) { e.preventDefault(); setTarget(n - 1); ui.audio().ui('click'); return; }
@@ -701,6 +796,7 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
       case 's': e.preventDefault(); act('strike'); break;
       case 'g': e.preventDefault(); act('guard'); break;
       case 'e': e.preventDefault(); act('special'); break;
+      case 'w': e.preventDefault(); act('swap'); break;
       case 'f': e.preventDefault(); act('flee'); break;
       case 'arrowleft': e.preventDefault(); moveFocus(-1); break;
       case 'arrowright': e.preventDefault(); moveFocus(1); break;
@@ -721,6 +817,7 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
     if (!ui.isOpen('expedition')) return false;
     if (mode === 'timing') { if (button === 0) press(); return true; }
     if (mode === 'result') { if (button === 0 || button === 9) resultEl.querySelector<HTMLButtonElement>('button')?.click(); return true; }
+    if (mode === 'intermission') { if (button === 0) stageGateEl.querySelector<HTMLButtonElement>('[data-autofocus]')?.click(); return true; }
     if (mode !== 'menu') return true;
     switch (button) {
       case 0: { const a = document.activeElement as HTMLElement | null; if (a && menu.contains(a)) a.click(); else act('strike'); return true; }
@@ -755,6 +852,11 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
         }
       }
     }),
+    bus.on('expedition:stage', () => {
+      if (!ui.isOpen('expedition')) return;
+      builtFor = '';
+      window.setTimeout(() => show_(), 0);
+    }),
     bus.on('expedition:end', (p) => { endSummary = p; }),
   ];
 
@@ -767,6 +869,8 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
       const xs = s.expedition;
       if (!ui.isOpen('expedition')) return;
       if (!xs || s.phase !== 'expedition') { ui.close('expedition'); return; }
+      const expectedKey = `${xs.siteId}|${xs.stage}|${xs.actors.map(a => a.id).join(',')}|${xs.foes.map(f => f.id).join(',')}`;
+      if (!xs.awaitingAdvance && expectedKey !== builtFor) { show_(); return; }
       if (mode !== 'timing') refresh(xs);
       if (mode === 'idle' && !busy) tryNext();
     },

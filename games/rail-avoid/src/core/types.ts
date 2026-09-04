@@ -332,13 +332,19 @@ export interface Bounty {
 }
 
 export type ExpeditionTiming = 'perfect' | 'good' | 'miss';
-export type ExpeditionActionKind = 'strike' | 'guard' | 'special' | 'flee';
-export interface ExpeditionActor { id: string; name: string; specialty: CrewSpecialty; hp: number; maxHp: number; guard: number; down: boolean }
-export interface ExpeditionFoe { id: string; kind: string; name: string; hp: number; maxHp: number; atk: number; speed: number; stunned: number; desc: string }
+export type ExpeditionActionKind = 'strike' | 'guard' | 'special' | 'swap' | 'flee';
+export type ExpeditionPosition = 'front' | 'middle' | 'rear';
+export type ExpeditionStageKey = 'ruin_approach' | 'buried_concourse' | 'void_sanctum';
+export interface ExpeditionActor { id: string; name: string; specialty: CrewSpecialty; hp: number; maxHp: number; guard: number; down: boolean; position: ExpeditionPosition }
+export interface ExpeditionFoe { id: string; kind: string; name: string; hp: number; maxHp: number; atk: number; speed: number; stunned: number; desc: string; range: 'melee' | 'ranged' }
 export interface ExpeditionState {
   siteId: string;
   round: number;
   rounds: number;
+  stage: number;
+  stageCount: number;
+  stageKey: ExpeditionStageKey;
+  awaitingAdvance: boolean;
   turn: 'player' | 'enemy';
   activeActor: number;
   activeFoe: number;

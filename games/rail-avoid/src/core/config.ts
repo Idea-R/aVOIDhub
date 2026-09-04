@@ -159,7 +159,7 @@ export const BOUNTY = {
 
 export const EXPEDITION = {
   maxCrew: 3,
-  maxRounds: 6,
+  maxRounds: 4,
   strike: 9,
   voidSecondsPerRound: 8,
   marks: [4, 7],

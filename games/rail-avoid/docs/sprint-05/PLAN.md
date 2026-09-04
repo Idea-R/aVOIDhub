@@ -1,6 +1,6 @@
 # Sprint 05 — Away Team
 
-Status: in progress. The Conductor portrait/combat-master vertical slice and dedicated browser art gate are implemented; the fixture matrix and system rebuild follow.
+Status: broader Away Team program remains in progress. The encounter-depth slice is implemented and verified: clean painted scenes, two/three-stage ruins, formation pressure, swapping, eight accepted native-alpha enemy avatars and a dedicated browser gate. Sprint 06 completed the content/transparency pass; Sprint 07 sequences the remaining crew identity and readable-combat work. Persistent XP, intents, Tempo, conditions, the wider crew art set and minibosses are not yet implemented.
 
 ## Outcome
 
@@ -68,6 +68,14 @@ Exit gate:
 
 ## Phase 2 — Combat rules rebuild
 
+Current slice:
+
+- [x] Add front, middle and rear positions with explicit damage/pressure rules.
+- [x] Add a turn-consuming Swap action with keyboard and gamepad-safe UI flow.
+- [x] Split standard ruins into two stages and later-region ruins into three, with wounds carrying forward.
+- [x] Add a clear risk decision between stages: continue for the final reward or withdraw safely.
+- [ ] Add the visible intent queue, Tempo, cooldowns and four shared conditions described below.
+
 Work:
 
 - Add three party positions: front, middle and rear. Position changes legal targets and enemy threat, not movement simulation.
@@ -95,12 +103,21 @@ Exit gate:
 
 ## Phase 3 — Art system and vertical slice
 
+Current slice:
+
+- [x] Generate and integrate four distinct environment backplates plus a lantern-camp event scene.
+- [x] Replace all eight enemy drafts with visually accepted native-alpha cutouts.
+- [x] Reject fake-alpha batches and the checker-extraction experiment; remove rejected files from runtime assets.
+- [x] Preserve native PNG enemy masters and verify source/runtime alpha plus light/dark edges. Remaining crew masters follow in Sprint 07.
+
+Asset recipes and hashes: `ASSET-MANIFEST.md`.
+
 Work:
 
 - Generate a locked visual sheet for the Conductor, Wren, one Rail Thug and the Greenbelt Spike Captain before batching the roster.
 - Each crew member receives one 4:5 portrait and one full-body, stage-facing combat master. Derive thumbnails from the portrait; do not generate inconsistent duplicates.
 - Each foe receives one full-body combat master suitable for both the stage and a cropped dossier portrait.
-- Require genuine alpha on combat cutouts. Reject baked checkerboards. If generation does not produce reliable alpha, key a controlled flat background and inspect the exported edge matte at 200%.
+- Require genuine native alpha on combat cutouts. Reject baked checkerboards and opaque backgrounds; correct through the authorized GPT Image 1.5 API and inspect edges on light/dark backgrounds. Do not colour-key or reconstruct alpha masks.
 - Store immutable sources and a manifest with prompts, dimensions, hashes and runtime mappings.
 - Animate cutouts with transform, recoil, hit flash, shadow and effect layers; do not require frame-by-frame character animation in this sprint.
 

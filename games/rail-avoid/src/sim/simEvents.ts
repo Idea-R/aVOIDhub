@@ -6,7 +6,7 @@ import { addResource, hasCar, log } from './helpers';
 import { spawnWave } from './waves';
 import { addCar } from './train';
 import type { CarType } from '../core/types';
-import { addCrew, removePassengers } from './train';
+import { addCrew, boardPassengers, removePassengers } from './train';
 import { addMarks, offerRelics, hasRelic } from './loot';
 
 export function updateEvents(ctx: SimContext): void {
@@ -137,6 +137,9 @@ export function chooseEventOption(ctx: SimContext, index: number): boolean {
     }
     case 'mystery_weapon:1': addResource(ctx, 'scrap', 16); addResource(ctx, 'ammo', 12); summary = 'The mounting yields useful parts and ammunition.'; break;
     case 'mystery_weapon:2': addResource(ctx, 'rails', 4); summary = 'The forgotten siding is added to the track plan.'; break;
+    case 'mystery_dock:0': addResource(ctx, 'scrap', -6); addResource(ctx, 'food', 18); summary = 'Fresh catch and smoked stores come aboard.'; break;
+    case 'mystery_dock:1': { const boarded = boardPassengers(ctx, 6); morale(6); summary = boarded > 0 ? `${boarded} stranded passengers come aboard.` : 'The coaches are full; supplies are shared on the platform.'; break; }
+    case 'mystery_dock:2': addResource(ctx, 'rails', 10); addResource(ctx, 'scrap', 8); morale(-3); summary = 'The bridge works come apart under uneasy eyes.'; break;
     case 'node_crossroads:0': {
       const region = Math.max(0, Math.min(3, state.region));
       const comp = region === 0 ? ['raider', 'raider', 'raider', 'hound', 'hound', 'raider'] : region === 1 ? ['crawler', 'raider', 'raider', 'sapper', 'hound', 'hound'] : region === 2 ? ['harpy', 'harpy', 'wisp', 'raider', 'raider', 'crawler'] : ['wisp', 'wisp', 'harpy', 'crawler', 'raider', 'raider'];

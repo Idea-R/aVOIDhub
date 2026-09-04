@@ -18,7 +18,7 @@ import { initDirector, updateDirector, spawnWave } from './waves';
 import { initBoss, updateBosses, spawnBoss } from './bosses';
 import { updateLoot, chooseRelic, offerRelics, addMarks } from './loot';
 import { updateBounties } from './bounties';
-import { startExpedition, expeditionAction, expeditionResolve, endExpedition } from './expedition';
+import { startExpedition, expeditionAction, expeditionResolve, advanceExpedition, endExpedition } from './expedition';
 import { LOOT } from '../core/config';
 import { tileAt, log, recomputeCapacity, locoPos, addResource, makeCar } from './helpers';
 import { neighbors } from '../core/hex';
@@ -297,6 +297,7 @@ export class Sim implements SimApi {
     this.bus.flush(); return r;
   }
   expeditionAction(kind: ExpeditionActionKind, targetFoe?: number): boolean { const r = expeditionAction(this.ctx, kind, targetFoe); this.bus.flush(); return r; }
+  advanceExpedition(continueDeeper: boolean): boolean { const r = advanceExpedition(this.ctx, continueDeeper); this.bus.flush(); return r; }
   expeditionResolve(timing: ExpeditionTiming): boolean { const r = expeditionResolve(this.ctx, timing); this.bus.flush(); return r; }
   endExpedition(): boolean { const r = endExpedition(this.ctx); this.bus.flush(); return r; }
 

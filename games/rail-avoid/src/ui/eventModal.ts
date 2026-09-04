@@ -5,8 +5,24 @@ import type { SimState, PassengerEventDef, PassengerEventOption } from '../core/
 import { eventById } from '../core/passengerEvents';
 import { CAR_DEFS } from '../core/cars';
 import { gsap, D, isReduced, rowsIn } from './motion';
+import lanternCamp from '/art/scenes/lantern-camp-v2.webp?url&inline';
+import ruinApproach from '/art/scenes/ruin-approach-v2.webp?url&inline';
+import falseSignal from '/art/scenes/false-signal-v2.webp?url&inline';
+import rainboundSurvivor from '/art/scenes/rainbound-survivor-v2.webp?url&inline';
+import abandonedGunCar from '/art/scenes/abandoned-gun-car-v2.webp?url&inline';
+import watersideRailDock from '/art/scenes/waterside-rail-dock-v2.webp?url&inline';
 
 export interface EventModal { el: HTMLElement; show(defId?: string): void; update(s: SimState): void }
+
+function sceneFor(defId: string): { src: string; alt: string } | null {
+  if (defId === 'node_site' || defId === 'mystery_away') return { src: ruinApproach, alt: 'The train waits beside an ancient ruin entrance.' };
+  if (defId === 'mystery_ambush') return { src: falseSignal, alt: 'Raiders spring a barricade around a false railway signal.' };
+  if (defId === 'mystery_survivor') return { src: rainboundSurvivor, alt: 'A lone rail gunner waits beside a wrecked handcar in the rain.' };
+  if (defId === 'mystery_weapon') return { src: abandonedGunCar, alt: 'A damaged gun car waits on an overgrown siding.' };
+  if (defId === 'mystery_dock') return { src: watersideRailDock, alt: 'A lantern-lit rail dock and fishing settlement beside dark water.' };
+  if (defId === 'mystery_cache') return { src: lanternCamp, alt: 'A lantern-lit camp beside the railway.' };
+  return null;
+}
 
 function unmet(s: SimState, o: PassengerEventOption): string | null {
   const r = o.requires;
@@ -60,17 +76,27 @@ export function createEventModal(ui: UiShared): EventModal {
       optionButtons.push({ btn: b, why, opt: o });
     });
     const h2 = el('h2', { text: def.title });
+    const scene = sceneFor(def.id);
     const mysteryMarks: Record<string, string> = {
-      mystery_cache: '▣', mystery_away: '⚔', mystery_ambush: '⚠', mystery_survivor: '♟', mystery_weapon: '⌁',
+      mystery_cache: '▣', mystery_away: '⚔', mystery_ambush: '⚠', mystery_survivor: '♟', mystery_weapon: '⌁', mystery_dock: '≋',
     };
-    box.replaceChildren(
-      el('div', { class: 'rv-label rv-wire', text: mystery ? 'Unknown signal · identity revealed' : (def.negative ? 'Trouble aboard' : 'Aboard the train') }),
+    const heading = el('div', { class: 'rv-event-heading' },
       ...(mystery ? [el('div', { class: 'rv-mystery-mark', 'aria-hidden': 'true', text: mysteryMarks[def.id] ?? '?' })] : []),
-      h2,
+      el('div', { class: 'rv-event-heading-copy' },
+        el('div', { class: 'rv-label rv-wire', text: mystery ? 'Unknown signal · identity revealed' : (def.negative ? 'Trouble aboard' : 'Aboard the train') }),
+        h2,
+      ),
+    );
+    const decision = el('div', { class: 'rv-event-decision' },
       el('p', { class: 'rv-event-text', text: def.text }),
       options,
       el('div', { class: 'rv-hint', text: 'Press 1-3 to choose. The train waits while you decide.' }),
     );
+    const body = el('div', { class: scene ? 'rv-event-body rv-has-scene' : 'rv-event-body' },
+      ...(scene ? [el('figure', { class: 'rv-event-scene' }, el('img', { src: scene.src, alt: scene.alt, 'data-scene': def.id }))] : []),
+      decision,
+    );
+    box.replaceChildren(heading, body);
     if (s) update(s);
     pendingWire = () => telegram(def.title, h2, options);
   }
