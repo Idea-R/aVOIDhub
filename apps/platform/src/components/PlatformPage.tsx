@@ -3,14 +3,15 @@ import { SiteFooter } from '@/components/SiteFooter'
 import { SiteHeader } from '@/components/SiteHeader'
 import { SharePageButton } from '@/components/SharePageButton'
 
-export function PlatformPage({ eyebrow, title, intro, children }: {
+export function PlatformPage({ eyebrow, title, intro, children, compact = false }: {
   eyebrow: string
   title: ReactNode
   intro: string
   children: ReactNode
+  compact?: boolean
 }) {
   return (
-    <main className="platformPage" id="top">
+    <main className={`platformPage${compact ? ' platformPageCompact' : ''}`} id="top">
       <SiteHeader />
       <div className="platformDepth" aria-hidden="true" />
       <header className="platformPageHero sectionFrame">
@@ -22,7 +23,7 @@ export function PlatformPage({ eyebrow, title, intro, children }: {
           </div>
           <div className="platformHeroAside">
             <p className="platformPageIntro">{intro}</p>
-            <SharePageButton />
+            {!compact && <SharePageButton />}
           </div>
         </div>
       </header>

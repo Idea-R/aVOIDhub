@@ -10,7 +10,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
-export const metadata: Metadata = { title: 'Platform control room' }
+export const metadata: Metadata = { title: 'Platform control room', alternates: { canonical: '/admin' }, robots: { index: false, follow: false } }
 
 type CreatorReview = {
   id: string
@@ -81,7 +81,7 @@ function PreviewControlRoom() {
 export default async function AdminPage() {
   if (!isPlatformRuntimeConfigured()) {
     return (
-      <PlatformPage eyebrow="/ restricted operations" title={<>Platform<br /><em>control room.</em></>} intro="Review people, builds, payments, and score integrity without turning the back office into a gray spreadsheet.">
+      <PlatformPage compact eyebrow="/ restricted operations" title={<>Platform<br /><em>control room.</em></>} intro="Review people, builds, payments, and score integrity without turning the back office into a gray spreadsheet.">
         <PreviewControlRoom />
       </PlatformPage>
     )
@@ -106,7 +106,7 @@ export default async function AdminPage() {
   const queueErrors = [creatorQueue.error, gameQueue.error, scoreQueue.error, membershipCount.error].filter(Boolean)
 
   return (
-    <PlatformPage eyebrow="/ restricted operations" title={<>Platform<br /><em>control room.</em></>} intro="Review people, builds, payments, and score integrity without turning the back office into a gray spreadsheet.">
+    <PlatformPage compact eyebrow="/ restricted operations" title={<>Platform<br /><em>control room.</em></>} intro="Review people, builds, payments, and score integrity without turning the back office into a gray spreadsheet.">
       <DashboardShell active="admin" role="PLATFORM ADMIN" name={userData.user.email ?? 'Administrator'} status={queueErrors.length ? 'partial signal' : 'systems responding'} isAdmin>
         <div className="deckHeader">
           <div><p className="panelLabel">Live operations</p><h2>One queue.<br /><em>Clear consequences.</em></h2></div>

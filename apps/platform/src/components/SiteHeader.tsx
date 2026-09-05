@@ -2,6 +2,7 @@
 
 import { Menu, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { BrandLockup } from './BrandLockup'
 import { SplitCta } from './SplitCta'
 
@@ -15,6 +16,10 @@ const navigation = [
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false)
+  const pathname = usePathname()
+  const isCurrent = (href: string) => href.includes('#')
+    ? pathname === '/' || pathname.startsWith('/games/')
+    : pathname.replace(/\/$/, '') === href.replace(/\/$/, '')
 
   useEffect(() => {
     if (!open) return
@@ -33,7 +38,7 @@ export function SiteHeader() {
 
       <nav className="desktopNav" aria-label="Primary navigation">
         {navigation.map((item) => (
-          <a key={item.href} href={item.href}>{item.label}</a>
+          <a key={item.href} href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>{item.label}</a>
         ))}
       </nav>
 
@@ -44,15 +49,16 @@ export function SiteHeader() {
         type="button"
         aria-label={open ? 'Close navigation' : 'Open navigation'}
         aria-expanded={open}
+        aria-controls="mobile-navigation"
         onClick={() => setOpen((value) => !value)}
       >
         {open ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
       </button>
 
       {open && (
-        <nav className="mobileNav" aria-label="Mobile navigation">
+        <nav id="mobile-navigation" className="mobileNav" aria-label="Mobile navigation">
           {navigation.map((item, index) => (
-            <a key={item.href} href={item.href} onClick={() => setOpen(false)}>
+            <a key={item.href} href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined} onClick={() => setOpen(false)}>
               <span>0{index + 1}</span>{item.label}
             </a>
           ))}

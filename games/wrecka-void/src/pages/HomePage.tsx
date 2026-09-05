@@ -16,6 +16,7 @@ import {
 import { usePlatformPlayer } from "../hooks/usePlatformPlayer";
 import { SupportModal } from "../components/Support/SupportModal";
 import logoImage from "../assets/wreckavoid-logo.webp";
+import { WRECKAVOID_SIGN_IN_PATH } from "../platformAuth";
 
 interface HomePageProps {
   onNavigate: (page: string) => void;
@@ -81,7 +82,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
                   <span>Leaderboard</span>
                 </a>
                 <a
-                  href="/login/?returnTo=%2Fwreckavoid%2F"
+                  href={WRECKAVOID_SIGN_IN_PATH}
                   className="rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-3 text-center font-bold text-white shadow-lg transition-all duration-200 hover:scale-105 hover:from-blue-400 hover:to-blue-500 sm:px-6"
                 >
                   Sign In
@@ -128,7 +129,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
                 </p>
                 <button
                   onClick={() =>
-                    (window.location.href = "/login/?returnTo=%2Fwreckavoid%2F")
+                    (window.location.href = WRECKAVOID_SIGN_IN_PATH)
                   }
                   className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-400 hover:to-blue-500 text-white font-semibold text-sm rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md"
                 >

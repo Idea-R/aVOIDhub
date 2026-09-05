@@ -24,6 +24,7 @@ run(["run", "verify:release", "--workspace=@avoid/tanka-void"]);
 run(["run", "test", "--workspace=@avoid/platform"]);
 run(["run", "typecheck", "--workspace=@avoid/platform"]);
 run(["run", "test:catalog", "--workspace=@avoid/platform"]);
+run(["run", "test:styles", "--workspace=@avoid/platform"]);
 run(["run", "test:foundation"]);
 run(["run", "build:platform:netlify"]);
 

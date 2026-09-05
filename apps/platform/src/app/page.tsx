@@ -5,15 +5,17 @@ import { ArcadeIntro, IntroReplayButton } from '@/components/ArcadeIntro'
 import { Reveal } from '@/components/Reveal'
 import { SiteFooter } from '@/components/SiteFooter'
 import { SiteHeader } from '@/components/SiteHeader'
-import { originalGames, relatedGames } from '@/data/games'
+import { getCatalogCounts, originalGames, relatedGames } from '@/data/games'
 
 const platformFeatures = [
   { icon: UserRound, title: 'One player profile', copy: 'A home for scores, favorites, badges, and the games you keep coming back to.' },
   { icon: Trophy, title: 'Shared competition', copy: 'Leaderboards that say what was checked, with each hosted game free to score differently.' },
-  { icon: Heart, title: 'Follow the fun', copy: 'Like games, save favorites, and follow creators without turning the arcade into a feed.' },
+  { icon: Heart, title: 'Keep your favorites', copy: 'Save the games you want to come back to, all in your player profile.' },
 ]
 
 export default function HomePage() {
+  const counts = getCatalogCounts()
+  const count = (value: number) => String(value).padStart(2, '0')
   return (
     <main id="top">
       <ArcadeIntro />
@@ -21,9 +23,9 @@ export default function HomePage() {
 
       <aside className="signalRail sectionFrame" aria-label="Platform status">
         <span className="signalLive"><span className="signalDot" aria-hidden="true" /> Directory online</span>
-        <span>Hosted <strong>04</strong></span>
-        <span>Elsewhere <strong>03</strong></span>
-        <span>Queued <strong>01</strong></span>
+        <span>Playable <strong>{count(counts.playable)}</strong></span>
+        <span>Elsewhere <strong>{count(counts.elsewhere)}</strong></span>
+        <span>Queued <strong>{count(counts.queued)}</strong></span>
         <IntroReplayButton />
         <span className="signalCode">AVD / ONLINE</span>
       </aside>
@@ -39,9 +41,9 @@ export default function HomePage() {
             <a className="textButton" href="#creators">What we&apos;re building <ArrowRight size={16} /></a>
           </div>
           <dl className="heroFacts" aria-label="Current catalog facts">
-            <div><dt>04</dt><dd>playable aVOID games</dd></div>
-            <div><dt>03</dt><dd>other Ideas Realized games</dd></div>
-            <div><dt>01</dt><dd>tank rebuild in the queue</dd></div>
+            <div><dt>{count(counts.playable)}</dt><dd>playable aVOID games</dd></div>
+            <div><dt>{count(counts.elsewhere)}</dt><dd>other Ideas Realized games</dd></div>
+            <div><dt>{count(counts.queued)}</dt><dd>games in the queue</dd></div>
           </dl>
         </div>
 
@@ -76,8 +78,8 @@ export default function HomePage() {
           </Reveal>
           <div className="catalogTelemetry" aria-label="Original game catalog status">
             <span><i aria-hidden="true" /> Hosted collection</span>
-            <span>04 live</span>
-            <span>01 queued</span>
+            <span>{count(counts.playable)} playable</span>
+            <span>{count(counts.queued)} queued</span>
             <span className="telemetryRule" aria-hidden="true" />
           </div>
           <p className="railHint" aria-hidden="true"><span>Swipe for more</span><i /><ArrowRight /></p>
@@ -109,7 +111,7 @@ export default function HomePage() {
             <p className="sectionIndex">/ 03 · the platform</p>
             <h2 id="platform-title">A better home for games that are <em>already fun.</em></h2>
             <p>We&apos;re tying the games together with player profiles, leaderboards people can trust, favorites, creator pages, and hosting that makes sense. The games are still the point.</p>
-            <div className="buildTag"><BadgeCheck size={16} /> Profiles are live. Older scores are clearly marked while verified scoring is rebuilt.</div>
+            <div className="buildTag"><BadgeCheck size={16} /> Player and creator tools share one account. Ranked saving is still being finished.</div>
             <div className="platformAccessLinks">
               <a href="/account/">Open your player deck <ArrowRight aria-hidden="true" /></a>
               <a href="/creators/dashboard/">Creator workspace <ArrowRight aria-hidden="true" /></a>
@@ -137,7 +139,7 @@ export default function HomePage() {
               <p className="sectionIndex">/ 04 · founding membership</p>
               <h2 id="membership-title">Back the games.<br /><em>Keep the wins yours.</em></h2>
             </Reveal>
-            <p>A Founding Player membership is for people who want fewer ads and more odd little games. It adds profile flair and early experiments. It never touches your score.</p>
+            <p>Founding Player membership is taking shape: fewer ads, profile flair, and early experiments. Checkout is not open yet. Your score will always be yours to earn.</p>
             <a className="membershipTicket" href="/membership/">
               <span><i>FOUNDING ACCESS</i><strong>See what membership includes</strong></span>
               <ArrowRight size={19} aria-hidden="true" />

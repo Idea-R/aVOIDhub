@@ -4,6 +4,7 @@ import type { PlatformPlayer } from "../../api/playerContext";
 import { GameState } from "../../types/Game";
 import { ModalSurface } from "../ui/ModalSurface";
 import logoImage from "../../assets/wreckavoid-logo.webp";
+import { WRECKAVOID_SIGN_IN_PATH } from "../../platformAuth";
 
 interface GameOverlaysProps {
   gameState: GameState;
@@ -252,7 +253,7 @@ Think you can go farther? Meet me on the aVOID leaderboard.
             {!user && (
               <button
                 onClick={() =>
-                  (window.location.href = "/login/?returnTo=%2Fwreckavoid%2F")
+                  (window.location.href = WRECKAVOID_SIGN_IN_PATH)
                 }
                 className="w-full rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
               >

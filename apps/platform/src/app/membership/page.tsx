@@ -7,7 +7,7 @@ import {
   membershipPlans,
 } from "@/lib/membership";
 
-export const metadata: Metadata = { title: "Membership" };
+export const metadata: Metadata = { title: "Membership", alternates: { canonical: "/membership" } };
 
 export default function MembershipPage() {
   return (
@@ -54,7 +54,7 @@ export default function MembershipPage() {
               <CheckoutButton plan={key} enabled={enabled} />
               {!enabled && (
                 <span className="quietNote">
-                  Preview only. Checkout is not open yet.
+                  Checkout is not open yet.
                 </span>
               )}
             </article>
@@ -74,10 +74,9 @@ export default function MembershipPage() {
         </a>
       </section>
       <p className="platformFootnote">
-        When checkout opens, Stripe hosts payment and billing management. Signed
-        webhooks grant or remove paid access; the browser never grants itself an
-        entitlement. Prices, renewal terms, taxes, and cancellation details will
-        appear before a real charge can be created.
+        When checkout opens, Stripe will host payment and billing. Prices,
+        renewal terms, taxes, and cancellation details will appear before a
+        real charge can be created.
       </p>
     </PlatformPage>
   );

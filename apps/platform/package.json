@@ -9,6 +9,8 @@
     "build:netlify": "npm run build:platform:netlify --prefix ../..",
     "start": "next start",
     "test:catalog": "node scripts/verify-game-catalog.mjs",
+    "test:styles": "node scripts/verify-platform-styles.mjs",
+    "test:routes": "node scripts/verify-platform-routes.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest --run"
   },

@@ -8,7 +8,7 @@ import { isPlatformRuntimeConfigured } from '@/lib/env'
 import { createClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
-export const metadata: Metadata = { title: 'Creator workspace' }
+export const metadata: Metadata = { title: 'Creator workspace', alternates: { canonical: '/creators/dashboard' }, robots: { index: false, follow: false } }
 
 type CreatorApplication = {
   id: string
@@ -49,7 +49,7 @@ function CreatorPreview() {
 export default async function CreatorDashboardPage() {
   if (!isPlatformRuntimeConfigured()) {
     return (
-      <PlatformPage eyebrow="/ creator workspace" title={<>Build it.<br /><em>Bring it in clean.</em></>} intro="Apply, pass review, and bring us a playable build. Payment never buys approval.">
+      <PlatformPage compact eyebrow="/ creator workspace" title={<>Build it.<br /><em>Bring it in clean.</em></>} intro="Apply, pass review, and bring us a playable build. Payment never buys approval.">
         <CreatorPreview />
       </PlatformPage>
     )
@@ -76,7 +76,7 @@ export default async function CreatorDashboardPage() {
   const role = getPlatformRole({ user: userData.user, creatorApproved: approved })
 
   return (
-    <PlatformPage eyebrow="/ creator workspace" title={<>Build it.<br /><em>Bring it in clean.</em></>} intro="Apply, pass review, and bring us a playable build. Payment never buys approval.">
+    <PlatformPage compact eyebrow="/ creator workspace" title={<>Build it.<br /><em>Bring it in clean.</em></>} intro="Apply, pass review, and bring us a playable build. Payment never buys approval.">
       <DashboardShell active="creator" role={role.toUpperCase()} name={name} status={canSubmit ? 'submissions open' : 'setup in progress'} isAdmin={isPlatformAdmin(userData.user)}>
         <div className="deckHeader">
           <div><p className="panelLabel">Creator bay</p><h2>Your route to<br /><em>the directory.</em></h2></div>

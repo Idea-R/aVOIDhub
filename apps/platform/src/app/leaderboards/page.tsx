@@ -1,12 +1,16 @@
 import type { Metadata } from 'next'
 import { PlatformPage } from '@/components/PlatformPage'
+import { getGameById } from '@/data/games'
 import { isPlatformRuntimeConfigured } from '@/lib/env'
 import { rankedGameRegistry, type RankedGameKey } from '@/lib/games/registry'
 import { WRECKAVOID_RULESET_VERSION } from '@/lib/games/wreckavoid'
 import { createClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
-export const metadata: Metadata = { title: 'Leaderboards' }
+export const metadata: Metadata = { title: 'Leaderboards', alternates: { canonical: '/leaderboards' } }
+
+const availableGameKeys = (Object.keys(rankedGameRegistry) as RankedGameKey[])
+  .filter(key => getGameById(key)?.status === 'playable')
 
 type ScoreRow = { id: string; user_id: string | null; player_name: string; score: number; game_key: string; verification_level: string; metadata: Record<string, unknown>; created_at: string }
 type LegacyScoreRow = Omit<ScoreRow, 'verification_level'> & { is_verified: boolean }
@@ -32,7 +36,7 @@ function trustLabel(row: ScoreRow): string {
 export default async function LeaderboardsPage({ searchParams }: { searchParams: Promise<{ game?: string; mode?: string }> }) {
   const params = await searchParams
   const requested = params.game
-  const gameKey: RankedGameKey = requested && requested in rankedGameRegistry ? requested as RankedGameKey : 'voidavoid'
+  const gameKey: RankedGameKey = requested && availableGameKeys.includes(requested as RankedGameKey) ? requested as RankedGameKey : 'voidavoid'
   const game = rankedGameRegistry[gameKey]
   const requestedMode = params.mode
   const mode = game.modes.some(({ key }) => key === requestedMode) ? requestedMode as string : game.modes[0].key
@@ -82,9 +86,9 @@ export default async function LeaderboardsPage({ searchParams }: { searchParams:
   }
 
   return (
-    <PlatformPage eyebrow="/ shared competition" title={<>Runs worth<br /><em>believing.</em></>} intro="Every hosted game gets its own board and ruleset. Server replay means the platform rebuilt the score from run evidence. Bounded means it checked a smaller terminal summary. Both remain provisional while anti-cheat work continues.">
+    <PlatformPage eyebrow="/ shared competition" title={<>Runs worth<br /><em>believing.</em></>} intro="Compare runs from games with platform scoring. Each board keeps its own rules. Scores remain provisional while anti-cheat checks are being improved.">
       <nav className="gameTabs" aria-label="Choose a leaderboard">
-        {(Object.keys(rankedGameRegistry) as RankedGameKey[]).map((key) => <a key={key} href={`/leaderboards/?game=${key}`} aria-current={key === gameKey ? 'page' : undefined}>{rankedGameRegistry[key].name}</a>)}
+        {availableGameKeys.map((key) => <a key={key} href={`/leaderboards/?game=${key}`} aria-current={key === gameKey ? 'page' : undefined}>{rankedGameRegistry[key].name}</a>)}
       </nav>
       {game.modes.length > 1 && (
         <nav className="gameTabs" aria-label="Choose a game mode">
@@ -93,8 +97,8 @@ export default async function LeaderboardsPage({ searchParams }: { searchParams:
       )}
       <section className="leaderboardPanel">
         <div className="leaderboardHead"><span>Rank / player</span><span>Trust</span><span>Score</span></div>
-        {unavailable && <p className="emptyState">The leaderboard cannot reach Supabase right now.</p>}
-        {!unavailable && !scores.length && <p className="emptyState">No accepted runs yet. The first one takes the top row.</p>}
+        {unavailable && <p className="emptyState">The live board is currently unavailable. Please try again later.</p>}
+        {!unavailable && !scores.length && <p className="emptyState">No accepted runs yet. Play and submit a run to get on the board.</p>}
         {scores.map((row, index) => (
           <div className="leaderboardRow" key={row.id}>
             <span><i>{String(index + 1).padStart(2, '0')}</i><strong>{row.player_name}</strong></span>

@@ -15,7 +15,7 @@ const compiled = ts.transpileModule(source, {
 const sandbox = { exports: {} };
 vm.runInNewContext(compiled, sandbox, { filename: sourceUrl.pathname });
 
-const { allGames, getGameById } = sandbox.exports;
+const { allGames, getGameById, getCatalogCounts } = sandbox.exports;
 const expectedIds = [
   "voidavoid",
   "wreckavoid",
@@ -33,6 +33,11 @@ function assert(condition, message) {
 }
 
 assert(Array.isArray(allGames), "allGames must be an array");
+assert(JSON.stringify(getCatalogCounts()) === JSON.stringify({ playable: 5, elsewhere: 3, queued: 1 }), "current catalog counts must match playable destinations, not cards");
+assert(JSON.stringify(getCatalogCounts([])) === JSON.stringify({ playable: 0, elsewhere: 0, queued: 0 }), "empty catalogs must not retain stale totals");
+const queuedClone = { ...getGameById('voidavoid'), id: 'test-future-game', status: 'soon', playHref: undefined };
+assert(getCatalogCounts([...allGames, queuedClone]).playable === 5, "queued additions must not inflate playable count");
+assert(getCatalogCounts([...allGames, queuedClone]).queued === 2, "queued additions must update the queue count");
 assert(
   allGames.length === expectedIds.length,
   "catalog must contain exactly nine V1 titles",
@@ -125,6 +130,7 @@ for (const id of ["bloomfall", "acrolis", "ttt3d"]) {
     game.playHref.startsWith("https://"),
     `${id} must launch its HTTPS-owned domain`,
   );
+  assert(!game.meta.startsWith('Opens '), `${id}: a detail-page card must not promise an immediate external launch`);
 }
 
 const flipside = getGameById("flipside");

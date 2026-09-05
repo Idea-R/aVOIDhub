@@ -231,8 +231,8 @@ export default async function GameDetailPage({
                 <span>
                   <i>
                     {launchesAway
-                      ? "LEAVING THE DIRECTORY"
-                      : "FOCUSED PLAY ROUTE"}
+                      ? "EXTERNAL GAME"
+                      : "PLAY HERE"}
                   </i>
                   <strong>{game.playLabel}</strong>
                 </span>
@@ -245,12 +245,12 @@ export default async function GameDetailPage({
             ) : (
               <div
                 className="gameComingControl"
-                aria-label="TankaVOID is not playable yet"
+                aria-label="This game is not playable yet"
               >
                 <Clock3 aria-hidden="true" />
                 <span>
                   <i>HANGAR STATUS</i>
-                  <strong>Release build held for final checks</strong>
+                  <strong>Not playable yet</strong>
                 </span>
               </div>
             )}
@@ -282,7 +282,7 @@ export default async function GameDetailPage({
           </div>
           <div className="gameStageStatus">
             <span>{game.availability}</span>
-            <strong>{game.destination ?? "Build in progress"}</strong>
+            <strong>{game.destination ?? "Not available yet"}</strong>
           </div>
           <span
             className="gameStageOrbit gameStageOrbitOne"
@@ -374,7 +374,7 @@ export default async function GameDetailPage({
               <small>
                 {scoreSnapshot.signedIn
                   ? "Best saved result for this account."
-                  : "Sign-in and saved runs open with the platform runtime."}
+                  : "Sign in to save runs and view your best score when the board is available."}
               </small>
             </div>
           ) : null}
@@ -384,22 +384,21 @@ export default async function GameDetailPage({
           <div className="gameScoreBoardHead">
             <span>
               {game.score.scope === "platform"
-                ? "Board preview"
+                ? "Platform board"
                 : "Score boundary"}
             </span>
             <strong>{game.title}</strong>
           </div>
           {game.score.scope === "platform" && scoreSnapshot.unavailable ? (
             <p className="gameScoreEmpty">
-              The platform board is staged but not connected on this preview.
+              The live board is currently unavailable. Please try again later.
             </p>
           ) : null}
           {game.score.scope === "platform" &&
           !scoreSnapshot.unavailable &&
           !scoreSnapshot.scores.length ? (
             <p className="gameScoreEmpty">
-              No saved runs yet. The empty board stays empty rather than making
-              up a crowd.
+              No accepted runs yet. Play and submit a run to get on the board.
             </p>
           ) : null}
           {game.score.scope === "platform" ? (

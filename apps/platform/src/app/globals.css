@@ -963,20 +963,6 @@ button {
   height: 1px;
   background: rgba(255, 255, 255, 0.13);
 }
-.originalGrid {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 22px;
-}
-.originalGrid .gameCard {
-  grid-column: span 6;
-}
-.originalGrid .gameCard:nth-child(3),
-.originalGrid .gameCard:nth-child(4),
-.originalGrid .gameCard:nth-child(5) {
-  grid-column: span 4;
-}
-
 .gameCard {
   --accent: var(--teal);
   --card-rx: 0deg;
@@ -3627,55 +3613,7 @@ button {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-  *,
-  *::before,
-  *::after {
-    scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-  }
-  .reveal {
-    opacity: 1;
-    transform: none;
-    animation: none;
-  }
-  .gameCard {
-    --card-rx: 0deg !important;
-    --card-ry: 0deg !important;
-    --card-lift: 0px !important;
-    --card-scale: 1 !important;
-  }
-  .gameCardVisual {
-    will-change: auto;
-  }
-  .gameDetailStage:hover .gameStageImageWrap {
-    border-radius: 8px 48px 8px 48px;
-    transform: translate3d(-3px, -1px, 28px) rotate(-2.5deg);
-  }
-  .gameDetailStage:hover .gameStageImage {
-    transform: none;
-  }
-  .gameHighlight:hover,
-  .gamePlayButton:hover,
-  .gamePlayButton:active {
-    transform: none;
-  }
-  .socialDock li {
-    opacity: 1;
-    animation: none;
-  }
-  .socialReveal,
-  .socialIconCard,
-  .socialIconCard::before,
-  .socialIconCard::after,
-  .socialInlineControl {
-    transition-duration: 0.01ms !important;
-  }
+/* Shared component refinements. Motion overrides live together at the end. */
 .brandLink { display: inline-flex; border-radius: 14px; }
 .brandLink:focus-visible { outline: 3px solid var(--orange); outline-offset: 4px; }
 .brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -0.04em; white-space: nowrap; }
@@ -3863,9 +3801,9 @@ button {
 .catalogTelemetry i { width: 7px; aspect-ratio: 1; border-radius: 50%; background: var(--lime); box-shadow: 0 0 0 4px rgba(201,251,87,.1); }
 .catalogTelemetry .telemetryRule { flex: 1; height: 1px; background: rgba(255,255,255,.13); }
 .railHint { display: none; }
-.originalGrid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 22px; }
-.originalGrid .gameCard { grid-column: span 6; }
-.originalGrid .gameCard:nth-child(3), .originalGrid .gameCard:nth-child(4), .originalGrid .gameCard:nth-child(5) { grid-column: span 4; }
+.originalGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px 22px; }
+.originalGrid .gameCard { grid-column: auto; }
+.originalGrid .gameCard:last-child:nth-child(odd) { grid-column: 1 / -1; }
 
 .gameCard { --accent: var(--teal); --card-rx: 0deg; --card-ry: 0deg; --card-lift: 0px; --card-scale: 1; --glow-x: 50%; --glow-y: 22%; position: relative; min-width: 0; display: block; color: inherit; perspective: 1100px; transform-style: preserve-3d; }
 .gameCardVisual { position: relative; height: 340px; overflow: hidden; border: 1px solid rgba(255,255,255,.18); border-radius: 8px 28px 8px 28px; background: radial-gradient(circle at 30% 20%, color-mix(in srgb, var(--accent) 62%, white), transparent 33%), linear-gradient(135deg, color-mix(in srgb, var(--accent) 46%, #111), #0e130e 68%); box-shadow: inset 0 0 0 5px rgba(255,255,255,.025), 0 18px 28px rgba(0,0,0,.17); transform: perspective(1100px) translateY(var(--card-lift)) rotateX(var(--card-rx)) rotateY(var(--card-ry)) scale(var(--card-scale)); transform-style: preserve-3d; transition: transform 310ms var(--ease-spring), border-radius 410ms var(--ease-spring), box-shadow 350ms ease; will-change: transform; }
@@ -4274,10 +4212,10 @@ button {
   .reviewActionBlock { grid-column: 2; }
 }
 
-@media (min-width: 761px) and (max-width: 900px) {
-  .originalGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .originalGrid .gameCard, .originalGrid .gameCard:nth-child(3), .originalGrid .gameCard:nth-child(4), .originalGrid .gameCard:nth-child(5) { grid-column: auto; }
-  .originalGrid .gameCard:last-child { width: calc(50% - 11px); grid-column: 1 / -1; justify-self: center; }
+/* The dock needs its own gutter; footer socials remain available everywhere. */
+body:has(.platformPage) .socialDock { display: none; }
+@media (max-width: 1399px) {
+  .socialDock { display: none; }
 }
 
 @media (max-width: 760px) {
@@ -4297,7 +4235,8 @@ button {
   .mobileNavAction { padding-top: 16px; }
   .mobileNavAction .splitCta { width: 100%; }
 
-  .signalRail { width: calc(100% - 28px); margin-top: 22px; gap: 13px; overflow: hidden; }
+  .signalRail { width: calc(100% - 28px); margin-top: 22px; gap: 10px; flex-wrap: wrap; }
+  .signalRail .signalCode { display: none; }
   .signalRail > span:nth-child(3), .signalRail > span:nth-child(4) { display: none; }
   .signalCode { display: none; }
   .introReplay { flex: 0 0 auto; margin-left: auto; }
@@ -4448,12 +4387,35 @@ button {
 
 @keyframes railNudge { 0%, 62%, 100% { transform: translateX(0); } 76% { transform: translateX(4px); } }
 
+/* Utility pages keep the brand, but bring the task above the fold. */
+.platformPageCompact .platformPageHero { padding: 38px 0 36px; }
+.platformPageCompact .platformPageSignal { margin-bottom: 24px; }
+.platformPageCompact .platformPageHero h1 { font-size: clamp(38px, 5vw, 64px); line-height: 1.06; }
+.platformPageCompact .platformPageHeroGrid { gap: 28px; }
+.platformPageCompact .platformPageIntro { font-size: 16px; }
+.platformPageCompact .platformPageHero h1 em { display: inline-block; padding-bottom: .08em; }
+.accessGateForm { gap: 24px; min-width: 0; }
+.accessGateForm > .deckWarning { margin: 0; }
+.accessReturn { max-width: 100%; }
+.accessReturn strong { min-width: 0; overflow-wrap: anywhere; }
+.desktopNav a[aria-current='page'] { color: var(--teal-dark); }
+.desktopNav a[aria-current='page']::after { right: 0; height: 2px; }
+.mobileNav a[aria-current='page'] { color: var(--teal-dark); background: rgba(7,155,146,.08); }
+@media (max-width: 760px) {
+  .platformPageCompact .platformPageHero { padding: 32px 0; }
+  .platformPageCompact .platformPageSignal { margin-bottom: 18px; }
+  .platformPageCompact .platformPageHeroGrid { gap: 18px; }
+  .accessGateForm { order: -1; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
   .reveal { opacity: 1; transform: none; animation: none; }
   .gameCard { --card-rx: 0deg !important; --card-ry: 0deg !important; --card-lift: 0px !important; --card-scale: 1 !important; }
   .gameCardVisual { will-change: auto; }
+  .gameDetailStage:hover .gameStageImageWrap { border-radius: 8px 48px 8px 48px; transform: translate3d(-3px, -1px, 28px) rotate(-2.5deg); }
+  .gameDetailStage:hover .gameStageImage, .gameHighlight:hover, .gamePlayButton:hover, .gamePlayButton:active { transform: none; }
   .socialDock li { opacity: 1; animation: none; }
   .socialReveal, .socialIconCard, .socialIconCard::before, .socialIconCard::after, .socialInlineControl { transition-duration: .01ms !important; }
   .railHint svg { animation: none; }

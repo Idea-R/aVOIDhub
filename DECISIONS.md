@@ -400,3 +400,10 @@ WreckaVOID and TankaVOID consume the platform's same-origin cookie session inste
 Use one platform session, one-use ticket, server-owned manifest, and server-derived accepted score for every hosted ranked run. Label a result `server replay` when deterministic evidence rebuilds the score and `bounded` when the server recomputes a narrower terminal summary. Store both as `provisional` until the platform proves the underlying player actions or simulation independently. Never translate a successful arithmetic replay into a `verified` claim.
 
 Keep modes separate and show one best accepted row per player per mode. Legacy rows may remain historical, but they cannot inherit a stronger trust label from old browser-authored flags.
+
+## D-057: Repair the platform before expanding monetization
+
+- Date: 2026-09-04
+- Status: accepted implementation scope from the user's next-sprint request
+
+Complete Platform Repair Sprint 1 against current main: shared CSS, responsive structure, catalog/page identity, public wording, login return paths and creator-form recovery. Preserve the approved artwork and stack. Use one Sol implementation worker and one Luna copy worker in isolated worktrees under the existing `_worktrees/aVOID/platform` folder; the coordinator owns integration and browser QA. Do not disturb earlier dirty worktrees. Production data, live email, Stripe, AdSense, and production release retain their separate gates. Details: `docs/sprints/platform-repair-1.md`.
