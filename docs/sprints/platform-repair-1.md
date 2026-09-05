@@ -1,7 +1,7 @@
 # Platform Repair Sprint 1
 
 Started: 2026-09-04
-Status: implementation and local verification complete; release handoff in progress
+Status: complete release candidate; production release and service activation remain gated
 Baseline: `origin/main` at `25d6820`
 Integration: `codex/fix-platform-repair-sprint-1` in `C:/dev/aVOID-main`
 
@@ -30,7 +30,7 @@ User authorized a documented sprint, implementation, a new goal, and credit-cons
 | 2. Handoffs and wording | Drizzt / Regis | Return destinations and application recovery; bounded copy cleanup | Regression tests and reviewed meaning | Complete |
 | 3. Catalog and page identity | Coordinator | Derived counts, honest external links, canonical/noindex metadata | Registry/source tests and route checks | Complete |
 | 4. Integration and browser QA | Coordinator | Integrated changes, builds, viewport/motion/error-state evidence | Required checks recorded | Complete |
-| 5. Release handoff | Coordinator | Coherent commits, final diff and release/rollback instructions | Candidate vs live and service gates clearly identified | In progress |
+| 5. Release handoff | Coordinator | Coherent commits, final diff and release/rollback instructions | Candidate vs live and service gates clearly identified | Complete |
 
 ## Worker board and ownership
 
@@ -75,7 +75,7 @@ No recursive agents. No worker browser or dependency installation is needed. Par
 - `npm run build:platform:netlify`: passed; all five game bundles assembled and Next production build completed. WORDaVOID retains its pre-existing large-chunk warning. No bundle policy was weakened.
 - The 12 route checks also passed against `next start`, not only the dev server.
 
-### Browser evidence so far
+### Browser evidence
 
 Local review has no configured production backend and sends no account email or real application.
 
@@ -98,11 +98,17 @@ Both bounded workers are terminal and their reviewed diffs are integrated. Resou
 
 ### Release and rollback
 
-Prepare one PR from `codex/fix-platform-repair-sprint-1` to `main`. The existing Git-to-Netlify integration supplies the preview; do not create worker PRs. Check the exact candidate SHA, CI, preview route preservation, public metadata and desktop/mobile creator/login layouts before approving release.
+Implementation commit: `a2675a20098e52b29c8968c51dea274d2a62d8ba`.
+
+One release PR: [#61](https://github.com/Idea-R/aVOIDhub/pull/61), from `codex/fix-platform-repair-sprint-1` to `main`. No worker PRs were created.
+
+Review site: [Netlify preview](https://deploy-preview-61--coruscating-squirrel-a47ad9.netlify.app/). Implementation deploy: `6a9b940dc5f48100084f0158`. [CI run](https://github.com/Idea-R/aVOIDhub/actions/runs/33943425307) passed the full existing release-candidate runner. Netlify build, headers and redirects passed; Pages changed was skipped, not failed. The subsequent evidence commit changes documentation only.
+
+Hosted preview checks passed: all 12 HTTP/canonical/noindex routes; creator spacing at 1280 and 390; the Wreck game detail Play action reaches its preserved game route; its Sign In link reaches `/login?next=%2Fwreckavoid%2F` and displays `/wreckavoid/` as the return destination. The preview intentionally leaves email/application submission disabled by configuration. This is not proof that live sign-in or score saving works.
 
 This candidate needs no database migration, new secret, new dependency, DNS change or payment/ad setting. Before a later authorized production merge, record the current production deploy and verify the same candidate preview. Rollback is a code revert/redeploy of the pre-release revision, with the previous Netlify deploy available as the immediate recovery target. No data rollback should be required by this sprint.
 
-Restart: complete the one release-preview handoff and record its URL/SHA/check status. Do not resume old worker branches or activate production services. Main and the live domain remain unchanged during candidate review.
+Restart: review/release PR #61 under the production gate, then use the following sprint sequence. Do not resume old worker branches or activate production services from this document alone. Main and the live domain were not changed by this sprint.
 
 ## Following sprint
 
@@ -110,7 +116,7 @@ Sprint 2 should prove a complete player journey before charging or showing ads:
 
 1. Read-only backend diagnosis: identify the exact leaderboard query/schema failure and current migration state. Deliver a repair/rehearsal plan, with no blind production migration.
 2. Isolated identity and scoring rehearsal: verify email callback, profile, one-use run ticket, accepted score, duplicate rejection and leaderboard display. Keep different rulesets/modes separate. Production writes need an approved target and test-account scope.
-3. WreckaVOID launch cleanup: make the platform detail page the overview and the game route the compact launcher, without deleting game instructions/settings. Preserve direct game links and touch controls.
+3. WreckaVOID launch cleanup: make the platform detail page the overview and the game route the compact launcher, without deleting game instructions/settings. Preserve direct game links and touch controls. Remove the repeated Physics survival label and old launcher claims about real-time global competition during that pass.
 4. Membership test-mode journey: settle actual benefits, then verify Checkout, webhook idempotency, entitlements, cancellation and paid-user ad suppression. No live charges during this gate.
 5. AdSense acceptance: sign in to the owning account, confirm approved domains and publisher ID, then verify ads.txt, consent requirements and one unobtrusive platform placement. No ad loading in gameplay or for ad-free members until these gates pass.
 

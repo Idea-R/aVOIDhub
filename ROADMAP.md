@@ -4,7 +4,7 @@ Updated: 2026-09-04
 
 ## Current sprint
 
-Platform Repair Sprint 1 is implemented and locally verified on `codex/fix-platform-repair-sprint-1` in `C:/dev/aVOID-main`, based on `origin/main` at `25d6820`. One release-preview handoff is in progress. The phase plan, evidence, rollback instructions and next service gates are in [Platform Repair Sprint 1](docs/sprints/platform-repair-1.md). Earlier branch/deploy references below are historical program records, not instructions to resume those worktrees. Input: `C:/dev/aVOID/docs/reviews/2026-09-04-platform-health-check.md`.
+Platform Repair Sprint 1 is complete as a verified release candidate on `codex/fix-platform-repair-sprint-1` in `C:/dev/aVOID-main`, based on `origin/main` at `25d6820`. Implementation `a2675a2` is in [PR #61](https://github.com/Idea-R/aVOIDhub/pull/61) with a passing [Netlify preview](https://deploy-preview-61--coruscating-squirrel-a47ad9.netlify.app/). Production and monetization were not activated. The phase plan, evidence, rollback instructions and next service gates are in [Platform Repair Sprint 1](docs/sprints/platform-repair-1.md). Earlier branch/deploy references below are historical program records, not instructions to resume those worktrees. Input: `C:/dev/aVOID/docs/reviews/2026-09-04-platform-health-check.md`.
 
 ## Charter
 
