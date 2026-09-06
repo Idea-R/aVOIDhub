@@ -86,8 +86,6 @@
 #ui .rv-exp-stun { display: none; font-size: calc(9 * var(--u)); letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); white-space: nowrap; }
 #ui .rv-exp-foe.rv-stunned .rv-exp-stun { display: inline; animation: rv-blink 0.8s steps(2) infinite; }
 #ui .rv-exp-foe.rv-stunned .rv-exp-fig { opacity: 0.8; }
-#ui .rv-exp-turn { position: absolute; top: -22px; left: 50%; margin-left: -6px; color: var(--gold); font-size: 14px; transform: rotate(90deg); opacity: 0; transition: opacity var(--tr); text-shadow: 0 0 8px var(--gold); }
-#ui .rv-exp-actor.rv-active .rv-exp-turn { opacity: 1; animation: rv-arrow 0.9s ease-in-out infinite; }
 #ui .rv-exp-actor.rv-active .rv-exp-card { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), 0 0 18px rgba(232, 193, 112, 0.35); }
 #ui .rv-exp-actor.rv-active .rv-exp-fig svg { filter: drop-shadow(0 0 6px var(--gold)); }
 #ui .rv-exp-actor.rv-active .rv-exp-fig-authored img { filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 8px var(--gold)); }
@@ -104,9 +102,6 @@
 #ui .rv-exp-foe.rv-dead .rv-exp-fig { opacity: 0.25; filter: grayscale(1); }
 #ui .rv-exp-foe.rv-acting .rv-exp-fig svg { filter: drop-shadow(0 0 8px var(--danger)); }
 #ui .rv-exp-foe.rv-acting .rv-exp-fig-enemy img { filter: drop-shadow(0 9px 13px rgba(0,0,0,.75)) drop-shadow(0 0 10px rgba(232,111,111,.75)); }
-#ui .rv-exp-key { position: absolute; top: 0; left: 50%; margin-left: -12px; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--bg3); border: 1px solid var(--line2); color: var(--fg2); font-size: calc(11 * var(--u)); font-weight: 800; z-index: 2; }
-#ui .rv-exp-foe.rv-target .rv-exp-key { background: var(--gold); color: #1a1408; border-color: var(--gold); }
-#ui .rv-exp-foe.rv-dead .rv-exp-key { display: none; }
 #ui .rv-exp-reticle { position: absolute; left: 50%; top: 40%; width: 74px; height: 74px; margin: -37px 0 0 -37px; border: 1.5px dashed var(--gold); border-radius: 50%; opacity: 0; transition: opacity var(--tr); pointer-events: none; animation: rv-exp-spin 6s linear infinite; }
 #ui .rv-exp-foe.rv-target:not(.rv-dead) .rv-exp-reticle { opacity: 0.8; }
 @keyframes rv-exp-spin { to { transform: rotate(360deg); } }
@@ -240,3 +235,41 @@
 /* reduced motion: static backdrop, no pulsing chrome (timing ring stays: it is gameplay feedback) */
 #ui.rv-reduced .rv-exp-ticker, #ui.rv-reduced .rv-exp-prompt, #ui.rv-reduced .rv-exp-reticle, #ui.rv-reduced .rv-exp-turn, #ui.rv-reduced .rv-exp-rally-ico { animation: none !important; }
 #ui.rv-reduced .rv-exp-layer { transform: none; }
+
+/* Reflow the whole combat surface on small screens, not just its outer modal. */
+#ui .rv-exp-log-toggle { display: none; }
+#ui .rv-exp-result, #ui .rv-exp-depth-card { max-height: calc(100dvh - 24px); overflow-y: auto; }
+@media (max-width: 900px) {
+  #ui .rv-exp-top { padding: 8px 10px; gap: 6px; flex-wrap: wrap; }
+  #ui .rv-exp-site { font-size: calc(13 * var(--u)); letter-spacing: .04em; }
+  #ui .rv-exp-stage-readout { padding: 3px 7px; }
+  #ui .rv-exp-ticker { font-size: 10px; max-width: 100%; padding: 3px 7px; }
+  #ui .rv-exp-stage { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 40px 12px 6px; }
+  #ui .rv-exp-crew, #ui .rv-exp-foes { width: 100%; min-width: 0; gap: 5px; padding: 0; justify-content: center; }
+  #ui .rv-exp-actor, #ui .rv-exp-foe { min-width: 0; width: min(110px, 100%); flex: 1 1 0; max-width: 120px; }
+  #ui .rv-exp-fig, #ui .rv-exp-fig-enemy { width: 100%; height: clamp(85px, 19vh, 140px); }
+  #ui .rv-exp-actor .rv-exp-fig svg, #ui .rv-exp-actor .rv-exp-fig-authored img { width: 100%; height: 100%; object-fit: contain; }
+  #ui .rv-exp-card { padding: 5px; }
+  #ui .rv-exp-name { font-size: calc(11 * var(--u)); letter-spacing: 0; }
+  #ui .rv-exp-formation-rules { max-width: calc(100% - 20px); width: max-content; flex-wrap: wrap; justify-content: center; border-radius: 5px; font-size: 9px; white-space: normal; }
+  #ui .rv-exp-bottom { padding: 5px 8px 7px; min-height: 0; display: flex; flex-wrap: wrap; gap: 5px; }
+  #ui .rv-exp-menu { min-width: 0; width: 100%; padding: 7px; gap: 4px; }
+  #ui .rv-exp-menu-head { flex-wrap: wrap; gap: 4px 8px; }
+  #ui .rv-exp-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+  #ui .rv-exp-action { min-width: 0; min-height: 48px; padding: 6px; gap: 2px; }
+  #ui .rv-exp-a-desc { font-size: 10px; line-height: 1.25; }
+  #ui .rv-exp-menu .rv-hint { font-size: 10px; letter-spacing: 0; }
+  #ui .rv-exp-log { display: none; }
+  #ui .rv-exp-log-toggle { display: block; padding: 4px 8px; min-height: 28px; margin-left: auto; font-size: 11px; }
+  #ui .rv-exp-log-open .rv-exp-log { display: flex; right: 8px; bottom: 43px; width: min(320px, calc(100vw - 16px)); max-height: 180px; overflow-y: auto; z-index: 5; background: #0b101c; }
+  #ui .rv-exp-tell { font-size: 10px; }
+}
+@media (max-width: 520px) {
+  #ui .rv-exp-stage { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; padding-top: 48px; gap: 5px; }
+  #ui .rv-exp-fig, #ui .rv-exp-fig-enemy { height: clamp(70px, 11vh, 110px); }
+  #ui .rv-exp-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #ui .rv-exp-crew, #ui .rv-exp-foes { align-self: end; }
+  #ui .rv-exp-ticker { margin: 0; }
+  #ui .rv-exp-top { gap: 4px; }
+  #ui .rv-exp-stage-name { letter-spacing: .04em; }
+}

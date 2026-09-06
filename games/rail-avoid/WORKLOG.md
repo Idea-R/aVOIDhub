@@ -1,5 +1,30 @@
 # Worklog
 
+## 2026-09-05 — Readable combat and deliberate formation (local)
+
+- Continued the user's next milestone in `C:/dev/aVOID-railavoid-release/games/rail-avoid`, preserving the dirty worktree. Bounded charter: `docs/sprint-07/READABLE-COMBAT.md`. No new goal, branch, commit, push, deployment, paid generation or Blender replacement.
+- Extracted pure targeting, normal-Strike, guard-reduction, intent and formation helpers shared by simulation/UI. Enemy cards show hits, base damage and targeting rule; queued attacks show the actual victim and timing reductions. Removed unsupported Shade fire/Brute armor claims.
+- Added a compact named turn order and rendered front nearest the opposing formation. Added an explicit partner chooser with both position changes, both Strike values and active-actor targeting-risk previews. Cancel does not consume state/RNG; selection uses only the active actor's turn. Mouse, number keys, native keyboard focus and controller choices share the same action path.
+- Stored explicit pending swap targets. Old pending swaps migrate once to their legacy next-living partner; invalid/downed/stale selections fail without spending a turn. Inspection/reload does not create a committed action.
+- Baseline: 54 passing unit tests and three matched ordinary-party/mixed-foe screenshots. Current: 75 passing unit tests, one optional skipped, TypeScript clean. New browser gate passes 11 viewport/text-scale combinations (23 recorded geometry/input samples), including 1920×1080 through 360×740, landscape 844×450, 75/100/110% scale, large text, normal/reduced motion, real mouse/keyboard/controller, cancellation, reload and downed-partner invalidation. No browser errors.
+- Existing expedition-art, seven-size card-layout, 25-state conversation and continuity/retreat suites pass. Timing input passed an unchanged rerun after one software-rendered S-window miss; added an exact incoming target/damage assertion. No timing thresholds changed and no human timing/balance acceptance is claimed.
+- Production build and 6.44 MB offline standalone rebuilt. Offline starter/conversation/intent/swap/frame checks pass with no unexpected errors; one known optional-audio file fallback remains. Full campaign regression passes its functional gates with zero console/page errors, warnings or failed requests. Its SwiftShader performance note is not real-GPU acceptance; boosted boss and Perfect-timing fixtures are not balance proof. Details in the milestone charter and `verify/report.md`.
+- Resource checkpoint: only the main agent, zero Codex-owned heavyweight MCP helpers. Other applications' helpers untouched. Docker engine unavailable; no Docker/WSL work performed. The local Vite server remains available at `http://localhost:5178/RAILaVOID/`.
+- Next: review intent/formation comprehension, then one blocked-track ambush and readable miniboss with ordinary-party Good-timing, wounded-party and retreat/re-entry gates. XP, equipment, larger roster and publishing stay separate.
+
+## 2026-09-05 — Keeper conversation foundation (local)
+
+- Continued the approved next slice in the release checkout, preserving all existing uncommitted UI/art work. Charter and decisions: `docs/sprint-07/KEEPERS-SIGNAL.md` and `DECISIONS.md`.
+- Added a stable crossroads conversation with Mechanic/relic-aware repair choices, a free exit and run-scoped keeper goodwill. Reused accepted clean scene and alpha portrait/frame assets; no paid generation or production publication.
+- Kept event state during crew selection; cancel/reload no longer discards the encounter. Added wounded retreat/re-entry and victory → relic → receipt continuity with single-award tests.
+- Preserved expedition/relic state during save restore, added durable task checkpoints, bound the correct simulation before title-load listeners, and prevented scheduled cinematics from stealing dialogue input.
+- Replaced the remaining legacy event typewriter/slide and crew-selection bounce. Added readable minimum Void-cost disclosure without changing the cost/timing rules.
+- Verified 54 unit tests (one optional skipped), typecheck, production build, eight-combination conversation flow (25 captured states), seven-size expedition-card suite, continuity, usability and six-size responsive checks. Keyboard timing passed an unchanged rerun; software-rendering timing sensitivity is recorded in the charter, not hidden by relaxed gameplay windows.
+- Final campaign regression passed all required gates with zero browser errors, warnings or failed requests. Updated the stale controls fixture to make a real junction choice before testing canvas placement. Boosted boss and Perfect-timing fixtures are functional evidence, not balance acceptance; real-GPU performance remains pending.
+- Rebuilt the 6.42 MB standalone. Offline smoke passed for starter art and the new scene/portrait/frame plus conversation choices, with zero unexpected errors and one known optional-audio fallback. Left the local server available at `http://localhost:5178/RAILaVOID/`; no commit, push or deployment.
+- Resource check: only the main agent; zero Codex-owned heavyweight MCP helpers. Docker engine unavailable; no Docker was used or modified. Existing non-Codex helpers were untouched.
+- Next: review the conversation composition, then implement readable intent and explicit swap partners before the blocked-track/miniboss milestone. XP, equipment, roster expansion and live release remain separate.
+
 ## 2026-09-03
 
 - Started Sprint 03, "The Train Is the Interface".

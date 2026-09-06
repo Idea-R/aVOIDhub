@@ -170,7 +170,9 @@ export function createHoverCards(ui: UiShared, layout: { freeZone(): Rect }): Ho
         if (t?.void) why = 'Consumed by the void';
         else if (t?.terrain === 'mountain') why = 'Mountain — impassable';
       }
-      text = '✕ ' + why; tone = 'rv-no';
+      // A non-adjacent tile is a route destination, not an invalid click.
+      if (why === 'Not adjacent to the plan') text = '⌖ Click to route here · existing rail first';
+      else { text = '✕ ' + why; tone = 'rv-no'; }
     } else if (p.free) { text = 'FREE · old rail'; tone = 'rv-free'; }
     else text = `${p.cost} rail${p.cost === 1 ? '' : 's'}`;
     if (chip.textContent !== text) chip.textContent = text;
@@ -205,6 +207,7 @@ export function createHoverCards(ui: UiShared, layout: { freeZone(): Rect }): Ho
   }
 
   function show(k: Exclude<Kind, null>, id: string, x: number, y: number): void {
+    if (ui.root.classList.contains('rv-junction-active') && !ui.root.classList.contains('rv-inspector-open')) { hideAll(); return; }
     const node = k === 'tile' ? chip : card;
     const other = k === 'tile' ? card : chip;
     const now = performance.now();
@@ -259,6 +262,7 @@ export function createHoverCards(ui: UiShared, layout: { freeZone(): Rect }): Ho
     showCar(index, x, y) { if (!ui.runActive()) return; carIndex = index; show('car', 'strip:' + index, x, y); },
     hideCar() { if (kind === 'car') hideAll(); },
     update() {
+      if (ui.root.classList.contains('rv-junction-active') && !ui.root.classList.contains('rv-inspector-open')) { hideAll(); return; }
       if (!kind || !ui.runActive()) { if (kind) hideAll(); return; }
       const now = performance.now();
       if (now - lastRender < 250) return;

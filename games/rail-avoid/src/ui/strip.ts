@@ -1,5 +1,5 @@
 /** Bottom train strip: one chip per car, diff-based updates. Lives in the HUD dock. */
-import { el, setText, setWidth, toggleClass, setAttr, hexColor } from './dom';
+import { el, btn, setText, setWidth, toggleClass, setAttr, hexColor } from './dom';
 import type { UiShared } from './shared';
 import type { SimState, Car, Crew, CrewSpecialty } from '../core/types';
 import { CAR_DEFS } from '../core/cars';
@@ -55,6 +55,16 @@ export function createStrip(ui: UiShared, hooks: StripHooks = {}): Strip {
   const powerV = el('b', { text: '0/0' });
   const speedV = el('b', { text: '0.00' });
   const countV = el('b', { text: '0' });
+  const trainSummary = el('span', { class: 'rv-train-summary', role: 'status', text: '' });
+  const trainToggle = btn('Manage train ▴', () => {
+    const open = ui.root.classList.toggle('rv-train-open');
+    setAttr(trainToggle, 'aria-expanded', String(open));
+    setText(trainToggle, open ? 'Close train ▾' : 'Manage train ▴');
+    needSpans = true;
+    ui.audio().ui(open ? 'open' : 'click');
+  }, { class: 'rv-small rv-train-toggle', aria: 'Manage train' });
+  setAttr(trainToggle, 'aria-expanded', 'false');
+  setAttr(trainToggle, 'aria-controls', 'rv-train-cards');
   const crewReadyV = el('b', { text: '0' });
   const crewReady = el('button', { class: 'rv-crew-ready', type: 'button', 'aria-label': 'Assign available crew to a train car' },
     el('span', { class: 'rv-crew-ready-lamp', 'aria-hidden': 'true' }),
@@ -81,6 +91,7 @@ export function createStrip(ui: UiShared, hooks: StripHooks = {}): Strip {
     el('span', { class: 'rv-stat-k', text: label }),
     el('span', { class: 'rv-stat-readout' }, value, suffix));
   const head = el('div', { class: 'rv-strip-head' },
+    trainToggle, trainSummary,
     el('div', { class: 'rv-strip-brand' },
       el('span', { class: 'rv-strip-kicker', text: 'Rolling stock command' }),
       el('strong', { text: 'The Eastbound' })),
@@ -90,7 +101,7 @@ export function createStrip(ui: UiShared, hooks: StripHooks = {}): Strip {
       metric('Power grid', powerV, '', 'Power generated / power demanded'),
       metric('Ground speed', speedV, ' hex/s')),
   );
-  const carsEl = el('div', { class: 'rv-cars', role: 'listbox', 'aria-label': 'Train cars, locomotive first' });
+  const carsEl = el('div', { class: 'rv-cars', id: 'rv-train-cards', role: 'listbox', 'aria-label': 'Train cars, locomotive first' });
   const root = el('div', { class: 'rv-strip rv-panel' }, head, crewReady, carsEl);
 
   let chips: Chip[] = [];
@@ -313,6 +324,13 @@ export function createStrip(ui: UiShared, hooks: StripHooks = {}): Strip {
     lastUpdate = now; selectedShown = sel;
     updateChips(s);
     const t = s.train;
+    const open = ui.root.classList.contains('rv-train-open');
+    setAttr(trainToggle, 'aria-expanded', String(open));
+    setText(trainToggle, open ? 'Close train ▾' : 'Manage train ▴');
+    const critical = cars.filter(c => c.hp / c.maxHp < 0.35 || c.onFire).length;
+    const hull = Math.round(cars.reduce((v, c) => v + Math.max(0, c.hp), 0) / Math.max(1, cars.reduce((v, c) => v + c.maxHp, 0)) * 100);
+    setText(trainSummary, `${cars.length} cars · ${hull}% hull${critical ? ` · ${critical} critical` : ''}`);
+    toggleClass(trainSummary, 'rv-train-critical', critical > 0);
     const ready = t.crew.filter(c => c.carIndex < 0).length;
     if (ready > 0) {
       setText(crewReadyV, String(ready));

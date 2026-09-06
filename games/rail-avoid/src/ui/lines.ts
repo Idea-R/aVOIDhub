@@ -79,6 +79,7 @@ export function settlementLine(s: SimState, st: Pick<Settlement, 'col' | 'row'>)
 
 export interface JunctionOption {
   col: number; row: number;
+  trace?: Array<[number, number]>;
   line: number;
   lineName: string;
   next: { id: string; name: string; type: string; distance: number } | null;
@@ -143,8 +144,8 @@ export function readJunctionOptions(sim: SimApi | null, s: SimState | null): Jun
           const line = typeof o.line === 'number' ? o.line : LINE_UNKNOWN;
           // the sim may not resolve a next stop on crossovers; walk the rail ourselves before calling it a dead end
           let next = o.next ?? null;
-          if (!next && end) { try { next = nextSettlementAlong(s, end, [o.col, o.row]); } catch { next = null; } }
-          return { col: o.col, row: o.row, line, lineName: o.lineName || lineName(line), next };
+          if (!next && !o.trace && end) { try { next = nextSettlementAlong(s, end, [o.col, o.row]); } catch { next = null; } }
+          return { col: o.col, row: o.row, line, lineName: o.lineName || lineName(line), trace: o.trace, next };
         });
       }
     } catch { /* fall through to the local reader */ }

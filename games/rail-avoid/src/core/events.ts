@@ -90,6 +90,7 @@ export interface GameEvents {
   'bounty:done': { id: string; title: string; reward: { marks: number; rails: number; scrap: number } };
   'bounty:failed': { id: string; title: string };
   'expedition:start': { siteId: string; crew: string[]; foes: string[] };
+  'expedition:prepare': {};
   'expedition:pending': { kind: string; actor: string; foe: string; turn: 'player' | 'enemy' };
   'expedition:hit': { target: 'foe' | 'actor' | 'heal'; name: string; amount: number; timing: 'perfect' | 'good' | 'miss' };
   'expedition:round': { round: number };

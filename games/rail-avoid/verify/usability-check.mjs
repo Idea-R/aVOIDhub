@@ -35,8 +35,18 @@ for (let i = 0; i < 8; i++) {
 await page.waitForFunction(() => !window.__RAIL.view?.isCinematicPlaying(), null, { timeout: 10000 });
 const startedRunning = await page.evaluate(() => window.__RAIL.state.phase === 'running');
 assert(startedRunning, 'a new run did not begin in the running state');
+// Test explicit pause away from a junction; at a junction the direction cards
+// are themselves the central continue action (covered by verify:junction).
+await page.evaluate(() => {
+  const R = window.__RAIL, option = R.sim.junctionOptions()[0];
+  if (option) R.sim.planTile(option.col, option.row);
+});
 await page.evaluate(() => window.__RAIL.pause());
 await page.waitForTimeout(1000); // command-deck entrance animation must settle before geometry checks
+await page.waitForFunction(() => {
+  const callout = document.querySelector('#ui .rv-paused-callout');
+  return callout && !callout.hidden && document.querySelector('#ui .rv-speed button[aria-label^="Resume"]');
+}, null, { timeout: 10000 });
 const paused = await page.evaluate(() => ({
   phase: window.__RAIL.state.phase,
   callout: !document.querySelector('#ui .rv-paused-callout')?.hidden,
@@ -108,13 +118,27 @@ if (click) {
   await page.waitForTimeout(650);
   const route = page.locator('#ui .rv-route');
   const collapsedWidth = await route.evaluate(n => n.getBoundingClientRect().width);
+  // Sample the actual CSS transition clock inside the page. A CDP round-trip
+  // plus waitForTimeout(75) can arrive well after 140 ms under SwiftShader.
+  await route.evaluate(n => {
+    n.addEventListener('pointerenter', () => requestAnimationFrame(() => {
+      const transitions = n.getAnimations();
+      const width = transitions.find(a => a.transitionProperty === 'width');
+      if (!width) { n.dataset.intentSample = JSON.stringify({ missing: true }); return; }
+      for (const animation of transitions) { animation.pause(); animation.currentTime = 75; }
+      const timing = width.effect.getTiming();
+      n.dataset.intentSample = JSON.stringify({ width: n.getBoundingClientRect().width, delay: timing.delay, duration: timing.duration });
+    }), { once: true });
+  });
   await route.hover();
-  await page.waitForTimeout(75);
-  const intentWidth = await route.evaluate(n => n.getBoundingClientRect().width);
-  await page.waitForTimeout(600);
+  await page.waitForFunction(() => !!document.querySelector('#ui .rv-route')?.dataset.intentSample);
+  const intent = await route.evaluate(n => JSON.parse(n.dataset.intentSample));
+  await route.evaluate(n => n.getAnimations().forEach(a => a.play()));
+  await page.waitForFunction(() => document.querySelector('#ui .rv-route').getBoundingClientRect().width > 180);
   const openWidth = await route.evaluate(n => n.getBoundingClientRect().width);
   assert(collapsedWidth <= 48, `route rail did not collapse (${collapsedWidth}px)`);
-  assert(intentWidth < 90, `route rail expanded before hover intent elapsed (${intentWidth}px)`);
+  assert(!intent.missing && intent.delay >= 140 && intent.duration >= 300, `route rail lost its deliberate hover transition (${JSON.stringify(intent)})`);
+  assert(intent.width <= collapsedWidth + 1, `route rail expanded before hover intent elapsed (${JSON.stringify(intent)})`);
   assert(openWidth > 180, `route rail did not smoothly expand (${openWidth}px)`);
 }
 

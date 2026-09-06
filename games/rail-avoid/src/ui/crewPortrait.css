@@ -1,0 +1,5 @@
+/* Shared bust framing. Generic exports contain alpha margins; crop in the UI,
+   never remove a background or alter the native transparent masters. */
+#ui .rv-portrait-window { display: inline-block; overflow: hidden; flex-shrink: 0; isolation: isolate; background: #13141c; }
+#ui .rv-portrait-window > img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; transform: scale(1.8); transform-origin: 50% 50%; }
+#ui .rv-portrait-window[data-portrait-role="conductor"] > img { transform: none; object-position: 50% 18%; }

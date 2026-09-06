@@ -3,7 +3,7 @@
  * rail; hovering (or focusing) expands it to show the poster, the reward and the time left. Completed bounties
  * flash gold and fade out; failed ones strike through and fade.
  */
-import { el, setText, setWidth, toggleClass, show, fmtTime, clamp } from './dom';
+import { el, btn, setAttr, setText, setWidth, toggleClass, show, fmtTime, clamp } from './dom';
 import type { UiShared } from './shared';
 import type { SimState, Bounty } from '../core/types';
 import { gsap, D, isReduced } from './motion';
@@ -25,7 +25,14 @@ function fmtReward(r: Bounty['reward']): string {
 export function createBountyTracker(ui: UiShared): BountyTracker {
   const countEl = el('span', { class: 'rv-bounty-count', text: '0' });
   const listEl = el('div', { class: 'rv-bounty-list', role: 'list' });
+  listEl.id = 'rv-bounty-list';
+  const toggle = btn('Bounties', () => {
+    const open = ui.root.classList.toggle('rv-bounties-open');
+    setAttr(toggle, 'aria-expanded', String(open));
+  }, { class: 'rv-small rv-bounties-toggle', aria: 'Bounties' });
+  setAttr(toggle, 'aria-expanded', 'false'); setAttr(toggle, 'aria-controls', listEl.id);
   const root = el('div', { class: 'rv-bounties rv-panel', role: 'group', 'aria-label': 'Bounties', tabindex: '-1' },
+    toggle,
     el('div', { class: 'rv-bounty-head' }, el('span', { class: 'rv-bounty-ico', 'aria-hidden': 'true', text: '◎' }), el('span', { class: 'rv-label', text: 'Bounties' }), countEl),
     listEl,
   );
@@ -113,6 +120,7 @@ export function createBountyTracker(ui: UiShared): BountyTracker {
   }
 
   function reset(): void {
+    ui.root.classList.remove('rv-bounties-open'); setAttr(toggle, 'aria-expanded', 'false');
     rows.clear(); listEl.replaceChildren(); root.hidden = true; lastTick = 0;
   }
 

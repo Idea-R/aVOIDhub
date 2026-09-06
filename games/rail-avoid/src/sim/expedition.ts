@@ -11,12 +11,15 @@ import { EXPEDITION, VOID } from '../core/config';
 import { addResource, log, nextId } from './helpers';
 import { addMarks, offerRelics } from './loot';
 import { addCrew } from './train';
+import { rememberKeeperHelp } from './conversations';
+import { timingMul, strikePositionMul, rangedPositionMul, expeditionTargets, expeditionIncomingDamage, expeditionStrikeDamage, expeditionSwapOptions, standing } from '../core/expeditionRules';
+export { expeditionTargetWeight } from '../core/expeditionRules';
 
-const FOES: Record<string, { name: string; hp: number; atk: number; speed: number; desc: string; range: 'melee' | 'ranged' }> = {
+export const EXPEDITION_FOES: Record<string, { name: string; hp: number; atk: number; speed: number; desc: string; range: 'melee' | 'ranged' }> = {
   thug: { name: 'Rail Thug', hp: 26, atk: 6, speed: 1, range: 'melee', desc: 'Melee · hunts the front. Guard when the rail-club rises.' },
   hound: { name: 'Void Hound', hp: 18, atk: 4, speed: 2, range: 'melee', desc: 'Melee · bites twice. Fast, fragile, front-hunting.' },
-  shade: { name: 'Void Shade', hp: 34, atk: 8, speed: 1, range: 'ranged', desc: 'Ranged · reaches for the rear. Hates fire and light.' },
-  brute: { name: 'Scrap Brute', hp: 48, atk: 10, speed: 1, range: 'melee', desc: 'Melee · slow, armoured, and drawn to the front.' },
+  shade: { name: 'Void Shade', hp: 34, atk: 8, speed: 1, range: 'ranged', desc: 'Ranged · one heavy blow. Favours the rear line.' },
+  brute: { name: 'Scrap Brute', hp: 48, atk: 10, speed: 1, range: 'melee', desc: 'Melee · heavy strike, high health. Favours the front.' },
   fusilier: { name: 'Ash Cult Fusilier', hp: 28, atk: 7, speed: 1, range: 'ranged', desc: 'Ranged · sights down the rear line. Fragile under pressure.' },
   crawler: { name: 'Rail-Maw Crawler', hp: 22, atk: 5, speed: 2, range: 'melee', desc: 'Melee · attacks twice and tears into the front line.' },
   wraith: { name: 'Lantern Wraith', hp: 30, atk: 9, speed: 1, range: 'ranged', desc: 'Ranged · its signal beam seeks the rear line.' },
@@ -36,16 +39,8 @@ export const SPECIALS: Record<CrewSpecialty, { name: string; desc: string }> = {
   quartermaster: { name: 'Bribe', desc: '50%: a foe leaves. Costs 6 scrap.' },
 };
 
-function timingMul(t: ExpeditionTiming): number { return t === 'perfect' ? 1.5 : t === 'good' ? 1 : 0.5; }
-function guardMul(t: ExpeditionTiming): number { return t === 'perfect' ? 0.25 : t === 'good' ? 0.5 : 1; }
-function strikePositionMul(p: ExpeditionPosition): number { return p === 'front' ? 1.2 : p === 'rear' ? 0.85 : 1; }
-function rangedPositionMul(p: ExpeditionPosition): number { return p === 'rear' ? 1.2 : p === 'front' ? 0.85 : 1; }
-
-/** Explicit combat rule, exported so balancing tests can lock the formation contract. */
-export function expeditionTargetWeight(position: ExpeditionPosition, range: 'melee' | 'ranged'): number {
-  if (range === 'melee') return position === 'front' ? 5 : position === 'middle' ? 2 : 1;
-  return position === 'rear' ? 5 : position === 'middle' ? 2 : 1;
-}
+/** Even an immediate withdrawal spends one round travelling out and back. */
+export function expeditionVoidCost(rounds: number): number { return EXPEDITION.voidSecondsPerRound * Math.max(1, rounds); }
 
 /** Pure roster contract used by deterministic tests and future ADS encounter previews. */
 export function expeditionStageRoster(region: number, stage: number): string[] {
@@ -63,7 +58,7 @@ function makeStageFoes(ctx: SimContext, stage: number): ExpeditionFoe[] {
   const region = ctx.state.region;
   const scale = 1 + region * 0.16 + (stage - 1) * 0.07;
   return expeditionStageRoster(region, stage).map(key => {
-    const f = FOES[key];
+    const f = EXPEDITION_FOES[key];
     const hp = Math.round(f.hp * scale);
     return { id: nextId(ctx.state, 'foe'), kind: key, name: f.name, hp, maxHp: hp, atk: Math.round(f.atk * scale), speed: f.speed, stunned: 0, desc: f.desc, range: f.range };
   });
@@ -76,8 +71,11 @@ export function canExpedition(state: SimState): boolean {
 export function startExpedition(ctx: SimContext, crewIds: string[], siteId: string): boolean {
   const { state } = ctx;
   if (state.phase !== 'event' && state.phase !== 'running') return false;
+  if (state.phase === 'event' && !state.activeEvent?.preparingExpedition) return false;
   const chosen = state.train.crew.filter(c => crewIds.includes(c.id) && c.hp > 20).slice(0, EXPEDITION.maxCrew);
   if (chosen.length === 0) return false;
+  const returnEvent = state.activeEvent ? structuredClone(state.activeEvent) : undefined;
+  if (returnEvent) returnEvent.preparingExpedition = false;
   const stageCount = state.region >= 2 ? 3 : 2;
   const actors: ExpeditionActor[] = chosen.map((c, i) => ({
     id: c.id, name: c.name, specialty: c.specialty, hp: c.hp, maxHp: 100,
@@ -85,7 +83,7 @@ export function startExpedition(ctx: SimContext, crewIds: string[], siteId: stri
   }));
   const foes = makeStageFoes(ctx, 1);
   state.expedition = {
-    siteId, round: 1, rounds: 0, stage: 1, stageCount, stageKey: STAGE_KEYS[0], awaitingAdvance: false,
+    siteId, returnEvent, round: 1, rounds: 0, stage: 1, stageCount, stageKey: STAGE_KEYS[0], awaitingAdvance: false,
     turn: 'player', activeActor: 0, activeFoe: 0, actors, foes, rally: 0,
     pending: null, log: [`The crew reaches the outer works of ${siteId}.`], outcome: null, rewardRelic: false,
   };
@@ -100,17 +98,17 @@ export function startExpedition(ctx: SimContext, crewIds: string[], siteId: stri
 }
 
 function nextActor(x: ExpeditionState, from: number): number {
-  for (let k = 1; k <= x.actors.length; k++) { const i = (from + k) % x.actors.length; if (!x.actors[i].down) return i; }
+  for (let k = 1; k <= x.actors.length; k++) { const i = (from + k) % x.actors.length; if (standing(x.actors[i])) return i; }
   return -1;
 }
 function firstFoe(x: ExpeditionState): number { return x.foes.findIndex(f => f.hp > 0); }
 
 /** Player declares an action. The UI animates it and calls expeditionResolve. */
-export function expeditionAction(ctx: SimContext, kind: ExpeditionActionKind, targetFoe?: number): boolean {
+export function expeditionAction(ctx: SimContext, kind: ExpeditionActionKind, targetFoe?: number, swapActorIndex?: number): boolean {
   const x = ctx.state.expedition;
   if (!x || ctx.state.phase !== 'expedition' || x.turn !== 'player' || x.pending || x.outcome || x.awaitingAdvance) return false;
   const actor = x.actors[x.activeActor];
-  if (!actor || actor.down) return false;
+  if (!actor || !standing(actor)) return false;
   if (kind === 'flee') {
     x.outcome = 'fled';
     x.log.push('The crew falls back to the train.');
@@ -120,8 +118,8 @@ export function expeditionAction(ctx: SimContext, kind: ExpeditionActionKind, ta
   let tf = targetFoe ?? firstFoe(x);
   if (tf < 0 || !x.foes[tf] || x.foes[tf].hp <= 0) tf = firstFoe(x);
   if (tf < 0) return false;
-  if (kind === 'swap' && x.actors.filter(a => !a.down).length < 2) return false;
-  x.pending = { kind, actorIndex: x.activeActor, foeIndex: tf };
+  if (kind === 'swap' && !expeditionSwapOptions(x).some(o => o.index === swapActorIndex)) return false;
+  x.pending = { kind, actorIndex: x.activeActor, foeIndex: tf, ...(kind === 'swap' ? { swapActorIndex } : {}) };
   ctx.bus.defer('expedition:pending', { kind, actor: actor.name, foe: x.foes[tf].name, turn: 'player' });
   return true;
 }
@@ -181,6 +179,7 @@ export function expeditionResolve(ctx: SimContext, timing: ExpeditionTiming): bo
   const rng = ctx.rng.events;
   const p = x.pending;
   x.pending = null;
+  if (x.turn === 'player' && p.kind === 'swap' && (p.actorIndex !== x.activeActor || !expeditionSwapOptions(x).some(o => o.index === p.swapActorIndex))) return false;
   if (x.turn === 'player') {
     const actor = x.actors[p.actorIndex];
     const foe = x.foes[p.foeIndex];
@@ -194,7 +193,7 @@ export function expeditionResolve(ctx: SimContext, timing: ExpeditionTiming): bo
       ctx.bus.defer('expedition:hit', { target: 'foe', name: f.name, amount, timing });
     };
     switch (p.kind) {
-      case 'strike': hit(foe, base * strikePositionMul(actor.position) * timingMul(timing)); break;
+      case 'strike': hit(foe, expeditionStrikeDamage(x, actor, timing)); break;
       case 'special': {
         const ranged = rangedPositionMul(actor.position);
         switch (actor.specialty) {
@@ -210,7 +209,7 @@ export function expeditionResolve(ctx: SimContext, timing: ExpeditionTiming): bo
       }
       case 'guard': actor.guard = 1; x.log.push(`${actor.name} braces in the ${actor.position} line.`); break;
       case 'swap': {
-        const otherIndex = nextActor(x, x.activeActor);
+        const otherIndex = p.swapActorIndex!;
         const other = x.actors[otherIndex];
         if (other && otherIndex !== x.activeActor) {
           [actor.position, other.position] = [other.position, actor.position];
@@ -228,9 +227,8 @@ export function expeditionResolve(ctx: SimContext, timing: ExpeditionTiming): bo
   const foe = x.foes[p.foeIndex];
   const actor = x.actors[p.actorIndex];
   if (foe && actor && !actor.down && foe.hp > 0) {
-    let dmg = foe.atk * guardMul(timing);
-    if (actor.guard > 0) { dmg *= 0.5; actor.guard = 0; }
-    dmg = Math.round(dmg);
+    const dmg = expeditionIncomingDamage(foe, actor, timing);
+    if (actor.guard > 0) actor.guard = 0;
     actor.hp = Math.max(0, actor.hp - dmg);
     x.log.push(`${foe.name} hits ${actor.name} in the ${actor.position} for ${dmg}.`);
     ctx.bus.defer('expedition:hit', { target: 'actor', name: actor.name, amount: dmg, timing });
@@ -267,10 +265,11 @@ function queueEnemyAttack(ctx: SimContext, foeIndex?: number): void {
     return;
   }
   if (foeIndex === undefined) x.foeSwingsLeft = Math.max(0, foe.speed - 1);
-  const alive = x.actors.map((a, i) => ({ a, i })).filter(t => !t.a.down);
-  const target = ctx.rng.events.weighted(alive, alive.map(t => expeditionTargetWeight(t.a.position, foe.range)));
-  x.pending = { kind: 'strike', actorIndex: target.i, foeIndex: fi };
-  ctx.bus.defer('expedition:pending', { kind: 'attack', actor: target.a.name, foe: foe.name, turn: 'enemy' });
+  const alive = expeditionTargets(x, foe);
+  if (!alive.length) { x.pending = null; x.outcome = 'lost'; finish(ctx); return; }
+  const target = ctx.rng.events.weighted(alive, alive.map(t => t.weight));
+  x.pending = { kind: 'strike', actorIndex: target.index, foeIndex: fi };
+  ctx.bus.defer('expedition:pending', { kind: 'attack', actor: target.actor.name, foe: foe.name, turn: 'enemy' });
 }
 
 function finish(ctx: SimContext): void {
@@ -281,7 +280,7 @@ function finish(ctx: SimContext): void {
     const c = state.train.crew.find(cr => cr.id === a.id);
     if (c) c.hp = a.down ? 15 : Math.max(15, a.hp);
   }
-  const creep = VOID.baseSpeed * EXPEDITION.voidSecondsPerRound * Math.max(1, x.rounds);
+  const creep = VOID.baseSpeed * expeditionVoidCost(x.rounds);
   for (let r = 0; r < state.void.front.length; r++) state.void.front[r] += creep;
   let summary = '';
   if (x.outcome === 'won') {
@@ -306,6 +305,7 @@ function finish(ctx: SimContext): void {
     summary = `The crew withdrew after stage ${x.stage}.`;
   }
   x.log.push(summary);
+  x.summary = summary;
   log(state, `Expedition: ${summary}`, x.outcome === 'won' ? 'good' : 'warn');
   ctx.bus.defer('expedition:end', { outcome: x.outcome!, summary, rounds: x.rounds });
 }
@@ -316,9 +316,19 @@ export function endExpedition(ctx: SimContext): boolean {
   const x = state.expedition;
   if (!x || state.phase !== 'expedition' || !x.outcome) return false;
   const relic = x.rewardRelic;
+  const back = x.returnEvent;
   state.expedition = null;
-  state.phase = 'running';
-  ctx.bus.defer('phase:change', { phase: 'running' });
+  if (back && x.outcome === 'won') state.stats.eventsResolved++;
+  if (back?.defId === 'node_crossroads') {
+    state.activeEvent = back;
+    if (x.outcome === 'won') {
+      rememberKeeperHelp(ctx);
+      back.dialogue = { ...back.dialogue, step: 'receipt', receipt: `My crew are safe. The keepers will remember your help. ${x.summary ?? 'The expedition rewards are aboard.'}` };
+    }
+  } else if (back && x.outcome !== 'won') state.activeEvent = back;
+  else state.activeEvent = null;
+  state.phase = state.activeEvent ? 'event' : 'running';
+  ctx.bus.defer('phase:change', { phase: state.phase });
   if (relic) offerRelics(ctx, 'expedition');
   return true;
 }

@@ -63,6 +63,7 @@ export class GameScene extends Phaser.Scene {
   public track!: TrackLayer;
   public plannable!: PlannableLayer;
   public lines!: LineLayer;
+  public routeOverlay = false;
   public settlements!: SettlementsLayer;
   public train!: TrainLayer;
   public enemies!: EnemyLayer;
@@ -528,7 +529,10 @@ export class GameScene extends Phaser.Scene {
     // 2) junction signage (label / chevron corridor) → plan the first tile of that branch
     const jo = this.lines.hitTest(wp.x, wp.y, cam.zoom);
     if (jo) {
-      try { this.ctx.sim.planTile(jo.option.col, jo.option.row); } catch (e) { console.warn('[render] junction plan failed', e); }
+      try {
+        const result = this.ctx.sim.planTile(jo.option.col, jo.option.row);
+        if (result.ok && this.ctx.sim.state.phase === 'paused') this.ctx.sim.resume();
+      } catch (e) { console.warn('[render] junction plan failed', e); }
       return;
     }
     // 3) settlement marker
@@ -552,7 +556,8 @@ export class GameScene extends Phaser.Scene {
     try {
       // Ask the simulation, not the last rendered planning overlay. This avoids a stale
       // one-frame hit reporting "not adjacent" after the route has just advanced.
-      if (sim.previewPlan(col, row).ok) { sim.planTile(col, row); return; }
+      // Even an adjacent destination may be connected by a curved railway.
+      // Use the same rail-first planner as settlement clicks, not a direct paid edge.
       if (tile.void || tile.terrain === 'mountain') return;
       sim.planPathTo(col, row);
     } catch (e) { console.warn('[render] plan failed', e); }
@@ -782,7 +787,7 @@ export class GameScene extends Phaser.Scene {
     const tSec = time / 1000;
     // cinematics: no junction signage / line chip while any plays; no countdown arcs during the opening
     const cinePlaying = this.cine.isPlaying();
-    this.lines.suppressed = cinePlaying;
+    this.lines.suppressed = cinePlaying || this.routeOverlay;
     this.settlements.hideArcs = cinePlaying && this.cine.current() === 'opening';
     // forced night look (cinematics): snaps on quickly, fades back to the real time of day
     const nbT = cinePlaying ? this.nightBoostTarget : 0;

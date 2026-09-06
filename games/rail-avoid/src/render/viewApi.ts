@@ -32,6 +32,7 @@ export function createViewApi(scene: GameScene): ViewApi {
     worldToScreen(x: number, y: number) { return scene.worldToScreen(x, y); },
     selectCar(index: number) { scene.selectedCar = Number.isFinite(index) ? (index | 0) : -1; },
     getSelectedCar() { return scene.selectedCar; },
+    setRouteOverlay(on) { scene.routeOverlay = on; },
     snapshot() {
       try {
         // Render one frame synchronously so the buffer holds the latest scene, then read the canvas.

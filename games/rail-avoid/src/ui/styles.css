@@ -1056,39 +1056,7 @@ html.rv-cursors #game canvas[data-cursor="default"] { cursor: var(--rv-cur-defau
 #ui .rv-hovercard .rv-hc-tag.rv-hc-line { display: inline-flex; align-items: center; gap: 5px; color: var(--line, var(--fg2)); border-color: color-mix(in srgb, var(--line, var(--line2)) 60%, transparent); text-transform: none; letter-spacing: 0.04em; font-weight: 700; }
 #ui .rv-hovercard .rv-hc-tag.rv-hc-line .rv-line-sw { width: 8px; height: 8px; }
 
-/* junction chooser: docked above the strip in place of the stop pill while the train waits at a branch */
-#ui .rv-junction { position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 6px; padding: 7px 10px 8px; max-width: 100%; border-color: var(--gold); box-shadow: 0 0 0 1px rgba(232, 193, 112, 0.25), 0 0 22px rgba(232, 193, 112, 0.22), 0 8px 30px rgba(0, 0, 0, 0.35); }
-#ui .rv-junction .rv-junction-head { display: flex; align-items: baseline; gap: 8px; padding: 0 2px; }
-#ui .rv-junction .rv-junction-ico { color: var(--gold); font-size: calc(15 * var(--u)); line-height: 1; align-self: center; }
-#ui .rv-junction .rv-junction-title { font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; font-size: calc(11 * var(--u)); color: var(--gold); }
-#ui .rv-junction .rv-junction-sub { font-size: calc(10 * var(--u)); letter-spacing: 0.08em; color: var(--fg2); }
-#ui .rv-junction .rv-junction-keys { margin-left: auto; font-size: calc(9 * var(--u)); letter-spacing: 0.16em; color: var(--fg3); font-family: ui-monospace, Consolas, monospace; }
-#ui .rv-junction .rv-junction-opts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
-#ui .rv-junction .rv-junction-opt {
-  --line: var(--fg3);
-  position: relative; display: inline-flex; align-items: stretch; gap: 8px; min-width: 196px; max-width: 300px; padding: 6px 10px 6px 8px; text-align: left; letter-spacing: 0; text-transform: none;
-  border: 1px solid color-mix(in srgb, var(--line) 55%, transparent); border-left: 4px solid var(--line); border-radius: 6px;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--line) 16%, rgba(10, 12, 24, 0.9)), rgba(10, 12, 24, 0.9));
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35); transition: transform 120ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 140ms, border-color 140ms, background 140ms;
-}
-#ui .rv-junction .rv-junction-opt:hover, #ui .rv-junction .rv-junction-opt:focus-visible { transform: translateY(-2px); border-color: var(--line); box-shadow: 0 0 0 1px color-mix(in srgb, var(--line) 50%, transparent), 0 0 18px color-mix(in srgb, var(--line) 45%, transparent), 0 6px 14px rgba(0, 0, 0, 0.4); background: linear-gradient(180deg, color-mix(in srgb, var(--line) 26%, rgba(10, 12, 24, 0.92)), rgba(10, 12, 24, 0.92)); }
-#ui .rv-junction .rv-junction-opt:active { transform: translateY(0); }
-#ui .rv-junction .rv-jo-key { align-self: center; width: 18px; height: 18px; line-height: 16px; text-align: center; border-radius: 4px; border: 1px solid var(--line2); background: rgba(0, 0, 0, 0.35); color: var(--fg2); font-size: calc(10 * var(--u)); font-family: ui-monospace, Consolas, monospace; font-weight: 700; flex: 0 0 auto; }
-#ui .rv-junction .rv-jo-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
-#ui .rv-junction .rv-jo-line { display: inline-flex; align-items: center; gap: 6px; color: var(--line); font-size: calc(12 * var(--u)); letter-spacing: 0.06em; text-transform: uppercase; }
-#ui .rv-junction .rv-jo-line b { font-weight: 800; }
-#ui .rv-junction .rv-jo-direction { margin-left: auto; color: var(--fg); font: 700 calc(9 * var(--u))/1 ui-monospace, Consolas, monospace; letter-spacing: .06em; }
-#ui .rv-junction .rv-jo-next { display: inline-flex; align-items: center; gap: 3px; font-size: calc(11.5 * var(--u)); color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-#ui .rv-junction .rv-jo-next.rv-dim { color: var(--fg3); font-style: italic; }
-#ui .rv-junction .rv-jo-arrow { color: var(--fg3); }
-#ui .rv-junction .rv-jo-next-name { overflow: hidden; text-overflow: ellipsis; }
-#ui .rv-junction .rv-jo-dist { color: var(--fg2); font-variant-numeric: tabular-nums; }
-#ui .rv-junction .rv-jo-flavour { font-size: calc(9.5 * var(--u)); letter-spacing: 0.12em; text-transform: uppercase; color: color-mix(in srgb, var(--line) 75%, var(--fg2)); }
-#ui .rv-junction .rv-jo-pad { align-self: flex-start; font-size: calc(8.5 * var(--u)); letter-spacing: 0.1em; color: var(--fg3); border: 1px solid var(--line2); border-radius: 999px; padding: 0 5px; line-height: 14px; flex: 0 0 auto; }
-#ui.rv-compact .rv-junction { padding: 5px 8px 6px; gap: 4px; }
-#ui.rv-compact .rv-junction .rv-junction-opt { min-width: 168px; max-width: 250px; padding: 4px 8px 4px 6px; gap: 6px; }
-#ui.rv-compact .rv-junction .rv-jo-flavour, #ui.rv-compact .rv-junction .rv-junction-sub, #ui.rv-compact .rv-junction .rv-jo-pad { display: none; }
-@media (max-width: 1100px) { #ui .rv-junction .rv-junction-opt { min-width: 150px; max-width: 220px; } }
+/* Junction components are defined in mapFirst.css. */
 
 /* ==================================================================================
    COMMAND DECK REDESIGN
@@ -1786,17 +1754,6 @@ html.rv-cursors #game canvas[data-cursor="default"] { cursor: var(--rv-cur-defau
 #ui .rv-loco-card:focus { outline: 2px solid var(--gold); outline-offset: 2px; }
 #ui .rv-loco-explain { margin: 0; }
 
-/* A small map-correlated branch dial makes junction choice spatial, not just textual. */
-#ui .rv-junction { display: grid; grid-template-columns: 136px minmax(0,1fr); grid-template-rows: auto auto; align-items: center; }
-#ui .rv-junction .rv-junction-head { grid-column: 1 / -1; }
-#ui .rv-junction-map { position: relative; width: 128px; height: 76px; overflow: visible; }
-#ui .rv-jm-center { position: absolute; left: 50%; top: 50%; translate: -50% -50%; z-index: 2; display: grid; place-items: center; width: 28px; height: 28px; border: 2px solid var(--gold); border-radius: 50%; color: var(--gold); background: #0b0e1a; box-shadow: 0 0 0 4px rgba(232,193,112,.12); }
-#ui .rv-jm-branch { position: absolute; left: 50%; top: 50%; width: 52px; height: 3px; transform-origin: 0 50%; transform: rotate(var(--angle)); background: linear-gradient(90deg, var(--gold), var(--line)); box-shadow: 0 0 7px color-mix(in srgb, var(--line) 50%, transparent); }
-#ui .rv-jm-branch::after { content: ''; position: absolute; right: -4px; top: -3px; width: 8px; height: 8px; border: 2px solid var(--line); border-radius: 50%; background: #0b0e1a; }
-#ui .rv-jm-branch i { position: absolute; right: -9px; top: -22px; transform: rotate(calc(-1 * var(--angle))); color: var(--fg); font: 800 9px/16px ui-monospace, Consolas, monospace; width: 16px; height: 16px; text-align: center; border: 1px solid var(--line); border-radius: 50%; background: #0b0e1a; }
-#ui .rv-jm-branch b { position: absolute; left: 23px; top: 6px; max-width: 62px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transform: rotate(calc(-1 * var(--angle))); transform-origin: left top; color: var(--line); font-size: calc(8 * var(--u)); font-weight: 700; }
-#ui .rv-junction .rv-junction-opts { justify-content: flex-start; flex-wrap: nowrap; min-width: 0; overflow-x: auto; padding: 2px; }
-#ui .rv-junction .rv-junction-opt { min-width: 174px; }
 
 @media (max-width: 1366px) {
   #ui.rv-compact .rv-hud-top { grid-template-columns: calc(224px * var(--ui-density)) minmax(0,1fr) 225px; grid-template-rows: auto; }

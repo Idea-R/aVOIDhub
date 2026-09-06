@@ -12,6 +12,7 @@ import { initTrain, updateTrain, computeTrail, detachFrom, moveCar, addCar, assi
 import { planRange, plannableTiles, previewPlan, planTile, unplanLast, clearPlan, planPathTo, edgeCost, tileHasRail, isRail, aheadCount, junctionOptions } from './route';
 import { initWeather, initVoid, updateWeather, updateDayNight, updateVoid, voidDistance } from './weather';
 import { updateEvents, chooseEventOption } from './simEvents';
+import { cancelExpeditionPreparation } from './conversations';
 import { onArrive, updateStop, depart, buyCar, sellCar, repairCar, repairAll, closeShop, canShop, upgradeCar, upgradeCost, upgradeLoco, locoUpgradeCost } from './settlements';
 import { updateCombat, onTrainEnterTile, clearEnemies } from './combat';
 import { initDirector, updateDirector, spawnWave } from './waves';
@@ -288,15 +289,16 @@ export class Sim implements SimApi {
   closeShop(): void { closeShop(this.ctx); this.bus.flush(); }
   canShop(): boolean { return canShop(this.ctx); }
 
-  chooseEventOption(index: number): boolean { const r = chooseEventOption(this.ctx, index); this.bus.flush(); return r; }
+  chooseEventOption(index: number, expectedStep?: string): boolean { const r = chooseEventOption(this.ctx, index, expectedStep); this.bus.flush(); return r; }
+  cancelExpeditionPreparation(): boolean { const r = cancelExpeditionPreparation(this.ctx); this.bus.flush(); return r; }
   chooseRelic(index: number): boolean { const r = chooseRelic(this.ctx, index); this.bus.flush(); return r; }
   startExpedition(crewIds: string[]): boolean {
     const s = this.state;
-    const site = s.settlements.find(x => x.type === 'site' && s.route.path[s.train.routeIndex] && x.col === s.route.path[s.train.routeIndex][0] && x.row === s.route.path[s.train.routeIndex][1]);
+    const site = s.settlements.find(x => x.id === s.activeEvent?.locationId) ?? s.settlements.find(x => x.type === 'site' && s.route.path[s.train.routeIndex] && x.col === s.route.path[s.train.routeIndex][0] && x.row === s.route.path[s.train.routeIndex][1]);
     const r = startExpedition(this.ctx, crewIds, site ? site.name : 'the ruins');
     this.bus.flush(); return r;
   }
-  expeditionAction(kind: ExpeditionActionKind, targetFoe?: number): boolean { const r = expeditionAction(this.ctx, kind, targetFoe); this.bus.flush(); return r; }
+  expeditionAction(kind: ExpeditionActionKind, targetFoe?: number, swapActorIndex?: number): boolean { const r = expeditionAction(this.ctx, kind, targetFoe, swapActorIndex); this.bus.flush(); return r; }
   advanceExpedition(continueDeeper: boolean): boolean { const r = advanceExpedition(this.ctx, continueDeeper); this.bus.flush(); return r; }
   expeditionResolve(timing: ExpeditionTiming): boolean { const r = expeditionResolve(this.ctx, timing); this.bus.flush(); return r; }
   endExpedition(): boolean { const r = endExpedition(this.ctx); this.bus.flush(); return r; }
@@ -325,7 +327,12 @@ export class Sim implements SimApi {
       const data = JSON.parse(json);
       if (!data || data.version !== SAVE_VERSION || !data.state || !Array.isArray(data.state.tiles)) return false;
       const st = data.state as SimState;
-      if (st.phase === 'paused' || st.phase === 'event' || st.phase === 'shop') { /* keep */ } else if (st.phase !== 'running') st.phase = 'running';
+      if (st.phase === 'expedition' && st.expedition) { /* keep the battle or its unclaimed result */ }
+      else if (st.phase === 'relic' && st.pendingRelicChoice) { /* keep the reward and its return phase */ }
+      else if (st.phase !== 'paused' && st.phase !== 'event' && st.phase !== 'shop' && st.phase !== 'running') st.phase = 'running';
+      // Party selection is uncommitted UI state. Reload returns to the same decision, at no cost.
+      if (st.activeEvent) st.activeEvent.preparingExpedition = false;
+      st.storyFlags ??= [];
       this.state = st;
       this.ctx.state = st;
       if (st.train.reversing === undefined) st.train.reversing = false;
@@ -341,6 +348,16 @@ export class Sim implements SimApi {
       if (st.phaseBeforeRelic === undefined) st.phaseBeforeRelic = null;
       if (!st.pendingEliteRelic) st.pendingEliteRelic = 0;
       if (st.expedition === undefined) st.expedition = null;
+      // Older already-committed swaps chose the next living actor. Preserve that
+      // saved decision once; new actions must always name their partner.
+      const ex = st.expedition;
+      if (ex?.pending?.kind === 'swap' && ex.pending.swapActorIndex === undefined) {
+        const from = ex.pending.actorIndex;
+        const partner = ex.actors.map((_, k) => (from + k + 1) % ex.actors.length)
+          .find(i => i !== from && !ex.actors[i].down && ex.actors[i].hp > 0);
+        if (partner === undefined) ex.pending = null;
+        else ex.pending.swapActorIndex = partner;
+      }
       if (st.phaseBeforeExpedition === undefined) st.phaseBeforeExpedition = null;
       // Older saves begin their route history at the depot, before the opening
       // consist used the authored approach rail. Restore that missing history

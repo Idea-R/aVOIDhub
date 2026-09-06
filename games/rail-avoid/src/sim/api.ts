@@ -31,10 +31,10 @@ export interface SimApi {
   clearPlan(): void;
   /** Tiles that may be appended right now (adjacent to plan end, in range, not void). */
   plannableTiles(): Array<{ col: number; row: number; cost: number; free: boolean }>;
-  /** Auto-plan toward a target tile with an A* over cost (used by autopilot & double-click). */
+  /** Follow existing rail to a target; fall back to affordable construction if disconnected. */
   planPathTo(col: number, row: number): PlanResult;
   /** Branch options at the current plan end (rail continuations), with line id and the next settlement along each. */
-  junctionOptions(): Array<{ col: number; row: number; line: number; lineName: string; next: { id: string; name: string; type: string; distance: number } | null }>;
+  junctionOptions(): import('./route').RailBranch[];
 
   // --- train ---
   depart(): void;                          // leave a settlement early
@@ -57,13 +57,15 @@ export interface SimApi {
   canShop(): boolean;
 
   // --- events ---
-  chooseEventOption(index: number): boolean;
+  chooseEventOption(index: number, expectedStep?: string): boolean;
+  cancelExpeditionPreparation(): boolean;
   /** Relic 1-of-3 choice while phase === 'relic'. */
   chooseRelic(index: number): boolean;
   // --- expeditions (phase === 'expedition') ---
   /** Send crew from an Expedition Site event (option 0 of 'node_site'). */
   startExpedition(crewIds: string[]): boolean;
-  expeditionAction(kind: ExpeditionActionKind, targetFoe?: number): boolean;
+  /** Swap requires an explicit living ally index; selection alone spends no turn. */
+  expeditionAction(kind: ExpeditionActionKind, targetFoe?: number, swapActorIndex?: number): boolean;
   /** Continue into the next chamber after clearing a stage, or withdraw with current crew HP. */
   advanceExpedition(continueDeeper: boolean): boolean;
   /** Report the player's timing for the pending action/blow. */

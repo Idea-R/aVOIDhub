@@ -371,12 +371,28 @@ async function main() {
     // pause while planning so the train cannot start traversing the freshly planned tile before Backspace
     await evalRail(page, R => R.pause());
     await sleep(200);
+    // The map-first junction sketch intentionally owns input while choosing a
+    // branch. Finish that decision through its real hotkey before testing an
+    // ordinary canvas click; clicking through the overlay is not supported.
+    const junctionBefore = await evalRail(page, R => R.sim.junctionOptions().length ? R.state.route.path.length : null);
+    if (junctionBefore !== null) {
+      await page.waitForFunction(() => {
+        const n = document.querySelector('#ui .rv-junction');
+        return n && !n.hidden;
+      }, null, { timeout: 10000 });
+      await page.keyboard.press('1');
+      await page.waitForFunction(before => window.__RAIL.state.route.path.length > before, junctionBefore, { timeout: 10000 });
+      await evalRail(page, R => R.pause());
+      await page.waitForFunction(() => document.querySelector('#ui .rv-junction')?.hidden, null, { timeout: 10000 });
+      g.note('junction hotkey committed before canvas planning');
+    }
     // click a plannable tile
     const target = await evalRail(page, R => {
       const opts = R.sim.plannableTiles();
       if (!opts.length || !R.view) return null;
       const visible = opts.map(o => ({ o, p: R.view.hexToScreen(o.col, o.row) }))
-        .filter(x => x.p.x > 280 && x.p.x < innerWidth - 50 && x.p.y > 120 && x.p.y < innerHeight - 190);
+        .filter(x => x.p.x > 280 && x.p.x < innerWidth - 50 && x.p.y > 120 && x.p.y < innerHeight - 190)
+        .filter(x => document.elementFromPoint(x.p.x, x.p.y) instanceof HTMLCanvasElement);
       const picked = visible.sort((a, b) => b.o.col - a.o.col || a.o.row - b.o.row)[0];
       if (!picked) return null;
       const best = picked.o, p = picked.p;
@@ -424,11 +440,11 @@ async function main() {
     await page.keyboard.press('m');
     // train panel (best effort)
     const domBefore = await page.evaluate(() => document.querySelectorAll('#ui *').length);
-    await page.keyboard.press('Tab');
+    await page.keyboard.press('t');
     await sleep(350);
     const panel = await page.evaluate(() => ({ count: document.querySelectorAll('#ui *').length, attr: !!document.querySelector('[data-panel="train"]') }));
     const panelShown = panel.attr || panel.count !== domBefore;
-    g.note('Tab train panel ' + (panelShown ? 'shown' : 'not detected (best effort)'));
+    g.note('T train panel ' + (panelShown ? 'shown' : 'not detected (best effort)'));
     await page.keyboard.press('Escape');
     await sleep(300);
     const panelAfter = await page.evaluate(() => ({ count: document.querySelectorAll('#ui *').length, attr: !!document.querySelector('[data-panel="train"]') }));

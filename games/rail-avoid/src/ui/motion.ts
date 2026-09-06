@@ -14,17 +14,15 @@ export const D = (s: number): number => (reduced ? 0 : s);
 export type Vars = gsap.TweenVars;
 export type Target = gsap.TweenTarget;
 
-/** Animate in with a small overshoot (panels, chips, coach-marks). Inline styles are cleared afterwards. */
-export function popIn(t: Target, from: Vars = {}, vars: Vars = {}): gsap.core.Tween {
+/** UI chrome fades in place. Combat movement uses its own explicit tweens. */
+export function popIn(t: Target, _from: Vars = {}, vars: Vars = {}): gsap.core.Tween {
   gsap.killTweensOf(t);
-  return gsap.fromTo(t, { opacity: 0, scale: 0.9, y: 14, ...from },
-    { opacity: 1, scale: 1, y: 0, x: 0, duration: D(0.42), ease: 'back.out(1.4)', clearProps: 'transform,opacity', ...vars });
+  return gsap.fromTo(t, { opacity: 0 },
+    { opacity: 1, duration: D(0.22), ease: 'power1.out', clearProps: 'opacity', onComplete: vars.onComplete });
 }
-/** Stagger a list of rows in (rise + fade). */
+/** Reveal related controls together, in their final positions. */
 export function rowsIn(t: Target, vars: Vars = {}, from: Vars = {}): gsap.core.Tween {
-  gsap.killTweensOf(t);
-  return gsap.fromTo(t, { opacity: 0, y: 12, x: 0, ...from },
-    { opacity: 1, y: 0, x: 0, duration: D(0.36), ease: 'power3.out', stagger: D(0.045), clearProps: 'transform,opacity', ...vars });
+  return popIn(t, from, vars);
 }
 /** Quick positional shake (damage, slams). */
 export function shake(t: Target, power = 4, dur = 0.3): void {
@@ -45,9 +43,8 @@ export function floatLabel(parent: HTMLElement, text: string, cls = ''): void {
   s.textContent = text;
   parent.appendChild(s);
   if (reduced) { window.setTimeout(() => s.remove(), 700); return; }
-  // drifts right and slightly up so it stays on screen for chips hugging the top edge
-  gsap.fromTo(s, { x: -6, y: 0, opacity: 0, scale: 0.7 }, { x: 4, y: -6, opacity: 1, scale: 1.05, duration: 0.22, ease: 'power2.out' });
-  gsap.to(s, { x: 16, y: -16, opacity: 0, duration: 0.65, delay: 0.45, ease: 'power1.in', onComplete: () => s.remove() });
+  gsap.fromTo(s, { opacity: 0 }, { opacity: 1, duration: 0.16 });
+  gsap.to(s, { opacity: 0, duration: 0.22, delay: 0.8, onComplete: () => s.remove() });
 }
 /** Tween every integer inside `final` from 0 into el.textContent, preserving zero-padding and punctuation. */
 export function countText(el: Element, final: string, opts: { dur?: number; delay?: number; onDone?: () => void } = {}): void {

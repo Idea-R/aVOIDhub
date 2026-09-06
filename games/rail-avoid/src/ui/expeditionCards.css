@@ -1,0 +1,226 @@
+/* Signal-box battle kit: generated brass hardware over solid enamel, never glass.
+   The frame is native alpha, nine-sliced so corners don't stretch with the cards. */
+#ui .rv-exp, #ui .rv-crewpick {
+  --exp-ink: #0b0e1a;
+  --exp-paper: #eee4cd;
+  --exp-muted: #c2bba9;
+  --exp-edge: #8e7041;
+}
+#ui .rv-exp { --exp-red: var(--danger); }
+#ui .rv-exp-scene-art { filter: saturate(.88) brightness(.84); }
+#ui .rv-exp-top { padding: 14px 24px 10px; gap: 18px; }
+#ui .rv-exp-title { padding: 4px 14px; border-left: 3px solid var(--gold); }
+#ui .rv-exp-site { color: var(--exp-paper); font-family: 'Cinzel', Georgia, serif; font-size: clamp(16px, 1.6vw, 23px); letter-spacing: .06em; }
+#ui .rv-exp-top .rv-label { color: var(--exp-muted); font-size: max(10px, calc(10 * var(--u))); }
+#ui .rv-exp-round, #ui .rv-exp-stage-readout { border: 0; background: none; border-radius: 0; padding: 4px 12px; border-left: 1px solid #e8c17050; }
+#ui .rv-exp-stage-name { color: var(--exp-paper); font-size: max(10px, calc(10 * var(--u))); }
+#ui .rv-exp-ticker { margin-right: 0; background: none; border: 0; animation: none; font-size: max(10px, calc(10 * var(--u))); letter-spacing: .08em; }
+#ui .rv-exp-formation-rules { top: 0; background: none; border: 0; backdrop-filter: none; color: var(--exp-muted); text-shadow: 0 2px 3px #000; font-size: max(10px, calc(9 * var(--u))); }
+#ui .rv-exp-formation-rules span { border-color: #e8c17044; }
+
+/* Characters remain in the scene. Only their identity/status plates are opaque. */
+#ui .rv-exp-stage { padding: 38px 4vw 16px; }
+#ui .rv-exp-crew, #ui .rv-exp-foes { gap: 14px; padding: 0; }
+#ui .rv-exp-actor, #ui .rv-exp-foe { width: clamp(140px, 14vw, 204px); gap: 5px; }
+#ui .rv-exp-actor .rv-exp-fig-authored img { height: clamp(150px, 27vh, 270px); filter: drop-shadow(0 6px 8px #0009); }
+#ui .rv-exp-actor.rv-active .rv-exp-fig-authored img { filter: drop-shadow(0 6px 8px #0009); }
+#ui .rv-exp-fig-enemy { height: clamp(150px, 27vh, 270px); }
+#ui .rv-exp-card {
+  padding: 12px 13px 11px; gap: 5px; border: 0; border-radius: 0;
+  background: linear-gradient(150deg, #28251f, #12131b 62%); color: var(--exp-paper);
+  backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: 0 6px 14px #0007; text-shadow: none;
+}
+#ui .rv-exp-card::before, #ui .rv-exp-action::before, #ui .rv-exp-menu-head::before,
+#ui .rv-exp-depth-card::before, #ui .rv-exp-result::before, #ui .rv-crewpick::before {
+  content: ''; display: block; position: absolute; inset: 0; pointer-events: none;
+  border: 16px solid transparent; border-image-source: var(--exp-frame); border-image-slice: 80; border-image-repeat: stretch; opacity: .7;
+}
+#ui .rv-exp-card-status { align-self: flex-start; font-size: max(9px, calc(9 * var(--u))); font-weight: 700; color: var(--exp-muted); letter-spacing: .09em; text-transform: uppercase; line-height: 1.2; }
+#ui .rv-exp-name { font-size: max(12px, calc(12 * var(--u))); }
+#ui .rv-exp-name b { color: var(--exp-paper); font-family: 'Cinzel', Georgia, serif; font-weight: 800; letter-spacing: 0; }
+#ui .rv-exp-spec { color: var(--exp-muted); letter-spacing: .07em; font-size: max(9px, calc(9 * var(--u))); flex-wrap: wrap; gap: 3px; }
+#ui .rv-exp-lane { border: 0; padding: 0; color: var(--gold); font-size: max(9px, calc(9 * var(--u))); }
+#ui .rv-exp-hp-text { color: var(--exp-paper); font-size: max(10px, calc(10 * var(--u))); }
+#ui .rv-exp-card .rv-bar { border-radius: 0; background: #040608; height: 5px; }
+#ui .rv-exp-card .rv-bar > i { border-radius: 0; }
+#ui .rv-exp-tell { color: var(--exp-muted); font-size: max(11px, calc(10 * var(--u))); font-style: normal; line-height: 1.35; }
+#ui .rv-exp-actor.rv-active .rv-exp-card, #ui .rv-exp-foe.rv-target:not(.rv-dead) .rv-exp-card { border: 0; box-shadow: 0 6px 14px #0007; background: linear-gradient(155deg, #403321, #15151c 65%); }
+#ui .rv-exp-actor.rv-active .rv-exp-card::before, #ui .rv-exp-foe.rv-target .rv-exp-card::before { opacity: 1; }
+#ui .rv-exp-actor.rv-active .rv-exp-card-status, #ui .rv-exp-foe.rv-target .rv-exp-card-status { color: var(--gold); }
+#ui .rv-exp-actor.rv-guarding .rv-exp-card { box-shadow: 0 6px 14px #0007; }
+#ui .rv-exp-guard { color: var(--gold); text-shadow: none; }
+
+/* A portrait nameplate plus a hand of three commands and two compact utilities. */
+#ui .rv-exp-bottom { padding: 4px 24px 14px; min-height: 0; gap: 0; display: block; }
+#ui .rv-exp-menu { display: grid; grid-template-columns: minmax(165px, 210px) minmax(0, 1fr); align-items: stretch; gap: 14px; width: min(1120px, 100%); min-width: 0; margin: 0 auto; padding: 0; border: 0; background: none; box-shadow: none; backdrop-filter: none; }
+/* Keep its footprint during timing. The battlefield must not jump between beats. */
+#ui .rv-exp-menu[hidden] { display: grid !important; visibility: hidden; pointer-events: none; }
+#ui .rv-exp-menu-head { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 12px 12px 14px; gap: 0; text-align: center; background: radial-gradient(ellipse at 50% 10%, #3b3020, #0b0e1a 80%); }
+#ui .rv-exp-menu-head::before { opacity: 1; }
+#ui .rv-exp-menu-portrait { position: absolute; width: 90px; height: 108px; object-fit: contain; object-position: bottom; top: 8px; left: calc(50% - 45px); filter: drop-shadow(0 3px 4px #0008); }
+#ui .rv-exp-menu-identity { display: flex; flex-direction: column; align-items: center; gap: 1px; min-width: 0; width: 100%; }
+#ui .rv-exp-menu-head .rv-label { color: var(--gold); font-size: 10px; letter-spacing: .14em; }
+#ui .rv-exp-menu-head b { font-family: 'Cinzel', Georgia, serif; font-size: max(15px, calc(14 * var(--u))); line-height: 1.25; color: var(--exp-paper); max-width: 100%; overflow-wrap: anywhere; letter-spacing: 0; }
+#ui .rv-exp-menu-spec, #ui .rv-exp-menu-position { color: var(--exp-muted); font-size: max(10px, calc(9 * var(--u))); letter-spacing: .06em; }
+#ui .rv-exp-menu-position { color: var(--gold); }
+#ui .rv-exp-command-hand { min-width: 0; display: flex; flex-direction: column; gap: 7px; }
+#ui .rv-exp-target { display: block; margin: 0; color: var(--exp-paper); font-family: 'Special Elite', monospace; font-size: max(12px, calc(11 * var(--u))); letter-spacing: .03em; }
+#ui .rv-exp-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(135px, .84fr); gap: 8px; }
+#ui .rv-exp-action {
+  min-width: 0; width: 100%; position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 7px;
+  min-height: 128px; padding: 14px 14px 16px; border: 0; border-radius: 0; overflow: visible;
+  background: linear-gradient(150deg, #2a2826, #11121b 65%); color: var(--exp-paper); box-shadow: 0 5px 12px #0005;
+  text-transform: none; white-space: normal; transform: none; transition: background 220ms ease, filter 220ms ease;
+}
+#ui .rv-exp-action::after { display: none; }
+#ui .rv-exp-action::before { opacity: .8; }
+#ui .rv-exp-action:hover:not(:disabled), #ui .rv-exp-action:focus-visible { background: linear-gradient(145deg, #4b3b25, #1b1920 70%); color: var(--exp-paper); box-shadow: 0 5px 12px #0007; transform: none; }
+#ui .rv-exp-action:hover:not(:disabled)::before, #ui .rv-exp-action:focus-visible::before { opacity: 1; }
+#ui .rv-exp-action:active:not(:disabled) { background: #342a1e; transform: none; }
+#ui .rv-exp-action:focus-visible { outline: 2px solid var(--exp-paper); outline-offset: 2px; }
+#ui .rv-exp-a-heading { display: flex; align-items: center; gap: 8px; min-width: 0; }
+#ui .rv-exp-action .rv-exp-a-key { position: static; flex-shrink: 0; width: 28px; height: 28px; display: grid; place-items: center; padding: 0; border: 1px solid var(--exp-edge); border-radius: 50%; color: var(--gold); font: 700 14px 'Cinzel', Georgia, serif; background: #0b0e1a; }
+#ui .rv-exp-action .rv-exp-a-label { color: var(--exp-paper); font: 800 max(14px, calc(14 * var(--u))) 'Cinzel', Georgia, serif; letter-spacing: .01em; padding: 0; overflow-wrap: anywhere; }
+#ui .rv-exp-a-mode { font-family: 'Special Elite', monospace; color: var(--gold); font-size: max(11px, calc(10 * var(--u))); padding-bottom: 7px; border-bottom: 1px solid #e8c17030; }
+#ui .rv-exp-action .rv-exp-a-desc { color: var(--exp-muted); font-size: max(12px, calc(11 * var(--u))); line-height: 1.35; }
+#ui .rv-exp-a-special { background: linear-gradient(150deg, #2d2531, #11121b 65%); }
+#ui .rv-exp-utility-actions { display: grid; grid-template-rows: 1fr 1fr; gap: 6px; }
+#ui .rv-exp-utility-actions .rv-exp-action { min-height: 0; padding: 10px 12px; gap: 4px; }
+#ui .rv-exp-utility-actions .rv-exp-a-key { height: 22px; width: 22px; font-size: 11px; }
+#ui .rv-exp-utility-actions .rv-exp-a-label { font-size: max(12px, calc(12 * var(--u))); }
+#ui .rv-exp-utility-actions .rv-exp-a-mode { display: none; }
+#ui .rv-exp-utility-actions .rv-exp-a-heading { flex: 0 0 auto; }
+#ui .rv-exp-utility-actions .rv-exp-a-desc { min-width: 0; }
+#ui .rv-exp-utility-actions .rv-exp-a-desc { font-size: max(10px, calc(9 * var(--u))); line-height: 1.25; }
+#ui .rv-exp-menu .rv-hint { color: var(--exp-muted); font-size: max(10px, calc(10 * var(--u))); padding-right: 86px; line-height: 1.4; letter-spacing: 0; }
+#ui .rv-exp-log-toggle { position: absolute; right: 24px; bottom: 12px; display: block; min-height: 30px; margin: 0; padding: 5px 8px; font-size: 10px; background: #13131b; border: 1px solid var(--exp-edge); border-radius: 0; color: var(--exp-paper); }
+#ui .rv-exp-log { display: none; }
+#ui .rv-exp-log-open .rv-exp-log { display: flex; right: 24px; bottom: 48px; z-index: 9; width: min(340px, calc(100vw - 24px)); max-height: 200px; overflow: auto; background: var(--exp-ink); border: 1px solid var(--exp-edge); border-radius: 0; color: var(--exp-paper); backdrop-filter: none; }
+
+/* Timed feedback uses the same warm metal vocabulary; no blue frosted banner. */
+#ui .rv-exp-prompt { padding: 9px 18px; border: 0; border-block: 1px solid #e8c17075; border-radius: 0; background: #0b0e1a; color: var(--exp-paper); animation: none; box-shadow: 0 6px 16px #0005; font-size: clamp(12px, 1.4vw, 18px); max-width: 94%; width: max-content; white-space: normal; text-align: center; letter-spacing: .07em; }
+#ui .rv-exp-ring-label { letter-spacing: .06em; font-size: 12px; }
+#ui .rv-exp-ring.rv-ring-guard .rv-exp-ring-label { color: var(--exp-paper); }
+#ui .rv-exp-ring.rv-ring-guard .rv-exp-ring-outer { border-color: var(--gold); box-shadow: 0 0 18px #e8c17080; }
+
+/* Selection, stage decisions and results share the hardware instead of generic modals. */
+#ui .rv-crewpick, #ui .rv-exp-depth-card, #ui .rv-exp-result { position: relative; background: linear-gradient(145deg, #26231e, #0b0e1a 60%); border: 0; border-radius: 0; padding: 28px; backdrop-filter: none; box-shadow: 0 20px 60px #0009; color: var(--exp-paper); }
+#ui .rv-crewpick::before, #ui .rv-exp-depth-card::before, #ui .rv-exp-result::before { border-width: 24px; opacity: 1; }
+#ui .rv-crewpick h2, #ui .rv-exp-depth-card h2, #ui .rv-exp-result h1 { font-family: 'Cinzel', Georgia, serif; color: var(--gold); }
+#ui .rv-exp-result.rv-res-won h1 { text-shadow: none; }
+#ui .rv-exp-depth-card p, #ui .rv-exp-result-sum, #ui .rv-crewpick-lead { color: var(--exp-paper); }
+#ui .rv-exp-stage-gate, #ui .rv-exp-result-ov { background: #040608b8; }
+#ui .rv-crewpick-list { gap: 8px; }
+#ui .rv-crewpick-row { border: 1px solid #8e704166; border-radius: 0; background: #12131b; padding: 10px; }
+#ui .rv-crewpick-row:hover { background: #27251f; border-color: var(--gold); }
+#ui .rv-crewpick-row.rv-on { background: #312a1e; border-color: var(--gold); box-shadow: inset 3px 0 var(--gold); }
+#ui .rv-cp-portrait { width: 56px; height: 70px; border-radius: 0; background: #0b0e1a; border-color: var(--exp-edge); }
+#ui .rv-cp-key { background: #0b0e1a; border-color: var(--exp-edge); color: var(--exp-paper); }
+#ui .rv-cp-special, #ui .rv-cp-hp, #ui .rv-cp-count { color: var(--exp-muted); }
+#ui .rv-cp-special b { color: var(--gold); }
+#ui .rv-exp-rc { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border-bottom: 1px solid #e8c17044; color: var(--exp-paper); }
+#ui .rv-exp-rc .rv-portrait-window { width: 42px; height: 52px; }
+#ui .rv-exp-reward { border-radius: 0; border-color: #8e7041; background: #242219; }
+#ui .rv-exp-depth-card .rv-btn, #ui .rv-exp-result .rv-btn, #ui .rv-crewpick .rv-btn { border-radius: 0; background: #1c1a19; border-color: var(--exp-edge); color: var(--exp-paper); min-width: 0; max-width: 100%; white-space: normal; }
+#ui .rv-exp-depth-card .rv-primary, #ui .rv-exp-result .rv-primary, #ui .rv-crewpick .rv-primary { background: linear-gradient(#e8c170, #bc9045); color: #16110a; font-weight: 800; }
+
+@media (max-width: 1100px) {
+  #ui .rv-exp-menu { grid-template-columns: 155px minmax(0, 1fr); gap: 10px; }
+  #ui .rv-exp-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  #ui .rv-exp-utility-actions { grid-column: 1 / -1; grid-template-columns: 1fr 1fr; grid-template-rows: auto; }
+  #ui .rv-exp-utility-actions .rv-exp-action { min-height: 44px; display: flex; flex-direction: row; align-items: center; gap: 10px; }
+  #ui .rv-exp-utility-actions .rv-exp-a-desc { font-size: 10px; }
+  #ui .rv-exp-action { min-height: 118px; padding: 12px; gap: 5px; }
+  #ui .rv-exp-menu-portrait { top: 12px; height: 94px; }
+  #ui .rv-exp-menu-head { justify-content: flex-end; }
+}
+@media (max-width: 900px) {
+  #ui .rv-exp-top { padding: 8px 12px; gap: 6px; }
+  #ui .rv-exp-title { padding: 3px 8px; }
+  #ui .rv-exp-stage { padding: 34px 12px 12px; gap: 16px; }
+  #ui .rv-exp-crew, #ui .rv-exp-foes { gap: 5px; }
+  #ui .rv-exp-actor, #ui .rv-exp-foe { min-width: 0; width: 100%; max-width: 132px; }
+  #ui .rv-exp-fig, #ui .rv-exp-fig-enemy { height: clamp(90px, 19vh, 150px); }
+  #ui .rv-exp-actor .rv-exp-fig-authored img { width: 100%; height: 100%; }
+  #ui .rv-exp-card { padding: 10px 9px; gap: 3px; }
+  #ui .rv-exp-card::before { border-width: 12px; }
+  #ui .rv-exp-name b { font-family: 'Segoe UI', system-ui, sans-serif; }
+  #ui .rv-exp-bottom { padding: 3px 12px 12px; }
+  #ui .rv-exp-menu { grid-template-columns: 128px minmax(0, 1fr); gap: 8px; }
+  #ui .rv-exp-action .rv-exp-a-label { font-size: max(12px, calc(11 * var(--u))); }
+  #ui .rv-exp-action .rv-exp-a-key { width: 24px; height: 24px; font-size: 12px; }
+  #ui .rv-exp-a-heading { gap: 5px; }
+  #ui .rv-exp-action .rv-exp-a-desc { font-size: max(11px, calc(10 * var(--u))); }
+  #ui .rv-exp-log-toggle { right: 12px; bottom: 10px; }
+  #ui .rv-exp-menu-head b { font-size: 13px; }
+}
+@media (max-width: 600px) {
+  #ui .rv-exp-top { column-gap: 5px; row-gap: 6px; }
+  #ui .rv-exp-title { flex: 1; }
+  #ui .rv-exp-site { font-size: 15px; }
+  #ui .rv-exp-stage-readout, #ui .rv-exp-round { padding: 2px 6px; }
+  #ui .rv-exp-ticker { max-width: 100%; margin: 0; padding: 0 8px; }
+  #ui .rv-exp-stage { padding: 35px 10px 8px; }
+  #ui .rv-exp-menu { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  #ui .rv-exp-menu-head { flex-direction: row; text-align: left; justify-content: flex-start; padding: 8px 12px; min-height: 50px; gap: 8px; }
+  #ui .rv-exp-menu-portrait { position: static; width: 40px; height: 44px; margin-top: -4px; }
+  #ui .rv-exp-menu-identity { display: grid; grid-template-columns: auto 1fr; align-items: baseline; gap: 1px 8px; width: auto; }
+  #ui .rv-exp-menu-identity .rv-label { grid-row: 1; }
+  #ui .rv-exp-menu-head b { font-size: 14px; }
+  #ui .rv-exp-menu-spec { grid-column: 2; grid-row: 2; }
+  #ui .rv-exp-menu-position { grid-column: 1; grid-row: 2; }
+  #ui .rv-exp-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  #ui .rv-exp-action { min-height: 112px; padding: 10px; gap: 4px; }
+  #ui .rv-exp-action::before { border-width: 12px; }
+  #ui .rv-exp-a-heading { flex-direction: column; align-items: flex-start; gap: 4px; }
+  #ui .rv-exp-action .rv-exp-a-label { font-size: 12px; }
+  #ui .rv-exp-a-mode { display: none; }
+  #ui .rv-exp-utility-actions .rv-exp-a-heading { flex-direction: row; align-items: center; }
+  #ui .rv-exp-utility-actions .rv-exp-action { gap: 6px; padding: 9px 10px; }
+  #ui .rv-exp-menu .rv-hint { padding-right: 86px; font-size: 10px; }
+  #ui .rv-exp-command-hand { gap: 5px; }
+  #ui .rv-exp-formation-rules { font-size: 9px; }
+  #ui .rv-exp-spec { letter-spacing: 0; }
+  #ui .rv-exp-card-status { font-size: 8px; }
+  #ui .rv-crewpick, #ui .rv-exp-depth-card, #ui .rv-exp-result { padding: 22px 16px; }
+  #ui .rv-crewpick-row { grid-template-columns: auto 42px minmax(0, 1fr) auto; padding: 8px; gap: 6px; }
+  #ui .rv-cp-portrait { width: 42px; height: 54px; }
+  #ui .rv-cp-hp .rv-bar { width: 60px; }
+}
+@media (max-width: 520px) {
+  #ui .rv-exp-stage { padding-top: 30px; grid-template-rows: 1fr 1fr; gap: 4px; }
+  #ui .rv-exp-fig, #ui .rv-exp-fig-enemy { height: clamp(64px, 9.5vh, 95px); }
+  #ui .rv-exp-card { padding: 8px 9px; }
+  #ui .rv-exp-name { font-size: 11px; }
+}
+@media (max-height: 600px) and (min-width: 601px) {
+  #ui .rv-exp-top { padding-block: 6px; }
+  #ui .rv-exp-stage { padding-bottom: 8px; }
+  #ui .rv-exp-actor .rv-exp-fig-authored img, #ui .rv-exp-fig-enemy { max-height: 105px; }
+  #ui .rv-exp-action { min-height: 103px; }
+  #ui .rv-exp-card { padding-block: 9px; }
+  #ui .rv-exp-menu-portrait { height: 78px; }
+}
+#ui.rv-contrast .rv-exp-card, #ui.rv-contrast .rv-exp-action, #ui.rv-contrast .rv-exp-menu-head, #ui.rv-contrast .rv-crewpick { background: #000; --exp-muted: #e6e9f2; --exp-paper: #fff; }
+
+/* Shallow windows need a compact hand, not a smaller-font copy of the tall layout. */
+@media (max-height: 520px) and (min-width: 601px) {
+  #ui .rv-exp-menu { grid-template-columns: minmax(0, 1fr); }
+  #ui .rv-exp-menu-head { display: none; }
+  #ui .rv-exp-actions { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  #ui .rv-exp-utility-actions { display: contents; }
+  #ui .rv-exp-action, #ui .rv-exp-utility-actions .rv-exp-action { min-height: 92px; padding: 12px; display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
+  #ui .rv-exp-a-mode { display: none; }
+  #ui .rv-exp-utility-actions .rv-exp-a-desc { font-size: 11px; }
+}
+@media (max-width: 520px) and (max-height: 800px) {
+  #ui .rv-exp-tell { display: none; }
+  #ui .rv-exp-stage { grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); }
+}
+@media (max-width: 520px) and (max-height: 700px) {
+  #ui .rv-exp-fig, #ui .rv-exp-fig-enemy { height: 50px; }
+  #ui .rv-exp-card-status { display: none; }
+  #ui .rv-exp-card { padding-block: 8px; }
+  #ui .rv-exp-action { padding-block: 9px; min-height: 100px; }
+  #ui .rv-exp-utility-actions .rv-exp-action { padding-block: 7px; }
+}

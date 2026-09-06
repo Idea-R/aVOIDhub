@@ -12,7 +12,7 @@ export interface PanelDef {
   /** Modal panels block gameplay keys (Space etc.) and stack; Esc closes the top one when `escClosable`. */
   modal: boolean;
   escClosable?: boolean;
-  /** Open/close motion: 'modal' (scale + overshoot, staggered rows), 'side' (slide from the right), 'fade', or 'none'. Defaults: modal → 'modal', else 'fade'. */
+  /** Presentation kind. Modal/side/fade now fade in place; 'none' skips motion. */
   anim?: 'modal' | 'side' | 'fade' | 'none';
   onOpen?: () => void;
   onClose?: () => void;
@@ -45,6 +45,7 @@ export class UiShared {
   private selected = -1;
   private selectListeners: Array<(i: number) => void> = [];
   private toastsEl: HTMLElement;
+  readonly noticeRail: HTMLElement;
   private confirmEl: HTMLElement;
   private confirmResolve: ((v: boolean) => void) | null = null;
   private pausedByMenu = false;
@@ -54,7 +55,8 @@ export class UiShared {
     try { dev = location.search.includes('dev') || !!(window as unknown as { __RAIL_DEV?: boolean }).__RAIL_DEV; } catch { dev = false; }
     this.isDev = dev;
     this.toastsEl = el('div', { class: 'rv-toasts', role: 'status', 'aria-live': 'polite' });
-    root.appendChild(this.toastsEl);
+    this.noticeRail = el('div', { class: 'rv-notice-rail' }, this.toastsEl);
+    root.appendChild(this.noticeRail);
     this.confirmEl = el('div', { class: 'rv-overlay', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Confirm' });
     this.confirmEl.hidden = true;
     root.appendChild(this.confirmEl);
@@ -107,6 +109,8 @@ export class UiShared {
   close(name: PanelName): void {
     const p = this.panels.get(name);
     if (!p || p.el.hidden || this.closing.has(name)) return;
+    this.closing.add(name);
+    p.el.classList.add('rv-closing');
     this.stack = this.stack.filter(n => n !== name);
     this.syncLayoutClasses();
     p.onClose?.();
@@ -115,9 +119,8 @@ export class UiShared {
       if (top) this.focusFirst(this.panels.get(top)!.el);
       else if (this.focusReturn && this.focusReturn.isConnected) { try { this.focusReturn.focus(); } catch { /* ignore */ } }
     }
-    const finish = () => { this.closing.delete(name); p.el.classList.remove('rv-closing'); show(p.el, false); this.app.view?.resize(); };
-    if (this.animateOut(p, finish)) { this.closing.add(name); p.el.classList.add('rv-closing'); }
-    else finish();
+    const finish = () => { this.closing.delete(name); p.el.classList.remove('rv-closing'); show(p.el, false); this.syncLayoutClasses(); this.app.view?.resize(); };
+    if (!this.animateOut(p, finish)) finish();
   }
   // ---- panel motion ----
   private animTargets(p: PanelDef): { box: HTMLElement; overlay: HTMLElement | null } {
@@ -144,7 +147,7 @@ export class UiShared {
     const { box, overlay } = this.animTargets(p);
     gsap.killTweensOf(box);
     if (overlay) gsap.to(overlay, { backgroundColor: 'rgba(4,6,14,0)', duration: 0.18, clearProps: 'backgroundColor' });
-    gsap.to(box, { opacity: 0, ...(kind === 'side' ? { x: 40 } : kind === 'modal' ? { scale: 0.96, y: 10 } : {}), duration: 0.18, ease: 'power2.in',
+    gsap.to(box, { opacity: 0, duration: 0.18, ease: 'power1.in',
       onComplete: () => { gsap.set(box, { clearProps: 'transform,opacity' }); finish(); } });
     return true;
   }
@@ -199,7 +202,10 @@ export class UiShared {
     this.selected = i;
     try { this.app.view?.selectCar(i); } catch { /* view may be booting */ }
     for (const l of this.selectListeners) l(i);
-    if (openInspector && i >= 0) this.open('inspector');
+    if (openInspector && i >= 0) {
+      if (this.root.classList.contains('rv-map-first')) this.root.classList.remove('rv-train-open');
+      this.open('inspector');
+    }
     if (i < 0) this.close('inspector');
   }
   onSelectCar(l: (i: number) => void): void { this.selectListeners.push(l); }
@@ -219,7 +225,7 @@ export class UiShared {
         g.text.appendChild(el('span', { class: 'rv-toast-more rv-k-' + kind, text }));
         window.clearTimeout(g.timer);
         g.timer = this.scheduleToastOut(g.el, ttl);
-        if (!isReduced()) gsap.fromTo(g.text.lastElementChild, { x: 10, opacity: 0 }, { x: 0, opacity: 1, duration: 0.25, clearProps: 'transform' });
+        if (!isReduced()) gsap.fromTo(g.text.lastElementChild, { opacity: 0 }, { opacity: 1, duration: 0.2 });
         return;
       }
     }
@@ -228,7 +234,7 @@ export class UiShared {
     this.toastsEl.appendChild(t);
     while (this.toastsEl.children.length > 3) this.toastsEl.removeChild(this.toastsEl.firstChild!);
     this.root.classList.add('rv-has-toasts');
-    gsap.fromTo(t, { x: 56, opacity: 0 }, { x: 0, opacity: 1, duration: D(0.4), ease: 'back.out(1.6)', clearProps: 'transform' });
+    gsap.fromTo(t, { opacity: 0 }, { opacity: 1, duration: D(0.2), clearProps: 'opacity' });
     const timer = this.scheduleToastOut(t, ttl);
     if (group) this.toastGroups.set(group, { el: t, text: textEl, at: now, timer });
   }
@@ -237,8 +243,7 @@ export class UiShared {
     return window.setTimeout(() => {
       if (!t.isConnected) return;
       if (isReduced()) { gone(); return; }
-      gsap.to(t, { x: 36, opacity: 0, duration: 0.25, ease: 'power2.in' });
-      gsap.to(t, { height: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0, duration: 0.3, delay: 0.18, ease: 'power2.inOut', onComplete: gone });
+      gsap.to(t, { opacity: 0, duration: 0.2, onComplete: gone });
     }, ttl);
   }
 

@@ -178,7 +178,46 @@ export function clearPlan(ctx: SimContext): void {
   while (unplanLast(ctx).ok && guard++ < 500) { /* pop */ }
 }
 
-/** A* from the plan end to the target over affordable edges; plans as far as possible. */
+/** Find a forward route using ONLY existing rail (including track the player built).
+ * Search the connected network, not just the visible planning range: a curved line
+ * must not lose to a paid shortcut because its destination is farther than the plan. */
+export function existingRailPath(state: SimState, col: number, row: number): Array<[number, number]> | null {
+  const start = pathEnd(state), goalK = tileKey(col, row), startK = tileKey(...start);
+  const queue: Array<[number, number]> = [start];
+  const came = new Map<string, string | null>([[startK, null]]);
+  for (let head = 0; head < queue.length; head++) {
+    const [cc, cr] = queue[head];
+    const current = tileKey(cc, cr);
+    if (current === goalK) {
+      const path: Array<[number, number]> = [];
+      let k: string | null = current;
+      while (k && k !== startK) {
+        const [c, r] = k.split(',').map(Number); path.push([c, r]); k = came.get(k) ?? null;
+      }
+      return path.reverse();
+    }
+    for (const [nc, nr] of neighbors(cc, cr)) {
+      const key = tileKey(nc, nr);
+      if (came.has(key) || isRevisit(state, nc, nr) || !isLinked(state, cc, cr, nc, nr)) continue;
+      if (edgeCost(state, cc, cr, nc, nr).blocked) continue;
+      came.set(key, current); queue.push([nc, nr]);
+    }
+  }
+  return null;
+}
+
+function appendSequence(ctx: SimContext, seq: Array<[number, number]>): PlanResult {
+  let planned = 0, spent = 0;
+  const available = planRange(ctx.state) - aheadCount(ctx.state);
+  for (const [c, r] of seq.slice(0, Math.max(0, available))) {
+    const result = planTile(ctx, c, r);
+    if (!result.ok) return planned ? { ok: true, cost: spent } : result;
+    planned++; spent += result.cost ?? 0;
+  }
+  return planned ? { ok: true, cost: spent } : { ok: false, reason: `Plan range ${planRange(ctx.state)} reached` };
+}
+
+/** Follow connected rail first; use affordable construction only when no rail route exists. */
 export function planPathTo(ctx: SimContext, col: number, row: number): PlanResult {
   const { state } = ctx;
   const target = tileAt(state, col, row);
@@ -186,10 +225,15 @@ export function planPathTo(ctx: SimContext, col: number, row: number): PlanResul
   if (target.void || target.terrain === 'mountain') return { ok: false, reason: 'Unreachable tile' };
   const [sc, sr] = pathEnd(state);
   if (sc === col && sr === row) return { ok: false, reason: 'Already planned' };
+  if (state.train.reversing) return { ok: false, reason: 'Stop reversing first' };
+  if (aheadCount(state) >= planRange(state)) return { ok: false, reason: `Plan range ${planRange(state)} reached` };
+  const railPath = existingRailPath(state, col, row);
+  if (railPath) return appendSequence(ctx, railPath);
   const goalK = tileKey(col, row);
   const startK = tileKey(sc, sr);
   const g = new Map<string, number>([[startK, 0]]);
   const rails = new Map<string, number>([[startK, 0]]);
+  const depths = new Map<string, number>([[startK, 0]]);
   const came = new Map<string, string>();
   const open: Array<{ k: string; f: number }> = [{ k: startK, f: 0 }];
   const closed = new Set<string>();
@@ -205,8 +249,8 @@ export function planPathTo(ctx: SimContext, col: number, row: number): PlanResul
     if (closed.has(cur.k)) continue;
     closed.add(cur.k);
     const [cc, cr] = cur.k.split(',').map(Number);
-    const depth = Math.round((g.get(cur.k) ?? 0) / 1000);
-    if (depth > maxSteps) continue;
+    const depth = depths.get(cur.k) ?? 0;
+    if (depth >= maxSteps) continue;
     for (const [nc, nr] of neighbors(cc, cr)) {
       if (cur.k === startK && prevTile && prevTile[0] === nc && prevTile[1] === nr) continue;
       if (isRevisit(state, nc, nr)) continue;
@@ -218,7 +262,7 @@ export function planPathTo(ctx: SimContext, col: number, row: number): PlanResul
       // cost: 1000 per step (depth) + rails weight so free rail is preferred
       const ng = (g.get(cur.k) ?? 0) + 1000 + e.cost * 350 + (e.free ? 0 : 120);
       if (ng < (g.get(nk) ?? Infinity)) {
-        g.set(nk, ng); rails.set(nk, spentRails); came.set(nk, cur.k);
+        g.set(nk, ng); rails.set(nk, spentRails); depths.set(nk, depth + 1); came.set(nk, cur.k);
         open.push({ k: nk, f: ng + hexDistance(nc, nr, col, row) * 1000 });
       }
     }
@@ -228,14 +272,7 @@ export function planPathTo(ctx: SimContext, col: number, row: number): PlanResul
   let k: string | undefined = goalK;
   while (k && k !== startK) { const [c, r] = k.split(',').map(Number); seq.push([c, r]); k = came.get(k); }
   seq.reverse();
-  let planned = 0, spent = 0;
-  for (const [c, r] of seq) {
-    const res = planTile(ctx, c, r);
-    if (!res.ok) break;
-    planned++; spent += res.cost ?? 0;
-  }
-  if (planned === 0) return { ok: false, reason: `Plan range ${planRange(state)} reached` };
-  return { ok: true, cost: spent };
+  return appendSequence(ctx, seq);
 }
 
 /**
@@ -272,12 +309,18 @@ export function logRoute(ctx: SimContext, text: string): void { log(ctx.state, t
 
 
 /** Rail continuations at the plan end, with their line and the next settlement along each branch. */
-export function junctionOptions(state: SimState): Array<{ col: number; row: number; line: number; lineName: string; next: { id: string; name: string; type: string; distance: number } | null }> {
+export interface RailBranch {
+  col: number; row: number; line: number; lineName: string;
+  /** Actual connected rail tiles, including the junction and advertised destination. */
+  trace: Array<[number, number]>;
+  next: { id: string; name: string; type: string; distance: number } | null;
+}
+export function junctionOptions(state: SimState): RailBranch[] {
   const p = state.route.path;
   if (!p.length) return [];
   const [ec, er] = pathEnd(state);
   const prev = p.length >= 2 ? p[p.length - 2] : null;
-  const out: Array<{ col: number; row: number; line: number; lineName: string; next: { id: string; name: string; type: string; distance: number } | null }> = [];
+  const out: RailBranch[] = [];
   const lines = state.route.railLines ?? {};
   for (const [nc, nr] of neighbors(ec, er)) {
     if (prev && prev[0] === nc && prev[1] === nr) continue;
@@ -289,14 +332,18 @@ export function junctionOptions(state: SimState): Array<{ col: number; row: numb
     // walk the branch until a settlement, a junction or 40 steps
     let cur: [number, number] = [nc, nr];
     let from: [number, number] = [ec, er];
+    const trace: Array<[number, number]> = [[ec, er]];
+    const seen = new Set([tileKey(ec, er)]);
     let next: { id: string; name: string; type: string; distance: number } | null = null;
     for (let step = 1; step <= 40; step++) {
+      trace.push(cur);
+      seen.add(tileKey(cur[0], cur[1]));
       const tile = tileAt(state, cur[0], cur[1]);
       if (tile?.settlementId) {
         const st = state.settlements.find(x => x.id === tile.settlementId);
         if (st && !st.consumed && (!st.visited || st.type === 'yard')) { next = { id: st.id, name: st.name, type: st.type, distance: step }; break; }
       }
-      let conts = neighbors(cur[0], cur[1]).filter(([c, r]) => !(c === from[0] && r === from[1]) && isRail(state, cur[0], cur[1], c, r));
+      let conts = neighbors(cur[0], cur[1]).filter(([c, r]) => !seen.has(tileKey(c, r)) && !(c === from[0] && r === from[1]) && !tileAt(state, c, r)?.void && isRail(state, cur[0], cur[1], c, r));
       if (conts.length === 0) break;
       if (conts.length > 1) {
         // at a junction prefer continuations that carry this branch's line id, then the east-most one
@@ -307,7 +354,7 @@ export function junctionOptions(state: SimState): Array<{ col: number; row: numb
       }
       from = cur; cur = conts[0];
     }
-    out.push({ col: nc, row: nr, line, lineName: LINE_NAMES[line] ?? 'Line', next });
+    out.push({ col: nc, row: nr, line, lineName: LINE_NAMES[line] ?? 'Line', trace, next });
   }
   return out;
 }

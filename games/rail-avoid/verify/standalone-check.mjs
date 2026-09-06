@@ -44,8 +44,46 @@ const r = await p.evaluate(() => {
     embeddedArt: art.filter(img => img instanceof HTMLImageElement && img.src.startsWith('data:image/webp')).length,
   };
 });
-const pass = r.ready && r.view && r.phase === 'running' && r.authoredArt >= 6 && r.loadedArt === r.authoredArt && r.embeddedArt === r.authoredArt && errs.length === 0;
-console.log(JSON.stringify({ ...r, pass, ignoredAudioFallbacks: ignored.length, errs: errs.slice(0, 5) }));
 await p.screenshot({ path: path.join(screenshotDir, 'standalone.png') });
+// The new location scene, portrait and authored frame must also work offline.
+await p.evaluate(() => window.__RAIL.triggerEvent('node_crossroads'));
+await p.waitForFunction(() => {
+  const box = document.querySelector('#ui .rv-conversation');
+  return box && !box.closest('[hidden]') && [...box.querySelectorAll('img')].every(img => img.complete && img.naturalWidth > 0);
+}, null, { timeout: 15000 });
+const conversation = await p.evaluate(() => {
+  const box = document.querySelector('#ui .rv-conversation');
+  return {
+    choices: box.querySelectorAll('.rv-option').length,
+    imagesEmbedded: [...box.querySelectorAll('img')].every(img => img.src.startsWith('data:image/')),
+    frameEmbedded: getComputedStyle(box).borderImageSource.includes('data:image/'),
+  };
+});
+await p.locator('#ui .rv-conversation .rv-option').first().click();
+await p.waitForFunction(() => document.querySelector('#ui .rv-conversation')?.dataset.dialogueStep === 'briefing');
+await p.screenshot({ path: path.join(screenshotDir, 'standalone-conversation.png') });
+// Shared-rule intent and explicit swaps must also work with no server.
+await p.evaluate(() => {
+  const R = window.__RAIL;
+  R.ctx.settings.set({ reducedMotion: true, showTutorial: false });
+  R.newRun(12345); R.state.region = 3;
+  R.state.train.crew.push(
+    { id: 'offline-gunner', name: 'Nils', specialty: 'gunner', hp: 100, carIndex: -1 },
+    { id: 'offline-medic', name: 'Ines', specialty: 'medic', hp: 100, carIndex: -1 },
+  );
+  R.sim.startExpedition(R.state.train.crew.map(c => c.id));
+});
+await p.locator('.rv-exp-menu').waitFor({ state: 'visible' });
+const intents = await p.locator('.rv-exp-intent').allTextContents();
+await p.keyboard.press('w');
+await p.locator('.rv-exp-swap-overlay').waitFor({ state: 'visible' });
+const swap = await p.locator('.rv-exp-swap-card').evaluate(n => ({ choices: n.querySelectorAll('.rv-exp-swap-choice').length, frameEmbedded: getComputedStyle(n).borderImageSource.includes('data:image/') }));
+await p.screenshot({ path: path.join(screenshotDir, 'standalone-swap.png') });
+await p.keyboard.press('2');
+await p.waitForFunction(() => window.__RAIL.state.expedition.activeActor === 1 && !window.__RAIL.state.expedition.pending);
+const formation = await p.evaluate(() => window.__RAIL.state.expedition.actors.map(a => a.position).join());
+const combat = { intents, ...swap, formation };
+const pass = r.ready && r.view && r.phase === 'running' && r.authoredArt >= 6 && r.loadedArt === r.authoredArt && r.embeddedArt === r.authoredArt && conversation.choices === 3 && conversation.imagesEmbedded && conversation.frameEmbedded && intents.join('|') === '1 × 10 damage|2 × 6 damage' && swap.choices === 2 && swap.frameEmbedded && formation === 'rear,middle,front' && errs.length === 0;
+console.log(JSON.stringify({ ...r, conversation, combat, pass, ignoredAudioFallbacks: ignored.length, errs: errs.slice(0, 5) }));
 await b.close();
 if (!pass) process.exitCode = 1;

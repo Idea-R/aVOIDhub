@@ -1,6 +1,14 @@
 # RAILaVOID — Improvement Roadmap
 
-Release planning updated 2026-09-04. Current production evidence is in `docs/sprint-06/RELEASE.md`; next bounded goal is planned in `docs/sprint-07/PLAN.md`. Ordered by player impact.
+Release planning updated 2026-09-05. Current production evidence is in `docs/sprint-06/RELEASE.md`; local milestones and the next bounded slice are in `docs/sprint-07/PLAN.md`. Ordered by player impact.
+
+Latest local milestone: [Readable combat](docs/sprint-07/READABLE-COMBAT.md). Enemy cards expose hit count, base damage and targeting rules; queued blows identify the actual target. Round order stays fixed while an explicit Swap chooser previews both positions, Strike changes and the active crew member's targeting risk. Next: one blocked-track encounter with a readable miniboss, normal-party pacing tests and safe retreat/re-entry. No new art or publication in this pass.
+
+Latest playtest pass: [Continuity and encounters](docs/sprint-07/CONTINUITY-AND-ENCOUNTERS.md). Calmer stationary notices, shared crew portrait framing and voluntary expedition descent are local UI changes. Next: one contextual crossroads conversation → blocked-track ambush → staged miniboss loop. Named crew progression, one/two crew-relic slots and individual pair synergies are explicitly planned afterward, not present mechanics.
+
+2026-09-05 local milestone: [The Keeper’s Signal](docs/sprint-07/KEEPERS-SIGNAL.md) implements the conversation/preparation/return foundation at crossroads. A Mechanic, Tinker’s Kit and prior keeper help change repair options. The existing staged expedition can be entered or declined; cancellation, wounds and rewards persist. This is **not yet a physical rail blockage or a new miniboss**. Next: readable enemy intent and explicit swap partners, then the blocked-link encounter, ordinary-party pacing tests and an accepted art pass.
+
+Local playtest follow-up (not yet published): [Map-first UI and systems review](docs/sprint-07/UI-AND-SYSTEMS-REVIEW.md). This candidate collapses secondary HUD panels, rebuilds junction choice, reflows small-screen combat and makes destination planning follow existing rail before building. Supply tracing and readable crew combat are the next priorities; older completed UI checkboxes below are historical milestones, not a claim that small-screen polish is finished.
 
 ## Completed sprint: Command Deck Rebuild
 
@@ -34,12 +42,18 @@ Verification and implementation notes: `docs/sprint-04/USABILITY-PATCH.md`.
 
 ## Away Team program (in progress)
 
+Latest local pass: [Route sketch and complete crew artwork](docs/sprint-07/ROUTE-AND-CREW-PASS.md). Expedition-first expansion is now the next priority: visible intents and deliberate swaps, one proven miniboss expedition, then a bounded world-boss engagement prototype. This candidate is not yet deployed.
+
+Current visual review: [Expedition card UI](docs/sprint-07/EXPEDITION-CARD-PASS.md) replaces the rejected blue/translucent battle treatment with framed enamel cards and a compact command hand. Await human review before another broad art batch.
+
 - [x] Establish deterministic staged-expedition coverage and a dedicated browser verification command. A full authoring fixture palette remains ADS work.
 - [ ] Add persistent crew identity, XP, five levels and two authored unlock decisions.
 - [ ] Rebuild expedition rules around party positions, visible enemy intents, Tempo and four shared conditions.
 - [x] Ship eight native-alpha enemy avatars, eight clean scene paintings, staged ruins, formation pressure and swaps.
-- [ ] Complete the remaining six crew portrait/avatar pairs and region miniboss art; the Conductor already has authored art.
-- [ ] Replace the current expedition layout with a command-deck-quality party rail, stage, threat desk and action deck.
+- [x] Complete generic specialty portrait/avatar pairs for all seven current crew roles (local candidate; Conductor retained).
+- [ ] Add persistent individual identities and region miniboss art after the encounter loop is proven.
+- [x] Replace heavy action-container chrome with floating commands, authored crew, unobtrusive active/target nameplates and keyboard timing (local candidate).
+- [x] Add readable enemy intent and an explicit Swap partner selection; keep the stage visually open (local milestone; shared resolver rules and save-safe targets).
 - [ ] Balance standard encounters and minibosses, then complete campaign, standalone and production verification.
 
 Detailed plan: `docs/sprint-05/PLAN.md`. Art/content matrix: `docs/sprint-05/CONTENT-MATRIX.md`.

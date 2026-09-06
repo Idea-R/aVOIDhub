@@ -9,5 +9,6 @@ verify/run.log
 verify/hud-sprint-report.json
 verify/inspector-pan-report.json
 verify/screenshots/**/*.png
+verify/screenshots/**/*.json
 tmp/imagegen/
 output/imagegen/rejected/

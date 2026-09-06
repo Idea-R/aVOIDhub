@@ -42,7 +42,12 @@ const ctx: AppContext = {
     let seed = TEST_SEED;
     try { seed = JSON.parse(json).state.seed; } catch { return false; }
     const sim = createSim(seed, bus);
-    if (!sim.restore(json)) return false;
+    // Restore data before listeners can read ctx.sim; otherwise they briefly read
+    // (and may autosave) the title demo or previous run instead of the saved run.
+    const wasMuted = bus.muted;
+    let restored = false;
+    try { bus.muted = true; restored = sim.restore(json); } finally { bus.muted = wasMuted; }
+    if (!restored) return false;
     demoMode = false;
     autopilot.setEnabled(false);
     ctx.replaceSim(sim);
@@ -51,7 +56,7 @@ const ctx: AppContext = {
     return true;
   },
   quitToTitle() {
-    if (!demoMode && (ctx.sim.state.phase === 'running' || ctx.sim.state.phase === 'paused' || ctx.sim.state.phase === 'shop' || ctx.sim.state.phase === 'event')) {
+    if (!demoMode && !['title', 'victory', 'defeat'].includes(ctx.sim.state.phase)) {
       settings.writeSave(ctx.sim.serialize());
     }
     demoMode = true;
@@ -75,6 +80,16 @@ installDevApi(ctx, autopilot);
 // ---- persistence hooks
 bus.on('settlement:reached', () => { if (!demoMode) settings.writeSave(ctx.sim.serialize()); });
 bus.on('phase:change', ({ phase }) => { if (!demoMode && phase === 'paused') settings.writeSave(ctx.sim.serialize()); });
+// Choices and their rewards are durable checkpoints, not just settlement arrivals.
+const checkpoint = () => { if (!demoMode && !['title', 'victory', 'defeat'].includes(ctx.sim.state.phase)) settings.writeSave(ctx.sim.serialize()); };
+bus.on('event:show', checkpoint);
+bus.on('expedition:prepare', checkpoint);
+bus.on('expedition:stage', checkpoint);
+bus.on('expedition:stageCleared', checkpoint);
+bus.on('expedition:end', checkpoint);
+bus.on('relic:offer', checkpoint);
+bus.on('relic:taken', checkpoint);
+bus.on('phase:change', ({ phase }) => { if (phase === 'running') checkpoint(); });
 const finishRun = (victory: boolean) => {
   if (demoMode) return;
   const s = ctx.sim.state;
@@ -100,6 +115,8 @@ window.addEventListener('keydown', unlock);
 let cinematicActive = false;
 function cinematic(name: 'opening' | 'run_intro' | 'region_enter' | 'boss_intro' | 'victory' | 'defeat', data?: { title?: string; subtitle?: string; x?: number; y?: number }): void {
   if (demoMode || !ctx.view || settings.get().reducedMotion) return;
+  // Deferred flyovers must not cover a decision or steal its confirmation key.
+  if (name !== 'victory' && name !== 'defeat' && ctx.sim.state.phase !== 'running' && ctx.sim.state.phase !== 'paused') return;
   if (cinematicActive) return;
   cinematicActive = true;
   let done = false;
@@ -108,11 +125,15 @@ function cinematic(name: 'opening' | 'run_intro' | 'region_enter' | 'boss_intro'
   window.setTimeout(finish, name === 'opening' ? 40000 : 9000); // hard safety cap
 }
 bus.on('run:start', ({ seed }) => {
+  const startedState = ctx.sim.state;
   const region = ctx.sim.state.region;
   // the first run of a profile gets the full scripted opening; later runs the short run intro (the title menu can replay the opening)
   const first = !settings.meta().introSeen && !(window as any).__RAIL_SKIP_OPENING;
   if (first) settings.setMeta({ introSeen: true });
-  window.setTimeout(() => cinematic(first ? 'opening' : 'run_intro', { title: 'RAILaVOID', subtitle: `${REGION_NAMES[region]} · Seed ${seed}` }), 60);
+  window.setTimeout(() => { if (ctx.sim.state === startedState) cinematic(first ? 'opening' : 'run_intro', { title: 'RAILaVOID', subtitle: `${REGION_NAMES[region]} · Seed ${seed}` }); }, 60);
+});
+bus.on('phase:change', ({ phase }) => {
+  if (['event', 'shop', 'relic', 'expedition'].includes(phase) && ctx.view?.isCinematicPlaying()) ctx.view.skipCinematic();
 });
 // UI can request the opening on demand (title menu "Watch intro") — it plays on the live run
 (window as any).__RAIL_PLAY_OPENING = () => { const s = ctx.sim.state; if (!demoMode && (s.phase === 'running' || s.phase === 'paused')) cinematic('opening', { title: 'RAILaVOID' }); };
@@ -156,7 +177,9 @@ window.setInterval(() => {
 // pause when the tab is hidden
 document.addEventListener('visibilitychange', () => {
   if (document.hidden && !demoMode && ctx.sim.state.phase === 'running') ctx.sim.pause();
+  else if (document.hidden) checkpoint();
 });
+window.addEventListener('pagehide', checkpoint);
 
 window.addEventListener('resize', () => ctx.view?.resize());
 

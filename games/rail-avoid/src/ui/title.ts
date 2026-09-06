@@ -75,7 +75,7 @@ export function createTitle(ui: UiShared, actions: TitleActions): TitleScreen {
     btn('Watch intro', () => depart(() => actions.watchIntro(parseSeed(seedInput.value))), { class: 'rv-big rv-secondary', aria: 'Watch the opening and start a new run' }),
     btn('Settings', () => { ui.audio().ui('open'); actions.settings(); }, { class: 'rv-big', aria: 'Open settings' }),
   );
-  const hint = el('div', { class: 'rv-hint', text: 'Space pause · 1/2 speed · click hexes to plan track · R reverse · Tab train · Esc menu · H help' });
+  const hint = el('div', { class: 'rv-hint', text: 'Space pause · 1/2 speed · click hexes to plan track · R reverse · T train · Tab focus · Esc menu · H help' });
   const footer = el('div', { class: 'rv-footer', text: 'aVOID Games' });
   const root = el('section', { class: 'rv-title', role: 'dialog', 'aria-label': 'RAILaVOID title' },
     el('div', { class: 'rv-title-bg', 'aria-hidden': 'true' }), fx, el('div', { class: 'rv-title-vignette', 'aria-hidden': 'true' }),

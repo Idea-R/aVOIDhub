@@ -1,4 +1,4 @@
-/** Car catalogue (22 types). */
+/** Car catalogue (23 types). */
 import type { CarDef, CarType, WeaponDef } from './types';
 
 const W = (w: Partial<WeaponDef> & Pick<WeaponDef, 'kind' | 'damageClass' | 'range' | 'damage' | 'cooldown'>): WeaponDef => ({

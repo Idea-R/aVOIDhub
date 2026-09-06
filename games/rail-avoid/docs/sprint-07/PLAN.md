@@ -1,8 +1,18 @@
 # Sprint 07 — Crew Identity and Readable Combat
 
-Status: planned, not an active implementation goal. Begin after the Sprint 06 human playtest; fold its blockers into Phase 0 before choosing balance changes. This is the next bounded slice of the broader Sprint 05 Away Team program.
+Status: UI, generic crew art and the intent/explicit-swap milestone are implemented locally; no active goal or deployment implied. The blocked-link/miniboss slice remains planned. Art acceptance/provenance: [Route and crew pass](ROUTE-AND-CREW-PASS.md). Current combat evidence: [Readable combat](READABLE-COMBAT.md).
+
+2026-09-05: Readable combat adds shared-rule enemy intents, queued targets, round order and explicit cancellable swaps. Front now appears nearest the opposing formation. Existing damage values, timing windows, rewards and art are retained; human timing/pacing acceptance and representative GPU performance remain separate gates before encounter-frequency expansion.
+
+2026-09-05: [The Keeper’s Signal](KEEPERS-SIGNAL.md) adds the first authored conversation-to-expedition handoff and save-safe return. Its repair/leave alternatives keep the main line open. Phase 2 intent/explicit-swap mechanics still precede the compulsory blocked-link/miniboss slice; they were not silently bundled into this conversation milestone.
+
+Visual follow-up: the user rejected the cool translucent expedition cards. [Expedition card revision](EXPEDITION-CARD-PASS.md) replaces them with native-alpha brass framing, opaque ink plates and a responsive command hand. This is the current visual-review candidate; the previous transparent-wrapper note below is historical, not the selected card treatment.
+
+2026-09-04 follow-up: the user requested direct route-sketch nodes, complete crew avatars, transparent battle containers and action-key timing. Those are now the local review candidate. All seven generic specialty art pairs are present; individual save-stable identity remains pending. The user prioritizes expedition bosses/minibosses and special events next. Supply tracing stays in the backlog; the flak-car confusion is a missing explanation of a working mechanic, not simply missing ammo stock. The earlier [systems review](UI-AND-SYSTEMS-REVIEW.md) inventories 13 car-art gaps, two unused normal-stage enemies and geography/ADS work.
 
 ## Proposed goal
+
+Latest feedback and follow-on sequencing: [Continuity, conversations and expedition depth](CONTINUITY-AND-ENCOUNTERS.md). This pass calms reactive chrome and fixes portrait framing and retreat activation. Extend Phase 3's single proven encounter with the blocked-line conversation/ambush example; do not batch-generate a named roster or introduce XP/equipment in the UI-polish pass.
 
 Make an expedition feel like commanding the people aboard the train: consistent crew portraits and avatars, clearly previewed enemy actions, deliberate formation changes, and an after-action screen that explains what happened. Prove one complete encounter before expanding the roster or adding another progression system.
 
