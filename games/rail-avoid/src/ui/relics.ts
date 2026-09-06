@@ -148,8 +148,10 @@ export function createRelicModal(ui: UiShared, hooks: { relicBarAnchor(): HTMLEl
   }
 
   overlay.addEventListener('keydown', (e) => {
+    if (e.repeat) { e.preventDefault(); return; }
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
     const n = Number(e.key);
-    if (n >= 1 && n <= cards.length) { e.preventDefault(); pick(n - 1); return; }
+    if (n >= 1 && n <= cards.length) { e.preventDefault(); e.stopPropagation(); pick(n - 1); return; }
     if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); moveFocus(-1); }
     else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); moveFocus(1); }
   });

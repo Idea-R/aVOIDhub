@@ -1,6 +1,7 @@
 /** Pause menu. */
 import { el, btn, setText } from './dom';
 import type { UiShared } from './shared';
+import { withHotkey } from './shortcuts';
 
 export interface PauseActions { restart(): void; newSeed(): void; quit(): void }
 
@@ -12,7 +13,7 @@ export function createPause(ui: UiShared, actions: PauseActions): { el: HTMLElem
       seedEl,
       el('div', { class: 'rv-hr' }),
       el('div', { class: 'rv-menu rv-rows' },
-        btn('Resume', () => { ui.audio().ui('close'); ui.close('pause'); }, { class: 'rv-big rv-primary', aria: 'Resume the run' }),
+        withHotkey(btn('Resume', () => { ui.audio().ui('close'); ui.close('pause'); }, { class: 'rv-big rv-primary', aria: 'Resume the run' }), 'C'),
         btn('Restart run (same seed)', async () => {
           ui.audio().ui('click');
           if (await ui.confirm({ title: 'Restart run', text: 'Restart this run from the beginning with the same seed? Current progress is lost.', yes: 'Restart', danger: true })) {
@@ -30,7 +31,7 @@ export function createPause(ui: UiShared, actions: PauseActions): { el: HTMLElem
         btn('Settings', () => { ui.audio().ui('open'); ui.open('settings'); }, { class: 'rv-big' }),
         btn('Save & Quit to title', () => { ui.audio().ui('confirm'); ui.close('pause'); actions.quit(); }, { class: 'rv-big', aria: 'Save and quit to title' }),
       ),
-      el('div', { class: 'rv-hint', text: 'Esc or Space resumes. Progress is auto-saved.' }),
+      el('div', { class: 'rv-hint', text: 'C / Esc resume · Tab choose · Enter confirm focused choice. Progress is auto-saved.' }),
     ),
   );
   function refresh(): void {

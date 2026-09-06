@@ -25,6 +25,8 @@ export function createHowto(ui: UiShared): HTMLElement {
         )),
       ),
       el('h3', { text: 'Controls' }),
+      el('p', { html: '<kbd>C</kbd> continue deeper, leave a result, start your prepared team, or resume the pause menu. <kbd>Tab</kbd> moves focus; <kbd>Enter</kbd> confirms that focused control (including Cancel or Retreat). <kbd>Esc</kbd> goes back where safe. <kbd>1</kbd>–<kbd>9</kbd> select the numbered choices on the current screen. C never chooses a dialogue branch or relic for you.' }),
+      el('p', { html: 'In combat: <kbd>S</kbd> strike, <kbd>G</kbd> guard, <kbd>E</kbd> special, <kbd>W</kbd> choose a swap, <kbd>F</kbd> flee. Press the action key again or <kbd>Space</kbd> on impact. At a cleared stage: <kbd>C</kbd> continue, <kbd>F</kbd> retreat.' }),
       el('p', { html: '<kbd>Space</kbd> pause · <kbd>1</kbd>/<kbd>2</kbd> speed · <kbd>Backspace</kbd>/<kbd>Z</kbd> unplan · <kbd>D</kbd> detach last car · <kbd>R</kbd> reverse / stop · <kbd>T</kbd> train panel · <kbd>Tab</kbd> focus controls · <kbd>Esc</kbd> menu · <kbd>M</kbd> mute · <kbd>+</kbd>/<kbd>-</kbd> zoom · <kbd>F</kbd> centre · right-drag or <kbd>WASD</kbd> pan · <kbd>IJKL</kbd> cursor · <kbd>Enter</kbd> plan at cursor · <kbd>H</kbd> this screen. Expedition: <kbd>1</kbd>-<kbd>3</kbd> target · <kbd>S</kbd>/<kbd>G</kbd>/<kbd>E</kbd>/<kbd>F</kbd> strike / guard / special / flee · <kbd>Space</kbd> on impact. Gamepad: left stick pan, right stick cursor, A plan, B unplan, X depart, Y train, Start pause, LB/RB speed; in an expedition A strikes / presses on impact, Y guards, X special, D-pad browses.' }),
       el('div', { class: 'rv-actions' },
         btn('Got it', () => { ui.audio().ui('close'); ui.close('howto'); }, { class: 'rv-primary' }),

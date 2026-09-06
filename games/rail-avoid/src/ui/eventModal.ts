@@ -4,7 +4,9 @@ import type { UiShared } from './shared';
 import type { SimState, PassengerEventDef, PassengerEventOption } from '../core/types';
 import { activeEventDef, eventStepKey, keeperConversation, type ConversationDef } from '../core/conversations';
 import { unmetEventRequirement as unmet } from '../core/eventRequirements';
-import { crewPortrait } from './crewArt';
+import { CREW_AVATARS } from './crewArt';
+import { commandKey, withHotkey } from './shortcuts';
+import maraPortrait from '/art/npcs/mara-dialogue-v1.webp?url&inline';
 import brassFrame from '/art/ui/expedition-brass-frame-v2.webp?url&inline';
 import './conversation.css';
 import './trackEncounter.css';
@@ -69,6 +71,8 @@ export function createEventModal(ui: UiShared): EventModal {
         } else { ui.audio().ui('error'); if (st) update(st); }
       });
       options.appendChild(b);
+      b.setAttribute('aria-keyshortcuts', String(i + 1));
+      if (conversation?.options.length === 1 && conversation.options[0].action === 'return') withHotkey(b, 'C');
       optionButtons.push({ btn: b, why, opt: o });
     });
     const h2 = el('h2', { text: def.title });
@@ -77,23 +81,24 @@ export function createEventModal(ui: UiShared): EventModal {
       const arrival = s.activeEvent?.arrival;
       const receipt = [arrival?.passengers ? `${arrival.passengers} passengers boarded` : '', arrival?.crewName ? `${arrival.crewName} joined the crew` : ''].filter(Boolean).join(' · ');
       const dialogue = el('div', { class: 'rv-conversation-lines', 'aria-live': 'polite' },
-        ...conversation.exchange.map((line, i) => el('div', { class: 'rv-conversation-line' },
-          i === 1 ? crewPortrait('conductor', 'rv-conversation-portrait') : null,
-          el('div', {}, el('b', { class: 'rv-conversation-speaker', text: line.speaker }), el('p', { text: line.text })),
+        ...conversation.exchange.map((line, i) => el('section', { class: `rv-conversation-person ${i === 0 ? 'rv-person-npc' : 'rv-person-player'}`, 'aria-label': line.speaker },
+          el('div', { class: 'rv-conversation-bust', 'aria-hidden': 'true' },
+            el('img', { src: i === 0 ? maraPortrait : CREW_AVATARS.conductor, alt: '', decoding: 'async' })),
+          el('div', { class: 'rv-conversation-line' },
+            el('b', { class: 'rv-conversation-speaker', text: line.speaker }), el('p', { text: line.text })),
         )),
       );
       box.dataset.dialogueStep = s.activeEvent?.dialogue?.step ?? 'arrival';
       box.replaceChildren(
         el('header', { class: 'rv-conversation-heading' }, el('div', { class: 'rv-label', text: `${place} · train waiting` }), h2),
         el('div', { class: 'rv-conversation-body' },
-          el('figure', { class: 'rv-conversation-scene' }, el('img', { src: ruinApproach, alt: 'The train waits at the entrance to the old rail works.' }), el('figcaption', { text: 'The lower works' })),
           dialogue,
         ),
         el('div', { class: 'rv-conversation-context', text: conversation.context }),
         options,
         el('footer', { class: 'rv-conversation-footer' },
           el('span', { text: receipt || 'The railway stays open. Your route does not change.' }),
-          el('span', { text: `1–${def.options.length} choose · Tab navigate · Enter confirm` }),
+          el('span', { text: def.options.length === 1 ? 'C continue · Enter confirm' : `1–${def.options.length} reply · Tab choose · Enter confirm` }),
         ),
       );
       update(s);
@@ -161,9 +166,14 @@ export function createEventModal(ui: UiShared): EventModal {
   // number keys choose options
   overlay.addEventListener('keydown', (e) => {
     if (e.repeat) { e.preventDefault(); return; }
-    const n = Number(e.key);
+    const key = commandKey(e);
+    if (!key) return;
+    if (key === 'c' && optionButtons.length === 1 && optionButtons[0].btn.getAttribute('aria-keyshortcuts') === 'C') {
+      e.preventDefault(); e.stopPropagation(); optionButtons[0].btn.click(); return;
+    }
+    const n = Number(key);
     if (n >= 1 && n <= optionButtons.length) {
-      e.preventDefault();
+      e.preventDefault(); e.stopPropagation();
       optionButtons[n - 1].btn.click();
     }
   });

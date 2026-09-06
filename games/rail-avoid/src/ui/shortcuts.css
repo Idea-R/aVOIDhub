@@ -1,0 +1,2 @@
+#ui .rv-command-key { display: inline-block; flex: 0 0 auto; margin-left: .65em; padding: .1em .4em; border: 1px solid currentColor; border-radius: 3px; font: 600 11px/1.25 system-ui, sans-serif; letter-spacing: 0; opacity: .8; vertical-align: middle; }
+#ui .rv-shortcut-hint { color: var(--fg2); font: 12px/1.45 system-ui, sans-serif; text-align: center; margin-top: 8px; }

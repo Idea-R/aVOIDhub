@@ -9,6 +9,7 @@ import { SPECIALS } from '../sim/expedition';
 import { EXPEDITION } from '../core/config';
 import { D, rowsIn, shake } from './motion';
 import { crewPortrait } from './crewArt';
+import { commandKey, withHotkey } from './shortcuts';
 import brassFrame from '/art/ui/expedition-brass-frame-v2.webp?url&inline';
 
 export interface CrewPicker { el: HTMLElement; open(): void; gamepad(button: number): boolean }
@@ -53,14 +54,15 @@ export function createCrewPicker(ui: UiShared, hooks: { onCancel(): void }): Cre
     });
     countEl = el('span', { class: 'rv-cp-count' });
     startBtn = btn('Start expedition', () => start(), { class: 'rv-primary', aria: 'Start the expedition (Enter)' });
+    withHotkey(startBtn, 'C');
     startBtn.dataset.autofocus = '';
     box.replaceChildren(
       el('div', { class: 'rv-label', text: 'Expedition site' }),
       el('h2', { text: 'Who goes?' }),
       el('p', { class: 'rv-crewpick-lead', text: `Pick up to ${EXPEDITION.maxCrew}. Each round costs ${EXPEDITION.voidSecondsPerRound}s of Void travel, with a one-round minimum once you start. Wounded crew (20 HP or less) stay aboard.` }),
       el('div', { class: 'rv-crewpick-list rv-rows', role: 'group', 'aria-label': 'Crew' }, ...rows.map(r => r.el)),
-      el('div', { class: 'rv-actions rv-crewpick-actions' }, countEl, startBtn, btn('Cancel', () => cancel(), { aria: 'Cancel (Esc)' })),
-      el('div', { class: 'rv-hint', text: 'Press 1-9 to toggle a crew member · Enter to start · Esc to stay aboard.' }),
+      el('div', { class: 'rv-actions rv-crewpick-actions' }, countEl, startBtn, withHotkey(btn('Cancel', () => cancel(), { aria: 'Cancel (Esc)' }), 'Escape')),
+      el('div', { class: 'rv-hint', text: '1–9 choose crew · C start · Enter confirm focused choice · Esc cancel' }),
     );
     sync();
   }
@@ -106,8 +108,11 @@ export function createCrewPicker(ui: UiShared, hooks: { onCancel(): void }): Cre
 
   overlay.addEventListener('keydown', (e) => {
     if (e.repeat) { e.preventDefault(); return; }
-    const n = Number(e.key);
-    if (n >= 1 && n <= rows.length) { e.preventDefault(); toggle(rows[n - 1].crew.id); return; }
+    const key = commandKey(e);
+    if (!key) return;
+    if (key === 'c') { e.preventDefault(); e.stopPropagation(); start(); return; }
+    const n = Number(key);
+    if (n >= 1 && n <= rows.length) { e.preventDefault(); e.stopPropagation(); toggle(rows[n - 1].crew.id); return; }
     // Let Enter/Space activate the focused native control, especially Cancel.
     if (e.key === 'Enter' && !(e.target instanceof HTMLButtonElement)) { e.preventDefault(); start(); }
   });
