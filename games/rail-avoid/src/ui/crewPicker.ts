@@ -15,7 +15,7 @@ export interface CrewPicker { el: HTMLElement; open(): void; gamepad(button: num
 
 export function createCrewPicker(ui: UiShared, hooks: { onCancel(): void }): CrewPicker {
   const box = el('div', { class: 'rv-panel rv-modal rv-crewpick', style: `--exp-frame:url("${brassFrame}")` });
-  const overlay = el('div', { class: 'rv-overlay rv-zone', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Choose the expedition crew' }, box);
+  const overlay = el('div', { class: 'rv-overlay rv-zone rv-preparation-overlay', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Choose the expedition crew' }, box);
   let rows: Array<{ crew: Crew; el: HTMLButtonElement; locked: boolean }> = [];
   let chosen = new Set<string>();
   let started = false;

@@ -24,6 +24,7 @@
     "verify:continuity": "node verify/continuity-check.mjs",
     "verify:conversation": "node verify/conversation-check.mjs",
     "verify:combat-readability": "node verify/combat-readability-check.mjs",
+    "verify:blocked-track": "node verify/blocked-track-check.mjs",
     "verify:expedition": "node verify/expedition-art-check.mjs",
     "verify:avatars": "node verify/native-avatar-check.mjs",
     "perf:headed": "node verify/perf-headed.mjs"

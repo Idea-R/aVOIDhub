@@ -6,6 +6,8 @@ import { TRAIN, HEX_R, TERRAIN_SPEED, WEATHER, MAX_CARS, UPGRADES } from '../cor
 import { hexToWorld } from '../core/hex';
 import { makeCar, recomputeCapacity, damageCar, addResource, log, tileAt, fixCrewIndices, nextId, carPos, damageEnemy, carPowerGen, carCooling, carPassengerCap } from './helpers';
 import { autoFollow, aheadCount, unplanLast } from './route';
+import { blockedTrack } from '../core/trackEncounters';
+import { inspectTrackEncounter } from './trackEncounters';
 
 export const CAR_SPACING = 40; // px between car centres along the track
 
@@ -360,7 +362,14 @@ export function updateMovement(ctx: SimContext, onEnterTile: (col: number, row: 
   if (t.speed < target) t.speed = Math.min(target, t.speed + accel * dt);
   else t.speed = Math.max(target, t.speed - accel * 2 * dt);
   const pxPerHex = HEX_R * Math.sqrt(3);
-  const step = t.speed * pxPerHex * dt;
+  let blockedIndex = -1;
+  if (state.route.encounters?.some(e => e.status === 'blocked')) {
+    const path = state.route.path;
+    for (let i = t.routeIndex; i + 1 < path.length; i++) {
+      if (blockedTrack(state, path[i], path[i + 1])) { blockedIndex = i; break; }
+    }
+  }
+  const step = Math.max(0, Math.min(t.speed * pxPerHex * dt, blockedIndex >= 0 ? poly.cum[blockedIndex] - s : Infinity));
   // coal / scrap burn
   const hexes = step / pxPerHex;
   const coalNeed = hexes * (TRAIN.coalPerHex + t.totalWeight * TRAIN.coalPerTonPerHex) * ((t.relics ?? []).includes('coal_heart') ? 0.8 : 1);
@@ -372,6 +381,17 @@ export function updateMovement(ctx: SimContext, onEnterTile: (col: number, row: 
   t.distanceTravelled += hexes;
   // advance along the polyline
   let s2 = s + step;
+  // A plan can predate a barricade. Clamp to its near endpoint before any arrival
+  // callbacks or the end-of-plan fast path can carry the train across it.
+  if (blockedIndex >= 0 && s2 >= poly.cum[blockedIndex]) {
+    const moved = blockedIndex > t.routeIndex;
+    t.routeIndex = blockedIndex; t.progress = 0; t.speed = 0;
+    t.stopped = true; t.stopReason = 'no_route'; t.stopTimer = 0;
+    if (moved) onEnterTile(...state.route.path[blockedIndex]);
+    if (state.phase === 'running') inspectTrackEncounter(ctx);
+    computeTrail(state);
+    return;
+  }
   const end = poly.cum[poly.len - 1] ?? 0;
   if (s2 >= end - 0.01) {
     s2 = end;

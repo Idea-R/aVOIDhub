@@ -2,6 +2,7 @@
 import type { PassengerEventDef, PassengerEventOption, SimState } from './types';
 import { eventById } from './passengerEvents';
 import { EXPEDITION } from './config';
+import { TRACK_AMBUSH_EVENT, trackEncounterEvent } from './trackEncounters';
 
 export const KEEPER_HELPED = 'keeper_aided';
 export type KeeperAction = 'help' | 'mechanic' | 'kit' | 'prepare' | 'repair' | 'leave' | 'return';
@@ -14,7 +15,7 @@ export interface ConversationDef extends PassengerEventDef {
 
 export function eventStepKey(s: SimState): string {
   const e = s.activeEvent;
-  return e ? `${e.defId}:${e.startedAt}:${e.locationId ?? ''}:${e.dialogue?.step ?? 'arrival'}:${e.dialogue?.approach ?? ''}:${!!e.preparingExpedition}` : '';
+  return e ? `${e.defId}:${e.startedAt}:${e.locationId ?? ''}:${e.trackEncounterId ?? ''}:${e.dialogue?.step ?? 'arrival'}:${e.dialogue?.approach ?? ''}:${!!e.preparingExpedition}` : '';
 }
 
 export function keeperConversation(s: SimState): ConversationDef {
@@ -62,5 +63,6 @@ export function keeperConversation(s: SimState): ConversationDef {
 }
 
 export function activeEventDef(s: SimState, id = s.activeEvent?.defId): PassengerEventDef | undefined {
+  if (id === TRACK_AMBUSH_EVENT) return trackEncounterEvent(s);
   return id === 'node_crossroads' ? keeperConversation(s) : id ? eventById(id) : undefined;
 }

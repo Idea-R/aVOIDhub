@@ -11,6 +11,8 @@ import { addMarks, offerRelics, hasRelic } from './loot';
 import { activeEventDef, eventStepKey, type ConversationOption } from '../core/conversations';
 import { unmetEventRequirement } from '../core/eventRequirements';
 import { chooseKeeperOption, prepareExpedition } from './conversations';
+import { TRACK_AMBUSH_EVENT, nearbyTrackEncounter } from '../core/trackEncounters';
+import { clearPlan } from './route';
 
 export function updateEvents(ctx: SimContext): void {
   const { state, dt } = ctx;
@@ -40,6 +42,18 @@ export function chooseEventOption(ctx: SimContext, index: number, expectedStep?:
   const opt = def.options[index];
   if (!opt || unmetEventRequirement(state, opt)) return false;
   if (def.id === 'node_crossroads') return chooseKeeperOption(ctx, opt as ConversationOption);
+  if (def.id === TRACK_AMBUSH_EVENT) {
+    const encounter = nearbyTrackEncounter(state);
+    if (!encounter || encounter.id !== state.activeEvent.trackEncounterId) return false;
+    if (index === 0) return prepareExpedition(ctx);
+    if (index !== 1) return false;
+    clearPlan(ctx);
+    state.activeEvent = null;
+    state.phase = 'running';
+    state.train.stopped = true; state.train.stopReason = 'no_route'; state.train.speed = 0;
+    ctx.bus.defer('phase:change', { phase: 'running' });
+    return true;
+  }
   const t = state.train;
   const rng = ctx.rng.events;
   let summary = '';

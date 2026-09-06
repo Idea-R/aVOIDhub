@@ -1,6 +1,6 @@
 # Sprint 07 — Crew Identity and Readable Combat
 
-Status: UI, generic crew art and the intent/explicit-swap milestone are implemented locally; no active goal or deployment implied. The blocked-link/miniboss slice remains planned. Art acceptance/provenance: [Route and crew pass](ROUTE-AND-CREW-PASS.md). Current combat evidence: [Readable combat](READABLE-COMBAT.md).
+Status: UI, generic crew art, Keeper conversation and intent/explicit-swap are published in PR #62 (`16d2fbf`). See [Release](RELEASE.md). [Blocked-track foundation](BLOCKED-TRACK.md) is the current opt-in local slice; the Spike Captain and world spawning remain planned. Art acceptance/provenance: [Route and crew pass](ROUTE-AND-CREW-PASS.md). Current combat evidence: [Readable combat](READABLE-COMBAT.md).
 
 2026-09-05: Readable combat adds shared-rule enemy intents, queued targets, round order and explicit cancellable swaps. Front now appears nearest the opposing formation. Existing damage values, timing windows, rewards and art are retained; human timing/pacing acceptance and representative GPU performance remain separate gates before encounter-frequency expansion.
 

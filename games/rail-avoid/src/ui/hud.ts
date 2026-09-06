@@ -15,6 +15,7 @@ import { gsap, D, isReduced, floatLabel, shake } from './motion';
 import { createVolumePopover } from './volume';
 import { nodeMeta } from './nodes';
 import { relicDef } from '../core/relics';
+import { nearbyTrackEncounter } from '../core/trackEncounters';
 import { LINE_NAMES } from '../core/config';
 import { readJunctionOptions, currentLine, lineName, lineFlavour, lineCss, lineKey, LINE_BUILT, LINE_UNKNOWN, type JunctionOption } from './lines';
 
@@ -271,12 +272,14 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
   const stopText = el('div', { class: 'rv-stop-text', text: '' });
   const stopType = el('span', { class: 'rv-stop-type', text: '' });
   const departBtn = btn('Depart now', () => { ui.audio().ui('confirm'); ui.sim()?.depart(); }, { class: 'rv-small rv-primary', aria: 'Depart the settlement now' });
+  const inspectTrackBtn = btn('Inspect barricade', () => { ui.audio().ui('confirm'); ui.sim()?.inspectTrackEncounter(); }, { class: 'rv-small rv-primary' });
+  inspectTrackBtn.hidden = true;
   const pressureFill = el('i');
   const pressureEl = el('div', { class: 'rv-pressure' }, el('span', { text: 'Stop pressure' }), el('div', { class: 'rv-bar' }, pressureFill));
   const havenEl = el('span', { class: 'rv-haven-tag', title: 'Safe haven: no waves spawn and the militia defends while you are stopped here', text: 'Haven' });
   const stopEl = el('div', { class: 'rv-stop rv-panel', role: 'status' },
     el('span', { class: 'rv-stop-arrow', 'aria-hidden': 'true', text: '▲' }),
-    el('div', { class: 'rv-stop-main' }, stopIco, stopText, stopType, havenEl, departBtn),
+    el('div', { class: 'rv-stop-main' }, stopIco, stopText, stopType, havenEl, departBtn, inspectTrackBtn),
     pressureEl);
   stopEl.hidden = true;
   const resumeBtn = btn('Resume journey', () => { ui.audio().ui('confirm'); ui.sim()?.resume(); }, { class: 'rv-small rv-primary', aria: 'Resume the journey (Space)' });
@@ -722,7 +725,7 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
     const now = performance.now();
     const p = s.route.path;
     const end = p[p.length - 1];
-    const sig = `${end ? end[0] + ',' + end[1] : ''}|${p.length}|${s.train.stopReason}|${Object.keys(s.route.railLines ?? {}).length}`;
+    const sig = `${end ? end[0] + ',' + end[1] : ''}|${p.length}|${s.train.stopReason}|${Object.keys(s.route.railLines ?? {}).length}|${(s.route.encounters ?? []).map(e => e.id + e.status).join()}`;
     if (sig !== junctionPositionSig || now - junctionAt > 2000) {
       junctionPositionSig = sig;
       junctionAt = now;
@@ -758,9 +761,10 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
 
   function updateStop(s: SimState): void {
     const t = s.train;
+    const barricade = t.stopped && (s.phase === 'running' || s.phase === 'paused') ? nearbyTrackEncounter(s) : undefined;
     if (s.phase === 'victory' || s.phase === 'defeat') { show(stopEl, false); updateJunction(s, false); lastStopSig = ''; return; }
     // a branch to choose: the chooser replaces the stop pill (also when a plain 'no_route' stop sits at a fork)
-    const atFork = t.stopped && !t.reversing && (t.stopReason === 'junction' || t.stopReason === 'no_route') && (s.phase === 'running' || s.phase === 'paused');
+    const atFork = !barricade && t.stopped && !t.reversing && (t.stopReason === 'junction' || t.stopReason === 'no_route') && (s.phase === 'running' || s.phase === 'paused');
     if (updateJunction(s, atFork)) { show(stopEl, false); lastStopSig = ''; return; }
     let text = '', cls = 'rv-stop rv-panel', depart = false, haven = false, ico = '', type = '', color = '';
     if (t.reversing) {
@@ -791,7 +795,8 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
         case 'derailed': text = 'Derailed'; cls += ' rv-no-route'; ico = '✕'; break;
       }
     }
-    const sig = [text, cls, depart, haven, ico, type, color, Math.round(t.stopPressure * 100)].join('|');
+    if (barricade) { text = 'Barricade nearby · inspect, reverse or plan around'; ico = '⚠'; depart = false; haven = false; }
+    const sig = [text, cls, depart, haven, ico, type, color, !!barricade, Math.round(t.stopPressure * 100)].join('|');
     if (sig === lastStopSig) return;
     lastStopSig = sig;
     setText(stopText, text);
@@ -801,6 +806,7 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
     if (stopEl.getAttribute('style') !== st) stopEl.setAttribute('style', st);
     if (stopEl.className !== cls) stopEl.className = cls;
     show(departBtn, depart);
+    show(inspectTrackBtn, !!barricade);
     show(stopType, !!type);
     show(havenEl, haven);
     show(pressureEl, !haven && !t.reversing);

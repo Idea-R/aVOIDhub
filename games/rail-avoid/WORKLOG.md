@@ -1,5 +1,13 @@
 # Worklog
 
+## 2026-09-05 — Live release and the first blocked-track slice
+
+- Published PR #62 from candidate `994f45a` to main `16d2fbf`; Netlify deploy `6a9cb816a256f200088a7a3e` confirmed published for that commit. Whole-site preview and live smoke passed seven routes/25 assets with exact Rail bundle hashes. Preview and production each passed combat (23 samples) and conversation/save/return (25 samples). Four-size real-rail junction preview passed; shared release CI `34001925334` passed. [Release evidence](docs/sprint-07/RELEASE.md). Previous deploy retained for rollback; separate platform PR #61 untouched.
+- Started `codex/railavoid-blocked-track` from production. Added an opt-in saved physical-edge encounter, movement interception, explicit free preparation/cancel/leave, wound-preserving retry and once-only attempt/reward settlement. Existing two-stage Greenbelt foes/art are temporary lifecycle fixtures; no new miniboss, frequency or art claims.
+- 89 unit tests passed (one optional skipped), TypeScript and build passed. New browser flow passes 16 checkpoints at four viewport sizes with no errors; the existing seven-viewport expedition-card regression also passes. Found/fixed the illustrated event's phone two-column overflow and short-screen party controls; the crew roster scrolls independently of Start/Cancel. Full campaign/offline rebuild are still required before releasing this new slice. See [charter and evidence](docs/sprint-07/BLOCKED-TRACK.md).
+- User asked about Blender carts. Read the actual pilot report/source: locomotive/cargo/coach are built and opt-in-integrated only in `C:/dev/aVOID`, not this release checkout or live. No files were silently ported. Recorded the required measured integration step in ROADMAP.
+- Next: finish ordinary-party miniboss/tell/counter fixtures before world spawning. The current new slice remains local-only. Live remains the verified PR #62 milestone.
+
 ## 2026-09-05 — Readable combat and deliberate formation (local)
 
 - Continued the user's next milestone in `C:/dev/aVOID-railavoid-release/games/rail-avoid`, preserving the dirty worktree. Bounded charter: `docs/sprint-07/READABLE-COMBAT.md`. No new goal, branch, commit, push, deployment, paid generation or Blender replacement.

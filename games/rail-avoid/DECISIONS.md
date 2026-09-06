@@ -1,5 +1,13 @@
 # Decisions
 
+## 2026-09-05: Publish the verified game; isolate the next encounter
+
+The user explicitly authorized publication and starting the next slice. PR #62 publishes only the accumulated RailAVOID milestone through the whole-site preview/main pipeline; platform PR #61 stays separate. Production is `16d2fbf` / Netlify `6a9cb816a256f200088a7a3e`.
+
+The new track encounter lives on `codex/railavoid-blocked-track` and is opt-in. A blockage is an undirected edge record, not deleted rail. Withdrawal preserves it, carries normal wounds/Void cost back, and restarts the two existing Greenbelt stages on retry. Only a matching, unclaimed completed attempt clears the link and grants rewards. Inspection/cancellation are free; staying aboard clears only the untravelled plan. Existing art/foes prove the lifecycle, not the authored Spike Captain. See `docs/sprint-07/BLOCKED-TRACK.md`.
+
+The user's follow-up correctly identified that Blender carts are not live: they remain in the separate pilot checkout. Record a port-and-measure gate, not automatic replacement. No Blender files were imported and no asset batch started during this release/slice.
+
 ## 2026-09-05: Read the existing combat before expanding encounters
 
 Status: local implementation decision for the approved next milestone.

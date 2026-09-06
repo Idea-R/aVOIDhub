@@ -13,6 +13,7 @@ import { planRange, plannableTiles, previewPlan, planTile, unplanLast, clearPlan
 import { initWeather, initVoid, updateWeather, updateDayNight, updateVoid, voidDistance } from './weather';
 import { updateEvents, chooseEventOption } from './simEvents';
 import { cancelExpeditionPreparation } from './conversations';
+import { inspectTrackEncounter, placeTrackAmbush } from './trackEncounters';
 import { onArrive, updateStop, depart, buyCar, sellCar, repairCar, repairAll, closeShop, canShop, upgradeCar, upgradeCost, upgradeLoco, locoUpgradeCost } from './settlements';
 import { updateCombat, onTrainEnterTile, clearEnemies } from './combat';
 import { initDirector, updateDirector, spawnWave } from './waves';
@@ -291,11 +292,12 @@ export class Sim implements SimApi {
 
   chooseEventOption(index: number, expectedStep?: string): boolean { const r = chooseEventOption(this.ctx, index, expectedStep); this.bus.flush(); return r; }
   cancelExpeditionPreparation(): boolean { const r = cancelExpeditionPreparation(this.ctx); this.bus.flush(); return r; }
+  inspectTrackEncounter(): boolean { const r = inspectTrackEncounter(this.ctx); this.bus.flush(); return r; }
   chooseRelic(index: number): boolean { const r = chooseRelic(this.ctx, index); this.bus.flush(); return r; }
   startExpedition(crewIds: string[]): boolean {
     const s = this.state;
     const site = s.settlements.find(x => x.id === s.activeEvent?.locationId) ?? s.settlements.find(x => x.type === 'site' && s.route.path[s.train.routeIndex] && x.col === s.route.path[s.train.routeIndex][0] && x.row === s.route.path[s.train.routeIndex][1]);
-    const r = startExpedition(this.ctx, crewIds, site ? site.name : 'the ruins');
+    const r = startExpedition(this.ctx, crewIds, s.activeEvent?.trackEncounterId ? 'The Barricade' : site ? site.name : 'the ruins');
     this.bus.flush(); return r;
   }
   expeditionAction(kind: ExpeditionActionKind, targetFoe?: number, swapActorIndex?: number): boolean { const r = expeditionAction(this.ctx, kind, targetFoe, swapActorIndex); this.bus.flush(); return r; }
@@ -388,6 +390,9 @@ export class Sim implements SimApi {
 
   // ---------- debug ----------
   debug = {
+    placeTrackAmbush: (from: [number, number], to: [number, number]): string | null => {
+      const encounter = placeTrackAmbush(this.ctx, from, to); this.bus.flush(); return encounter?.id ?? null;
+    },
     warpToRegion: (region: number) => {
       const s = this.state;
       region = Math.max(0, Math.min(3, Math.floor(region)));

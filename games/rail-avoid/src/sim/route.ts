@@ -5,6 +5,7 @@ import { TRACK_COST, TRAIN, MAX_CARS, LINE_NAMES } from '../core/config';
 import { neighbors, edgeKey, hexDistance, tileKey } from '../core/hex';
 import { CAR_DEFS } from '../core/cars';
 import { tileAt, addResource, log } from './helpers';
+import { blockedTrack } from '../core/trackEncounters';
 
 // ---- link set cache (rebuilt when arrays change identity or length)
 interface LinkCache { rail: Set<string>; built: Set<string>; railRef: string[]; railLen: number; builtRef: string[]; builtLen: number; }
@@ -58,6 +59,7 @@ export function edgeCost(state: SimState, fc: number, fr: number, col: number, r
   if (!t) return { cost: 0, free: false, blocked: 'Off the map' };
   if (t.void) return { cost: 0, free: false, blocked: 'Consumed by the void' };
   if (t.terrain === 'mountain') return { cost: 0, free: false, blocked: 'Mountains are impassable' };
+  if (blockedTrack(state, [fc, fr], [col, row])) return { cost: 0, free: false, blocked: 'Barricade on this track · inspect from the near end or choose another route' };
   if (isLinked(state, fc, fr, col, row)) return { cost: 0, free: true, blocked: null };
   const base = TRACK_COST[t.terrain];
   const spike = (state.train.relics ?? []).includes('lucky_spike') && (t.terrain === 'plains' || t.terrain === 'ruins' || t.terrain === 'ash') ? -1 : 0;
@@ -288,6 +290,7 @@ export function autoFollow(ctx: SimContext): 'extended' | 'junction' | 'none' {
   for (const [nc, nr] of neighbors(ec, er)) {
     if (prev && prev[0] === nc && prev[1] === nr) continue;
     if (!isRail(state, ec, er, nc, nr)) continue;
+    if (blockedTrack(state, [ec, er], [nc, nr])) continue;
     if (isRevisit(state, nc, nr)) continue;
     const t = tileAt(state, nc, nr);
     if (!t || t.void) continue;
@@ -325,6 +328,7 @@ export function junctionOptions(state: SimState): RailBranch[] {
   for (const [nc, nr] of neighbors(ec, er)) {
     if (prev && prev[0] === nc && prev[1] === nr) continue;
     if (!isRail(state, ec, er, nc, nr)) continue;
+    if (blockedTrack(state, [ec, er], [nc, nr])) continue;
     if (isRevisit(state, nc, nr)) continue;
     const t = tileAt(state, nc, nr);
     if (!t || t.void) continue;
@@ -343,7 +347,7 @@ export function junctionOptions(state: SimState): RailBranch[] {
         const st = state.settlements.find(x => x.id === tile.settlementId);
         if (st && !st.consumed && (!st.visited || st.type === 'yard')) { next = { id: st.id, name: st.name, type: st.type, distance: step }; break; }
       }
-      let conts = neighbors(cur[0], cur[1]).filter(([c, r]) => !seen.has(tileKey(c, r)) && !(c === from[0] && r === from[1]) && !tileAt(state, c, r)?.void && isRail(state, cur[0], cur[1], c, r));
+      let conts = neighbors(cur[0], cur[1]).filter(([c, r]) => !seen.has(tileKey(c, r)) && !(c === from[0] && r === from[1]) && !tileAt(state, c, r)?.void && isRail(state, cur[0], cur[1], c, r) && !blockedTrack(state, cur, [c, r]));
       if (conts.length === 0) break;
       if (conts.length > 1) {
         // at a junction prefer continuations that carry this branch's line id, then the east-most one

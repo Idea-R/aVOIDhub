@@ -7,6 +7,7 @@ import { unmetEventRequirement as unmet } from '../core/eventRequirements';
 import { crewPortrait } from './crewArt';
 import brassFrame from '/art/ui/expedition-brass-frame-v2.webp?url&inline';
 import './conversation.css';
+import './trackEncounter.css';
 import lanternCamp from '/art/scenes/lantern-camp-v2.webp?url&inline';
 import ruinApproach from '/art/scenes/ruin-approach-v2.webp?url&inline';
 import falseSignal from '/art/scenes/false-signal-v2.webp?url&inline';
@@ -18,7 +19,7 @@ export interface EventModal { el: HTMLElement; show(defId?: string): void; updat
 
 function sceneFor(defId: string): { src: string; alt: string } | null {
   if (defId === 'node_site' || defId === 'mystery_away') return { src: ruinApproach, alt: 'The train waits beside an ancient ruin entrance.' };
-  if (defId === 'mystery_ambush') return { src: falseSignal, alt: 'Raiders spring a barricade around a false railway signal.' };
+  if (defId === 'mystery_ambush' || defId === 'track_ambush') return { src: falseSignal, alt: 'Raiders spring a barricade around a false railway signal.' };
   if (defId === 'mystery_survivor') return { src: rainboundSurvivor, alt: 'A lone rail gunner waits beside a wrecked handcar in the rain.' };
   if (defId === 'mystery_weapon') return { src: abandonedGunCar, alt: 'A damaged gun car waits on an overgrown siding.' };
   if (defId === 'mystery_dock') return { src: watersideRailDock, alt: 'A lantern-lit rail dock and fishing settlement beside dark water.' };
@@ -41,6 +42,7 @@ export function createEventModal(ui: UiShared): EventModal {
     const mystery = def.id.startsWith('mystery_');
     box.className = 'rv-panel rv-modal rv-event' + (def.negative ? ' rv-negative' : '') + (mystery ? ' rv-mystery-event' : '') + (conversation ? ' rv-conversation' : '');
     overlay.classList.toggle('rv-location-overlay', !!conversation);
+    overlay.classList.toggle('rv-track-overlay', def.id === 'track_ambush');
     overlay.setAttribute('aria-label', conversation ? 'A conversation at the crossroads' : 'Passenger event');
     box.style.setProperty('--exp-frame', `url("${brassFrame}")`);
     const options = el('div', { class: 'rv-options', role: 'group', 'aria-label': 'Choices' });
@@ -104,7 +106,7 @@ export function createEventModal(ui: UiShared): EventModal {
     const heading = el('div', { class: 'rv-event-heading' },
       ...(mystery ? [el('div', { class: 'rv-mystery-mark', 'aria-hidden': 'true', text: mysteryMarks[def.id] ?? '?' })] : []),
       el('div', { class: 'rv-event-heading-copy' },
-        el('div', { class: 'rv-label rv-wire', text: mystery ? 'Unknown signal · identity revealed' : (def.negative ? 'Trouble aboard' : 'Aboard the train') }),
+        el('div', { class: 'rv-label rv-wire', text: def.id === 'track_ambush' ? 'Line blocked · train waiting' : mystery ? 'Unknown signal · identity revealed' : (def.negative ? 'Trouble aboard' : 'Aboard the train') }),
         h2,
       ),
     );

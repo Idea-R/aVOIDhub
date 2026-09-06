@@ -59,6 +59,8 @@ export interface SimApi {
   // --- events ---
   chooseEventOption(index: number, expectedStep?: string): boolean;
   cancelExpeditionPreparation(): boolean;
+  /** Reopen an uncleared track encounter from either adjacent endpoint. */
+  inspectTrackEncounter(): boolean;
   /** Relic 1-of-3 choice while phase === 'relic'. */
   chooseRelic(index: number): boolean;
   // --- expeditions (phase === 'expedition') ---
@@ -106,6 +108,8 @@ export interface SimApi {
     offerRelics(): void;
     grantMarks(n: number): void;
     startExpedition(): void;
+    /** Local/ADS fixture only: ordinary world generation does not place these. */
+    placeTrackAmbush(from: [number, number], to: [number, number]): string | null;
     godTrain(): void;   // strong composition for testing
   };
 }

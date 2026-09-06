@@ -187,6 +187,19 @@ export interface RouteState {
   planRange: number;               // hexes ahead allowed
   blocked: boolean;                // next tile void/impassable
   sapperCharges: Array<{ col: number; row: number; revealed: boolean; timer: number; id: string }>;
+  /** Opt-in authored rail encounters. Absent in older saves and ordinary worlds. */
+  encounters?: TrackEncounter[];
+}
+
+export interface TrackEncounter {
+  id: string;
+  edge: string;
+  from: [number, number];
+  to: [number, number];
+  status: 'blocked' | 'cleared';
+  attempts: number;
+  settledAttempt: number;
+  lastOutcome?: 'won' | 'lost' | 'fled';
 }
 
 // ---------- Enemies ----------
@@ -300,6 +313,7 @@ export interface ActiveEvent {
   defId: string;
   startedAt: number;
   locationId?: string;
+  trackEncounterId?: string;
   preparingExpedition?: boolean;
   arrival?: { passengers: number; crewName?: string };
   dialogue?: {
@@ -347,6 +361,7 @@ export interface ExpeditionActor { id: string; name: string; specialty: CrewSpec
 export interface ExpeditionFoe { id: string; kind: string; name: string; hp: number; maxHp: number; atk: number; speed: number; stunned: number; desc: string; range: 'melee' | 'ranged' }
 export interface ExpeditionState {
   siteId: string;
+  trackAttempt?: { encounterId: string; attempt: number };
   /** Return to the original location decision after withdrawal; serialized with the fight. */
   returnEvent?: ActiveEvent;
   summary?: string;
