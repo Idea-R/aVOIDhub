@@ -4,11 +4,12 @@ import { CreatorApplicationForm } from "@/components/CreatorApplicationForm";
 import { PlatformPage } from "@/components/PlatformPage";
 import { isPlatformRuntimeConfigured } from "@/lib/env";
 
-export const metadata: Metadata = { title: "Become a creator" };
+export const metadata: Metadata = { title: "Become a creator", alternates: { canonical: "/creators/apply" } };
 
 export default function CreatorApplyPage() {
   return (
     <PlatformPage
+      compact
       eyebrow="/ creator intake"
       title={
         <>

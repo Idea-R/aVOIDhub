@@ -63,7 +63,7 @@ export const originalGames: Game[] = [
     destination: "avoidgame.io/voidavoid",
     availability: "Playable now",
     statusNote:
-      "The game is live. Signed-in runs now use a server seed and platform replay path in source. Ranked saving stays staged until the shared database rehearsal passes.",
+      "The game is live. Ranked saving is not currently available.",
     facts: [
       { label: "Move", value: "Mouse or touch drag" },
       { label: "Knockback", value: "Double-click or double-tap when charged" },
@@ -87,8 +87,8 @@ export const originalGames: Game[] = [
     score: {
       scope: "platform",
       gameKey: "voidavoid",
-      headline: "New runs bring receipts.",
-      copy: "The platform rebuilds the score from the recorded run. It still calls the result provisional because a browser replay is not complete anti-cheat proof.",
+      headline: "Scores with a paper trail.",
+      copy: "Each score is checked against the recorded run. Results remain provisional because browser checks cannot prove a run was fair.",
     },
   },
   {
@@ -111,7 +111,7 @@ export const originalGames: Game[] = [
     destination: "avoidgame.io/wreckavoid",
     availability: "Playable now",
     statusNote:
-      "The playable build is live. Its secure score adapter is staged, while lifecycle, collision, and long-session cleanup remain part of the game’s own V1 sprint.",
+      "The playable build is live. Ranked saving is not currently available.",
     facts: [
       { label: "Move", value: "Mouse" },
       { label: "Chain", value: "Hold the mouse to retract" },
@@ -139,8 +139,8 @@ export const originalGames: Game[] = [
     score: {
       scope: "platform",
       gameKey: "wreckavoid",
-      headline: "A provisional board after the secure adapter lands.",
-      copy: "The previous Wreck score table is being retired. Accepted runs will use one-use platform tickets and remain provisional until stronger checks exist.",
+      headline: "Ranked saving is not available yet.",
+      copy: "Accepted runs remain provisional until stronger checks can confirm they were fair.",
     },
   },
   {
@@ -163,7 +163,7 @@ export const originalGames: Game[] = [
     destination: "avoidgame.io/wordavoid",
     availability: "Playable now",
     statusNote:
-      "The game is live and its secure result path is ready in source. Ranked saving activates after the shared database rehearsal.",
+      "The game is live. Ranked saving is not currently available.",
     facts: [
       { label: "Input", value: "Physical keyboard" },
       { label: "Pause", value: "Escape" },
@@ -191,8 +191,8 @@ export const originalGames: Game[] = [
     score: {
       scope: "platform",
       gameKey: "wordavoid",
-      headline: "Every accepted word is replayed.",
-      copy: "The platform rebuilds each prompt, keystroke, score, accuracy result, and speed result. The board still says provisional while anti-cheat remains browser-based.",
+      headline: "Replay-checked, still provisional.",
+      copy: "Each run is checked against its prompts, keystrokes, score, accuracy, and speed. Results remain provisional because browser checks cannot prove a run was fair.",
     },
   },
   {
@@ -359,7 +359,7 @@ export const relatedGames: Game[] = [
     status: "external",
     hosting: "independent",
     accent: "#ff6ea8",
-    meta: "Opens bloomfall.io",
+    meta: "Independent game",
     detailHref: "/games/bloomfall/",
     playHref: "https://bloomfall.io/",
     playLabel: "Open Bloomfall",
@@ -411,7 +411,7 @@ export const relatedGames: Game[] = [
     status: "external",
     hosting: "independent",
     accent: "#8fa6ff",
-    meta: "Opens play.acrolis.io",
+    meta: "Independent game",
     detailHref: "/games/acrolis/",
     playHref: "https://play.acrolis.io/",
     playLabel: "Open Acrolis",
@@ -466,7 +466,7 @@ export const relatedGames: Game[] = [
     status: "external",
     hosting: "independent",
     accent: "#f3b84b",
-    meta: "Opens ttt3d.app",
+    meta: "Independent game",
     detailHref: "/games/ttt3d/",
     playHref: "https://ttt3d.app/",
     playLabel: "Open ttt3d.app",
@@ -503,6 +503,14 @@ export const relatedGames: Game[] = [
 ];
 
 export const allGames = [...originalGames, ...relatedGames];
+
+export function getCatalogCounts(games: readonly Game[] = allGames) {
+  return {
+    playable: games.filter(game => game.hosting !== "independent" && game.status !== "soon" && game.playHref).length,
+    elsewhere: games.filter(game => game.hosting === "independent" && game.status !== "soon" && game.playHref).length,
+    queued: games.filter(game => game.status === "soon").length,
+  };
+}
 
 export function getGameById(id: string): Game | undefined {
   return allGames.find((game) => game.id === id);

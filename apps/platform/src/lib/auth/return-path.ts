@@ -1,15 +1,32 @@
 const fallbackPath = '/account/'
 
-export function getSafeReturnPath(value: string | null | undefined): string {
-  if (!value || !value.startsWith('/') || value.startsWith('//') || value.includes('\\')) {
+type ReturnPathValue = string | string[] | null | undefined
+
+function firstValue(value: ReturnPathValue): string | null | undefined {
+  return Array.isArray(value) ? value[0] : value
+}
+
+export function getSafeReturnPath(value: ReturnPathValue): string {
+  const candidate = firstValue(value)
+  if (!candidate || !candidate.startsWith('/') || candidate.startsWith('//') || candidate.includes('\\')) {
     return fallbackPath
   }
 
   try {
-    const parsed = new URL(value, 'https://avoidgame.io')
+    const decoded = decodeURIComponent(candidate)
+    if (decoded.startsWith('//') || decoded.includes('\\')) return fallbackPath
+
+    const parsed = new URL(candidate, 'https://avoidgame.io')
     if (parsed.origin !== 'https://avoidgame.io') return fallbackPath
     return `${parsed.pathname}${parsed.search}${parsed.hash}`
   } catch {
     return fallbackPath
   }
+}
+
+export function getLoginReturnPath(
+  next: ReturnPathValue,
+  legacyReturnTo: ReturnPathValue,
+): string {
+  return getSafeReturnPath(next !== undefined ? next : legacyReturnTo)
 }

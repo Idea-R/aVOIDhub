@@ -1,5 +1,18 @@
 # aVOIDgame.io worklog
 
+## 2026-09-04: Platform Repair Sprint 1 release candidate
+
+- Fetched `origin/main` at `25d6820`; no open PRs returned by the preflight check.
+- Preserved dirty root/audit/catalog worktrees. Integration uses the existing clean `C:/dev/aVOID-main` checkout on `codex/fix-platform-repair-sprint-1`.
+- Added `docs/sprints/platform-repair-1.md` with phases, ownership, checks, boundaries and the next service gates.
+- Dispatched one Sol worker for handoff recovery and one Luna worker for scoped public copy, in isolated paths under `_worktrees/aVOID/platform`. No heavy Codex-owned MCP helpers were running at the resource check.
+- Repaired the unclosed motion block, restored responsive creator panels, balanced the catalog grid, derived catalog counts, reduced utility-page header space and kept the social dock out of forms.
+- Added public canonicals, private-workflow noindex, accurate game/checkout wording, safe login returns, and recoverable creator drafts/requests. Both bounded workers finished; the coordinator reviewed and integrated their diffs.
+- Passed 47 platform tests, 38 WreckaVOID tests, platform/Wreck typechecks, Wreck lint/build/budget, catalog/CSS checks, and the complete five-game/Next production build. The 12-route HTTP/metadata check passed on the built server.
+- Inspected desktop/mobile screenshots, sampled control bounds across five widths and both motion preferences, and checked keyboard form/menu behavior. The phase document records the full evidence and deliberate limits.
+- Published implementation `a2675a2` as the single release PR #61. GitHub CI and Netlify build/header/redirect checks passed. Hosted-preview route/metadata checks and creator/login/Wreck return-path checks passed; evidence is in the sprint document.
+- Next: release the reviewed candidate under its gate, then the leaderboard/identity rehearsal. No production settings, data, live email, billing or ads were changed. Code readiness is not live service acceptance.
+
 ## 2026-08-23 — finite Wreck Run candidate
 
 - Replaced WreckaVOID's score-driven wave escalation and unbounded minute-boss loop with the versioned `wreck-run-v1.0.0-rc.1` encounter director.

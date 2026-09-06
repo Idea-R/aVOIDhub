@@ -11,7 +11,7 @@ import { isPlatformRuntimeConfigured } from '@/lib/env'
 import { createClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
-export const metadata: Metadata = { title: 'Your player deck' }
+export const metadata: Metadata = { title: 'Your player deck', alternates: { canonical: '/account' }, robots: { index: false, follow: false } }
 
 function AccountPreview() {
   return (
@@ -33,7 +33,7 @@ function AccountPreview() {
 export default async function AccountPage() {
   if (!isPlatformRuntimeConfigured()) {
     return (
-      <PlatformPage eyebrow="/ player identity" title={<>Your place<br /><em>in the arcade.</em></>} intro="Your scores, saved games, membership, and creator tools all live here.">
+      <PlatformPage compact eyebrow="/ player identity" title={<>Your place<br /><em>in the arcade.</em></>} intro="Your scores, saved games, membership, and creator tools all live here.">
         <AccountPreview />
       </PlatformPage>
     )
@@ -64,7 +64,7 @@ export default async function AccountPage() {
   const playerName = profile?.display_name || profile?.username || userData.user.email?.split('@')[0] || 'Player'
 
   return (
-    <PlatformPage eyebrow="/ player identity" title={<>Your place<br /><em>in the arcade.</em></>} intro="Your scores, saved games, membership, and creator tools all live here.">
+    <PlatformPage compact eyebrow="/ player identity" title={<>Your place<br /><em>in the arcade.</em></>} intro="Your scores, saved games, membership, and creator tools all live here.">
       <DashboardShell active="overview" role={role.toUpperCase()} name={playerName} status={canSubmitGame ? 'creator tools ready' : hasAdFree ? 'ad-free member' : 'free player'} isAdmin={isAdmin}>
         <div className="deckHeader">
           <div><p className="panelLabel">Welcome back</p><h2>{playerName}<br /><em>is on the board.</em></h2></div>
