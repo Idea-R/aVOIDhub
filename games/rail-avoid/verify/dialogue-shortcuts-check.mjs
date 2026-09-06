@@ -1,7 +1,8 @@
 /** Isolated keyboard/visual fixtures; direct resolver use is NOT balance evidence. */
 import { chromium } from 'playwright';
 import fs from 'node:fs';
-const out='verify/screenshots/dialogue-shortcuts'; fs.mkdirSync(out,{recursive:true});
+const base=process.argv.find(a=>a.startsWith('--url='))?.slice(6)??'http://localhost:5178/RAILaVOID/';
+const out=process.argv.find(a=>a.startsWith('--out='))?.slice(6)??'verify/screenshots/dialogue-shortcuts'; fs.mkdirSync(out,{recursive:true});
 const browser=await chromium.launch({args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--mute-audio']});
 const page=await browser.newPage({viewport:{width:1280,height:720}});
 const errors=[],failures=[]; const check=(ok,text)=>{if(!ok)failures.push(text);};
@@ -16,7 +17,7 @@ async function stageOne(){
   await page.locator('.rv-exp-depth-card').waitFor({state:'visible'});
 }
 try{
-  await page.goto('http://localhost:5178/RAILaVOID/');await page.waitForFunction(()=>window.__RAIL?.ready&&window.__RAIL.view);
+  await page.goto(base);await page.waitForFunction(()=>window.__RAIL?.ready&&window.__RAIL.view);
   for(const [width,height] of [[1280,720],[800,600],[390,844],[360,740],[844,450]]){
     await page.setViewportSize({width,height});await fresh();
     await page.evaluate(()=>window.__RAIL.sim.debug.triggerEvent('node_crossroads'));

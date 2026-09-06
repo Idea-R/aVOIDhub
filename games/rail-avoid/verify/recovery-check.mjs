@@ -1,7 +1,8 @@
 /** Isolated UI/command fixtures, not player-balance evidence. */
 import { chromium } from 'playwright';
 import fs from 'node:fs';
-const out = 'verify/screenshots/recovery'; fs.mkdirSync(out, { recursive: true });
+const base = process.argv.find(a => a.startsWith('--url='))?.slice(6) ?? 'http://localhost:5178/RAILaVOID/';
+const out = process.argv.find(a => a.startsWith('--out='))?.slice(6) ?? 'verify/screenshots/recovery'; fs.mkdirSync(out, { recursive: true });
 const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
 const page = await browser.newPage();
 const errors = [], failures = [], shots = [];
@@ -32,7 +33,7 @@ async function bounds(width, height) {
   check(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${width}: horizontal page overflow`);
 }
 try {
-  await page.goto('http://localhost:5178/RAILaVOID/'); await page.waitForFunction(() => window.__RAIL?.ready && window.__RAIL.view);
+  await page.goto(base); await page.waitForFunction(() => window.__RAIL?.ready && window.__RAIL.view);
   for (const [width, height] of [[1440,900], [1280,720], [800,600], [390,844], [360,740], [844,450]]) {
     await page.setViewportSize({ width, height }); await fresh();
     await page.getByRole('button', { name: 'Service stop', exact: true }).click();
