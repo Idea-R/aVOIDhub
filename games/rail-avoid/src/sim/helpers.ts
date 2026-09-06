@@ -71,6 +71,7 @@ export function addResource(ctx: SimContext, key: ResourceKey, delta: number, x?
   const cap = t.capacity[key];
   const after = Math.max(0, Math.min(cap, before + delta));
   t.resources[key] = after;
+  if (key === 'ammo') refreshAmmoReadiness(ctx.state);
   const real = after - before;
   if (Math.abs(real) >= 0.5) ctx.bus.defer('resource:change', { key, delta: real, x, y });
   if (delta > 0 && before + delta > cap + 0.5) ctx.bus.defer('resource:full', { key });
@@ -83,6 +84,14 @@ export function hasCar(state: SimState, type: CarType): boolean {
 }
 export function countCars(state: SimState, type: CarType): number {
   return state.train.cars.filter(c => c.type === type && c.hp > 0).length;
+}
+
+/** Shop and paused saves do not tick propagation. Keep their ammo indicators
+ * current as soon as stock/capacity changes, not only after resuming travel. */
+function refreshAmmoReadiness(state: SimState): void {
+  for (const car of state.train.cars) {
+    car.derived.hasAmmoSupply = state.train.resources.ammo >= (CAR_DEFS[car.type].weapon?.ammoPerShot ?? 0);
+  }
 }
 
 /**
@@ -250,6 +259,7 @@ export function recomputeCapacity(state: SimState): void {
   t.totalWeight = weight + t.passengers * 0.5;
   t.totalPowerGen = gen;
   t.totalPowerUse = use;
+  refreshAmmoReadiness(state);
 }
 
 // ---------- Enemies ----------

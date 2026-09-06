@@ -100,7 +100,6 @@ export interface CarDef {
   cooling: number;       // per second self cooling (radiator etc.)
   storage: ResourceBundle; // capacity added
   passengerCap: number;
-  ammoSupplier: boolean;
   weapon: WeaponDef | null;
   planRangeBonus: number;
   trackCostBonus: number;   // negative reduces cost
@@ -126,6 +125,7 @@ export interface Car {
   boarders: string[];       // enemy ids currently inside this car
   crewId: string | null;
   cooldown: number;         // weapon cooldown remaining
+  guardCooldown?: number;   // independent emergency sidearms; optional for older saves
   workTimer: number;        // fabricator/foundry cycle
   passengers: number;       // riding in this car
   disabled: boolean;        // temporarily disabled (e.g. drone sap)
@@ -136,7 +136,7 @@ export interface Car {
 
 export interface CarDerived {
   powerRatio: number;       // 0..1 how much of powerUse is satisfied
-  hasAmmoSupply: boolean;
+  hasAmmoSupply: boolean;   // shared stock can fund the next shot; no adjacency requirement
   activity: number;         // 0..1 used for heat generation
   targetEnemyId: string | null;
   heatFlowIn: number;       // net heat flow from neighbours (for UI arrows)
@@ -153,6 +153,7 @@ export interface TrainState {
   stopped: boolean;           // at settlement / no route
   stopReason: 'none' | 'no_route' | 'settlement' | 'junction' | 'boss' | 'derailed';
   stopTimer: number;          // seconds stopped (stop pressure)
+  service?: { settlementId: string; repairing: boolean; repairTimer: number };
   stopPressure: number;       // 0..1
   reversing: boolean;         // backing down the traversed track
   locoUpgrades: LocoUpgrades; // engine upgrade tracks bought at yards (0..3 each)

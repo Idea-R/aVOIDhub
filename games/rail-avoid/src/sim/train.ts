@@ -163,14 +163,6 @@ export function propagate(ctx: SimContext): void {
     ratio[i] = use > 0 ? Math.min(1, supply[i] / use) : 1;
     if (!alive[i]) ratio[i] = 0;
   }
-  // ammo supply
-  const ammoSup: boolean[] = new Array(n).fill(false);
-  for (let i = 0; i < n; i++) {
-    if (!defs[i].weapon || defs[i].weapon!.ammoPerShot === 0) { ammoSup[i] = true; continue; }
-    for (let j = Math.max(0, i - TRAIN.ammoRange); j <= Math.min(n - 1, i + TRAIN.ammoRange); j++) {
-      if (t.cars[j].hp > 0 && defs[j].ammoSupplier) { ammoSup[i] = true; break; }
-    }
-  }
   // heat: generation, cooling, diffusion, fire
   const cooling = WEATHER[state.weather.kind].cooling * state.weather.intensity;
   const heatIn: number[] = new Array(n).fill(0);
@@ -199,7 +191,7 @@ export function propagate(ctx: SimContext): void {
     car.heat = Math.max(0, Math.min(120, car.heat + heatIn[i] * dt));
     car.derived.heatFlowIn = i + 1 < n ? (t.cars[i + 1].heat - car.heat) * TRAIN.heatDiffusion : 0;
     car.derived.powerRatio = ratio[i];
-    car.derived.hasAmmoSupply = ammoSup[i];
+    car.derived.hasAmmoSupply = t.resources.ammo >= (defs[i].weapon?.ammoPerShot ?? 0);
     car.derived.activity = Math.max(0, car.derived.activity - 2 * dt);
     if (car.disabled) { car.disabledFor -= dt; if (car.disabledFor <= 0) { car.disabled = false; car.disabledFor = 0; } }
     if (car.heat >= TRAIN.heatFireAt && !car.onFire) { car.onFire = true; ctx.bus.defer('car:fire', { carIndex: i, on: true }); ctx.bus.defer('car:overheat', { carIndex: i }); log(state, `${defs[i].name} is on fire!`, 'bad'); }
@@ -464,6 +456,7 @@ export function startReversing(ctx: SimContext): boolean {
   let guard = 0;
   while (unplanLast(ctx).ok && guard++ < 500) { /* pop */ }
   t.reversing = true;
+  t.service = undefined;
   t.stopped = false;
   t.stopReason = 'none';
   t.stopTimer = 0;

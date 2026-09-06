@@ -17,6 +17,9 @@ import { nodeMeta } from './nodes';
 import { relicDef } from '../core/relics';
 import { nearbyTrackEncounter } from '../core/trackEncounters';
 import { LINE_NAMES } from '../core/config';
+import { fieldRepairTarget } from '../sim/service';
+import { CAR_DEFS } from '../core/cars';
+import { withHotkey } from './shortcuts';
 import { readJunctionOptions, currentLine, lineName, lineFlavour, lineCss, lineKey, LINE_BUILT, LINE_UNKNOWN, type JunctionOption } from './lines';
 
 export interface Hud {
@@ -51,7 +54,7 @@ const RES: Array<{ key: ResourceKey; label: string; icon: string; help: string }
   { key: 'rails', label: 'Rails', icon: '═', help: 'Spent to lay new track. Existing railway is free.' },
   { key: 'scrap', label: 'Scrap', icon: '⚙', help: 'Repairs hulls and buys or upgrades cars at yards.' },
   { key: 'coal', label: 'Coal', icon: '⬢', help: 'Fuel burned as the train moves. Heavy trains use more.' },
-  { key: 'ammo', label: 'Ammo', icon: '➤', help: 'Consumed by guns. Weapons also need a supplier within two cars.' },
+  { key: 'ammo', label: 'Ammo', icon: '➤', help: 'Shared by every gun, regardless of car position. Cargo adds capacity; Foundries produce ammo.' },
   { key: 'food', label: 'Food', icon: '✿', help: 'Feeds passengers and protects morale during long runs.' },
 ];
 const WEATHER_ICON: Record<string, string> = { clear: '○', rain: '☂', fog: '≋', storm: '⚡', ashfall: '☁' };
@@ -271,7 +274,20 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
   const stopIco = el('span', { class: 'rv-stop-ico', 'aria-hidden': 'true', text: '' });
   const stopText = el('div', { class: 'rv-stop-text', text: '' });
   const stopType = el('span', { class: 'rv-stop-type', text: '' });
-  const departBtn = btn('Depart now', () => { ui.audio().ui('confirm'); ui.sim()?.depart(); }, { class: 'rv-small rv-primary', aria: 'Depart the settlement now' });
+  const departBtn = withHotkey(btn('Depart now', () => { ui.audio().ui('confirm'); ui.sim()?.depart(); }, { class: 'rv-small rv-primary', aria: 'Depart the settlement now (X)' }), 'X');
+  const serviceBtn = btn('Service stop', () => {
+    const sim = ui.sim(); if (sim) sim.setServiceHold(!sim.state.train.service);
+  }, { class: 'rv-small', title: 'Hold departure to repair and reorder. World time continues.' });
+  const repairLabel = el('span', { text: 'Repair to 80%' });
+  const repairBtn = withHotkey(btn('', () => {
+    const sim = ui.sim(); if (sim) sim.setFieldRepair(!sim.state.train.service?.repairing);
+  }, { class: 'rv-small', aria: 'Toggle field repairs (P)' }), 'P');
+  repairBtn.prepend(repairLabel);
+  const arrangeBtn = btn('Arrange cars', () => ui.selectCar(1), { class: 'rv-small', title: 'Choose a car and move it forward or backward. The locomotive stays first.' });
+  const serviceCopy = el('span', { class: 'rv-service-copy' });
+  const serviceRow = el('div', { class: 'rv-service-row', 'aria-label': 'Field service' },
+    el('div', { class: 'rv-service-actions' }, repairBtn, arrangeBtn), serviceCopy);
+  serviceRow.hidden = true;
   const inspectTrackBtn = btn('Inspect barricade', () => { ui.audio().ui('confirm'); ui.sim()?.inspectTrackEncounter(); }, { class: 'rv-small rv-primary' });
   inspectTrackBtn.hidden = true;
   const pressureFill = el('i');
@@ -279,8 +295,8 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
   const havenEl = el('span', { class: 'rv-haven-tag', title: 'Safe haven: no waves spawn and the militia defends while you are stopped here', text: 'Haven' });
   const stopEl = el('div', { class: 'rv-stop rv-panel', role: 'status' },
     el('span', { class: 'rv-stop-arrow', 'aria-hidden': 'true', text: '▲' }),
-    el('div', { class: 'rv-stop-main' }, stopIco, stopText, stopType, havenEl, departBtn, inspectTrackBtn),
-    pressureEl);
+    el('div', { class: 'rv-stop-main' }, stopIco, stopText, stopType, havenEl, serviceBtn, departBtn, inspectTrackBtn),
+    serviceRow, pressureEl);
   stopEl.hidden = true;
   const resumeBtn = btn('Resume journey', () => { ui.audio().ui('confirm'); ui.sim()?.resume(); }, { class: 'rv-small rv-primary', aria: 'Resume the journey (Space)' });
   const pausedEl = el('div', { class: 'rv-paused-callout rv-panel', role: 'status', 'aria-label': 'Journey paused' },
@@ -782,12 +798,13 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
             if (st) { name = st.name; stType = st.type; }
           }
           const m = nodeMeta(stType);
-          const remain = Math.max(0, Math.ceil(TRAIN.settlementStopTime - t.stopTimer));
-          text = s.phase === 'shop' ? name : `${name} · departing in ${remain}s`;
+          const stopSeconds = stType === 'crossroads' ? 4 : TRAIN.settlementStopTime * (t.relics.includes('old_timetable') ? .5 : 1);
+          const remain = Math.max(0, Math.ceil(stopSeconds - t.stopTimer));
+          text = s.phase === 'shop' ? name : t.service ? `${name} · service stop${s.phase === 'paused' ? ' · paused' : ''}` : `${name} · departing in ${remain}s`;
           type = m.label; ico = m.icon; color = m.color;
           cls += ' rv-settlement';
           depart = s.phase !== 'shop';
-          haven = true;
+          haven = stType !== 'crossroads';
           break;
         }
         case 'junction': text = 'Junction — choose a branch'; cls += ' rv-junction-stop'; ico = '⑂'; break;
@@ -796,7 +813,12 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
       }
     }
     if (barricade) { text = 'Barricade nearby · inspect, reverse or plan around'; ico = '⚠'; depart = false; haven = false; }
-    const sig = [text, cls, depart, haven, ico, type, color, !!barricade, Math.round(t.stopPressure * 100)].join('|');
+    const canService = !!ui.sim()?.canService() && s.phase !== 'shop';
+    const held = !!t.service && canService;
+    const repairing = held && !!t.service?.repairing;
+    const target = held ? fieldRepairTarget(s) : undefined;
+    const serviceText = held ? `${target ? `${CAR_DEFS[target.type].name} ${Math.round(target.hp / target.maxHp * 100)}% · ` : 'All hulls at least 80% · '}${s.phase === 'paused' ? 'Work paused' : repairing ? 'Repairing' : 'Holding'} · 4% hull / 2s · 1 scrap / 8 HP · ${Math.floor(t.resources.scrap)} scrap left. ${!haven ? 'No militia here. ' : ''}${s.phase === 'paused' ? 'Resume to work.' : 'The Void keeps moving.'}` : '';
+    const sig = [text, cls, depart, haven, ico, type, color, !!barricade, canService, held, repairing, serviceText, Math.round(t.stopPressure * 100)].join('|');
     if (sig === lastStopSig) return;
     lastStopSig = sig;
     setText(stopText, text);
@@ -806,9 +828,18 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
     if (stopEl.getAttribute('style') !== st) stopEl.setAttribute('style', st);
     if (stopEl.className !== cls) stopEl.className = cls;
     show(departBtn, depart);
+    show(serviceBtn, canService);
+    setText(serviceBtn, held ? 'End service' : 'Service stop');
+    setAttr(serviceBtn, 'aria-pressed', String(held));
+    show(serviceRow, held);
+    setText(serviceCopy, serviceText);
+    setText(repairLabel, repairing ? 'Stop repairs' : 'Repair to 80%');
+    setAttr(repairBtn, 'aria-pressed', String(repairing));
+    repairBtn.disabled = !repairing && (!target || t.resources.scrap <= 0);
+    arrangeBtn.disabled = t.cars.length < 2;
     show(inspectTrackBtn, !!barricade);
-    show(stopType, !!type);
-    show(havenEl, haven);
+    show(stopType, !!type && !held);
+    show(havenEl, haven && !held);
     show(pressureEl, !haven && !t.reversing);
     if (!haven) setWidth(pressureFill, clamp(t.stopPressure, 0, 1) * 100);
     show(stopEl, true);

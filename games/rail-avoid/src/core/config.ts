@@ -36,7 +36,15 @@ export const TRAIN = {
   baseCapacity: { rails: 60, scrap: 60, coal: 60, ammo: 100, food: 40 } as Record<ResourceKey, number>,
   startResources: { rails: 36, scrap: 42, coal: 58, ammo: 100, food: 30 } as Record<ResourceKey, number>,
   powerRange: 3,
-  ammoRange: 2,
+  guardRange: 110,
+  guardCooldown: 1.6,
+  guardDamage: 4,
+  guardCrewBonus: 3,
+  guardGunnerBonus: 2,
+  fieldRepairCap: 0.8,      // yards remain the place for full instant repairs
+  fieldRepairInterval: 2,
+  fieldRepairFraction: 0.04, // 4% of one car's max hull per work cycle
+  fieldRepairHpPerScrap: 8,
   heatDiffusion: 0.15,
   heatDamageAt: 80,
   heatFireAt: 100,

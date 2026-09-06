@@ -90,6 +90,10 @@ export function createInput(ui: UiShared, actions: InputActions): Input {
       case k === 'j' || k === 'J': view?.moveCursor(-1, 0); break;
       case k === 'l' || k === 'L': view?.moveCursor(1, 0); break;
       case k === 'x' || k === 'X': actions.departOrClose(); break;
+      case k === 'p' || k === 'P': {
+        if (sim.canService() && !sim.canShop()) { e.preventDefault(); sim.setFieldRepair(!st.train.service?.repairing); }
+        break;
+      }
       case k === 'r' || k === 'R': if (!e.repeat) actions.toggleReverse(); break;
       default:
         if (['w', 'a', 's', 'd', 'W', 'A', 'S', 'D', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(k)) {

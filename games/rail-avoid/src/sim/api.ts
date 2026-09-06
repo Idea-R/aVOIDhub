@@ -43,6 +43,10 @@ export interface SimApi {
   isReversing(): boolean;
   detachFrom(carIndex: number): boolean;   // drops carIndex..end (carIndex >= 1)
   moveCar(from: number, to: number): boolean;  // reorder (not the locomotive)
+  canReorder(): boolean;
+  canService(): boolean;
+  setServiceHold(on: boolean): boolean;   // stay at a staffed stop; world time continues
+  setFieldRepair(on: boolean): boolean;   // weakest hull first, up to 80%; costs scrap and time
   buyCar(type: CarType, insertAt?: number): boolean;  // only while phase==='shop'
   sellCar(carIndex: number): boolean;
   repairCar(carIndex: number): boolean;    // costs scrap at yards

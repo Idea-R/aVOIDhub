@@ -7,7 +7,7 @@ const W = (w: Partial<WeaponDef> & Pick<WeaponDef, 'kind' | 'damageClass' | 'ran
 });
 
 const base = (d: Partial<CarDef> & Pick<CarDef, 'type' | 'name' | 'short' | 'desc' | 'tier' | 'cost' | 'hp' | 'weight' | 'color'>): CarDef => ({
-  powerGen: 0, powerUse: 0, heatGen: 0, cooling: 0, storage: {}, passengerCap: 0, ammoSupplier: false, weapon: null,
+  powerGen: 0, powerUse: 0, heatGen: 0, cooling: 0, storage: {}, passengerCap: 0, weapon: null,
   planRangeBonus: 0, trackCostBonus: 0, blocksBoarders: false,
   ...d,
 });
@@ -20,14 +20,14 @@ export const CAR_DEFS: Record<CarType, CarDef> = {
   reactor: base({ type: 'reactor', name: 'Reactor Car', short: 'REAC', desc: '+10 power, +6 heat/s. Explodes violently when destroyed, damaging neighbours.', tier: 3, cost: 70, hp: 140, weight: 30, powerGen: 10, heatGen: 6, color: 0x5ee0b0 }),
   radiator: base({ type: 'radiator', name: 'Radiator Car', short: 'RADR', desc: 'Cools itself by 6/s and neighbours by 3/s. Put it between hot cars.', tier: 1, cost: 22, hp: 100, weight: 14, cooling: 6, color: 0x6fb7e8 }),
   fabricator: base({ type: 'fabricator', name: 'Fabricator', short: 'FAB', desc: 'Turns 2 scrap into 1 rail every 4 s while powered.', tier: 2, cost: 40, hp: 120, weight: 26, powerUse: 3, heatGen: 2, color: 0xc9a54a }),
-  foundry: base({ type: 'foundry', name: 'Foundry', short: 'FNDY', desc: 'Turns 1 scrap into 6 ammo every 4 s while powered. Supplies ammo to weapons within 2 cars.', tier: 2, cost: 38, hp: 120, weight: 28, powerUse: 3, heatGen: 3, ammoSupplier: true, color: 0xd98a3a }),
-  cargo: base({ type: 'cargo', name: 'Cargo Hold', short: 'CRGO', desc: '+60 to every storage cap. Supplies ammo to weapons within 2 cars.', tier: 1, cost: 20, hp: 125, weight: 20, storage: { rails: 60, scrap: 60, coal: 40, ammo: 60, food: 60 }, ammoSupplier: true, color: 0x8b6b4a }),
-  armored_cargo: base({ type: 'armored_cargo', name: 'Armoured Cargo', short: 'ACRG', desc: '+40 storage, double hull. Supplies ammo within 2 cars.', tier: 2, cost: 42, hp: 240, weight: 34, storage: { rails: 40, scrap: 40, coal: 30, ammo: 60, food: 40 }, ammoSupplier: true, color: 0x6b6b7a }),
-  gatling: base({ type: 'gatling', name: 'Gatling Turret', short: 'GATL', desc: 'Rapid bullets vs ground. Weak against armour and air. Needs an ammo supplier within 2 cars.', tier: 1, cost: 30, hp: 115, weight: 18, powerUse: 2, heatGen: 2,
+  foundry: base({ type: 'foundry', name: 'Foundry', short: 'FNDY', desc: 'Turns 1 scrap into 6 ammo every 4 s while powered. Feeds the shared ammo stock.', tier: 2, cost: 38, hp: 120, weight: 28, powerUse: 3, heatGen: 3, color: 0xd98a3a }),
+  cargo: base({ type: 'cargo', name: 'Cargo Hold', short: 'CRGO', desc: 'Extra shared storage: +60 rails, scrap, ammo and food; +40 coal.', tier: 1, cost: 20, hp: 125, weight: 20, storage: { rails: 60, scrap: 60, coal: 40, ammo: 60, food: 60 }, color: 0x8b6b4a }),
+  armored_cargo: base({ type: 'armored_cargo', name: 'Armoured Cargo', short: 'ACRG', desc: 'Armoured storage: +40 rails, scrap and food; +30 coal and +60 ammo.', tier: 2, cost: 42, hp: 240, weight: 34, storage: { rails: 40, scrap: 40, coal: 30, ammo: 60, food: 40 }, color: 0x6b6b7a }),
+  gatling: base({ type: 'gatling', name: 'Gatling Turret', short: 'GATL', desc: 'Rapid bullets vs ground. Weak against armour and air. Uses shared ammo from anywhere in the train.', tier: 1, cost: 30, hp: 115, weight: 18, powerUse: 2, heatGen: 2,
     weapon: W({ kind: 'gatling', damageClass: 'bullet', range: 230, damage: 8, cooldown: 0.22, ammoPerShot: 0.25, heatPerShot: 0.35, hitsAir: true }), color: 0xe86f6f }),
-  cannon: base({ type: 'cannon', name: 'Cannon Car', short: 'CANN', desc: 'Slow ground-only shells with splash; double damage vs armour. Needs an ammo supplier within 2 cars.', tier: 2, cost: 48, hp: 120, weight: 30, powerUse: 3, heatGen: 4,
+  cannon: base({ type: 'cannon', name: 'Cannon Car', short: 'CANN', desc: 'Slow ground-only shells with splash; double damage vs armour. Uses shared ammo from anywhere in the train.', tier: 2, cost: 48, hp: 120, weight: 30, powerUse: 3, heatGen: 4,
     weapon: W({ kind: 'cannon', damageClass: 'shell', range: 330, damage: 42, cooldown: 2.4, ammoPerShot: 4, aoe: 55, projectileSpeed: 420, heatPerShot: 6 }), color: 0xd94f4f }),
-  flak: base({ type: 'flak', name: 'Flak Battery', short: 'FLAK', desc: 'Bursts that shred air units; cannot target ground. Needs an ammo supplier within 2 cars.', tier: 2, cost: 40, hp: 100, weight: 22, powerUse: 3, heatGen: 2,
+  flak: base({ type: 'flak', name: 'Flak Battery', short: 'FLAK', desc: 'Bursts that shred air units; cannot target ground. Uses shared ammo from anywhere in the train.', tier: 2, cost: 40, hp: 100, weight: 22, powerUse: 3, heatGen: 2,
     weapon: W({ kind: 'flak', damageClass: 'shell', range: 300, damage: 14, cooldown: 0.5, hitsGround: false, hitsAir: true, ammoPerShot: 0.5, aoe: 34, projectileSpeed: 560, heatPerShot: 0.8 }), color: 0xe8a94f }),
   tesla: base({ type: 'tesla', name: 'Tesla Coil', short: 'TSLA', desc: 'Chain lightning hits ground, air and wisps. Needs 5 power and no ammo. Weak vs raiders in numbers.', tier: 3, cost: 75, hp: 110, weight: 24, powerUse: 5, heatGen: 3,
     weapon: W({ kind: 'tesla', damageClass: 'energy', range: 210, damage: 22, cooldown: 1.1, hitsAir: true, hitsPhase: true, ammoPerShot: 0, chain: 3, heatPerShot: 3 }), color: 0x8fd3ff }),
