@@ -1,0 +1,7 @@
+Use case: stylized-concept
+Asset type: RailAVOID full-body crew combat avatar, native transparent PNG.
+Input image 1 is STYLE and SCALE reference only: our accepted conductor. Generate ONE different person for the requested specialty, NOT the conductor or a group.
+Style: Signal Box Storybook, expressive hand-painted human face, confident ink outlines, smooth matte gouache and controlled cel shading. Match reference's navy uniform and brass fittings, grounded heroic proportions and readable silhouette. Clean surfaces: NO grain, stipple, canvas texture or photorealism.
+Composition: a complete standing figure in a three-quarter view facing screen RIGHT, ready for a side-view tactical battle. Entire hat, boots, fingers and equipment within frame. Modest separated limbs, easy readable stance. Figure occupies about 80 percent height with generous clear margins.
+Background: genuinely transparent alpha, including between arms and torso, between legs, and equipment openings. No floor, no pedestal, no ground/contact shadow, no halo, no scenery, no border, no checkerboard, no text, no badges or numbers. Only the person and carried gear have visible pixels.
+Subject: A sturdy middle-aged Black woman with close-cropped curly hair, a coral-red shoulder cape over navy workwear, brass ear protection around neck and utility belt. Cradles a clearly shaped period carbine diagonally across the chest, muzzle toward upper right; both hands anatomically natural. Confident veteran, warm focused expression. No firing effect.

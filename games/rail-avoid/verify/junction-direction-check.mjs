@@ -38,7 +38,7 @@ await page.evaluate(() => {
       else if (x?.pending) R.sim.expeditionResolve('good');
       else R.sim.expeditionAction('strike');
     }
-    if (s.train.stopped && s.train.stopReason === 'junction') break;
+    if (s.train.stopped && ['junction', 'no_route'].includes(s.train.stopReason) && R.sim.junctionOptions().length >= 2) break;
     if (s.train.stopped && s.train.stopReason === 'no_route') {
       const opts = R.sim.plannableTiles();
       const next = opts.find(t => t.free) ?? opts[0];
@@ -47,12 +47,15 @@ await page.evaluate(() => {
     if (s.train.stopped && s.train.stopReason === 'settlement' && s.train.stopTimer > 1) R.sim.depart();
     R.sim.update(0.05);
   }
-  if (R.state.train.stopReason === 'junction') R.pause();
+  if (R.state.train.stopped && R.sim.junctionOptions().length >= 2) R.pause();
 });
 await page.waitForFunction(() => {
   const panel = document.querySelector('#ui .rv-junction');
   return window.__RAIL.state.phase === 'paused' && panel && !panel.hidden && panel.querySelectorAll('.rv-junction-opt').length >= 2;
-}, null, { timeout: 5000 });
+}, null, { timeout: 15000, polling: 100 }).catch(async error => {
+  console.error(await page.evaluate(() => ({ phase:window.__RAIL.state.phase, stopped:window.__RAIL.state.train.stopped, reason:window.__RAIL.state.train.stopReason, opts:window.__RAIL.sim.junctionOptions(), hidden:document.querySelector('.rv-junction')?.hidden, errors:window.__RAIL.errors })));
+  await browser.close(); throw error;
+});
 await page.waitForTimeout(250);
 
 const geometry = await page.evaluate(() => {
@@ -72,9 +75,9 @@ const geometry = await page.evaluate(() => {
 assert(geometry.length >= 2, `expected at least two junction choices, got ${geometry.length}`);
 for (let i = 1; i < geometry.length; i++) {
   assert(geometry[i - 1].mapX <= geometry[i].mapX, `controls do not run left-to-right with map branches: ${JSON.stringify(geometry)}`);
-  assert(geometry[i - 1].controlX < geometry[i].controlX, `junction cards are not left-to-right: ${JSON.stringify(geometry)}`);
 }
-assert(geometry.every(x => /east|west|north|south/i.test(x.aria) && /[←→↑↓↖↗↘↙]/.test(x.text)), `junction directions are not explicit: ${JSON.stringify(geometry)}`);
+assert(geometry.every(x => /Branch \d/.test(x.aria) && /Choose to continue/.test(x.aria)), `junction nodes lack an accessible choice label: ${JSON.stringify(geometry)}`);
+assert(await page.locator('.rv-junction-rails g').count() === geometry.length, 'Every choice needs a real-rail trace');
 await page.screenshot({ path: path.join(out, 'map-aligned-paused-junction.png') });
 
 const chosen = geometry.at(-1);
@@ -94,4 +97,4 @@ if (failures.length) {
   for (const failure of failures) console.error(`- ${failure}`);
   process.exit(1);
 }
-console.log('PASS map-aligned junction controls, explicit direction labels, and choose-to-resume flow');
+console.log('PASS actual-rail junction nodes, accessible labels, and choose-to-resume flow');

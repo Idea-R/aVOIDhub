@@ -53,7 +53,11 @@ export function createInput(ui: UiShared, actions: InputActions): Input {
     if (k === 'm' || k === 'M') { e.preventDefault(); actions.toggleMute(); return; }
     if (k === 'h' || k === 'H') { e.preventDefault(); actions.howto(); return; }
     if (!ui.runActive()) return;
-    if (k === 'Tab') { e.preventDefault(); if (!ui.anyModal() || ui.isOpen('shop')) actions.toggleInspector(); return; }
+    // Keep native focus traversal and button activation. Game shortcuts must not
+    // swallow Tab/Enter/Space while a player is navigating the command surface.
+    if (k === 'Tab') return;
+    if ((k === 'Enter' || k === ' ') && e.target instanceof Element && e.target.closest('button, [role="button"], summary, a[href]')) return;
+    if (k === 't' || k === 'T') { if (!ui.anyModal()) { e.preventDefault(); actions.toggleInspector(); } return; }
     if (ui.anyModal()) {
       // Space/Enter in the pause menu resumes
       if (k === ' ' && ui.topModal() === 'pause') { e.preventDefault(); ui.close('pause'); }

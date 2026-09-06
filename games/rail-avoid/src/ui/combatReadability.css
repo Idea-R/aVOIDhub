@@ -1,0 +1,44 @@
+/* Combat information lives on the existing plates; no permanent side panel. */
+#ui .rv-exp-intent { color: var(--gold); font-size: max(12px, calc(12 * var(--u))); line-height: 1.25; font-variant-numeric: tabular-nums; }
+#ui .rv-exp-intent-target { color: var(--exp-paper); font-size: max(11px, calc(10 * var(--u))); line-height: 1.3; overflow-wrap: anywhere; }
+#ui .rv-exp-foe[data-intent-state="stunned"] .rv-exp-intent { color: #c3b8f1; }
+#ui .rv-exp-foe[data-intent-state="attacking"] .rv-exp-intent { color: #ffbcad; }
+#ui .rv-exp-foe[data-intent-state="acted"] .rv-exp-intent,
+#ui .rv-exp-foe[data-intent-state="defeated"] .rv-exp-intent { color: var(--exp-muted); }
+#ui .rv-exp-turn-order { position: absolute; top: 0; inset-inline: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 0; color: var(--exp-paper); font-size: 11px; }
+#ui .rv-exp-order-label { text-transform: uppercase; letter-spacing: .1em; font-size: 9px; color: var(--exp-muted); flex-shrink: 0; }
+#ui .rv-exp-turn-nodes { display: flex; gap: 4px; min-width: 0; }
+#ui .rv-exp-order-step { padding: 4px 7px; border-bottom: 2px solid #8e704188; background: #0b0e1acc; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#ui .rv-exp-order-step[data-side="foe"] { border-color: #b96d6488; }
+#ui .rv-exp-order-step[data-state="active"] { border-color: var(--gold); color: var(--gold); background: #262019; font-weight: 700; }
+#ui .rv-exp-order-step[data-state="done"], #ui .rv-exp-order-step[data-state="down"] { color: #97928a; background: #0b0e1a88; }
+#ui .rv-exp-order-step[data-state="down"] { text-decoration: line-through; }
+#ui .rv-exp-order-step[data-state="stunned"] { border-color: #ab98ec; color: #c3b8f1; }
+
+#ui .rv-exp-swap-overlay { position: absolute; inset: 0; z-index: 12; display: flex; align-items: center; justify-content: center; padding: 12px; background: #040608b8; }
+#ui .rv-exp-swap-card { display: flex; flex-direction: column; gap: 12px; width: min(850px, 100%); max-height: 100%; min-height: 0; padding: 18px; border: 13px solid transparent; border-image: var(--exp-frame) 80 / 13px stretch; background: #0d111c; color: var(--exp-paper); }
+#ui .rv-exp-swap-card h2 { color: var(--gold); font: 700 clamp(20px, 2.4vw, 28px) 'Cinzel', Georgia, serif; margin: 0; }
+#ui .rv-exp-swap-card > p { margin: 0; font-size: max(13px, calc(12 * var(--u))); line-height: 1.45; }
+#ui .rv-exp-swap-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; min-height: 0; overflow: auto; }
+#ui .rv-btn.rv-exp-swap-choice { display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 9px; padding: 14px; white-space: normal; text-align: left; text-transform: none; letter-spacing: 0; background: #191b24; border: 1px solid #8e7041; border-radius: 0; color: var(--exp-paper); line-height: 1.4; font-size: max(12px, calc(12 * var(--u))); transform: none; box-shadow: none; }
+#ui .rv-btn.rv-exp-swap-choice::after { display: none; }
+#ui .rv-btn.rv-exp-swap-choice:hover, #ui .rv-btn.rv-exp-swap-choice:focus-visible { background: #29251e; transform: none; border-color: var(--gold); }
+#ui .rv-exp-swap-choice:focus-visible { outline: 2px solid var(--gold); outline-offset: -3px; }
+#ui .rv-exp-swap-choice b { color: var(--gold); }
+#ui .rv-exp-swap-person { display: flex; gap: 10px; align-items: center; font-size: max(14px, calc(14 * var(--u))); }
+#ui .rv-exp-swap-portrait { flex: 0 0 42px; width: 42px; height: 50px; }
+#ui .rv-exp-swap-risk { border-top: 1px solid #8e704166; padding-top: 8px; color: #d4cdbf; }
+#ui .rv-exp-swap-footer { display: flex; align-items: center; flex-wrap: wrap; justify-content: space-between; gap: 8px; font-size: 11px; color: var(--exp-muted); }
+#ui .rv-exp-swap-footer .rv-btn { min-height: 44px; white-space: normal; text-transform: none; border-color: var(--exp-edge); border-radius: 0; }
+@media (max-width: 600px) {
+  #ui .rv-exp-swap-options { grid-template-columns: 1fr; gap: 8px; }
+  #ui .rv-exp-swap-card { padding: 10px; gap: 8px; border-width: 10px; border-image-width: 10px; }
+  #ui .rv-btn.rv-exp-swap-choice { padding: 10px; gap: 5px; }
+  #ui .rv-exp-swap-person { font-size: 14px; }
+  #ui .rv-exp-swap-portrait { width: 30px; height: 36px; flex-basis: 30px; }
+  #ui .rv-exp-turn-order { inset-inline: 8px; gap: 5px; }
+  #ui .rv-exp-order-label { display: none; }
+  #ui .rv-exp-order-step { font-size: 10px; padding: 4px 6px; }
+  #ui .rv-exp-intent { font-size: 12px; }
+  #ui .rv-exp-intent-target { font-size: 11px; }
+}

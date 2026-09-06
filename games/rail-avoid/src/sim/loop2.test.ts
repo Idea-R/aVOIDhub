@@ -37,7 +37,7 @@ describe('loot, relics, bounties, expeditions', () => {
     sim.debug.startExpedition();
     const x = sim.state.expedition!;
     expect(x.actors.map(a => a.position)).toEqual(['front', 'middle']);
-    expect(sim.expeditionAction('swap')).toBe(true);
+    expect(sim.expeditionAction('swap', undefined, 1)).toBe(true);
     expect(sim.expeditionResolve('good')).toBe(true);
     expect(x.actors.map(a => a.position)).toEqual(['middle', 'front']);
   });

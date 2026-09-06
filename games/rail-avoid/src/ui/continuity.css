@@ -1,0 +1,28 @@
+/* One stationary notice lane. New information doesn't shove another card sideways. */
+#ui .rv-notice-rail { position: absolute; top: calc(var(--rv-top-h) + 12px); right: 12px; width: min(400px, calc(100% - 24px)); z-index: 5; pointer-events: none; }
+#ui .rv-notice-rail .rv-announce-layer, #ui .rv-notice-rail .rv-toasts { position: static; width: 100%; margin: 0; }
+#ui .rv-notice-rail .rv-announce-layer { margin-bottom: 10px; }
+#ui .rv-notice-rail .rv-announce-layer:empty { display: none; }
+#ui .rv-notice-rail .rv-announce { width: 100%; padding: 12px 20px; will-change: opacity; }
+#ui .rv-notice-rail .rv-ann-title { font-size: clamp(17px, 1.4vw, 21px); }
+#ui .rv-notice-rail .rv-ann-body { font-family: inherit; font-size: 13px; line-height: 1.5; }
+#ui .rv-notice-rail .rv-toast { font-size: 13px; }
+#ui .rv-notice-rail .rv-toast-more { font-size: 12px; }
+#ui.rv-title-mode .rv-notice-rail, #ui.rv-modal-open .rv-notice-rail,
+#ui.rv-inspector-open .rv-notice-rail, #ui.rv-shop-open .rv-notice-rail,
+#ui.rv-junction-active .rv-notice-rail { visibility: hidden; }
+
+/* Stage completion keeps the scene visible. Low health warrants a stronger warning,
+   but neither state retreats or descends without the player's choice. */
+#ui .rv-exp-stage-gate { padding: 16px; }
+#ui .rv-exp-stage-gate:not(.rv-exp-depth-danger) { align-items: flex-end; background: none; backdrop-filter: none; pointer-events: none; }
+#ui .rv-exp-stage-gate:not(.rv-exp-depth-danger) .rv-exp-depth-card { padding: 18px 24px; }
+#ui .rv-exp-depth-card { pointer-events: auto; width: min(720px, 100%); max-height: 100%; overflow-y: auto; }
+#ui .rv-exp-depth-card h2 { margin: 8px 0; font-size: clamp(18px, 2vw, 26px); }
+#ui .rv-exp-depth-card .rv-actions { justify-content: flex-start; }
+#ui .rv-exp-depth-warning { padding-left: 12px; border-left: 3px solid var(--danger); }
+#ui .rv-exp-depth-danger h2 { color: #ffd0c7; }
+@media (max-width: 600px) {
+  #ui .rv-exp-depth-card { padding: 22px; }
+  #ui .rv-exp-depth-card .rv-actions { display: grid; grid-template-columns: 1fr; }
+}

@@ -285,7 +285,7 @@ export interface BossState {
 export interface PassengerEventOption {
   label: string;
   desc: string;
-  requires?: { car?: CarType; resource?: ResourceKey; amount?: number; marks?: number };
+  requires?: { car?: CarType; resource?: ResourceKey; amount?: number; marks?: number; crew?: CrewSpecialty; relic?: string; fitCrew?: boolean };
 }
 
 export interface PassengerEventDef {
@@ -299,6 +299,14 @@ export interface PassengerEventDef {
 export interface ActiveEvent {
   defId: string;
   startedAt: number;
+  locationId?: string;
+  preparingExpedition?: boolean;
+  arrival?: { passengers: number; crewName?: string };
+  dialogue?: {
+    step: 'arrival' | 'briefing' | 'receipt';
+    approach?: 'help' | 'mechanic' | 'kit';
+    receipt?: string;
+  };
 }
 
 export interface WaveDirectorState {
@@ -339,6 +347,9 @@ export interface ExpeditionActor { id: string; name: string; specialty: CrewSpec
 export interface ExpeditionFoe { id: string; kind: string; name: string; hp: number; maxHp: number; atk: number; speed: number; stunned: number; desc: string; range: 'melee' | 'ranged' }
 export interface ExpeditionState {
   siteId: string;
+  /** Return to the original location decision after withdrawal; serialized with the fight. */
+  returnEvent?: ActiveEvent;
+  summary?: string;
   round: number;
   rounds: number;
   stage: number;
@@ -351,7 +362,7 @@ export interface ExpeditionState {
   actors: ExpeditionActor[];
   foes: ExpeditionFoe[];
   rally: number;
-  pending: { kind: ExpeditionActionKind; actorIndex: number; foeIndex: number } | null;
+  pending: { kind: ExpeditionActionKind; actorIndex: number; foeIndex: number; swapActorIndex?: number } | null;
   foeSwingsLeft?: number;
   log: string[];
   outcome: 'won' | 'lost' | 'fled' | null;
@@ -406,6 +417,8 @@ export interface SimState {
   expedition: ExpeditionState | null;
   phaseBeforeExpedition: RunPhase | null;
   usedEvents: string[];
+  /** Small run-scoped story memory, absent in older saves. Not account progression. */
+  storyFlags?: string[];
   region: number;             // current region of loco
   regionsEntered: number[];
   stats: Stats;

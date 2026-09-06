@@ -209,6 +209,11 @@ export function createAutopilot(ctx: AppContext): Autopilot {
 
   function resolveEvent(): string {
     const sim = ctx.sim;
+    if (sim.state.activeEvent?.preparingExpedition) {
+      const ids = sim.state.train.crew.filter(c => c.hp > 20).slice(0, 3).map(c => c.id);
+      if (sim.startExpedition(ids)) return 'event: away team dispatched';
+      sim.cancelExpeditionPreparation();
+    }
     for (const i of [0, 1, 2]) {
       if (sim.chooseEventOption(i)) return `event: option ${i}`;
     }

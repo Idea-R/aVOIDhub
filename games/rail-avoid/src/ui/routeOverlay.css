@@ -1,0 +1,37 @@
+/* A rail sketch in the play field. Only stop nodes are controls; no enclosing panel. */
+#ui .rv-route-overlay.rv-junction {
+  position: fixed; inset: calc(var(--rv-top-h) + 18px) 24px calc(var(--rv-dock-h) + 22px) calc(var(--rv-left-w, 72px) + 26px);
+  width: auto; min-width: 0; max-width: none; height: auto; padding: 0; margin: 0;
+  display: flex; flex-direction: column; gap: 0; z-index: 5;
+  border: 0; border-radius: 0; background: none; box-shadow: none; backdrop-filter: none; clip-path: none;
+  pointer-events: none;
+}
+#ui .rv-route-overlay::before { content: ''; position: absolute; inset: -10px; z-index: -1; pointer-events: auto; background: radial-gradient(ellipse, #07101bd9 12%, #07101ba6 52%, #07101b00 74%); }
+#ui .rv-route-overlay .rv-junction-head { display: flex; justify-content: center; align-items: center; flex-direction: column; gap: 5px; text-align: center; padding: 4px 12px; text-shadow: 0 2px 5px #05080e, 0 0 18px #05080e; }
+#ui .rv-route-overlay .rv-junction-ico { display: none; }
+#ui .rv-route-overlay .rv-junction-title { font-family: var(--font-display, Georgia, serif); font-size: clamp(21px, 2.4vw, 34px); letter-spacing: .14em; font-weight: 800; }
+#ui .rv-route-overlay .rv-junction-sub { color: #e6e9f2; font-size: 12px; }
+#ui .rv-route-overlay .rv-junction-keys { display: block; margin: 0; color: var(--gold); font-size: 12px; }
+#ui .rv-route-overlay .rv-junction-map { position: relative; flex: 1; min-height: 0; width: 100%; height: auto; margin: 0; border: 0; border-radius: 0; overflow: visible; background: none; }
+#ui .rv-junction-rails { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; fill: none; }
+#ui .rv-rail-bed { stroke: #07101c; stroke-width: 15; stroke-linejoin: round; }
+#ui .rv-rail-ties { stroke: var(--line); stroke-width: 12; stroke-dasharray: 2 7; opacity: .6; }
+#ui .rv-rail-ink { stroke: var(--line); stroke-width: 4; stroke-linejoin: round; }
+#ui .rv-route-overlay .rv-jm-center { width: 40px; height: 40px; font-size: 24px; box-shadow: 0 0 0 6px #e8c17018; }
+#ui .rv-jm-you { position: absolute; top: 46px; width: 85px; text-align: center; color: var(--gold); font: 700 11px/1.2 system-ui; text-shadow: 0 2px 4px #000; }
+#ui .rv-route-overlay .rv-junction-opts { position: absolute; inset: 0; width: 100%; height: 100%; display: block; overflow: visible; max-height: none; padding: 0; }
+#ui .rv-route-overlay .rv-jm-endpoint { position: absolute; width: 44px; height: 44px; min-height: 44px; padding: 0; display: grid; place-items: center; transform: translate(-50%, -50%); translate: none; background: #0b1420; border: 2px solid var(--line); border-radius: 50%; color: var(--line); box-shadow: 0 0 0 5px #0b142077; pointer-events: auto; white-space: normal; overflow: visible; }
+#ui .rv-route-overlay .rv-jm-endpoint:hover, #ui .rv-route-overlay .rv-jm-endpoint:focus-visible { transform: translate(-50%, -50%); box-shadow: 0 0 0 5px color-mix(in srgb, var(--line) 35%, transparent); background: #233345; }
+#ui .rv-jm-number { font: 800 18px/1 system-ui; }
+#ui .rv-jm-label { position: absolute; top: 51px; left: 50%; transform: translateX(-50%); width: 190px; display: flex; flex-direction: column; gap: 3px; text-align: center; text-shadow: 0 2px 4px #000, 0 0 12px #000; pointer-events: none; }
+#ui .rv-node-north .rv-jm-label { top: auto; bottom: 51px; }
+#ui .rv-jm-label b { font: 800 clamp(13px, 1.4vw, 18px)/1.2 Georgia, serif; color: var(--line); overflow-wrap: anywhere; }
+#ui .rv-jm-label span { font: 12px/1.3 system-ui; color: #e6e9f2; }
+#ui .rv-jm-label small { font: 10px/1.2 system-ui; text-transform: uppercase; letter-spacing: .08em; color: #b8c3d4; }
+#ui.rv-modal-open .rv-route-overlay, #ui.rv-inspector-open .rv-route-overlay { visibility: hidden; pointer-events: none; }
+@media (max-width: 600px) {
+  #ui .rv-route-overlay.rv-junction { left: 8px; right: 8px; top: calc(var(--rv-top-h) + 62px); bottom: calc(var(--rv-dock-h) + 16px); }
+  #ui .rv-jm-label { width: 118px; }
+  #ui .rv-jm-label span { font-size: 11px; }
+  #ui .rv-route-overlay .rv-junction-title { font-size: 21px; letter-spacing: .08em; }
+}

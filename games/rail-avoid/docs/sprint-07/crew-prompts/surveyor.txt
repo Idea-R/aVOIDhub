@@ -1,0 +1,7 @@
+Use case: stylized-concept
+Asset type: RailAVOID full-body crew combat avatar, native transparent PNG.
+Input image 1 is STYLE and SCALE reference only: our accepted conductor. Generate ONE different person for the requested specialty, NOT the conductor or a group.
+Style: Signal Box Storybook, expressive hand-painted human face, confident ink outlines, smooth matte gouache and controlled cel shading. Match reference's navy uniform and brass fittings, grounded heroic proportions and readable silhouette. Clean surfaces: NO grain, stipple, canvas texture or photorealism.
+Composition: a complete standing figure in a three-quarter view facing screen RIGHT, ready for a side-view tactical battle. Entire hat, boots, fingers and equipment within frame. Modest separated limbs, easy readable stance. Figure occupies about 80 percent height with generous clear margins.
+Background: genuinely transparent alpha, including between arms and torso, between legs, and equipment openings. No floor, no pedestal, no ground/contact shadow, no halo, no scenery, no border, no checkerboard, no text, no badges or numbers. Only the person and carried gear have visible pixels.
+Subject: A lean young brown-skinned nonbinary rail scout with cropped wavy hair, green neckerchief, short navy weatherproof jacket and brass compass harness. Holds a folded route chart and a small compass, alert three-quarter stance, sturdy laced boots. No long staff.

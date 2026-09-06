@@ -25,6 +25,8 @@ export interface ViewApi {
   /** Highlight a car (inspector selection); -1 clears. */
   selectCar(index: number): void;
   getSelectedCar(): number;
+  /** Hide duplicate world signage while the DOM junction sketch owns the decision. */
+  setRouteOverlay(on: boolean): void;
   /** Ask the view for a PNG data URL of the current frame (verification). */
   snapshot(): string | null;
   /** Rendering performance counters. */

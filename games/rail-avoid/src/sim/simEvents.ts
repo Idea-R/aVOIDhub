@@ -1,6 +1,6 @@
 /** Passenger event scheduling and resolution. */
 import type { SimContext } from './api';
-import { PASSENGER_EVENTS, eventById } from '../core/passengerEvents';
+import { PASSENGER_EVENTS } from '../core/passengerEvents';
 import { EVENTS } from '../core/config';
 import { addResource, hasCar, log } from './helpers';
 import { spawnWave } from './waves';
@@ -8,6 +8,9 @@ import { addCar } from './train';
 import type { CarType } from '../core/types';
 import { addCrew, boardPassengers, removePassengers } from './train';
 import { addMarks, offerRelics, hasRelic } from './loot';
+import { activeEventDef, eventStepKey, type ConversationOption } from '../core/conversations';
+import { unmetEventRequirement } from '../core/eventRequirements';
+import { chooseKeeperOption, prepareExpedition } from './conversations';
 
 export function updateEvents(ctx: SimContext): void {
   const { state, dt } = ctx;
@@ -28,21 +31,15 @@ export function updateEvents(ctx: SimContext): void {
   state.eventCooldown = EVENTS.interval + ctx.rng.events.range(-EVENTS.variance, EVENTS.variance);
 }
 
-function requirementMet(ctx: SimContext, opt: { requires?: { car?: any; resource?: any; amount?: number; marks?: number } }): boolean {
-  if (!opt.requires) return true;
-  if (opt.requires.marks && (ctx.state.train.marks ?? 0) < opt.requires.marks) return false;
-  if (opt.requires.car && !hasCar(ctx.state, opt.requires.car)) return false;
-  if (opt.requires.resource && ctx.state.train.resources[opt.requires.resource as 'rails'] < (opt.requires.amount ?? 0)) return false;
-  return true;
-}
-
-export function chooseEventOption(ctx: SimContext, index: number): boolean {
+export function chooseEventOption(ctx: SimContext, index: number, expectedStep?: string): boolean {
   const { state } = ctx;
   if (state.phase !== 'event' || !state.activeEvent) return false;
-  const def = eventById(state.activeEvent.defId);
+  if (state.activeEvent.preparingExpedition || (expectedStep !== undefined && expectedStep !== eventStepKey(state))) return false;
+  const def = activeEventDef(state);
   if (!def) { state.activeEvent = null; state.phase = 'running'; return false; }
   const opt = def.options[index];
-  if (!opt || !requirementMet(ctx, opt)) return false;
+  if (!opt || unmetEventRequirement(state, opt)) return false;
+  if (def.id === 'node_crossroads') return chooseKeeperOption(ctx, opt as ConversationOption);
   const t = state.train;
   const rng = ctx.rng.events;
   let summary = '';
@@ -90,7 +87,7 @@ export function chooseEventOption(ctx: SimContext, index: number): boolean {
     case 'node_market:2': addResource(ctx, 'ammo', -25); addResource(ctx, 'scrap', 18); summary = 'Ammunition sold for scrap.'; break;
     case 'node_market:3': morale(2); summary = 'Window shopping.'; break;
     case 'node_market:4': addMarks(ctx, -6, 'market relic'); summary = 'A wrapped relic changes hands.'; state.activeEvent = null; state.phase = 'running'; ctx.bus.defer('event:resolved', { defId: def.id, option: index, summary }); offerRelics(ctx, 'market'); return true;
-    case 'node_site:0': summary = 'Choose your crew.'; state.activeEvent = null; state.phase = 'running'; ctx.bus.defer('event:resolved', { defId: def.id, option: index, summary }); ctx.bus.defer('phase:change', { phase: 'running' }); return true; // the UI shows the crew picker and calls startExpedition(crewIds); cancelling simply continues the run
+    case 'node_site:0': return prepareExpedition(ctx);
     case 'node_site:1': addResource(ctx, 'scrap', 6); addResource(ctx, 'ammo', 4); summary = 'A quick sweep of the edge.'; break;
     case 'node_site:2': morale(2); summary = 'Not today.'; break;
     case 'mystery_cache:0': {
@@ -103,7 +100,7 @@ export function chooseEventOption(ctx: SimContext, index: number): boolean {
     }
     case 'mystery_cache:1': addResource(ctx, 'scrap', 12); summary = 'The lockbox fittings come away cleanly.'; break;
     case 'mystery_cache:2': morale(2); summary = 'Some mysteries are safer unopened.'; break;
-    case 'mystery_away:0': summary = 'Choose your away team.'; state.activeEvent = null; state.phase = 'running'; ctx.bus.defer('event:resolved', { defId: def.id, option: index, summary }); ctx.bus.defer('phase:change', { phase: 'running' }); return true;
+    case 'mystery_away:0': return prepareExpedition(ctx);
     case 'mystery_away:1': addResource(ctx, 'scrap', 7); addResource(ctx, 'ammo', 5); summary = 'A careful sweep finds loose stores.'; break;
     case 'mystery_away:2': morale(2); summary = 'The lights recede behind the last car.'; break;
     case 'mystery_ambush:0': {
@@ -140,22 +137,6 @@ export function chooseEventOption(ctx: SimContext, index: number): boolean {
     case 'mystery_dock:0': addResource(ctx, 'scrap', -6); addResource(ctx, 'food', 18); summary = 'Fresh catch and smoked stores come aboard.'; break;
     case 'mystery_dock:1': { const boarded = boardPassengers(ctx, 6); morale(6); summary = boarded > 0 ? `${boarded} stranded passengers come aboard.` : 'The coaches are full; supplies are shared on the platform.'; break; }
     case 'mystery_dock:2': addResource(ctx, 'rails', 10); addResource(ctx, 'scrap', 8); morale(-3); summary = 'The bridge works come apart under uneasy eyes.'; break;
-    case 'node_crossroads:0': {
-      const region = Math.max(0, Math.min(3, state.region));
-      const comp = region === 0 ? ['raider', 'raider', 'raider', 'hound', 'hound', 'raider'] : region === 1 ? ['crawler', 'raider', 'raider', 'sapper', 'hound', 'hound'] : region === 2 ? ['harpy', 'harpy', 'wisp', 'raider', 'raider', 'crawler'] : ['wisp', 'wisp', 'harpy', 'crawler', 'raider', 'raider'];
-      state.activeEvent = null; state.phase = 'running'; ctx.bus.defer('phase:change', { phase: 'running' });
-      state.train.stopped = false; state.train.stopReason = 'none'; state.train.stopTimer = 0;
-      spawnWave(ctx, comp as any, 'east');
-      // promote two members to elites (guaranteed relic + marks on kill)
-      let promoted = 0;
-      for (let i = state.enemies.length - 1; i >= 0 && promoted < 2; i--) { const e = state.enemies[i]; if (e.state === 'dead' || e.type.startsWith('boss_') || e.type === 'sapper') continue; e.extra.elite = 1; e.maxHp = Math.round(e.maxHp * 1.6); e.hp = e.maxHp; ctx.bus.defer('enemy:elite', { id: e.id, type: e.type }); promoted++; }
-      addMarks(ctx, 6, 'crossroads');
-      summary = 'The barricades open. Steel meets steel.';
-      ctx.bus.defer('event:resolved', { defId: def.id, option: index, summary });
-      return true;
-    }
-    case 'node_crossroads:1': addResource(ctx, 'scrap', -24); summary = 'The toll is paid. The barricades part.'; break;
-    case 'node_crossroads:2': addMarks(ctx, -5, 'crossroads bribe'); state.train.watchUntil = state.time + 300; summary = 'The tower talks. You know what is coming.'; break;
     case 'node_wreck:0': {
       const pool: CarType[] = ['coal_bunker', 'boiler', 'radiator', 'cargo', 'gatling', 'barracks', 'scout', 'coach', 'caboose'];
       if (rng.chance(0.75) && t.cars.length < 10) { const type = rng.pick(pool); const car = addCar(ctx, type); if (car) { car.hp = Math.round(car.maxHp * 0.6); summary = `A ${type.replace('_', ' ')} is dragged onto the rails.`; ctx.bus.defer('car:bought', { type }); break; } }

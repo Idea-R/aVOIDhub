@@ -17,6 +17,13 @@
     "verify:inspector": "node verify/inspector-pan-check.mjs",
     "verify:usability": "node verify/usability-check.mjs",
     "verify:junction": "node verify/junction-direction-check.mjs",
+    "verify:responsive": "node verify/map-first-check.mjs",
+    "verify:route-overlay": "node verify/route-overlay-check.mjs",
+    "verify:crew-timing": "node verify/crew-timing-check.mjs",
+    "verify:expedition-cards": "node verify/expedition-cards-check.mjs",
+    "verify:continuity": "node verify/continuity-check.mjs",
+    "verify:conversation": "node verify/conversation-check.mjs",
+    "verify:combat-readability": "node verify/combat-readability-check.mjs",
     "verify:expedition": "node verify/expedition-art-check.mjs",
     "verify:avatars": "node verify/native-avatar-check.mjs",
     "perf:headed": "node verify/perf-headed.mjs"

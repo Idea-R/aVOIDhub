@@ -117,7 +117,7 @@ await page.screenshot({ path: path.join(out, 'stage-1-formation-1280x720.png') }
 
 const swapped = await page.evaluate(() => {
   const R = window.__RAIL;
-  R.sim.expeditionAction('swap');
+  R.sim.expeditionAction('swap', undefined, 1);
   R.sim.expeditionResolve('good');
   return R.state.expedition.actors.map(a => a.position);
 });

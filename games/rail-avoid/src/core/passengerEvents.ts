@@ -1,4 +1,4 @@
-/** Passenger event content. Resolution logic lives in sim/events.ts. */
+/** Passenger event content. Resolution logic lives in sim/simEvents.ts. */
 import type { PassengerEventDef } from './types';
 
 export const PASSENGER_EVENTS: PassengerEventDef[] = [
@@ -159,7 +159,7 @@ export const SITE_EVENT: PassengerEventDef = {
   id: 'node_site', title: 'Expedition Site', negative: false,
   text: 'Ruins by the line. Lights move inside. Something worth taking, and something guarding it. The void will not wait while the crew is away.',
   options: [
-    { label: 'Send an expedition', desc: 'Pick up to three crew. Timed-hit fight; win for a relic, marks and salvage. Each round costs void margin.' },
+    { label: 'Send an expedition', desc: 'Pick up to three crew. Timed-hit fight; win for a relic, marks and salvage. Each round costs void margin.', requires: { fitCrew: true } },
     { label: 'Scout the edge only', desc: '+6 scrap, +4 ammo. Nothing risked.' },
     { label: 'Keep rolling', desc: 'Morale +2.' },
   ],
@@ -181,7 +181,7 @@ export const MYSTERY_EVENTS: PassengerEventDef[] = [
     id: 'mystery_away', title: 'Lights Under the Platform', negative: true,
     text: 'Lanterns move beneath an abandoned platform. Someone has scratched three fresh tally marks into the stone.',
     options: [
-      { label: 'Send an away team', desc: 'Choose up to three crew for a close-quarters expedition. Win salvage and a relic.' },
+      { label: 'Send an away team', desc: 'Choose up to three crew for a close-quarters expedition. Win salvage and a relic.', requires: { fitCrew: true } },
       { label: 'Sweep the platform edge', desc: '+7 scrap and +5 ammunition. Nothing risked.' },
       { label: 'Sound the whistle and roll', desc: 'Leave the lights behind. Morale +2.' },
     ],
@@ -226,13 +226,10 @@ export const MYSTERY_EVENTS: PassengerEventDef[] = [
 NODE_EVENTS.push(...MYSTERY_EVENTS);
 
 export const CROSSROADS_EVENT: PassengerEventDef = {
-  id: 'node_crossroads', title: 'The Crossroads', negative: true,
-  text: 'Every line meets here, and everyone knows it. Barricades on the platform, eyes in the towers, and a toll-keeper who has already counted your cars.',
-  options: [
-    { label: 'Fight through', desc: 'An ambush with two elites hits now. Clear it for a guaranteed relic and 6 Void Marks.' },
-    { label: 'Pay the toll', desc: '-24 scrap. Safe passage, no fight.', requires: { resource: 'scrap', amount: 24 } },
-    { label: 'Bribe the tower', desc: '-5 Void Marks. Safe passage and the toll-keeper shares intel: +6 s wave warnings for five minutes.', requires: { marks: 5 } },
-  ],
+  id: 'node_crossroads', title: 'The Keeper’s Signal', negative: false,
+  text: 'A junction keeper needs help at the lower works.',
+  // Stateful choices come from core/conversations.ts, not a second static table.
+  options: [],
 };
 NODE_EVENTS.push(CROSSROADS_EVENT);
 

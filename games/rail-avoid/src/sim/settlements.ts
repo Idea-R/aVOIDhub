@@ -41,6 +41,7 @@ export function onArrive(ctx: SimContext, s: Settlement): void {
   }
   // board passengers
   let boarded = 0;
+  let joinedName: string | undefined;
   if (s.passengers > 0) {
     boarded = boardPassengers(ctx, s.passengers);
     if (boarded < s.passengers) {
@@ -58,6 +59,7 @@ export function onArrive(ctx: SimContext, s: Settlement): void {
   // crew
   if (s.crew) {
     const c = addCrew(state, s.crew);
+    joinedName = c.name;
     ctx.bus.defer('crew:joined', { specialty: s.crew, name: c.name });
     log(state, `${c.name} the ${s.crew} joins the crew`, 'good');
   }
@@ -80,7 +82,7 @@ export function onArrive(ctx: SimContext, s: Settlement): void {
       id = ctx.rng.events.pick(pool).id;
       state.usedEvents.push(id);
     }
-    state.activeEvent = { defId: id, startedAt: state.time };
+    state.activeEvent = { defId: id, startedAt: state.time, locationId: s.id, arrival: { passengers: boarded, crewName: joinedName } };
     state.phase = 'event';
     ctx.bus.defer('phase:change', { phase: 'event' });
     ctx.bus.defer('event:show', { defId: id });

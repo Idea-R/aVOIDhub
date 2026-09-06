@@ -118,7 +118,7 @@ export function createSettings(ui: UiShared): HTMLElement {
     check('muted', 'Mute all', v => ui.audio().setMuted(v)),
     heading('Interface'),
     uiScaleSlider(),
-    check('compactHud', 'Compact HUD'),
+    check('compactHud', 'Map-first HUD on large screens'),
     check('showLog', 'Show event log feed'),
     check('customCursor', 'Custom cursors'),
     check('showTutorial', 'Show tutorial'),

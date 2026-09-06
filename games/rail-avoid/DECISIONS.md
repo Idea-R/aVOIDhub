@@ -1,5 +1,21 @@
 # Decisions
 
+## 2026-09-05: Read the existing combat before expanding encounters
+
+Status: local implementation decision for the approved next milestone.
+
+Enemy intent uses the existing weighted targeting rules, not a newly predetermined victim. Reveal hit count, base damage and the favoured position before action; reveal the actual target and timing/guard reductions once queued. Preview helpers are pure and shared with resolution so opening UI cannot consume RNG. Remove unsupported fire/armor descriptions instead of inventing new rules to justify them.
+
+Swap names a living partner explicitly, spends the active actor's turn only, and never reorders the round. Preview both actors' positions and Strike changes plus the active actor's per-blow targeting risk. Cancel is free. Old already-pending swaps migrate once to their legacy next-living partner; new actions cannot silently choose one. Stale/invalid selections fail without another turn being consumed. Front is rendered nearest the enemy formation.
+
+Keep the existing brass/ink plates, accepted avatars and command-hand footprint. Use a temporary chooser rather than another always-visible panel. Timing windows, enemy values, rewards, engine and asset roster remain unchanged. The next slice is one blocked-link/miniboss encounter, not broad XP/equipment or roster expansion.
+
+## 2026-09-05: Prove conversation continuity before blocking the railway
+
+Status: local implementation under the user's continuation request.
+
+The first keeper encounter concerns a platform hoist and stranded workers, not an impassable main-line obstacle. It reuses existing staged combat. This avoids introducing a compulsory fight before intent, formation controls and escape-route rules are ready. Authored dialogue and a run-scoped keeper reputation are deterministic; no runtime model calls, account progression or deployment are implied. See `docs/sprint-07/KEEPERS-SIGNAL.md` for the bounded charter.
+
 ## 2026-09-03: Preserve the existing world style
 
 Status: approved by the user.

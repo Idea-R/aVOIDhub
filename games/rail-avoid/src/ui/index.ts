@@ -3,6 +3,8 @@
  * State is read fresh from ctx.sim each frame (the sim instance may be swapped at any time).
  */
 import './styles.css';
+import './mapFirst.css';
+import './routeOverlay.css';
 import type { AppContext } from '../app';
 import type { SimState, ResourceKey } from '../core/types';
 import { UiShared, type PanelName } from './shared';
@@ -35,6 +37,7 @@ import { ROMAN } from './levels';
 import { CAR_DEFS } from '../core/cars';
 import { ENEMY_DEFS } from '../core/enemies';
 import { REGION_NAMES } from '../core/config';
+import './continuity.css';
 
 export interface UiApi {
   update(dt: number): void;
@@ -94,8 +97,7 @@ export function createUI(ctx: AppContext): UiApi {
   const settings = createSettings(ui);
   const eventModal = createEventModal(ui);
   const crewPicker = createCrewPicker(ui, {
-    // the sim keeps the site event active after "Send an expedition": cancelling returns to the site card
-    onCancel: () => { const s = ui.state(); if (s && s.phase === 'event' && (s.activeEvent?.defId === 'node_site' || s.activeEvent?.defId === 'mystery_away')) eventModal.show(s.activeEvent.defId); },
+    onCancel: () => { ui.sim()?.cancelExpeditionPreparation(); },
   });
   const pause = createPause(ui, {
     restart: () => { const s = ui.state(); ctx.newRun(s ? s.seed : undefined); },
@@ -124,6 +126,7 @@ export function createUI(ctx: AppContext): UiApi {
       if (top === 'expedition') return expedition.gamepad(b);
       if (top === 'relic') return relics.gamepad(b);
       if (top === 'crewpick') return crewPicker.gamepad(b);
+      if (top === 'event') return eventModal.gamepad(b);
       return false;
     },
   });
@@ -134,8 +137,9 @@ export function createUI(ctx: AppContext): UiApi {
 
   // DOM order = stacking order
   root.append(hud.el, shop.el, inspector.el, tutorial.el, announcer.el, cine.el, title.el, eventModal.el, crewPicker.el, expedition.el, relics.el, pause.el, settings, howto, results.el, input.overlay, cards.el);
+  ui.noticeRail.prepend(announcer.el);
   // toasts + confirm were created by UiShared; move them on top
-  for (const cls of ['.rv-toasts', '.rv-overlay[aria-label="Confirm"]']) { const n = root.querySelector(cls); if (n) root.appendChild(n); }
+  for (const cls of ['.rv-notice-rail', '.rv-overlay[aria-label="Confirm"]']) { const n = root.querySelector(cls); if (n) root.appendChild(n); }
   hud.el.hidden = true;
 
   // ---------- settings ----------
@@ -294,7 +298,6 @@ export function createUI(ctx: AppContext): UiApi {
     bus.on('bounty:failed', ({ id, title }) => { bounties.flash(id, 'failed'); say('Bounty failed', title, 'The poster will not be paying.', 'bad'); }),
     bus.on('expedition:end', (p) => { pendingExpeditionEnd = p; }),
     bus.on('event:resolved', ({ defId, option, summary }) => {
-      if ((defId === 'node_site' || defId === 'mystery_away') && option === 0) { if (ui.runActive()) crewPicker.open(); return; }
       const def = eventById(defId);
       if (summary) say('Event', def?.title ?? 'Aboard the train', summary, def?.negative ? 'bad' : 'gold');
     }),
@@ -306,6 +309,7 @@ export function createUI(ctx: AppContext): UiApi {
     bus.on('run:defeat', () => showResults('defeat')),
     bus.on('phase:change', ({ phase }) => handlePhase(phase)),
     bus.on('event:show', ({ defId }) => { if (ui.runActive()) eventModal.show(defId); }),
+    bus.on('expedition:prepare', () => { if (ui.runActive()) { ui.close('event'); crewPicker.open(); } }),
     bus.on('tutorial:step', ({ step, text }) => { if (ui.runActive()) tutorial.show(step, text); }),
     bus.on('ui:notify', ({ text, kind }) => note(text, kind)),
     bus.on('wave:warning', ({ type, from, in: secs }) => { const n = ENEMY_DEFS[type]?.name ?? type; note(`${n}s incoming from the ${String(from).toUpperCase()} in ${Math.ceil(secs)}s`, 'warn', 3000, 'wave'); }),
@@ -334,7 +338,10 @@ export function createUI(ctx: AppContext): UiApi {
     bus.on('resource:change', ({ key, delta }) => hud.flashResource(key, delta)),
     bus.on('resource:empty', ({ key }) => note(`Out of ${key}!`, 'bad', 4200, 'empty:' + key)),
     bus.on('crew:joined', ({ specialty, name }) => say('Crew ready', `${name} · ${specialty}`, `${CREW_LINE[specialty] ?? 'Another pair of hands on the line.'} Use the CREW READY ticket to post them.`, 'good')),
-    bus.on('passengers:board', ({ count }) => { if (count >= 6) say('Passengers', `${count} passengers board`, 'Find them food, and a yard to deliver them to.', 'info'); else note(`${count} passengers boarded`, 'info', 4200, settlementGroup()); }),
+    bus.on('passengers:board', ({ count }) => {
+      const t = ui.state()?.train;
+      note(`${count} passengers boarded${t ? ` · ${t.passengers}/${t.passengerCap} seats occupied` : ''}. They ride in coaches; deliver them at a yard or terminus.`, 'good', 6000, 'boarding');
+    }),
     bus.on('passengers:delivered', ({ count, reward }) => note(`${count} passengers delivered — ${fmtRewards(reward) || 'thanks'}`, 'good', 5000, settlementGroup())),
     bus.on('passengers:lost', ({ count, cause }) => note(`${count} passengers lost (${cause})`, 'bad')),
     bus.on('gate:open', () => say('The last gate', 'The Gate Is Open', 'Drive through. Nothing behind you is worth turning for.', 'gold', 4)),
@@ -384,6 +391,7 @@ export function createUI(ctx: AppContext): UiApi {
     const now = performance.now();
     const s = ui.state();
     if (ui.runActive() && s) {
+      announcer.hold(ui.anyModal() || ui.isOpen('inspector') || ui.isOpen('shop') || hud.junctionVisible() || !!ui.view()?.isCinematicPlaying());
       if (s.phase !== lastPhase) handlePhase(s.phase);
       if (now - hudAt >= 100) { hudAt = now; hud.update(s, now); layout.update(s); cards.update(); if (ui.isOpen('expedition')) expedition.update(s); }
       if (now - stripAt >= 200) { stripAt = now; strip.update(s); bounties.update(s); if (ui.isOpen('inspector')) inspector.update(s); }

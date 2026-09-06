@@ -31,6 +31,7 @@ export function createLayout(ui: UiShared, zones: { top: HTMLElement; dock: HTML
     if (root.style.getPropertyValue(name) !== v) root.style.setProperty(name, v);
   }
   function measure(): void {
+    applyClasses();
     const th = zones.top.hidden ? 0 : zones.top.offsetHeight;
     const dh = zones.dock.hidden ? 0 : zones.dock.offsetHeight;
     if (th > 0) topH = th;
@@ -38,11 +39,11 @@ export function createLayout(ui: UiShared, zones: { top: HTMLElement; dock: HTML
     leftW = zones.left.hidden ? 0 : zones.left.offsetWidth;
     setVar('--rv-top-h', topH);
     setVar('--rv-dock-h', dockH);
-    applyClasses();
   }
   function applyClasses(): void {
     const s = ui.settings();
     const compact = !!s.compactHud || window.innerWidth < COMPACT_BELOW;
+    root.classList.toggle('rv-map-first', !!s.compactHud || window.innerWidth <= 1536 || window.innerHeight <= 850);
     if (root.classList.contains('rv-compact') !== compact) root.classList.toggle('rv-compact', compact);
     const log = !!s.showLog;
     if (root.classList.contains('rv-log-on') !== log) root.classList.toggle('rv-log-on', log);
@@ -69,7 +70,8 @@ export function createLayout(ui: UiShared, zones: { top: HTMLElement; dock: HTML
       const noRoute = t.stopped && (t.stopReason === 'no_route' || t.stopReason === 'junction' || t.stopReason === 'derailed');
       need = noRoute || !!s.route.blocked || !!t.reversing || (ahead === 0 && s.phase === 'running' && !t.stopped && t.stopReason !== 'settlement');
     }
-    const collapsed = !need;
+    // Small screens use an explicit Route drawer, never a hover-expanded rail.
+    const collapsed = !root.classList.contains('rv-map-first') && !need;
     if (root.classList.contains('rv-rail-collapsed') !== collapsed) { root.classList.toggle('rv-rail-collapsed', collapsed); measure(); }
   }
 

@@ -12,14 +12,18 @@
  * Timing windows use performance.now(), never gsap, so reduced motion and 4x sim speed leave them intact.
  */
 import './expedition.css';
+import './expeditionCards.css';
+import './combatReadability.css';
 import { el, btn, setText, setWidth, toggleClass, show, cap, focusables } from './dom';
 import type { UiShared, AudioCue } from './shared';
 import type { SimState, ExpeditionState, ExpeditionTiming, ExpeditionActionKind } from '../core/types';
-import { SPECIALS } from '../sim/expedition';
+import { SPECIALS, expeditionVoidCost } from '../sim/expedition';
+import { expeditionEnemyIntent, expeditionPositionSummary, expeditionStrikeDamage, expeditionSwapOptions, expeditionSwapRisks, expeditionTurnOrder } from '../core/expeditionRules';
 import { EXPEDITION } from '../core/config';
 import { gsap, D, isReduced, shake, Particles, popIn } from './motion';
-import { crewSilhouette, foeSilhouette } from './silhouettes';
-import conductorCombat from '/art/crew/conductor-combat.webp?url&inline';
+import { foeSilhouette } from './silhouettes';
+import { CREW_AVATARS, crewPortrait, setCrewPortrait } from './crewArt';
+import brassFrame from '/art/ui/expedition-brass-frame-v2.webp?url&inline';
 import ruinApproach from '/art/scenes/ruin-approach-v2.webp?url&inline';
 import buriedConcourse from '/art/scenes/buried-concourse-v2.webp?url&inline';
 import voidSanctum from '/art/scenes/void-sanctum-v2.webp?url&inline';
@@ -54,10 +58,10 @@ const FOE_ART: Record<string, string> = {
 };
 
 interface Pending { kind: string; turn: 'player' | 'enemy'; actorIndex: number; foeIndex: number; actionKind: ExpeditionActionKind }
-interface ActorCard { id: string; el: HTMLElement; fig: HTMLElement; hpFill: HTMLElement; hpText: HTMLElement; guard: HTMLElement; lane: HTMLElement; sig: string }
-interface FoeCard { id: string; el: HTMLButtonElement; fig: HTMLElement; hpFill: HTMLElement; hpText: HTMLElement; stun: HTMLElement; sig: string }
+interface ActorCard { id: string; el: HTMLElement; fig: HTMLElement; hpFill: HTMLElement; hpText: HTMLElement; guard: HTMLElement; lane: HTMLElement; status: HTMLElement; sig: string }
+interface FoeCard { id: string; el: HTMLButtonElement; fig: HTMLElement; hpFill: HTMLElement; hpText: HTMLElement; stun: HTMLElement; status: HTMLElement; intent: HTMLElement; intentTarget: HTMLElement; sig: string }
 
-type Mode = 'idle' | 'menu' | 'timing' | 'anim' | 'intermission' | 'result';
+type Mode = 'idle' | 'menu' | 'swap' | 'timing' | 'anim' | 'intermission' | 'result';
 
 export function createExpedition(ui: UiShared): ExpeditionScene {
   // ---------- DOM ----------
@@ -90,11 +94,9 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
   judgeEl.hidden = true;
   const rallyEl = el('div', { class: 'rv-exp-rally', role: 'status' }, el('span', { class: 'rv-exp-rally-ico', 'aria-hidden': 'true', text: '♪' }), el('span', { text: 'RALLIED — the crew deals +50% damage this round' }));
   rallyEl.hidden = true;
-  const formationRules = el('div', { class: 'rv-exp-formation-rules' },
-    el('span', { text: 'FRONT +20% strike · draws melee' }),
-    el('span', { text: 'MIDDLE balanced' }),
-    el('span', { text: 'REAR +20% ranged special · draws ranged' }),
-  );
+  const turnNodes = el('div', { class: 'rv-exp-turn-nodes' });
+  const formationRules = el('div', { class: 'rv-exp-turn-order', role: 'list', 'aria-label': 'Round order: crew, then foes. Position swaps do not change turn order.' },
+    el('span', { class: 'rv-exp-order-label', text: 'Turn order' }), turnNodes);
   const stage = el('div', { class: 'rv-exp-stage' }, formationRules, crewEl, foesEl, fxLayer, ring, judgeEl, rallyEl);
   const promptEl = el('div', { class: 'rv-exp-prompt', role: 'status' });
   promptEl.hidden = true;
@@ -102,11 +104,15 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
   // action menu
   const menuName = el('b', { text: '' });
   const menuSpec = el('span', { class: 'rv-exp-menu-spec', text: '' });
+  const menuPortrait = crewPortrait('conductor', 'rv-exp-menu-portrait');
+  const menuPosition = el('span', { class: 'rv-exp-menu-position' });
   const targetEl = el('span', { class: 'rv-exp-target', text: '' });
   const actionBtn = (kind: ExpeditionActionKind, label: string, key: string, desc: string) => {
     const b = el('button', { class: 'rv-btn rv-exp-action rv-exp-a-' + kind, type: 'button', 'data-kind': kind, 'aria-label': `${label} (${key})` },
-      el('span', { class: 'rv-exp-a-key', 'aria-hidden': 'true', text: key }),
-      el('span', { class: 'rv-exp-a-label', text: label }),
+      el('span', { class: 'rv-exp-a-heading' },
+        el('kbd', { class: 'rv-exp-a-key', 'aria-hidden': 'true', text: key }),
+        el('span', { class: 'rv-exp-a-label', text: label })),
+      el('span', { class: 'rv-exp-a-mode', text: kind === 'strike' ? 'Timed attack' : kind === 'special' ? 'Crew skill' : kind === 'guard' ? 'Brace now' : '' }),
       el('span', { class: 'rv-exp-a-desc', text: desc }));
     b.addEventListener('click', () => act(kind));
     return b;
@@ -115,21 +121,34 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
   strikeBtn.dataset.autofocus = '';
   const guardBtn = actionBtn('guard', 'Guard', 'G', 'Brace: the next blow is halved.');
   const specialBtn = actionBtn('special', 'Special', 'E', '');
-  const swapBtn = actionBtn('swap', 'Swap', 'W', 'Trade lines with the next ally. Ends this turn.');
+  const swapBtn = actionBtn('swap', 'Swap', 'W', 'Choose an ally. Uses your turn, not theirs.');
   const fleeBtn = actionBtn('flee', 'Flee', 'F', 'Back to the train. No reward.');
-  const menu = el('div', { class: 'rv-exp-menu rv-panel', role: 'group', 'aria-label': 'Actions' },
-    el('div', { class: 'rv-exp-menu-head' }, el('span', { class: 'rv-label', text: 'Your move' }), menuName, menuSpec, targetEl),
-    el('div', { class: 'rv-exp-actions' }, strikeBtn, guardBtn, specialBtn, swapBtn, fleeBtn),
-    el('div', { class: 'rv-hint', text: 'Pick target 1-3 · S strike · G guard · E special · W swap · F retreat · Space/Enter on impact' }),
+  const menu = el('div', { class: 'rv-exp-menu', role: 'group', 'aria-label': 'Actions' },
+    el('div', { class: 'rv-exp-menu-head' }, menuPortrait,
+      el('div', { class: 'rv-exp-menu-identity' }, el('span', { class: 'rv-label', text: 'Your move' }), menuName, menuSpec, menuPosition)),
+    el('div', { class: 'rv-exp-command-hand' },
+      targetEl,
+      el('div', { class: 'rv-exp-actions' }, strikeBtn, guardBtn, specialBtn,
+        el('div', { class: 'rv-exp-utility-actions' }, swapBtn, fleeBtn)),
+      el('div', { class: 'rv-hint', text: 'Click a foe or ↑ ↓ to target · Space or the action key when the rings meet' })),
   );
   menu.hidden = true;
   const logEl = el('div', { class: 'rv-exp-log rv-panel', role: 'log', 'aria-live': 'polite', 'aria-label': 'Expedition log' });
-  const bottom = el('div', { class: 'rv-exp-bottom' }, menu, logEl);
+  logEl.id = 'rv-expedition-log';
+  const logToggle = el('button', { class: 'rv-btn rv-small rv-exp-log-toggle', type: 'button', text: 'Battle log', 'aria-expanded': 'false', 'aria-controls': logEl.id });
+  logToggle.addEventListener('click', () => {
+    const open = root.classList.toggle('rv-exp-log-open');
+    logToggle.setAttribute('aria-expanded', String(open));
+    logToggle.textContent = open ? 'Close log' : 'Battle log';
+  });
+  const bottom = el('div', { class: 'rv-exp-bottom' }, menu, logToggle, logEl);
   const resultEl = el('div', { class: 'rv-exp-result-ov' });
   resultEl.hidden = true;
   const stageGateEl = el('div', { class: 'rv-exp-stage-gate' });
   stageGateEl.hidden = true;
-  const root = el('div', { class: 'rv-exp', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Expedition' }, bg, top, stage, promptEl, bottom, stageGateEl, resultEl);
+  const swapOverlay = el('div', { class: 'rv-exp-swap-overlay', role: 'group', 'aria-label': 'Choose a formation swap' });
+  swapOverlay.hidden = true;
+  const root = el('div', { class: 'rv-exp', style: `--exp-frame:url("${brassFrame}")`, role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Expedition' }, bg, top, stage, promptEl, bottom, swapOverlay, stageGateEl, resultEl);
 
   const particles = new Particles(motes, 70, ['109,95,214', '154,140,255', '200,120,255']);
 
@@ -145,9 +164,23 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
   let lastRound = 0;
   let endSummary: { outcome: string; summary: string; rounds: number } | null = null;
   let timing: { impact: number; windup: number; raf: number; done: boolean; pressed: boolean; result: ExpeditionTiming | null; onJudged: (t: ExpeditionTiming) => void; kind: 'attack' | 'guard' } | null = null;
+  let timingKey = 's';
   let driftTl: gsap.core.Timeline | null = null;
   let introUntil = 0;
   let px = 0, py = 0;
+  let swapFor = -1, swapSignature = '';
+
+  // Timers belong to one encounter/stage. Never let an old beat resolve a new run.
+  const pendingTimers = new Set<number>();
+  function later(fn: () => void, ms: number): number {
+    const id = window.setTimeout(() => { pendingTimers.delete(id); fn(); }, ms);
+    pendingTimers.add(id);
+    return id;
+  }
+  function cancelTimers(): void {
+    for (const id of pendingTimers) window.clearTimeout(id);
+    pendingTimers.clear();
+  }
 
   const x = (): ExpeditionState | null => ui.state()?.expedition ?? null;
   const shakeOk = (): boolean => !!ui.settings().screenShake && !isReduced();
@@ -164,45 +197,47 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
       const hpText = el('span', { class: 'rv-exp-hp-text', text: `${a.hp}/${a.maxHp}` });
       const guard = el('span', { class: 'rv-exp-guard', title: 'Guarding: next hit halved', text: '⛨' });
       const lane = el('span', { class: `rv-exp-lane rv-lane-${a.position}`, text: a.position });
-      const fig = a.specialty === 'conductor'
-        ? el('div', { class: 'rv-exp-fig rv-exp-fig-authored' }, el('img', { src: conductorCombat, alt: '', 'aria-hidden': 'true' }))
-        : el('div', { class: 'rv-exp-fig', html: crewSilhouette(a.specialty, 118) });
+      const status = el('span', { class: 'rv-exp-card-status', text: 'Ready' });
+      const fig = el('div', { class: 'rv-exp-fig rv-exp-fig-authored' }, el('img', { src: CREW_AVATARS[a.specialty], alt: '', 'aria-hidden': 'true', 'data-specialty': a.specialty }));
       const card = el('div', { class: 'rv-exp-actor', style: `--accent:${ACTOR_COLORS[a.specialty] ?? '#e8c170'}`, 'data-index': String(i), 'aria-label': `${a.name}, ${a.specialty}` },
-        el('span', { class: 'rv-exp-turn', 'aria-hidden': 'true', text: '▶' }),
         fig,
         el('div', { class: 'rv-exp-card' },
+          status,
           el('div', { class: 'rv-exp-name' }, el('b', { text: a.name }), guard),
           el('div', { class: 'rv-exp-spec' }, el('span', { text: cap(a.specialty) }), lane),
           el('div', { class: 'rv-exp-hp' }, el('div', { class: 'rv-bar' }, hpFill), hpText),
         ),
         el('div', { class: 'rv-exp-downed', text: 'DOWN' }),
       );
-      return { id: a.id, el: card, fig, hpFill, hpText, guard, lane, sig: '' };
+      return { id: a.id, el: card, fig, hpFill, hpText, guard, lane, status, sig: '' };
     });
     foeCards = xs.foes.map((f, i) => {
       const hpFill = el('i');
       const hpText = el('span', { class: 'rv-exp-hp-text', text: `${f.hp}/${f.maxHp}` });
       const stun = el('span', { class: 'rv-exp-stun', title: 'Stunned: skips its next attack', text: '✦ stunned' });
+      const status = el('span', { class: 'rv-exp-card-status', text: 'Enemy' });
+      const intent = el('b', { class: 'rv-exp-intent' });
+      const intentTarget = el('span', { class: 'rv-exp-intent-target' });
       const art = FOE_ART[f.kind];
       const fig = art
         ? el('div', { class: 'rv-exp-fig rv-exp-fig-enemy' }, el('img', { src: art, alt: '', 'aria-hidden': 'true' }))
         : el('div', { class: 'rv-exp-fig', html: foeSilhouette(f.kind, 130) });
-      const card = el('button', { class: 'rv-exp-foe', type: 'button', style: `--accent:${FOE_COLORS[f.kind] ?? '#a3a8b8'}`, 'data-index': String(i), 'aria-label': `Target ${f.name} (${i + 1})`, tabindex: '-1' },
-        el('span', { class: 'rv-exp-key', 'aria-hidden': 'true', text: String(i + 1) }),
-        el('span', { class: 'rv-exp-reticle', 'aria-hidden': 'true' }),
+      const card = el('button', { class: 'rv-exp-foe', type: 'button', style: `--accent:${FOE_COLORS[f.kind] ?? '#a3a8b8'}`, 'data-index': String(i), 'aria-label': `Target ${f.name} (${i + 1}). ${f.desc}`, title: f.desc, tabindex: '-1' },
         fig,
         el('div', { class: 'rv-exp-card' },
+          status,
           el('div', { class: 'rv-exp-name' }, el('b', { text: f.name }), stun),
           el('div', { class: 'rv-exp-hp' }, el('div', { class: 'rv-bar' }, hpFill), hpText),
-          el('div', { class: 'rv-exp-tell', text: f.desc }),
+          intent, intentTarget,
         ),
       );
       card.addEventListener('click', () => { if (mode !== 'menu') return; setTarget(i); ui.audio().ui('click'); });
       card.addEventListener('pointerenter', () => { if (mode === 'menu' && xs.foes[i].hp > 0) ui.audio().ui('hover'); });
-      return { id: f.id, el: card, fig, hpFill, hpText, stun, sig: '' };
+      return { id: f.id, el: card, fig, hpFill, hpText, stun, status, intent, intentTarget, sig: '' };
     });
     crewEl.replaceChildren(...actorCards.map(c => c.el));
     foesEl.replaceChildren(...foeCards.map(c => c.el));
+    turnNodes.replaceChildren(...expeditionTurnOrder(xs).map(t => el('span', { class: 'rv-exp-order-step', 'data-id': t.key, role: 'listitem' })));
     logEl.replaceChildren();
     logCount = 0;
     setText(siteEl, xs.siteId);
@@ -232,13 +267,16 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
       toggleClass(c.el, 'rv-guarding', a.guard > 0 && !a.down);
       toggleClass(c.el, 'rv-down', a.down);
       toggleClass(c.el, 'rv-active', xs.turn === 'player' && xs.activeActor === i && !a.down && !xs.outcome);
-      c.el.style.order = String(a.position === 'front' ? 1 : a.position === 'middle' ? 2 : 3);
+      setText(c.status, a.down ? 'Down' : a.guard > 0 ? 'Guarding' : xs.turn === 'player' && xs.activeActor === i && !xs.outcome ? 'Your move' : 'Ready');
+      c.el.style.order = String(a.position === 'front' ? 3 : a.position === 'middle' ? 2 : 1);
       c.lane.className = `rv-exp-lane rv-lane-${a.position}`;
       setText(c.lane, a.position);
+      c.lane.title = expeditionPositionSummary(a.position);
     });
     xs.foes.forEach((f, i) => {
       const c = foeCards[i]; if (!c) return;
-      const sig = `${f.hp}|${f.stunned}|${target === i}|${xs.turn === 'enemy' && xs.activeFoe === i}`;
+      const intent = expeditionEnemyIntent(xs, i);
+      const sig = `${f.hp}|${f.stunned}|${target === i}|${JSON.stringify(intent)}`;
       if (!force && sig === c.sig) return;
       c.sig = sig;
       const r = f.maxHp > 0 ? f.hp / f.maxHp : 0;
@@ -248,11 +286,31 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
       toggleClass(c.el, 'rv-dead', f.hp <= 0);
       toggleClass(c.el, 'rv-target', target === i && f.hp > 0);
       toggleClass(c.el, 'rv-acting', xs.turn === 'enemy' && xs.activeFoe === i && f.hp > 0);
+      setText(c.status, f.hp <= 0 ? 'Defeated' : xs.turn === 'enemy' && xs.activeFoe === i ? 'Attacking' : target === i ? 'Selected target' : 'Enemy');
       c.el.setAttribute('aria-pressed', target === i ? 'true' : 'false');
       c.el.disabled = f.hp <= 0;
+      const primary = intent.status === 'stunned' ? 'Stunned · no attack' : intent.status === 'defeated' ? 'Defeated'
+        : intent.status === 'finished' ? 'Encounter ended' : intent.status === 'acted' ? 'Turn complete'
+        : `${intent.hits} × ${intent.damage} damage`;
+      const victim = intent.targetIndex !== null ? xs.actors[intent.targetIndex] : null;
+      const secondary = !intent.hits ? 'No incoming blow' : victim ? `Next: ${victim.name}` : `${cap(intent.range)} · ${intent.favoured} favoured`;
+      const detail = intent.nextDamage ? `Next blow: ${intent.nextDamage.miss} if missed, ${intent.nextDamage.good} on Good, ${intent.nextDamage.perfect} on Perfect. Later blows may choose another target.`
+        : intent.hits ? `Base damage per hit, before guard and timing. Each blow chooses separately: ${intent.targets.map(t => `${t.actor.name} ${Math.round(t.chance * 100)}%`).join(', ')}.` : primary;
+      setText(c.intent, primary); setText(c.intentTarget, secondary);
+      c.el.dataset.intentState = intent.status;
+      c.el.title = `${primary}. ${secondary}. ${detail}`;
+      c.el.setAttribute('aria-label', `Target ${f.name}. ${c.el.title}`);
+    });
+    expeditionTurnOrder(xs).forEach((t, i) => {
+      const node = turnNodes.children[i] as HTMLElement | undefined; if (!node) return;
+      node.dataset.state = t.state; node.dataset.side = t.side;
+      node.setAttribute('aria-current', t.state === 'active' ? 'step' : 'false');
+      node.setAttribute('aria-label', `${t.name}: ${t.state}`);
+      node.title = `${t.name} · ${t.state}`;
+      setText(node, t.name.replace(/^The /, '').replace('Ash Cult ', '').replace('Void ', '').replace('Rail-Maw ', '').replace('Iron ', '').replace('Lantern ', ''));
     });
     show(rallyEl, xs.rally > 0 && !xs.outcome);
-    swapBtn.disabled = xs.actors.filter(a => !a.down).length < 2;
+    swapBtn.disabled = !expeditionSwapOptions(xs).length;
     updateLog(xs);
   }
 
@@ -271,8 +329,8 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
   }
 
   function updateTicker(xs: ExpeditionState): void {
-    const lost = xs.rounds * EXPEDITION.voidSecondsPerRound;
-    setText(tickerText, `VOID +${EXPEDITION.voidSecondsPerRound}s / ROUND · ${lost}s spent · stage ${xs.stage}/${xs.stageCount} · round ${xs.round}/${EXPEDITION.maxRounds}`);
+    const lost = expeditionVoidCost(xs.rounds);
+    setText(tickerText, `VOID +${EXPEDITION.voidSecondsPerRound}s / round · ${lost}s spent`);
     setText(roundEl, String(Math.min(xs.round, EXPEDITION.maxRounds)));
     toggleClass(ticker, 'rv-hot', xs.round >= EXPEDITION.maxRounds - 1);
   }
@@ -287,14 +345,20 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
     if (target < 0 || !xs.foes[target] || xs.foes[target].hp <= 0) target = xs.foes.findIndex(f => f.hp > 0);
     setText(menuName, a.name);
     setText(menuSpec, cap(a.specialty));
+    setCrewPortrait(menuPortrait, a.specialty);
+    setText(menuPosition, `${cap(a.position)} line`);
+    menuPosition.title = expeditionPositionSummary(a.position);
+    setText(strikeBtn.querySelector('.rv-exp-a-desc'), `${expeditionStrikeDamage(xs, a, 'good')} damage on Good · ${expeditionStrikeDamage(xs, a, 'perfect')} on Perfect.`);
     const sp = SPECIALS[a.specialty];
     setText(specialBtn.querySelector('.rv-exp-a-label'), sp?.name ?? 'Special');
     setText(specialBtn.querySelector('.rv-exp-a-desc'), sp?.desc ?? '');
+    setText(specialBtn.querySelector('.rv-exp-a-mode'), a.specialty === 'conductor' ? 'Immediate rally' : 'Timed skill');
+    specialBtn.setAttribute('aria-label', `${sp?.name ?? 'Special'} (E). ${sp?.desc ?? ''}`);
     syncTarget();
     refresh(xs, true);
     show(menu, true);
     for (const c of foeCards) c.el.tabIndex = -1;
-    if (!isReduced()) gsap.fromTo(menu, { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: 'power3.out', clearProps: 'transform,opacity' });
+    if (!isReduced()) gsap.fromTo(menu, { opacity: 0 }, { opacity: 1, duration: 0.2, clearProps: 'opacity' });
     strikeBtn.focus({ preventScroll: true });
   }
   function hideMenu(): void { show(menu, false); }
@@ -308,7 +372,7 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
   function syncTarget(): void {
     const xs = x();
     const f = xs?.foes[target];
-    setText(targetEl, f ? `Target: ${f.name} (${target + 1})` : 'No target');
+    setText(targetEl, f ? `Target: ${f.name}` : 'No target');
   }
   function cycleTarget(dir: number): void {
     const xs = x(); if (!xs) return;
@@ -316,10 +380,51 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
     for (let k = 1; k <= n; k++) { const i = (target + dir * k + n) % n; if (xs.foes[i].hp > 0) { setTarget(i); ui.audio().ui('hover'); return; } }
   }
 
-  function act(kind: ExpeditionActionKind): void {
+  function swapState(xs: ExpeditionState): string { return JSON.stringify([xs.stage, xs.round, xs.activeActor, xs.turn, xs.pending, xs.outcome, xs.actors, xs.foes]); }
+  function renderSwap(xs: ExpeditionState): void {
+    swapSignature = swapState(xs);
+    const renderedSignature = swapSignature;
+    const actor = xs.actors[xs.activeActor];
+    const options = expeditionSwapOptions(xs);
+    const percent = (n: number) => Math.round(n * 100) + '%';
+    const choices = options.map((o, i) => {
+      const nextActor = { ...actor, position: o.to }, nextAlly = { ...o.ally, position: o.from };
+      const b = el('button', { class: 'rv-btn rv-exp-swap-choice', type: 'button', 'data-partner': String(o.index), 'aria-label': `Swap with ${o.ally.name}. ${actor.name} to ${o.to}, ${o.ally.name} to ${o.from}. Uses ${actor.name}'s turn.` },
+        el('span', { class: 'rv-exp-swap-person' }, crewPortrait(o.ally.specialty, 'rv-exp-swap-portrait'), el('b', { text: `${i + 1}. Swap with ${o.ally.name}` })),
+        el('b', { text: `${actor.name}: ${o.from} → ${o.to}` }),
+        el('span', { text: `${o.ally.name}: ${o.to} → ${o.from}` }),
+        el('span', { text: `Good strike: ${actor.name} ${expeditionStrikeDamage(xs, actor, 'good')} → ${expeditionStrikeDamage(xs, nextActor, 'good')}; ${o.ally.name} ${expeditionStrikeDamage(xs, o.ally, 'good')} → ${expeditionStrikeDamage(xs, nextAlly, 'good')}.` }),
+        el('span', { text: expeditionPositionSummary(o.to) }),
+        el('span', { class: 'rv-exp-swap-risk', text: `Chance each blow targets ${actor.name}: ${expeditionSwapRisks(xs, o.index).map(r => `${r.name} ${percent(r.before)} → ${percent(r.after)}`).join(' · ') || 'No incoming attacks'}` }),
+      );
+      b.addEventListener('click', () => {
+        const live = x();
+        if (!live || live.activeActor !== swapFor || swapState(live) !== renderedSignature) { if (live) renderSwap(live); ui.audio().ui('error'); return; }
+        act('swap', o.index);
+      });
+      return b;
+    });
+    const cancel = btn('Cancel — keep formation', closeSwap, { aria: 'Cancel formation swap (Escape)' });
+    cancel.dataset.cancelSwap = '';
+    swapOverlay.replaceChildren(el('div', { class: 'rv-exp-swap-card' },
+      el('span', { class: 'rv-label', text: 'Formation' }), el('h2', { text: `Move ${actor.name}` }),
+      el('p', { text: 'Choose a partner to confirm. This uses your turn; your ally keeps theirs. No HP or supplies spent.' }),
+      el('div', { class: 'rv-exp-swap-options' }, ...choices),
+      el('div', { class: 'rv-exp-swap-footer' }, cancel, el('span', { text: `1–${choices.length} choose · Esc cancel · Controller A select / B cancel` })),
+    ));
+  }
+  function openSwap(): void {
+    const xs = x(); if (!xs || !expeditionSwapOptions(xs).length) return;
+    swapFor = xs.activeActor; mode = 'swap'; hideMenu(); renderSwap(xs); show(swapOverlay, true);
+    swapOverlay.querySelector<HTMLButtonElement>('.rv-exp-swap-choice')?.focus({ preventScroll: true });
+  }
+  function closeSwap(): void { show(swapOverlay, false); mode = 'idle'; enterMenu(); swapBtn.focus({ preventScroll: true }); }
+
+  function act(kind: ExpeditionActionKind, swapActorIndex?: number): void {
     const sim = ui.sim();
     const xs = x();
-    if (!sim || !xs || mode !== 'menu') return;
+    if (!sim || !xs || (mode !== 'menu' && !(mode === 'swap' && kind === 'swap'))) return;
+    if (kind === 'swap' && swapActorIndex === undefined) { openSwap(); return; }
     if (kind === 'flee') {
       hideMenu();
       mode = 'anim';
@@ -327,12 +432,13 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
       if (!ok) { mode = 'menu'; show(menu, true); ui.audio().ui('error'); return; }
       ui.audio().ui('close');
       if (!isReduced()) gsap.to(actorCards.map(c => c.el), { x: -240, opacity: 0.2, duration: 0.6, ease: 'power2.in', stagger: 0.06 });
-      window.setTimeout(() => { mode = 'idle'; tryNext(); }, isReduced() ? 0 : 650);
+      later(() => { mode = 'idle'; tryNext(); }, isReduced() ? 0 : 650);
       return;
     }
     hideMenu();
+    show(swapOverlay, false);
     mode = 'anim';
-    const ok = sim.expeditionAction(kind, target);
+    const ok = sim.expeditionAction(kind, target, swapActorIndex);
     if (!ok) { mode = 'menu'; show(menu, true); ui.audio().ui('error'); return; }
     ui.audio().ui('click');
     mode = 'idle';
@@ -347,7 +453,7 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
     tryNext();
   }
   function tryNext(): void {
-    if (!ui.isOpen('expedition') || busy || mode === 'timing' || mode === 'result' || mode === 'intermission' || mode === 'anim') return;
+    if (!ui.isOpen('expedition') || busy || mode === 'swap' || mode === 'timing' || mode === 'result' || mode === 'intermission' || mode === 'anim') return;
     if (performance.now() < introUntil) return;
     const p = queue.shift();
     const xs = x();
@@ -365,7 +471,7 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
     else enemyAttack(p, xs);
   }
   function finishStep(delay: number): void {
-    window.setTimeout(() => {
+    later(() => {
       busy = false;
       mode = 'idle';
       const xs = x();
@@ -398,7 +504,7 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
       ac.el.classList.add('rv-bracing');
       if (!isReduced()) gsap.fromTo(ac.fig, { scale: 1 }, { scale: 0.92, duration: 0.18, yoyo: true, repeat: 1, ease: 'power2.inOut', clearProps: 'transform' });
       cue('block');
-      window.setTimeout(() => { ac.el.classList.remove('rv-bracing'); resolve('good'); finishStep(350); }, isReduced() ? 0 : 420);
+      later(() => { ac.el.classList.remove('rv-bracing'); resolve('good'); finishStep(350); }, isReduced() ? 0 : 420);
       return;
     }
     if (kind === 'swap') {
@@ -409,8 +515,8 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
       xs.actors.forEach((a, i) => {
         const card = actorCards[i];
         if (!card || before[i] === a.position) return;
-        card.el.style.order = String(a.position === 'front' ? 1 : a.position === 'middle' ? 2 : 3);
-        if (!isReduced()) gsap.fromTo(card.el, { y: -14, opacity: 0.65 }, { y: 0, opacity: 1, duration: 0.45, ease: 'power2.out', clearProps: 'transform,opacity' });
+        card.el.style.order = String(a.position === 'front' ? 3 : a.position === 'middle' ? 2 : 1);
+        if (!isReduced()) gsap.fromTo(card.el, { opacity: .65 }, { opacity: 1, duration: .25, clearProps: 'opacity' });
       });
       finishStep(520);
       return;
@@ -419,7 +525,7 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
       mode = 'anim';
       cue('rally');
       if (!isReduced()) gsap.fromTo(ac.fig, { y: 0 }, { y: -18, duration: 0.25, yoyo: true, repeat: 1, ease: 'power2.out', clearProps: 'transform' });
-      window.setTimeout(() => {
+      later(() => {
         resolve('good');
         show(rallyEl, true);
         if (!isReduced()) gsap.fromTo(rallyEl, { scaleX: 0.2, opacity: 0 }, { scaleX: 1, opacity: 1, duration: 0.45, ease: 'back.out(1.8)', clearProps: 'transform,opacity' });
@@ -500,11 +606,11 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
       const w = el('div', { class: 'rv-exp-word rv-w-stun', text: 'STUNNED' });
       placeOver(w, fc.el);
       fxLayer.appendChild(w);
-      if (isReduced()) window.setTimeout(() => w.remove(), 300);
+      if (isReduced()) later(() => w.remove(), 300);
       else gsap.timeline({ onComplete: () => w.remove() }).fromTo(w, { scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.2, ease: 'back.out(2)' }).to(w, { y: -20, opacity: 0, duration: 0.35, delay: 0.35 });
       if (!isReduced()) gsap.fromTo(fc.fig, { rotate: 0 }, { rotate: 6, duration: 0.08, yoyo: true, repeat: 5, clearProps: 'transform' });
     }
-    window.setTimeout(() => { resolve('miss'); finishStep(200); }, isReduced() ? 0 : 650);
+    later(() => { resolve('miss'); finishStep(200); }, isReduced() ? 0 : 650);
     void xs;
   }
 
@@ -516,7 +622,15 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
     const impact = t0 + windup * 1000;
     placeOver(ring, targetEl2);
     ring.className = 'rv-exp-ring rv-ring-' + kind;
-    setText(ringLabel, label);
+    timingKey = kind === 'guard' ? 'g' : x()?.pending?.kind === 'special' ? 'e' : 's';
+    setText(ringLabel, `${label} · ${timingKey.toUpperCase()} / SPACE`);
+    const pending = x()?.pending;
+    const victim = pending ? x()?.actors[pending.actorIndex] : null;
+    const incoming = pending && kind === 'guard' ? expeditionEnemyIntent(x()!, pending.foeIndex) : null;
+    setText(promptEl, incoming?.nextDamage && victim ? `${victim.name}: ${incoming.nextDamage.miss} damage · ${incoming.nextDamage.good} on Good · ${incoming.nextDamage.perfect} on Perfect · G / Space`
+      : `Time your ${label.toLowerCase()} · ${timingKey.toUpperCase()} or Space`);
+    show(promptEl, true);
+    ring.dataset.key = timingKey;
     ring.hidden = false;
     ringOuter.style.transform = 'scale(3)';
     ringOuter.style.opacity = '0.4';
@@ -556,6 +670,7 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
   function judge(st: NonNullable<typeof timing>, t: ExpeditionTiming): void {
     if (st.done) return;
     st.done = true;
+    show(promptEl, false);
     if (st.raf) cancelAnimationFrame(st.raf);
     if (timing === st) timing = null;
     ring.hidden = true;
@@ -578,7 +693,7 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
     const w = el('div', { class: 'rv-exp-word ' + cls, text });
     placeOver(w, over);
     fxLayer.appendChild(w);
-    if (isReduced()) { window.setTimeout(() => w.remove(), 400); return; }
+    if (isReduced()) { later(() => w.remove(), 400); return; }
     gsap.timeline({ onComplete: () => w.remove() })
       .fromTo(w, { scale: 0.5, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.16, ease: 'back.out(3)' })
       .to(w, { y: -24, opacity: 0, duration: 0.4, delay: 0.3, ease: 'power2.in' });
@@ -590,7 +705,7 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
     placeOver(judgeEl, over, 0.6);
     judgeEl.hidden = false;
     gsap.killTweensOf(judgeEl);
-    if (isReduced()) { window.setTimeout(() => { judgeEl.hidden = true; }, 500); return; }
+    if (isReduced()) { later(() => { judgeEl.hidden = true; }, 500); return; }
     gsap.timeline({ onComplete: () => { judgeEl.hidden = true; } })
       .fromTo(judgeEl, { scale: t === 'perfect' ? 2.4 : 1.8, opacity: 0, rotate: t === 'perfect' ? -8 : 0 }, { scale: 1, opacity: 1, rotate: 0, duration: 0.18, ease: 'power4.out' })
       .to(judgeEl, { y: -30, opacity: 0, duration: 0.45, delay: 0.45, ease: 'power2.in', clearProps: 'transform' });
@@ -607,7 +722,7 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
     placeOver(n, over, 0.22);
     n.style.left = (parseFloat(n.style.left) + (Math.random() - 0.5) * 40) + 'px';
     fxLayer.appendChild(n);
-    if (isReduced()) { window.setTimeout(() => n.remove(), 700); return; }
+    if (isReduced()) { later(() => n.remove(), 700); return; }
     gsap.timeline({ onComplete: () => n.remove() })
       .fromTo(n, { y: 10, scale: 0.6, opacity: 0 }, { y: -30, scale: 1, opacity: 1, duration: 0.22, ease: 'back.out(2)' })
       .to(n, { y: -90, opacity: 0, duration: 0.7, delay: 0.25, ease: 'power1.in' });
@@ -647,7 +762,7 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
     const sh = el('div', { class: 'rv-exp-shield' + (big ? ' rv-big' : ''), text: '⛨' });
     placeOver(sh, over);
     fxLayer.appendChild(sh);
-    if (isReduced()) { window.setTimeout(() => sh.remove(), 400); return; }
+    if (isReduced()) { later(() => sh.remove(), 400); return; }
     gsap.timeline({ onComplete: () => sh.remove() })
       .fromTo(sh, { scale: 0.4, opacity: 0 }, { scale: big ? 1.6 : 1.1, opacity: 1, duration: 0.14, ease: 'back.out(2)' })
       .to(sh, { scale: big ? 2.4 : 1.5, opacity: 0, duration: big ? 0.6 : 0.35, ease: 'power2.out' });
@@ -660,7 +775,10 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
     mode = 'intermission';
     hideMenu();
     const nextKey = xs.stage === 1 ? 'buried_concourse' : 'void_sanctum';
-    const deeper = btn(`Press deeper — ${STAGE_NAMES[nextKey]}`, () => {
+    const conductor = xs.actors.find(a => a.specialty === 'conductor');
+    const lowHealth = !!conductor && conductor.hp <= conductor.maxHp * .2;
+    stageGateEl.classList.toggle('rv-exp-depth-danger', lowHealth);
+    const deeper = btn(`Continue deeper — ${STAGE_NAMES[nextKey]}`, () => {
       const sim = ui.sim(); if (!sim) return;
       ui.audio().ui('confirm');
       if (!sim.advanceExpedition(true)) { ui.audio().ui('error'); return; }
@@ -669,7 +787,7 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
       show_();
     }, { class: 'rv-primary rv-big', aria: `Continue to ${STAGE_NAMES[nextKey]}` });
     deeper.dataset.autofocus = '';
-    const withdraw = btn('Return to the train', () => {
+    const withdraw = btn('Retreat to the train', () => {
       const sim = ui.sim(); if (!sim) return;
       ui.audio().ui('close');
       if (!sim.advanceExpedition(false)) { ui.audio().ui('error'); return; }
@@ -677,17 +795,19 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
       mode = 'idle';
       tryNext();
     }, { aria: 'Withdraw safely without the final reward' });
-    const card = el('div', { class: 'rv-panel rv-modal rv-exp-depth-card' },
+    withdraw.dataset.retreat = '';
+    const card = el('div', { class: 'rv-panel rv-modal rv-exp-depth-card', role: 'group', 'aria-label': 'Next expedition stage' },
       el('div', { class: 'rv-label', text: `Stage ${xs.stage} of ${xs.stageCount} cleared` }),
-      el('h2', { text: 'The ruin opens beneath you' }),
-      el('p', { text: 'Wounds carry forward. Deeper chambers hold stronger enemies—and the expedition reward waits only at the end.' }),
+      el('h2', { text: lowHealth ? 'Your Conductor is low on health' : STAGE_NAMES[nextKey] }),
+      lowHealth ? el('p', { class: 'rv-exp-depth-warning', role: 'alert', text: `${conductor!.name}: ${Math.round(conductor!.hp)} / ${conductor!.maxHp} HP. Continue with these wounds, or retreat to the train.` }) : null,
+      el('p', { text: 'Wounds carry forward. Clear the final chamber to earn the reward. You can still retreat on your turn.' }),
       el('div', { class: 'rv-exp-depth-status' }, ...xs.actors.map(a => el('span', { class: a.down ? 'rv-down' : '', text: `${a.name} · ${Math.round(a.hp)} HP · ${cap(a.position)}` }))),
-      el('div', { class: 'rv-actions' }, withdraw, deeper),
+      el('div', { class: 'rv-actions' }, deeper, withdraw),
     );
     stageGateEl.replaceChildren(card);
     show(stageGateEl, true);
     popIn(card, { scale: 0.9, y: 24 }, { duration: D(0.4) });
-    window.setTimeout(() => deeper.focus({ preventScroll: true }), isReduced() ? 0 : 260);
+    later(() => deeper.focus({ preventScroll: true }), isReduced() ? 0 : 260);
   }
 
   function showResult(xs: ExpeditionState): void {
@@ -698,7 +818,7 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
     show(promptEl, false);
     const outcome = xs.outcome ?? 'fled';
     const title = outcome === 'won' ? 'Victory' : outcome === 'lost' ? 'Defeat' : 'Retreat';
-    const summary = endSummary?.summary ?? xs.log[xs.log.length - 1] ?? '';
+    const summary = endSummary?.summary ?? xs.summary ?? xs.log[xs.log.length - 1] ?? '';
     const rounds = endSummary?.rounds ?? xs.rounds;
     const rewards: string[] = [];
     const m = summary.match(/\+(\d+) marks/); if (m) rewards.push(`◆ ${m[1]} marks`);
@@ -713,17 +833,19 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
     }, { class: 'rv-primary rv-big', aria: 'Continue (Enter)' });
     cont.dataset.autofocus = '';
     const card = el('div', { class: 'rv-panel rv-modal rv-exp-result rv-res-' + outcome },
-      el('div', { class: 'rv-label', text: `Expedition · ${xs.stage}/${xs.stageCount} stages · ${rounds} round${rounds === 1 ? '' : 's'} · void +${rounds * EXPEDITION.voidSecondsPerRound}s` }),
+      el('div', { class: 'rv-label', text: `Expedition · ${xs.stage}/${xs.stageCount} stages · ${rounds} round${rounds === 1 ? '' : 's'} · void +${expeditionVoidCost(rounds)}s` }),
       el('h1', { text: title }),
       el('p', { class: 'rv-exp-result-sum', text: summary }),
       rewards.length ? el('div', { class: 'rv-exp-rewards' }, ...rewards.map(r => el('span', { class: 'rv-exp-reward', text: r }))) : el('div', { class: 'rv-exp-rewards rv-dim', text: outcome === 'lost' ? 'No reward. Morale −10.' : 'No reward.' }),
-      el('div', { class: 'rv-exp-result-crew' }, ...xs.actors.map(a => el('span', { class: 'rv-exp-rc' + (a.down ? ' rv-down' : ''), text: `${a.name} ${a.down ? '— carried back' : `${Math.round(a.hp)} HP`}` }))),
+      el('div', { class: 'rv-exp-result-crew' }, ...xs.actors.map(a => el('span', { class: 'rv-exp-rc' + (a.down ? ' rv-down' : '') },
+        crewPortrait(a.specialty, 'rv-exp-result-portrait'),
+        el('span', { text: `${a.name} ${a.down ? '— carried back' : `${Math.round(a.hp)} HP`}` })))),
       el('div', { class: 'rv-actions' }, cont),
     );
     resultEl.replaceChildren(card);
     show(resultEl, true);
     popIn(card, { scale: 0.85, y: 30 }, { duration: D(0.5), delay: D(0.25) });
-    window.setTimeout(() => cont.focus({ preventScroll: true }), isReduced() ? 0 : 320);
+    later(() => cont.focus({ preventScroll: true }), isReduced() ? 0 : 320);
     if (outcome === 'won' && !isReduced()) gsap.fromTo(actorCards.filter((_, i) => !xs.actors[i].down).map(c => c.fig), { y: 0 }, { y: -16, duration: 0.25, yoyo: true, repeat: 3, ease: 'power1.inOut', stagger: 0.08, clearProps: 'transform' });
   }
 
@@ -734,25 +856,33 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
     const key = `${xs.siteId}|${xs.stage}|${xs.actors.map(a => a.id).join(',')}|${xs.foes.map(f => f.id).join(',')}`;
     const reopen = !ui.isOpen('expedition');
     if (key !== builtFor || reopen) {
+      cancelTimers();
+      fxLayer.replaceChildren();
       builtFor = key;
       queue.length = 0; busy = false; mode = 'idle'; endSummary = null; stopTiming();
-      show(resultEl, false); show(stageGateEl, false); hideMenu(); show(promptEl, false);
+      show(resultEl, false); show(stageGateEl, false); show(swapOverlay, false); hideMenu(); show(promptEl, false);
       build(xs);
     }
     if (reopen) {
+      root.classList.remove('rv-exp-log-open');
+      logToggle.setAttribute('aria-expanded', 'false');
+      logToggle.textContent = 'Battle log';
       ui.open('expedition');
       particles.start();
       startDrift();
     }
     introUntil = performance.now() + (isReduced() ? 0 : 900);
-    window.setTimeout(() => tryNext(), isReduced() ? 0 : 920);
+    later(() => tryNext(), isReduced() ? 0 : 920);
   }
   function onClose(): void {
+    cancelTimers();
+    fxLayer.replaceChildren();
     stopTiming();
     particles.stop();
     driftTl?.kill(); driftTl = null;
     queue.length = 0; busy = false; mode = 'idle';
     builtFor = '';
+    show(swapOverlay, false);
     gsap.killTweensOf([layers.far, layers.mid, layers.near]);
   }
   function startDrift(): void {
@@ -775,10 +905,17 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
   // ---------- input ----------
   function onKey(e: KeyboardEvent): void {
     if (!ui.isOpen('expedition') || ui.topModal() !== 'expedition') return;
-    if (e.repeat) { if (e.key === ' ' || e.key === 'Enter') e.preventDefault(); return; }
+    if (e.repeat) { if (mode === 'timing' || mode === 'swap') { e.preventDefault(); e.stopImmediatePropagation(); } return; }
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
     const k = e.key;
+    if (mode === 'swap') {
+      if (k === 'Escape' || k.toLowerCase() === 'w') { e.preventDefault(); e.stopImmediatePropagation(); closeSwap(); }
+      else if (k === 'Tab' || k.startsWith('Arrow')) { e.preventDefault(); moveSwapFocus(k === 'ArrowLeft' || k === 'ArrowUp' || e.shiftKey ? -1 : 1); }
+      else if (/^[1-3]$/.test(k)) { e.preventDefault(); swapOverlay.querySelectorAll<HTMLButtonElement>('.rv-exp-swap-choice')[Number(k) - 1]?.click(); }
+      return;
+    }
     if (mode === 'timing') {
-      if (k === ' ' || k === 'Enter') { e.preventDefault(); press(); }
+      if (k === ' ' || k === 'Enter' || k.toLowerCase() === timingKey) { e.preventDefault(); e.stopImmediatePropagation(); press(); }
       return;
     }
     if (mode === 'result') {
@@ -786,7 +923,17 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
       return;
     }
     if (mode === 'intermission') {
-      if (k === ' ' || k === 'Enter') { const b = stageGateEl.querySelector<HTMLButtonElement>('[data-autofocus]'); if (b && document.activeElement !== b) { e.preventDefault(); b.click(); } }
+      // Native Enter/Space must activate the focused choice, including Retreat.
+      if (k === 'Tab') {
+        e.preventDefault();
+        const choices = focusables(stageGateEl);
+        const at = choices.indexOf(document.activeElement as HTMLElement);
+        choices[(at + (e.shiftKey ? -1 : 1) + choices.length) % choices.length]?.focus({ preventScroll: true });
+      } else if ((k === ' ' || k === 'Enter') && !stageGateEl.contains(document.activeElement)) {
+        e.preventDefault(); stageGateEl.querySelector<HTMLButtonElement>('[data-autofocus]')?.click();
+      } else if (k.toLowerCase() === 'f') {
+        e.preventDefault(); stageGateEl.querySelector<HTMLButtonElement>('[data-retreat]')?.click();
+      }
       return;
     }
     if (mode !== 'menu') { if (k === ' ') e.preventDefault(); return; }
@@ -815,9 +962,21 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
   }
   function gamepad(button: number): boolean {
     if (!ui.isOpen('expedition')) return false;
+    if (mode === 'swap') {
+      if (button === 1) closeSwap();
+      else if (button === 0) { const a = document.activeElement as HTMLElement; if (swapOverlay.contains(a)) a.click(); }
+      else if ([12, 13, 14, 15].includes(button)) moveSwapFocus(button === 12 || button === 14 ? -1 : 1);
+      return true;
+    }
     if (mode === 'timing') { if (button === 0) press(); return true; }
     if (mode === 'result') { if (button === 0 || button === 9) resultEl.querySelector<HTMLButtonElement>('button')?.click(); return true; }
-    if (mode === 'intermission') { if (button === 0) stageGateEl.querySelector<HTMLButtonElement>('[data-autofocus]')?.click(); return true; }
+    if (mode === 'intermission') {
+      const choices = focusables(stageGateEl);
+      const active = document.activeElement as HTMLElement;
+      if (button === 0) (choices.includes(active) ? active : choices[0])?.click();
+      if ([12, 13, 14, 15].includes(button)) choices[(choices.indexOf(active) + 1) % choices.length]?.focus({ preventScroll: true });
+      return true;
+    }
     if (mode !== 'menu') return true;
     switch (button) {
       case 0: { const a = document.activeElement as HTMLElement | null; if (a && menu.contains(a)) a.click(); else act('strike'); return true; }
@@ -831,6 +990,10 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
       case 5: cycleTarget(1); return true;
     }
     return true;
+  }
+  function moveSwapFocus(dir: number): void {
+    const choices = focusables(swapOverlay), at = choices.indexOf(document.activeElement as HTMLElement);
+    choices[(Math.max(0, at) + dir + choices.length) % choices.length]?.focus({ preventScroll: true });
   }
   document.addEventListener('keydown', onKey, true);
   // pointer press anywhere on the stage during a timing window counts (mobile / mouse players)
@@ -855,7 +1018,7 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
     bus.on('expedition:stage', () => {
       if (!ui.isOpen('expedition')) return;
       builtFor = '';
-      window.setTimeout(() => show_(), 0);
+      later(() => show_(), 0);
     }),
     bus.on('expedition:end', (p) => { endSummary = p; }),
   ];
@@ -871,6 +1034,10 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
       if (!xs || s.phase !== 'expedition') { ui.close('expedition'); return; }
       const expectedKey = `${xs.siteId}|${xs.stage}|${xs.actors.map(a => a.id).join(',')}|${xs.foes.map(f => f.id).join(',')}`;
       if (!xs.awaitingAdvance && expectedKey !== builtFor) { show_(); return; }
+      if (mode === 'swap') {
+        if (xs.activeActor !== swapFor || !expeditionSwapOptions(xs).length) { show(swapOverlay, false); mode = 'idle'; }
+        else if (swapSignature !== swapState(xs)) { renderSwap(xs); swapOverlay.querySelector<HTMLButtonElement>('.rv-exp-swap-choice')?.focus({ preventScroll: true }); }
+      }
       if (mode !== 'timing') refresh(xs);
       if (mode === 'idle' && !busy) tryNext();
     },

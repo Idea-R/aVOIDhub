@@ -5,7 +5,7 @@ import type { SimState, Car, Crew, CrewSpecialty } from '../core/types';
 import { CAR_DEFS } from '../core/cars';
 import { TRAIN } from '../core/config';
 import { levelOf, levelPips, levelEffect, hasUpgrades, carUpgradeCost, upgradeApi, MAX_LEVEL, ROMAN } from './levels';
-import conductorPortrait from '/art/crew/conductor.webp?url&inline';
+import { crewPortrait } from './crewArt';
 import { carArtFor } from './carArt';
 
 export interface Inspector { el: HTMLElement; update(s: SimState, force?: boolean): void; reset(): void }
@@ -57,6 +57,8 @@ export function createInspector(ui: UiShared): Inspector {
     el('div', { class: 'rv-side-head' }, el('div', { class: 'rv-side-title' }, subEl, titleEl), closeBtn), body, foot);
 
   let structSig = '';
+  let builtCarId = '';
+  let focusCrewAfterBuild = false;
   let lastDyn = 0;
   interface Dyn {
     hpText: HTMLElement; hpFill: HTMLElement; heatText: HTMLElement; heatFill: HTMLElement;
@@ -69,6 +71,10 @@ export function createInspector(ui: UiShared): Inspector {
 
   function build(s: SimState, i: number): void {
     const car = s.train.cars[i];
+    const sameCar = builtCarId === car.id;
+    const oldScroll = sameCar ? body.scrollTop : 0;
+    const rosterOpen = sameCar && !!body.querySelector<HTMLDetailsElement>('.rv-insp-roster')?.open;
+    builtCarId = car.id;
     const def = CAR_DEFS[car.type];
     const sim = ui.sim();
     const canShop = !!sim && sim.canShop();
@@ -157,6 +163,7 @@ export function createInspector(ui: UiShared): Inspector {
       const simA = ui.sim(); if (!simA || !current) return;
       const ok = simA.assignCrew(current.id, -1);
       ui.audio().ui(ok ? 'click' : 'error');
+      focusCrewAfterBuild = ok;
       structSig = '';
     }, { class: 'rv-small', aria: 'Unassign current crew member' });
     unassignBtn.disabled = !current;
@@ -164,14 +171,14 @@ export function createInspector(ui: UiShared): Inspector {
       ? `${current.name} · ${cap(current.specialty)} · ${Math.round(current.hp)} HP`
       : i === 0 ? 'The Conductor commands from here.' : unassigned.length ? `${unassigned.length} specialist${unassigned.length === 1 ? '' : 's'} ready to post.` : 'Crew berth open';
     const slotEffect = current ? CREW_EFFECT[current.specialty] : 'Posting is immediate and can be changed at any time.';
-    const choices = el('div', { class: 'rv-crew-choices', role: 'list', 'aria-label': 'Available specialists' });
+    const choices = el('div', { class: 'rv-crew-choices', role: 'group', 'aria-label': 'Available specialists' });
     if (i > 0 && unassigned.length) {
       for (const c of unassigned) {
         const choice = el('button', {
-          class: 'rv-crew-choice', type: 'button', role: 'listitem',
+          class: 'rv-crew-choice', type: 'button',
           'aria-label': `Post ${c.name}, ${c.specialty}, to ${def.name}. ${CREW_EFFECT[c.specialty]}`,
         },
-          el('span', { class: 'rv-crew-choice-mark', 'aria-hidden': 'true', text: cap(c.specialty).slice(0, 2).toUpperCase() }),
+          crewPortrait(c.specialty, 'rv-crew-choice-mark rv-crew-role-portrait'),
           el('span', { class: 'rv-crew-choice-copy' },
             el('span', { class: 'rv-crew-choice-head' }, el('strong', { text: c.name }), el('span', { text: cap(c.specialty) }), el('b', { text: `${Math.round(c.hp)} HP` })),
             el('span', { class: 'rv-crew-choice-effect', text: CREW_EFFECT[c.specialty] })),
@@ -180,6 +187,7 @@ export function createInspector(ui: UiShared): Inspector {
         choice.addEventListener('click', () => {
           const simA = ui.sim(); if (!simA) return;
           const ok = simA.assignCrew(c.id, i);
+          focusCrewAfterBuild = ok;
           ui.audio().ui(ok ? 'confirm' : 'error');
           if (ok) ui.notify(`${c.name} posted to ${def.name}. ${CREW_EFFECT[c.specialty]}`, 'good', 4800, 'crew-posted');
           else ui.notify('Could not post that specialist here.', 'warn');
@@ -194,7 +202,7 @@ export function createInspector(ui: UiShared): Inspector {
     }
     sections.push(el('section', { class: 'rv-crew-slot rv-insp-module' },
       el('div', { class: 'rv-crew-slot-head' },
-        current?.specialty === 'conductor' ? el('img', { class: 'rv-crew-portrait', src: conductorPortrait, alt: 'The Conductor' }) : el('span', { class: 'rv-crew-ready-lamp', 'aria-hidden': 'true' }),
+        current ? crewPortrait(current.specialty, 'rv-crew-portrait', `${current.name}, ${current.specialty}`) : el('span', { class: 'rv-crew-ready-lamp', 'aria-hidden': 'true' }),
         el('div', null,
         el('div', { class: 'rv-label', text: current ? 'Crew posted here' : 'Crew berth' }),
         el('strong', { text: slotLead }))),
@@ -212,6 +220,7 @@ export function createInspector(ui: UiShared): Inspector {
         const hpEl = el('span', { class: 'rv-where', text: `${Math.round(c.hp)} hp · ${WHERE(c, s)}` });
         crewHp.push({ id: c.id, el: hpEl });
         list.appendChild(el('div', { class: 'rv-crew-line', title: CREW_EFFECT[c.specialty] },
+          crewPortrait(c.specialty, 'rv-roster-portrait'),
           el('span', null, c.name, ' ', el('span', { class: 'rv-spec', text: c.specialty }), el('small', { text: CREW_EFFECT[c.specialty] })), hpEl));
       }
       sections.push(el('details', { class: 'rv-insp-roster' },
@@ -221,6 +230,16 @@ export function createInspector(ui: UiShared): Inspector {
         list));
     }
     body.replaceChildren(...sections);
+    const roster = body.querySelector<HTMLDetailsElement>('.rv-insp-roster');
+    if (roster) roster.open = rosterOpen;
+    body.scrollTop = oldScroll;
+    if (focusCrewAfterBuild) {
+      focusCrewAfterBuild = false;
+      const next = body.querySelector<HTMLElement>('.rv-crew-controls button, .rv-crew-choice');
+      next?.focus({ preventScroll: true });
+      // Keep the posting task visible rather than jumping back to the car hero.
+      body.querySelector('.rv-crew-slot')?.scrollIntoView({ block: 'nearest' });
+    }
 
     // footer actions
     const repairBtn = btn('Repair', () => {
@@ -268,7 +287,7 @@ export function createInspector(ui: UiShared): Inspector {
       up.disabled = maxed || s.train.resources.scrap < uc;
       upgradeBtns.push(up);
     }
-    foot.replaceChildren(repairBtn, ...upgradeBtns, sellBtn, leftBtn, rightBtn, detachBtn, btn('Close', () => { ui.audio().ui('close'); ui.selectCar(-1); }, { class: 'rv-small', aria: 'Close inspector (Tab)' }));
+    foot.replaceChildren(repairBtn, ...upgradeBtns, sellBtn, leftBtn, rightBtn, detachBtn, btn('Close', () => { ui.audio().ui('close'); ui.selectCar(-1); }, { class: 'rv-small', aria: 'Close inspector (T)' }));
     if (!canShop) foot.appendChild(el('div', { class: 'rv-hint', text: 'Repair, sell and reorder are available at repair yards.' }));
 
     dyn = { hpText, hpFill, heatText, heatFill, powerText, ammoText, paxText, boardText, statusText, heroStatus, repairBtn, sellBtn, leftBtn, rightBtn, detachBtn, crewHp };
@@ -333,7 +352,7 @@ export function createInspector(ui: UiShared): Inspector {
     updateDyn(s, i);
   }
 
-  function reset(): void { structSig = ''; dyn = null; body.replaceChildren(); foot.replaceChildren(); }
+  function reset(): void { structSig = ''; builtCarId = ''; focusCrewAfterBuild = false; dyn = null; body.replaceChildren(); foot.replaceChildren(); }
 
   ui.registerPanel('inspector', { el: root, modal: false, anim: 'side', onOpen: () => { structSig = ''; }, onClose: () => { /* selection handled by ui.selectCar */ } });
   ui.onSelectCar(() => { structSig = ''; });

@@ -32,6 +32,7 @@ for (const [width, height] of [[1664, 920], [1280, 720]]) {
   const pageErrors = [];
   page.on('pageerror', e => pageErrors.push(e.message));
   await start(page);
+  if (await page.locator('#ui .rv-train-toggle').isVisible()) await page.locator('#ui .rv-train-toggle').click();
 
   await page.locator('#ui .rv-car-type-gatling').click();
   await page.waitForFunction(() => {
@@ -88,9 +89,18 @@ for (const [width, height] of [[1664, 920], [1280, 720]]) {
   assert(!contextScope.panelPrevented && contextScope.panelDispatch, `${width}: context-menu prevention leaked into the HUD`);
 
   await page.locator('#ui .rv-inspector .rv-icon').click();
+  await page.locator('#ui .rv-inspector').waitFor({ state: 'hidden' });
+  // Closing the inspector correctly restores a pending route decision. Dismiss it
+  // through a real choice before testing canvas input, not the decision's hit shield.
+  if (await page.locator('.rv-junction-opt').first().isVisible()) {
+    await page.locator('.rv-junction-opt').first().click();
+    await page.waitForTimeout(300);
+    await page.evaluate(() => window.__RAIL.pause());
+  }
   const canvas = page.locator('#game canvas');
   const box = await canvas.boundingBox();
   const startX = Math.round(width * 0.58), startY = Math.round(height * 0.46);
+  assert(await page.evaluate(({x,y}) => document.elementFromPoint(x,y)?.tagName === 'CANVAS', {x:startX,y:startY}), `${width}: pan fixture is not pointing at the canvas`);
   const before = await page.evaluate(() => {
     const scene = window.__RAIL.view.__scene;
     return { x: scene.cameras.main.scrollX, y: scene.cameras.main.scrollY, following: window.__RAIL.view.isFollowing() };

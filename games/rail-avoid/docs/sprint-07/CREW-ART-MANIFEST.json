@@ -1,0 +1,68 @@
+{
+  "model": "gpt-image-1.5",
+  "background": "transparent",
+  "sourceFormat": "png",
+  "treatment": "transparent-margin crop, resize, transparent padding, WebP encoding; portraits cropped from same master",
+  "assets": [
+    {
+      "role": "engineer",
+      "source": "output/imagegen/native-alpha/crew-engineer-v1.png",
+      "sourceSha256": "f816b4ab435ab1d5053eaaf00633ec8202e8a550bc911a774891fd79f0d68328",
+      "runtime": "public/art/crew/engineer-combat-v1.webp",
+      "runtimeSha256": "c7080c00de00358e7bb2c4249f8e0e02a82f62c81079d33b7510e2d1ec634f3e",
+      "bytes": 37302,
+      "portrait": "public/art/crew/engineer-portrait-v1.webp",
+      "portraitSha256": "41774adbbd8b867d332749fe8f2f0270cd97eef0a8f4d5bff346e16a9da69200"
+    },
+    {
+      "role": "gunner",
+      "source": "output/imagegen/native-alpha/crew-gunner-v2.png",
+      "sourceSha256": "cce35d38119780380ea530c67077b3e1777f7da04290db62aabaa5271e3240ce",
+      "runtime": "public/art/crew/gunner-combat-v1.webp",
+      "runtimeSha256": "5444c4ebface6f7c887aef410a1ae5b8c0bfd56a8a10d3f4643f54c48a72fd18",
+      "bytes": 43996,
+      "portrait": "public/art/crew/gunner-portrait-v1.webp",
+      "portraitSha256": "8204cf24f39f46bd44c9fd573ee97a6289f52e0aa106f94f5a2e15bf7da2376d"
+    },
+    {
+      "role": "medic",
+      "source": "output/imagegen/native-alpha/crew-medic-v1.png",
+      "sourceSha256": "4c2327f4823e2922cc22177757fbc9fc46d33984ba41cb79057d33d9d764b271",
+      "runtime": "public/art/crew/medic-combat-v1.webp",
+      "runtimeSha256": "af5ff1c7714f8faeb9101ceda0b41e8a1518ac6383b9c0f53f50e55fd05954cc",
+      "bytes": 34364,
+      "portrait": "public/art/crew/medic-portrait-v1.webp",
+      "portraitSha256": "2f2ad8dd7a3fa8eee1b0677f0d900bc57c53ea5fbf476ed77cc21b66451a401d"
+    },
+    {
+      "role": "surveyor",
+      "source": "output/imagegen/native-alpha/crew-surveyor-v1.png",
+      "sourceSha256": "1197b54f9850ed77ab71d61f1755733c8241131c3ffec93c72a576db1cd683b1",
+      "runtime": "public/art/crew/surveyor-combat-v1.webp",
+      "runtimeSha256": "feca2b26a1a1593a881f60134d52cda6b37d77822014c3726dcb44de3ab4a157",
+      "bytes": 34232,
+      "portrait": "public/art/crew/surveyor-portrait-v1.webp",
+      "portraitSha256": "a2fc31d3e9175c6df3520fed0ea51635ec6d522801501d6ddd7d244a3a21a6e1"
+    },
+    {
+      "role": "mechanic",
+      "source": "output/imagegen/native-alpha/crew-mechanic-v1.png",
+      "sourceSha256": "629d50ffedceb644e307e0f2ffde398012428f9c5470ebbbc372342fdd2a2c0a",
+      "runtime": "public/art/crew/mechanic-combat-v1.webp",
+      "runtimeSha256": "fe816bd4e49610347339513df622a6f52554c54fd1e2c283088e00ca175e06a0",
+      "bytes": 35350,
+      "portrait": "public/art/crew/mechanic-portrait-v1.webp",
+      "portraitSha256": "7e0c50fef613f1f98e4c69a6d70ed2ad94ecae4dfe12ef5f9626ade25682cc7f"
+    },
+    {
+      "role": "quartermaster",
+      "source": "output/imagegen/native-alpha/crew-quartermaster-v1.png",
+      "sourceSha256": "ffdef125d14d2a1a18498aca0f07d10d339fff685baf39a22f46531cdd90514d",
+      "runtime": "public/art/crew/quartermaster-combat-v1.webp",
+      "runtimeSha256": "1477d33f131b76ff4965e93962272b036328f9e16915df3279c68b6fc346c0f1",
+      "bytes": 34496,
+      "portrait": "public/art/crew/quartermaster-portrait-v1.webp",
+      "portraitSha256": "638cb4e7b03b1d46354f8a48086fdd73b341c39a886c7ad61c4815da9b754c38"
+    }
+  ]
+}

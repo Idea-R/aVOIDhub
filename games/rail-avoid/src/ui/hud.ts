@@ -93,7 +93,7 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
   const peopleChip = el('div', { class: 'rv-chip rv-chip-people', title: 'Passengers, morale and crew. Activate to open crew assignment.', 'aria-label': 'Passengers and crew', tabindex: '0', role: 'button' },
     el('span', { class: 'rv-chip-top' }, el('span', { class: 'rv-chip-ico', 'aria-hidden': 'true', text: '⚇' }), el('span', { class: 'rv-chip-k', text: 'People' })),
     el('span', { class: 'rv-people-readout' },
-      el('span', { class: 'rv-people-stat' }, el('small', { text: 'Pax' }), paxV, paxCap),
+      el('span', { class: 'rv-people-stat' }, el('small', { text: 'Passengers' }), paxV, paxCap),
       el('span', { class: 'rv-chip-sep', 'aria-hidden': 'true', text: '/' }),
       el('span', { class: 'rv-people-stat' }, el('small', { text: 'Crew' }), crewV), morale),
     el('span', { class: 'rv-chip-help', role: 'tooltip', text: 'Click to post an available specialist to a car. Passengers consume food; low morale puts them at risk.' }));
@@ -233,9 +233,17 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
       el('i', { class: 'rv-line-sw', 'aria-hidden': 'true' }),
       el('span', { class: 'rv-line-name', text: (LINE_NAMES[id] ?? '').replace(/ Line$/, '') }),
       el('span', { class: 'rv-line-fl', text: lineFlavour(id) }))));
+  const routeToggle = btn('⌖ Route', () => {
+    const open = ui.root.classList.toggle('rv-route-open');
+    setAttr(routeToggle, 'aria-expanded', String(open));
+    ui.audio().ui(open ? 'open' : 'click');
+  }, { class: 'rv-small rv-route-toggle', aria: 'Route tools' });
+  setAttr(routeToggle, 'aria-expanded', 'false');
+  setAttr(routeToggle, 'aria-controls', 'rv-route-tools');
   const routeEl = el('div', { class: 'rv-route rv-panel', role: 'group', 'aria-label': 'Route planning', tabindex: '-1' },
+    routeToggle,
     el('div', { class: 'rv-route-head' }, el('span', { class: 'rv-route-ico', 'aria-hidden': 'true', text: '⌖' }), el('span', { class: 'rv-label', text: 'Route' })),
-    el('div', { class: 'rv-route-details' },
+    el('div', { class: 'rv-route-details', id: 'rv-route-tools' },
       onLineEl,
       el('div', { class: 'rv-kv rv-ahead' }, el('span', { text: 'Planned ahead' }), el('span', null, aheadV, ' hex')),
       el('div', { class: 'rv-kv rv-range' }, el('span', { text: 'Plan range' }), el('span', null, rangeV, ' hex')),
@@ -282,19 +290,17 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
   const junctionBtns = el('div', { class: 'rv-junction-opts', role: 'group', 'aria-label': 'Branches' });
   const junctionMap = el('div', { class: 'rv-junction-map', 'aria-label': 'Map-aligned branch dial' },
     el('span', { class: 'rv-jm-center', 'aria-hidden': 'true', text: '◎' }));
-  const junctionEl = el('div', { class: 'rv-junction rv-panel', role: 'group', 'aria-label': 'Junction — choose your line' },
+  const junctionEl = el('div', { class: 'rv-junction rv-route-overlay', role: 'group', 'aria-label': 'Junction — choose your line' },
     el('div', { class: 'rv-junction-head' },
       el('span', { class: 'rv-junction-ico', 'aria-hidden': 'true', text: '⑂' }),
-      el('span', { class: 'rv-junction-title', text: 'Junction' }),
-      el('span', { class: 'rv-junction-sub', text: 'train held · choose a route to continue' }),
-      el('span', { class: 'rv-junction-keys', 'aria-hidden': 'true', text: 'branches match the map · 1 2 3' })),
-    junctionMap,
-    junctionBtns);
+      el('span', { class: 'rv-junction-title', text: 'Choose your route' }),
+      el('span', { class: 'rv-junction-sub', text: 'Train held · choose to continue' }),
+      el('span', { class: 'rv-junction-keys', 'aria-hidden': 'true', text: 'Click a numbered stop · or press 1–3' })),
+    junctionMap);
   junctionEl.hidden = true;
   let junctionOpts: JunctionOption[] = [];
   let junctionSig = '';
   const KEY_HINT = ['1', '2', '3', '4', '5', '6'];
-  const PAD_HINT = ['A', 'B', 'X'];
   function optionLabel(o: JunctionOption): string {
     const n = o.next;
     return n ? `${o.lineName} to ${n.name} (${nodeMeta(n.type).label}), ${n.distance} hex` : `${o.lineName}, dead end`;
@@ -309,53 +315,103 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
       return ap.x - bp.x || ap.y - bp.y;
     });
   }
-  function branchDirection(o: JunctionOption, origin: { x: number; y: number }): { glyph: string; label: string; angle: number } {
-    const at = hexToWorld(o.col, o.row);
-    const angle = Math.atan2((at.y - origin.y) * 0.62, at.x - origin.x);
-    const dirs = [
-      { glyph: '→', label: 'east' }, { glyph: '↘', label: 'south-east' }, { glyph: '↓', label: 'south' }, { glyph: '↙', label: 'south-west' },
-      { glyph: '←', label: 'west' }, { glyph: '↖', label: 'north-west' }, { glyph: '↑', label: 'north' }, { glyph: '↗', label: 'north-east' },
-    ];
-    const i = (Math.round(angle / (Math.PI / 4)) + 8) % 8;
-    return { ...dirs[i], angle };
-  }
   function buildJunction(opts: JunctionOption[]): void {
     const s = ui.state();
     const end = s?.route.path[s.route.path.length - 1];
-    const origin = end ? hexToWorld(end[0], end[1]) : { x: 0, y: 0 };
-    junctionMap.replaceChildren(
-      el('span', { class: 'rv-jm-center', 'aria-hidden': 'true', text: '◎' }),
-      ...opts.map((o, i) => {
-        const { angle } = branchDirection(o, origin);
-        const name = o.next?.name ?? o.lineName;
-        return el('span', {
-          class: 'rv-jm-branch',
-          style: `--angle:${angle}rad;--line:${lineCss(o.line)}`,
-          title: optionLabel(o),
-          'aria-hidden': 'true',
-        }, el('i', { text: KEY_HINT[i] ?? '' }), el('b', { text: name }));
-      }),
-    );
+    if (!end) return;
+    setText(junctionEl.querySelector('.rv-junction-keys'), `Click a numbered stop · or press ${opts.map((_, i) => KEY_HINT[i]).join(' / ')}`);
+    const width = junctionMap.clientWidth || 720, height = junctionMap.clientHeight || 400;
+    // One uniform projection for every branch: preserve the rail bends and orientation.
+    // Preview six edges; the destination label still reports the full distance.
+    const traces = opts.map(o => (o.trace ?? [end, [o.col, o.row] as [number, number]]).slice(0, 7)
+      .map(([c, r]) => { const p = hexToWorld(c, r); return { x: p.x, y: p.y * 0.62 }; }));
+    const points = traces.flat();
+    const minX = Math.min(...points.map(p => p.x)), maxX = Math.max(...points.map(p => p.x));
+    const minY = Math.min(...points.map(p => p.y)), maxY = Math.max(...points.map(p => p.y));
+    const marginX = Math.min(112, width * 0.24), marginY = Math.min(100, height * 0.27);
+    const scale = Math.max(0.01, Math.min((width - marginX * 2) / Math.max(1, maxX - minX), (height - marginY * 2) / Math.max(1, maxY - minY)));
+    const project = (p: { x: number; y: number }) => ({
+      x: width / 2 + (p.x - (minX + maxX) / 2) * scale,
+      y: height / 2 + (p.y - (minY + maxY) / 2) * scale,
+    });
+    const paths = traces.map(t => t.map(project));
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+    svg.classList.add('rv-junction-rails');
+    svg.setAttribute('aria-hidden', 'true');
+    paths.forEach((path, i) => {
+      const d = path.map((p, j) => `${j ? 'L' : 'M'}${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ');
+      const group = document.createElementNS(svg.namespaceURI, 'g');
+      group.setAttribute('data-branch', String(i));
+      group.setAttribute('style', `--line:${lineCss(opts[i].line)}`);
+      for (const cls of ['rv-rail-bed', 'rv-rail-ties', 'rv-rail-ink']) {
+        const rail = document.createElementNS(svg.namespaceURI, 'path');
+        rail.setAttribute('class', cls);
+        rail.setAttribute('d', d);
+        group.appendChild(rail);
+      }
+      group.setAttribute('data-trace', JSON.stringify((opts[i].trace ?? [end, [opts[i].col, opts[i].row]]).slice(0, 7)));
+      svg.appendChild(group);
+    });
+    const origin = paths[0]?.[0] ?? { x: width / 2, y: height / 2 };
+    const center = el('span', { class: 'rv-jm-center', 'aria-hidden': 'true', text: '◎', style: `left:${origin.x}px;top:${origin.y}px` },
+      el('span', { class: 'rv-jm-you', text: 'Your train' }));
     junctionBtns.replaceChildren(...opts.map((o, i) => {
+      const at = paths[i][paths[i].length - 1];
       const n = o.next;
-      const flavour = lineFlavour(o.line);
-      const dir = branchDirection(o, origin);
-      const b = btn('', () => chooseJunction(i), { class: 'rv-junction-opt rv-line-' + lineKey(o.line), aria: `${KEY_HINT[i] ? KEY_HINT[i] + ': ' : ''}${dir.label}, ${optionLabel(o)}` });
-      b.setAttribute('style', `--line:${lineCss(o.line)}`);
-      b.dataset.col = String(o.col); b.dataset.row = String(o.row);
-      append(b, [
-        el('span', { class: 'rv-jo-key', 'aria-hidden': 'true', text: KEY_HINT[i] ?? '' }),
-        el('span', { class: 'rv-jo-body' },
-          el('span', { class: 'rv-jo-line' }, el('i', { class: 'rv-line-sw', 'aria-hidden': 'true' }), el('b', { text: o.lineName }), el('span', { class: 'rv-jo-direction', text: `${dir.glyph} ${dir.label}` })),
-          el('span', { class: 'rv-jo-next' + (n ? '' : ' rv-dim') },
-            el('span', { class: 'rv-jo-arrow', 'aria-hidden': 'true', text: dir.glyph }),
-            n ? el('span', { class: 'rv-jo-next-name' }, el('span', { class: 'rv-jo-next-ico', 'aria-hidden': 'true', style: `color:${nodeMeta(n.type).color}`, text: nodeMeta(n.type).icon }), ` ${n.name} (${n.type})`) : el('span', { class: 'rv-jo-next-name', text: 'dead end' }),
-            n ? el('span', { class: 'rv-jo-dist', text: ` · ${n.distance} hex` }) : null),
-          flavour ? el('span', { class: 'rv-jo-flavour', text: flavour }) : null),
-        PAD_HINT[i] ? el('span', { class: 'rv-jo-pad', 'aria-hidden': 'true', text: PAD_HINT[i] }) : null,
-      ]);
+      const b = btn('', () => chooseJunction(i), { class: 'rv-junction-opt rv-jm-endpoint', aria: `Branch ${KEY_HINT[i]}: ${optionLabel(o)}. Choose to continue.` });
+      b.style.cssText = `--line:${lineCss(o.line)};left:${at.x}px;top:${at.y}px`;
+      b.dataset.branch = String(i); b.dataset.col = String(o.col); b.dataset.row = String(o.row);
+      b.dataset.traceLength = String(paths[i].length);
+      b.append(el('span', { class: 'rv-jm-number', text: KEY_HINT[i] ?? '' }));
+      const label = el('span', { class: 'rv-jm-label' },
+        el('b', { text: n?.name ?? 'Track ends' }),
+        el('span', { text: n ? `${nodeMeta(n.type).label} · ${n.distance} hex` : 'No known stop ahead' }),
+        el('small', { text: o.lineName }));
+      // Put northern labels above their node; southern labels below. No direction button tray.
+      if (at.y < origin.y - 20) b.classList.add('rv-node-north');
+      b.append(label);
+      b.addEventListener('pointerenter', () => highlightBranch(i));
+      b.addEventListener('pointerleave', () => highlightBranch(-1));
+      b.addEventListener('focus', () => highlightBranch(i));
+      b.addEventListener('blur', () => highlightBranch(-1));
       return b;
     }));
+    junctionMap.replaceChildren(svg, center, junctionBtns);
+    // Labels may move around their fixed node; rail geometry and node positions never do.
+    const occupied = paths.map(p => { const a = p[p.length - 1]; return { x: a.x - 26, y: a.y - 26, w: 52, h: 52 }; });
+    occupied.push({ x: origin.x - 42, y: origin.y - 24, w: 84, h: 70 });
+    const overlap = (a: { x: number; y: number; w: number; h: number }, b: typeof a) => Math.max(0, Math.min(a.x+a.w, b.x+b.w)-Math.max(a.x,b.x)) * Math.max(0, Math.min(a.y+a.h,b.y+b.h)-Math.max(a.y,b.y));
+    Array.from(junctionBtns.children).forEach((button, i) => {
+      const label = button.querySelector<HTMLElement>('.rv-jm-label')!;
+      const at = paths[i][paths[i].length - 1];
+      const w = label.offsetWidth, h = label.offsetHeight;
+      const above = { x: at.x - w / 2, y: at.y - 32 - h, w, h };
+      const below = { x: at.x - w / 2, y: at.y + 32, w, h };
+      const candidates = at.y < origin.y - 20 ? [above, below] : [below, above];
+      candidates.push({ x: at.x + 32, y: at.y-h/2, w, h }, { x: at.x-32-w, y: at.y-h/2, w, h });
+      const scored = candidates.map((c, index) => {
+        const box = { ...c, x: clamp(c.x, 0, Math.max(0, width-w)), y: clamp(c.y, 0, Math.max(0, height-h)) };
+        return { box, score: occupied.reduce((sum, other) => sum + overlap(box, other), 0) + index };
+      }).sort((a,b) => a.score-b.score);
+      const best = scored[0].box;
+      label.style.cssText = `left:${best.x-at.x+20}px;top:${best.y-at.y+20}px;bottom:auto;transform:none`;
+      occupied.push({ x: best.x-4, y: best.y-4, w: w+8, h: h+8 });
+    });
+  }
+  let junctionResizeFrame = 0;
+  const junctionObserver = new ResizeObserver(() => {
+    if (junctionResizeFrame || junctionEl.hidden) return;
+    junctionResizeFrame = requestAnimationFrame(() => {
+      junctionResizeFrame = 0;
+      if (!junctionEl.hidden) buildJunction(junctionOpts);
+    });
+  });
+  junctionObserver.observe(junctionMap);
+  function highlightBranch(index: number): void {
+    junctionEl.querySelectorAll<HTMLElement>('[data-branch]').forEach(node => {
+      node.classList.toggle('rv-branch-highlight', Number(node.dataset.branch) === index);
+    });
   }
   function chooseJunction(i: number): boolean {
     const o = junctionOpts[i];
@@ -390,9 +446,9 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
   };
   document.addEventListener('keydown', onJunctionKey, true);
 
-  const dock = el('div', { class: 'rv-dock' }, warningEl, pausedEl, junctionEl, stopEl);
+  const dock = el('div', { class: 'rv-dock' }, warningEl, pausedEl, stopEl);
 
-  const root = el('div', { class: 'rv-hud' }, top, left, dock);
+  const root = el('div', { class: 'rv-hud' }, top, left, dock, junctionEl);
 
   // ---------- state caches ----------
   let lastResSig = '';
@@ -402,7 +458,7 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
   let lastStopSig = '';
   const logSeen = new Set<string>();
 
-  // resource deltas are coalesced per key for 400 ms, then: chip pop + colour flash + floating "+12"
+  // Coalesce deltas for 400 ms: colour feedback and a stationary positive receipt.
   const pending: Partial<Record<ResourceKey, number>> = {};
   let flushTimer = 0;
   function flashResource(key: ResourceKey, delta: number): void {
@@ -426,10 +482,8 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
       if (c.flashTimer) clearTimeout(c.flashTimer);
       c.flashTimer = window.setTimeout(() => { c.el.classList.remove('rv-flash-up', 'rv-flash-down', 'rv-flash-loot'); c.flashTimer = 0; }, 500);
       if (isReduced()) continue;
-      gsap.killTweensOf(c.el);
-      gsap.fromTo(c.el, { scale: 1 }, { scale: 1.25, duration: 0.12, ease: 'power2.out', yoyo: true, repeat: 1, clearProps: 'transform' });
       const n = Math.round(Math.abs(d));
-      floatLabel(c.el, loot && up ? `+${n} ${k}` : `${up ? '+' : '−'}${n}`, loot && up ? 'rv-gold rv-float-loot' : up ? 'rv-good-text' : 'rv-danger-text');
+      if (up) floatLabel(c.el, loot ? `+${n} ${k}` : `+${n}`, loot ? 'rv-gold rv-float-loot' : 'rv-good-text');
     }
     lootKeys.clear();
   }
@@ -451,19 +505,15 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
     if (marksTimer) clearTimeout(marksTimer);
     marksTimer = window.setTimeout(() => { marksChip.classList.remove('rv-flash-loot', 'rv-flash-down'); marksTimer = 0; }, 600);
     if (isReduced()) return;
-    gsap.killTweensOf(marksChip);
-    gsap.fromTo(marksChip, { scale: 1 }, { scale: 1.35, duration: 0.14, ease: 'power2.out', yoyo: true, repeat: 1, clearProps: 'transform' });
     floatLabel(marksChip, `${up ? '+' : '−'}${Math.round(Math.abs(delta))} ◆`, up ? 'rv-void-text rv-float-loot' : 'rv-danger-text');
   }
 
   const groups = (): HTMLElement[] => [missionEl, tl, tc, tr, routeEl, logEl, ...(Array.from(dock.children) as HTMLElement[])];
   function enter(delay = 0): void {
     root.classList.remove('rv-hud-off');
-    groups().forEach((e, i) => {
-      const cl = e.classList;
-      const from: gsap.TweenVars = cl.contains('rv-hud-tr') ? { x: 48 } : cl.contains('rv-hud-tc') ? { y: -44 } : cl.contains('rv-hud-tl') ? { y: -32 } : cl.contains('rv-strip') ? { y: 64 } : cl.contains('rv-stop') || cl.contains('rv-warning') ? { y: 30 } : { x: -48 };
+    groups().forEach(e => {
       gsap.killTweensOf(e);
-      gsap.fromTo(e, { ...from, opacity: 0 }, { x: 0, y: 0, opacity: 1, duration: D(0.65), delay: D(delay + i * 0.07), ease: 'power3.out', clearProps: 'transform,opacity' });
+      gsap.fromTo(e, { opacity: 0 }, { opacity: 1, duration: D(0.22), delay: D(delay), clearProps: 'opacity' });
     });
   }
   function hide(): void {
@@ -550,7 +600,7 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
     const key = s.phase === 'paused' ? 0 : s.speedMul;
     // Modal state can change without phase/speed changing, so keep this outside the
     // render-signature early return. The callout must never linger behind a modal.
-    show(pausedEl, s.phase === 'paused' && !ui.anyModal());
+    show(pausedEl, s.phase === 'paused' && !ui.anyModal() && junctionEl.hidden);
     if (key === lastSpeed && s.phase === lastPhase) return;
     lastSpeed = key; lastPhase = s.phase;
     for (const { mul, b } of speedBtns) {
@@ -660,8 +710,12 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
 
   /** Junction chooser: docked while the train waits at a branch with 2+ rail continuations. Returns true when it is showing. */
   let junctionAt = 0;
+  let junctionPositionSig = '';
   function updateJunction(s: SimState, active: boolean): boolean {
     if (!active) {
+      ui.view()?.setRouteOverlay(false);
+      junctionPositionSig = '';
+      ui.root.classList.remove('rv-junction-active');
       if (!junctionEl.hidden) { show(junctionEl, false); junctionSig = ''; junctionOpts = []; }
       return false;
     }
@@ -669,7 +723,8 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
     const p = s.route.path;
     const end = p[p.length - 1];
     const sig = `${end ? end[0] + ',' + end[1] : ''}|${p.length}|${s.train.stopReason}|${Object.keys(s.route.railLines ?? {}).length}`;
-    if (sig !== junctionSig || now - junctionAt > 2000) {
+    if (sig !== junctionPositionSig || now - junctionAt > 2000) {
+      junctionPositionSig = sig;
       junctionAt = now;
       const opts = orderedJunction(readJunctionOptions(ui.sim(), s));
       const optSig = sig + '|' + opts.map(o => `${o.col},${o.row},${o.line},${o.next?.id ?? ''},${o.next?.distance ?? ''}`).join(';');
@@ -679,14 +734,25 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
         buildJunction(opts);
       }
     }
-    if (junctionOpts.length < 2) { if (!junctionEl.hidden) show(junctionEl, false); return false; }
+    if (junctionOpts.length < 2) { ui.view()?.setRouteOverlay(false); ui.root.classList.remove('rv-junction-active'); if (!junctionEl.hidden) show(junctionEl, false); return false; }
+    ui.view()?.setRouteOverlay(true);
     if (junctionEl.hidden) {
+      ui.root.classList.add('rv-junction-active');
+      if (ui.root.classList.contains('rv-map-first')) {
+        ui.root.classList.remove('rv-train-open', 'rv-route-open');
+        setAttr(routeToggle, 'aria-expanded', 'false');
+      }
       show(junctionEl, true);
       if (!isReduced()) {
-        gsap.fromTo(junctionEl, { y: 22, opacity: 0 }, { y: 0, opacity: 1, duration: 0.45, ease: 'back.out(1.5)', clearProps: 'transform,opacity' });
-        gsap.fromTo(Array.from(junctionBtns.children), { y: 10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, stagger: 0.07, delay: 0.1, ease: 'power3.out', clearProps: 'transform,opacity' });
+        gsap.fromTo(junctionEl, { opacity: 0 }, { opacity: 1, duration: 0.22, clearProps: 'opacity' });
       }
     }
+    // A hidden→shown reset can return to the same observed size within one frame.
+    // ResizeObserver need not fire, so never leave the hidden-size fallback in place.
+    // Only rebuild on a real mismatch; ordinary ticks retain buttons and focus.
+    const svg = junctionMap.querySelector('svg');
+    const width = junctionMap.clientWidth, height = junctionMap.clientHeight;
+    if (width > 0 && height > 0 && (!svg || svg.viewBox.baseVal.width !== width || svg.viewBox.baseVal.height !== height)) buildJunction(junctionOpts);
     return true;
   }
 
@@ -720,7 +786,7 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
           haven = true;
           break;
         }
-        case 'junction': text = 'Junction — choose a branch'; cls += ' rv-junction'; ico = '⑂'; break;
+        case 'junction': text = 'Junction — choose a branch'; cls += ' rv-junction-stop'; ico = '⑂'; break;
         case 'boss': text = 'Boss blocks the line — fight or find a way around'; cls += ' rv-boss'; ico = '☠'; break;
         case 'derailed': text = 'Derailed'; cls += ' rv-no-route'; ico = '✕'; break;
       }
@@ -783,6 +849,8 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
   }
 
   function reset(): void {
+    ui.root.classList.remove('rv-route-open', 'rv-train-open', 'rv-junction-active');
+    setAttr(routeToggle, 'aria-expanded', 'false');
     lastResSig = ''; lastPhase = ''; lastSpeed = -1; lastStopSig = '';
     warnShown = false; bossShown = false; lastSecs = -1; logSeen.clear(); reversingShown = false;
     setText(reverseBtn.querySelector('.rv-rb-lbl'), 'Reverse'); setText(reverseBtn.querySelector('.rv-rb-ico'), '◀'); toggleClass(reverseBtn, 'rv-reversing', false);
@@ -791,13 +859,32 @@ export function createHud(ui: UiShared, actions: { openPause(): void; toggleReve
     logLines.length = 0; logEl.replaceChildren();
     show(warningEl, false); show(bossEl, false); show(stopEl, false); show(pausedEl, false); show(junctionEl, false);
     junctionSig = ''; junctionOpts = []; junctionAt = 0; lastLine = undefined;
+    junctionPositionSig = ''; ui.view()?.setRouteOverlay(false);
     volume.close();
   }
 
   const anchors: Record<string, HTMLElement> = { mission: missionEl, resources: chipsEl, people: peopleChip, void: voidEl, status: statusEl, speed: speedEl, menu: menuBtn, route: routeEl, stop: stopEl, junction: junctionEl, lines: legendEl, log: logEl, hud: root, top, dock, left, speaker: volume.button, marks: marksChip, relics: relicsEl };
   return {
     el: root, zones: { top, left, dock }, update, flashResource, flashLoot, popMarks, shakeRoute, anchors, reset, enter, hide,
-    closePopovers() { if (volume.isOpen()) { volume.close(); return true; } return false; },
+    closePopovers() {
+      if (volume.isOpen()) { volume.close(); return true; }
+      if (ui.root.classList.contains('rv-map-first')) {
+        if (ui.root.classList.contains('rv-bounties-open')) {
+          ui.root.classList.remove('rv-bounties-open');
+          const toggle = ui.root.querySelector<HTMLElement>('.rv-bounties-toggle');
+          setAttr(toggle, 'aria-expanded', 'false'); toggle?.focus(); return true;
+        }
+        if (ui.root.classList.contains('rv-route-open')) {
+          ui.root.classList.remove('rv-route-open'); setAttr(routeToggle, 'aria-expanded', 'false'); routeToggle.focus(); return true;
+        }
+        if (ui.root.classList.contains('rv-train-open')) {
+          ui.root.classList.remove('rv-train-open');
+          const toggle = ui.root.querySelector<HTMLElement>('.rv-train-toggle');
+          setText(toggle, 'Manage train ▴'); setAttr(toggle, 'aria-expanded', 'false'); toggle?.focus(); return true;
+        }
+      }
+      return false;
+    },
     junctionVisible: () => !junctionEl.hidden,
     chooseJunction,
     junctionGamepad,
