@@ -104,8 +104,8 @@ Replace `5178` with `4173` to open the preview build.
 
 1. **Plan ahead.** Click hexes in front of the locomotive. Pre-laid rail (the faint network) is free to follow; new track costs rails and depends on terrain (plains 1, forest/ruins/ash 2, hills/crystal 3, water 4, mountains are impassable).
 2. **Keep moving.** The void advances from the west and stopping raises stop pressure, which brings waves faster. Settlements stop the train briefly to load cargo, passengers and crew; depart early with the button if things look bad.
-3. **Feed the machine.** Coal burns per hex and scales with weight; food feeds passengers; ammo feeds turrets (they need an ammo supplier car within two positions); rails build track; scrap buys cars and repairs at yards.
-4. **Build the train.** Generators power cars within three positions (brownouts when demand exceeds supply); hot cars heat their neighbours and catch fire at 100; radiators cool. Barracks and flamethrowers purge boarders; armour plates block them. Order matters, so reorder at yards.
+3. **Feed the machine.** Coal burns per hex and scales with weight; food feeds passengers; every gun draws directly from shared ammo regardless of position; rails build track; scrap buys cars and repairs. Staffed stops offer slow repairs to 80% and car reordering. Yards retain instant full repairs and upgrades.
+4. **Build the train.** Generators power cars within three positions (brownouts when demand exceeds supply); hot cars heat their neighbours and catch fire at 100; radiators cool. Barracks and flamethrowers purge boarders; armour plates block them. Order matters: reorder at staffed settlements or yards. Every operational car has emergency sidearms, strengthened by a living posted crew member.
 5. **Answer each enemy.** Raiders board, hounds slow you, crawlers ram and shrug off bullets, harpies fly (flak), sappers mine your planned track (scout car reveals them), wisps ignore bullets and shells (tesla / flame).
 6. **Reach the Last Gate.** Beat the Iron Wagon, the Brood Mother and the Void Maw. Score = settlements + passengers delivered + cars intact + time bonus.
 

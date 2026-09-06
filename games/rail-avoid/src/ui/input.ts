@@ -38,6 +38,11 @@ export function createInput(ui: UiShared, actions: InputActions): Input {
   function gameKeysAllowed(): boolean { return ui.runActive() && !ui.anyModal(); }
 
   function onKeyDown(e: KeyboardEvent): void {
+    if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.repeat) {
+      if (ui.anyModal() && (e.key === 'Enter' || e.key === ' ')) e.preventDefault();
+      return;
+    }
     const k = e.key;
     if (isTypingTarget(e.target)) {
       // Escape still closes the top panel from inside sliders / checkboxes / the seed field
@@ -60,7 +65,7 @@ export function createInput(ui: UiShared, actions: InputActions): Input {
     if (k === 't' || k === 'T') { if (!ui.anyModal()) { e.preventDefault(); actions.toggleInspector(); } return; }
     if (ui.anyModal()) {
       // Space/Enter in the pause menu resumes
-      if (k === ' ' && ui.topModal() === 'pause') { e.preventDefault(); ui.close('pause'); }
+      if ((k === ' ' || k.toLowerCase() === 'c' || k === 'Enter') && ui.topModal() === 'pause') { e.preventDefault(); ui.close('pause'); }
       return;
     }
     if (!sim || !st) return;
@@ -85,6 +90,10 @@ export function createInput(ui: UiShared, actions: InputActions): Input {
       case k === 'j' || k === 'J': view?.moveCursor(-1, 0); break;
       case k === 'l' || k === 'L': view?.moveCursor(1, 0); break;
       case k === 'x' || k === 'X': actions.departOrClose(); break;
+      case k === 'p' || k === 'P': {
+        if (sim.canService() && !sim.canShop()) { e.preventDefault(); sim.setFieldRepair(!st.train.service?.repairing); }
+        break;
+      }
       case k === 'r' || k === 'R': if (!e.repeat) actions.toggleReverse(); break;
       default:
         if (['w', 'a', 's', 'd', 'W', 'A', 'S', 'D', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(k)) {

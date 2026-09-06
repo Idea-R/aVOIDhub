@@ -1,6 +1,12 @@
 # RAILaVOID — Improvement Roadmap
 
-Release planning updated 2026-09-05. Current production evidence is in `docs/sprint-06/RELEASE.md`; local milestones and the next bounded slice are in `docs/sprint-07/PLAN.md`. Ordered by player impact.
+Latest follow-up: [RPG dialogue, shortcuts and progression/content audit](docs/sprint-07/RPG-DIALOGUE-AND-PROGRESSION.md). Local C-to-continue/common-command hints and two-person Keeper conversation. Crew XP remains absent; one shared expedition family uses three scenes and four fixed region sequences (six of eight defined enemies). Next content slice must add persisted encounter identities and distinct objectives/rosters; XP needs a separate once-only reward/save contract, not a cosmetic progress bar.
+
+Release planning updated 2026-09-05. Current production is PR #62 / `16d2fbf`, live on avoidgame.io. Evidence: [Sprint 07 release](docs/sprint-07/RELEASE.md). Earlier local/publication labels below describe their original milestone dates.
+
+Current local slice: [Blocked-track encounter](docs/sprint-07/BLOCKED-TRACK.md). Opt-in physical rail blockage, preparation/cancel, two-stage lifecycle, wounded retreat/retry and single rewards are implemented for verification. No ordinary-world spawning or Spike Captain yet. Next combat work: authored miniboss tell/counters and ordinary-party pacing before frequency increases.
+
+Cart integration pending: the Blender locomotive/cargo/coach exist only in `C:/dev/aVOID` on `codex/blender-rail-pilot`, behind `?assetPass=blender`. They are not in the release checkout or PR #62. Port the opt-in adapter onto current source, compare matching gameplay and frame-time/texture budgets, then decide default adoption. Do not overwrite current code with the pilot branch or treat the earlier handoff as blanket art approval. Pilot evidence: `C:/dev/aVOID/assets-src/rail-blender-pilot/REPORT.md`.
 
 Latest local milestone: [Readable combat](docs/sprint-07/READABLE-COMBAT.md). Enemy cards expose hit count, base damage and targeting rules; queued blows identify the actual target. Round order stays fixed while an explicit Swap chooser previews both positions, Strike changes and the active crew member's targeting risk. Next: one blocked-track encounter with a readable miniboss, normal-party pacing tests and safe retreat/re-entry. No new art or publication in this pass.
 

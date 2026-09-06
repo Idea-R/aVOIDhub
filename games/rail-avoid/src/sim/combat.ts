@@ -12,6 +12,7 @@
 import type { SimState, Enemy, EnemyLayer, DamageClass, Projectile, WeaponDef } from '../core/types';
 import type { SimContext } from './api';
 import { CAR_DEFS } from '../core/cars';
+import { guardDamage } from '../core/guards';
 import { ENEMY_DEFS } from '../core/enemies';
 import { TRAIN, DAY, DIRECTOR, HEX_R } from '../core/config';
 import { hexToWorld } from '../core/hex';
@@ -923,7 +924,7 @@ function updateWeapons(f: Frame): void {
     const target = pickWeaponTarget(f, i, w, range);
     car.derived.targetEnemyId = target ? target.id : null;
     if (!target || car.cooldown > 0) continue;
-    if (w.ammoPerShot > 0 && (!car.derived.hasAmmoSupply || state.train.resources.ammo < w.ammoPerShot)) continue;
+    if (w.ammoPerShot > 0 && state.train.resources.ammo < w.ammoPerShot) continue;
 
     // fire
     car.cooldown = w.cooldown / rateMul;
@@ -931,6 +932,36 @@ function updateWeapons(f: Frame): void {
     car.heat = Math.min(120, car.heat + w.heatPerShot);
     car.derived.activity = 1;
     fireWeapon(f, i, w, target, range);
+  }
+  updateCarGuards(f);
+}
+
+/** Modest, ammo-free fallback on every operational car. Own boarders first;
+ * otherwise nearby ground/air threats. Resistance still applies (no anti-wisp).
+ * Uses a separate cooldown so an empty gun or a crew posting cannot reset fire. */
+function updateCarGuards(f: Frame): void {
+  const { state, dt, ctx } = f;
+  for (let i = 0; i < state.train.cars.length && state.phase === 'running'; i++) {
+    const car = state.train.cars[i];
+    car.guardCooldown = Math.max(0, (car.guardCooldown ?? 0) - dt);
+    if (car.hp <= 0 || car.disabled || car.guardCooldown > 0) continue;
+    const cp = f.cars[i];
+    if (!cp) continue;
+    let target: Enemy | undefined, best = Infinity;
+    for (const e of state.enemies) {
+      if (!targetable(e) || effectiveLayer(e) === 'phase' || (ENEMY_DEFS[e.type].resist.bullet ?? 1) <= 0) continue;
+      if (e.boardedCar >= 0 && e.boardedCar !== i) continue;
+      const distance = dist(cp.x, cp.y, e.x, e.y);
+      if (e.boardedCar < 0 && distance > TRAIN.guardRange * weatherRangeMul(state)) continue;
+      const score = e.boardedCar === i ? -1 : distance;
+      if (score < best) { target = e; best = score; }
+    }
+    if (!target) continue;
+    car.guardCooldown = TRAIN.guardCooldown;
+    ctx.bus.defer('weapon:fire', { carIndex: i, kind: 'gatling', x: cp.x, y: cp.y, tx: target.x, ty: target.y, targetId: target.id });
+    pushProjectile(f, { kind: 'tracer', x: cp.x, y: cp.y, tx: target.x, ty: target.y, speed: TRACER_SPEED,
+      damage: 0, damageClass: 'bullet', aoe: 0, targetId: null, fromCar: i, life: .18, hitsAir: false });
+    hitEnemy(ctx, target, guardDamage(state, car), 'bullet');
   }
 }
 

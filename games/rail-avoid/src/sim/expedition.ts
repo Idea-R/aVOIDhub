@@ -12,6 +12,8 @@ import { addResource, log, nextId } from './helpers';
 import { addMarks, offerRelics } from './loot';
 import { addCrew } from './train';
 import { rememberKeeperHelp } from './conversations';
+import { beginTrackAttempt, settleTrackAttempt } from './trackEncounters';
+import { TRACK_AMBUSH_EVENT } from '../core/trackEncounters';
 import { timingMul, strikePositionMul, rangedPositionMul, expeditionTargets, expeditionIncomingDamage, expeditionStrikeDamage, expeditionSwapOptions, standing } from '../core/expeditionRules';
 export { expeditionTargetWeight } from '../core/expeditionRules';
 
@@ -54,8 +56,8 @@ export function expeditionStageRoster(region: number, stage: number): string[] {
   return [...byRegion[Math.max(0, Math.min(byRegion.length - 1, stage - 1))]];
 }
 
-function makeStageFoes(ctx: SimContext, stage: number): ExpeditionFoe[] {
-  const region = ctx.state.region;
+function makeStageFoes(ctx: SimContext, stage: number, trackAttempt = false): ExpeditionFoe[] {
+  const region = trackAttempt ? 0 : ctx.state.region;
   const scale = 1 + region * 0.16 + (stage - 1) * 0.07;
   return expeditionStageRoster(region, stage).map(key => {
     const f = EXPEDITION_FOES[key];
@@ -74,15 +76,19 @@ export function startExpedition(ctx: SimContext, crewIds: string[], siteId: stri
   if (state.phase === 'event' && !state.activeEvent?.preparingExpedition) return false;
   const chosen = state.train.crew.filter(c => crewIds.includes(c.id) && c.hp > 20).slice(0, EXPEDITION.maxCrew);
   if (chosen.length === 0) return false;
+  const isTrack = state.activeEvent?.defId === TRACK_AMBUSH_EVENT;
+  const trackAttempt = isTrack ? beginTrackAttempt(ctx) : null;
+  if (isTrack && !trackAttempt) return false;
   const returnEvent = state.activeEvent ? structuredClone(state.activeEvent) : undefined;
   if (returnEvent) returnEvent.preparingExpedition = false;
-  const stageCount = state.region >= 2 ? 3 : 2;
+  const stageCount = isTrack ? 2 : state.region >= 2 ? 3 : 2;
   const actors: ExpeditionActor[] = chosen.map((c, i) => ({
     id: c.id, name: c.name, specialty: c.specialty, hp: c.hp, maxHp: 100,
     guard: 0, down: false, position: POSITIONS[i] ?? 'rear',
   }));
-  const foes = makeStageFoes(ctx, 1);
+  const foes = makeStageFoes(ctx, 1, isTrack);
   state.expedition = {
+    ...(trackAttempt ? { trackAttempt } : {}),
     siteId, returnEvent, round: 1, rounds: 0, stage: 1, stageCount, stageKey: STAGE_KEYS[0], awaitingAdvance: false,
     turn: 'player', activeActor: 0, activeFoe: 0, actors, foes, rally: 0,
     pending: null, log: [`The crew reaches the outer works of ${siteId}.`], outcome: null, rewardRelic: false,
@@ -160,7 +166,7 @@ export function advanceExpedition(ctx: SimContext, continueDeeper: boolean): boo
   x.stage++;
   x.stageKey = STAGE_KEYS[Math.min(STAGE_KEYS.length - 1, x.stage - 1)];
   x.round = 1;
-  x.foes = makeStageFoes(ctx, x.stage);
+  x.foes = makeStageFoes(ctx, x.stage, !!x.trackAttempt);
   x.activeFoe = 0;
   x.activeActor = nextActor(x, -1);
   x.awaitingAdvance = false;
@@ -275,6 +281,7 @@ function queueEnemyAttack(ctx: SimContext, foeIndex?: number): void {
 function finish(ctx: SimContext): void {
   const { state } = ctx;
   const x = state.expedition!;
+  if (x.trackAttempt && !settleTrackAttempt(ctx, x)) return;
   const rng = ctx.rng.events;
   for (const a of x.actors) {
     const c = state.train.crew.find(cr => cr.id === a.id);
@@ -288,7 +295,7 @@ function finish(ctx: SimContext): void {
     addMarks(ctx, marks, 'expedition');
     const scrap = rng.int(10, 18) + x.stageCount * 2;
     addResource(ctx, 'scrap', scrap);
-    summary = `Ruin cleared through ${x.stageCount} stages. +${marks} marks, +${scrap} scrap.`;
+    summary = `${x.trackAttempt ? 'Barricade cleared. The rail is open.' : `Ruin cleared through ${x.stageCount} stages.`} +${marks} marks, +${scrap} scrap.`;
     if (rng.chance(EXPEDITION.rescueChance) && state.train.crew.length < 8) {
       const spec = rng.pick(['gunner', 'medic', 'mechanic', 'surveyor', 'engineer'] as CrewSpecialty[]);
       const c = addCrew(state, spec);

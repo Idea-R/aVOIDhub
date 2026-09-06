@@ -1,0 +1,36 @@
+/* Use the existing illustrated card. Short screens reserve room for decisions. */
+#ui .rv-track-overlay .rv-event-decision { min-width: 0; }
+#ui .rv-track-overlay .rv-event-text { font-family: 'Segoe UI', system-ui, sans-serif; font-size: max(13px, calc(13 * var(--u))); line-height: 1.5; }
+#ui .rv-track-overlay .rv-option { min-height: 48px; }
+
+/* Party rows may scroll; Start and Cancel never scroll out with the list. */
+#ui .rv-preparation-overlay .rv-crewpick { display: flex; flex-direction: column; overflow: hidden; gap: 8px; }
+#ui .rv-preparation-overlay .rv-crewpick > :not(.rv-crewpick-list) { flex-shrink: 0; }
+#ui .rv-preparation-overlay .rv-crewpick-list { min-height: 70px; overflow-y: auto; overscroll-behavior: contain; flex: 1 1 auto; }
+#ui .rv-preparation-overlay .rv-crewpick-lead { margin: 0; font-family: 'Segoe UI', system-ui, sans-serif; line-height: 1.4; }
+#ui .rv-preparation-overlay .rv-crewpick-actions { margin: 0; padding-top: 6px; }
+
+@media (max-width: 600px), (max-height: 600px) {
+  #ui:has(.rv-preparation-overlay:not([hidden]):not(.rv-closing)) .rv-hud,
+  #ui:has(.rv-track-overlay:not([hidden]):not(.rv-closing)) .rv-hud { visibility: hidden; }
+  #ui .rv-overlay.rv-zone.rv-preparation-overlay,
+  #ui .rv-overlay.rv-zone.rv-track-overlay { padding: 10px; }
+  #ui .rv-preparation-overlay .rv-crewpick { max-height: 100%; padding: 20px 18px; }
+}
+@media (max-width: 600px) {
+  #ui .rv-track-overlay .rv-event { padding: 16px; }
+  #ui .rv-track-overlay .rv-event .rv-event-body.rv-has-scene { grid-template-columns: minmax(0, 1fr); }
+  #ui .rv-track-overlay .rv-event-scene { height: 125px; min-height: 0; }
+  #ui .rv-track-overlay .rv-event-scene img { height: 100%; width: 100%; object-fit: cover; }
+  #ui .rv-track-overlay .rv-event h2 { font-size: 22px; }
+}
+@media (max-height: 520px) and (min-width: 601px) {
+  #ui .rv-preparation-overlay .rv-crewpick { width: min(800px, 100%) !important; padding: 16px 22px; gap: 5px; }
+  #ui .rv-preparation-overlay .rv-crewpick-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-content: start; }
+  #ui .rv-preparation-overlay .rv-crewpick-row { grid-template-columns: auto minmax(0, 1fr); align-content: start; }
+  #ui .rv-preparation-overlay .rv-cp-portrait { grid-column: 1; width: 36px; height: 48px; }
+  #ui .rv-preparation-overlay .rv-cp-main { grid-column: 2; grid-row: 1 / span 2; }
+  #ui .rv-preparation-overlay .rv-cp-check { display: none; }
+  #ui .rv-preparation-overlay .rv-cp-name { flex-wrap: wrap; }
+  #ui .rv-preparation-overlay .rv-cp-hp .rv-bar { width: 55px; }
+}

@@ -4,9 +4,12 @@ import type { UiShared } from './shared';
 import type { SimState, PassengerEventDef, PassengerEventOption } from '../core/types';
 import { activeEventDef, eventStepKey, keeperConversation, type ConversationDef } from '../core/conversations';
 import { unmetEventRequirement as unmet } from '../core/eventRequirements';
-import { crewPortrait } from './crewArt';
+import { CREW_AVATARS } from './crewArt';
+import { commandKey, withHotkey } from './shortcuts';
+import maraPortrait from '/art/npcs/mara-dialogue-v1.webp?url&inline';
 import brassFrame from '/art/ui/expedition-brass-frame-v2.webp?url&inline';
 import './conversation.css';
+import './trackEncounter.css';
 import lanternCamp from '/art/scenes/lantern-camp-v2.webp?url&inline';
 import ruinApproach from '/art/scenes/ruin-approach-v2.webp?url&inline';
 import falseSignal from '/art/scenes/false-signal-v2.webp?url&inline';
@@ -18,7 +21,7 @@ export interface EventModal { el: HTMLElement; show(defId?: string): void; updat
 
 function sceneFor(defId: string): { src: string; alt: string } | null {
   if (defId === 'node_site' || defId === 'mystery_away') return { src: ruinApproach, alt: 'The train waits beside an ancient ruin entrance.' };
-  if (defId === 'mystery_ambush') return { src: falseSignal, alt: 'Raiders spring a barricade around a false railway signal.' };
+  if (defId === 'mystery_ambush' || defId === 'track_ambush') return { src: falseSignal, alt: 'Raiders spring a barricade around a false railway signal.' };
   if (defId === 'mystery_survivor') return { src: rainboundSurvivor, alt: 'A lone rail gunner waits beside a wrecked handcar in the rain.' };
   if (defId === 'mystery_weapon') return { src: abandonedGunCar, alt: 'A damaged gun car waits on an overgrown siding.' };
   if (defId === 'mystery_dock') return { src: watersideRailDock, alt: 'A lantern-lit rail dock and fishing settlement beside dark water.' };
@@ -41,6 +44,7 @@ export function createEventModal(ui: UiShared): EventModal {
     const mystery = def.id.startsWith('mystery_');
     box.className = 'rv-panel rv-modal rv-event' + (def.negative ? ' rv-negative' : '') + (mystery ? ' rv-mystery-event' : '') + (conversation ? ' rv-conversation' : '');
     overlay.classList.toggle('rv-location-overlay', !!conversation);
+    overlay.classList.toggle('rv-track-overlay', def.id === 'track_ambush');
     overlay.setAttribute('aria-label', conversation ? 'A conversation at the crossroads' : 'Passenger event');
     box.style.setProperty('--exp-frame', `url("${brassFrame}")`);
     const options = el('div', { class: 'rv-options', role: 'group', 'aria-label': 'Choices' });
@@ -67,6 +71,8 @@ export function createEventModal(ui: UiShared): EventModal {
         } else { ui.audio().ui('error'); if (st) update(st); }
       });
       options.appendChild(b);
+      b.setAttribute('aria-keyshortcuts', String(i + 1));
+      if (conversation?.options.length === 1 && conversation.options[0].action === 'return') withHotkey(b, 'C');
       optionButtons.push({ btn: b, why, opt: o });
     });
     const h2 = el('h2', { text: def.title });
@@ -75,23 +81,24 @@ export function createEventModal(ui: UiShared): EventModal {
       const arrival = s.activeEvent?.arrival;
       const receipt = [arrival?.passengers ? `${arrival.passengers} passengers boarded` : '', arrival?.crewName ? `${arrival.crewName} joined the crew` : ''].filter(Boolean).join(' · ');
       const dialogue = el('div', { class: 'rv-conversation-lines', 'aria-live': 'polite' },
-        ...conversation.exchange.map((line, i) => el('div', { class: 'rv-conversation-line' },
-          i === 1 ? crewPortrait('conductor', 'rv-conversation-portrait') : null,
-          el('div', {}, el('b', { class: 'rv-conversation-speaker', text: line.speaker }), el('p', { text: line.text })),
+        ...conversation.exchange.map((line, i) => el('section', { class: `rv-conversation-person ${i === 0 ? 'rv-person-npc' : 'rv-person-player'}`, 'aria-label': line.speaker },
+          el('div', { class: 'rv-conversation-bust', 'aria-hidden': 'true' },
+            el('img', { src: i === 0 ? maraPortrait : CREW_AVATARS.conductor, alt: '', decoding: 'async' })),
+          el('div', { class: 'rv-conversation-line' },
+            el('b', { class: 'rv-conversation-speaker', text: line.speaker }), el('p', { text: line.text })),
         )),
       );
       box.dataset.dialogueStep = s.activeEvent?.dialogue?.step ?? 'arrival';
       box.replaceChildren(
         el('header', { class: 'rv-conversation-heading' }, el('div', { class: 'rv-label', text: `${place} · train waiting` }), h2),
         el('div', { class: 'rv-conversation-body' },
-          el('figure', { class: 'rv-conversation-scene' }, el('img', { src: ruinApproach, alt: 'The train waits at the entrance to the old rail works.' }), el('figcaption', { text: 'The lower works' })),
           dialogue,
         ),
         el('div', { class: 'rv-conversation-context', text: conversation.context }),
         options,
         el('footer', { class: 'rv-conversation-footer' },
           el('span', { text: receipt || 'The railway stays open. Your route does not change.' }),
-          el('span', { text: `1–${def.options.length} choose · Tab navigate · Enter confirm` }),
+          el('span', { text: def.options.length === 1 ? 'C continue · Enter confirm' : `1–${def.options.length} reply · Tab choose · Enter confirm` }),
         ),
       );
       update(s);
@@ -104,7 +111,7 @@ export function createEventModal(ui: UiShared): EventModal {
     const heading = el('div', { class: 'rv-event-heading' },
       ...(mystery ? [el('div', { class: 'rv-mystery-mark', 'aria-hidden': 'true', text: mysteryMarks[def.id] ?? '?' })] : []),
       el('div', { class: 'rv-event-heading-copy' },
-        el('div', { class: 'rv-label rv-wire', text: mystery ? 'Unknown signal · identity revealed' : (def.negative ? 'Trouble aboard' : 'Aboard the train') }),
+        el('div', { class: 'rv-label rv-wire', text: def.id === 'track_ambush' ? 'Line blocked · train waiting' : mystery ? 'Unknown signal · identity revealed' : (def.negative ? 'Trouble aboard' : 'Aboard the train') }),
         h2,
       ),
     );
@@ -159,9 +166,14 @@ export function createEventModal(ui: UiShared): EventModal {
   // number keys choose options
   overlay.addEventListener('keydown', (e) => {
     if (e.repeat) { e.preventDefault(); return; }
-    const n = Number(e.key);
+    const key = commandKey(e);
+    if (!key) return;
+    if (key === 'c' && optionButtons.length === 1 && optionButtons[0].btn.getAttribute('aria-keyshortcuts') === 'C') {
+      e.preventDefault(); e.stopPropagation(); optionButtons[0].btn.click(); return;
+    }
+    const n = Number(key);
     if (n >= 1 && n <= optionButtons.length) {
-      e.preventDefault();
+      e.preventDefault(); e.stopPropagation();
       optionButtons[n - 1].btn.click();
     }
   });

@@ -6,6 +6,8 @@ import { TRAIN, HEX_R, TERRAIN_SPEED, WEATHER, MAX_CARS, UPGRADES } from '../cor
 import { hexToWorld } from '../core/hex';
 import { makeCar, recomputeCapacity, damageCar, addResource, log, tileAt, fixCrewIndices, nextId, carPos, damageEnemy, carPowerGen, carCooling, carPassengerCap } from './helpers';
 import { autoFollow, aheadCount, unplanLast } from './route';
+import { blockedTrack } from '../core/trackEncounters';
+import { inspectTrackEncounter } from './trackEncounters';
 
 export const CAR_SPACING = 40; // px between car centres along the track
 
@@ -161,14 +163,6 @@ export function propagate(ctx: SimContext): void {
     ratio[i] = use > 0 ? Math.min(1, supply[i] / use) : 1;
     if (!alive[i]) ratio[i] = 0;
   }
-  // ammo supply
-  const ammoSup: boolean[] = new Array(n).fill(false);
-  for (let i = 0; i < n; i++) {
-    if (!defs[i].weapon || defs[i].weapon!.ammoPerShot === 0) { ammoSup[i] = true; continue; }
-    for (let j = Math.max(0, i - TRAIN.ammoRange); j <= Math.min(n - 1, i + TRAIN.ammoRange); j++) {
-      if (t.cars[j].hp > 0 && defs[j].ammoSupplier) { ammoSup[i] = true; break; }
-    }
-  }
   // heat: generation, cooling, diffusion, fire
   const cooling = WEATHER[state.weather.kind].cooling * state.weather.intensity;
   const heatIn: number[] = new Array(n).fill(0);
@@ -197,7 +191,7 @@ export function propagate(ctx: SimContext): void {
     car.heat = Math.max(0, Math.min(120, car.heat + heatIn[i] * dt));
     car.derived.heatFlowIn = i + 1 < n ? (t.cars[i + 1].heat - car.heat) * TRAIN.heatDiffusion : 0;
     car.derived.powerRatio = ratio[i];
-    car.derived.hasAmmoSupply = ammoSup[i];
+    car.derived.hasAmmoSupply = t.resources.ammo >= (defs[i].weapon?.ammoPerShot ?? 0);
     car.derived.activity = Math.max(0, car.derived.activity - 2 * dt);
     if (car.disabled) { car.disabledFor -= dt; if (car.disabledFor <= 0) { car.disabled = false; car.disabledFor = 0; } }
     if (car.heat >= TRAIN.heatFireAt && !car.onFire) { car.onFire = true; ctx.bus.defer('car:fire', { carIndex: i, on: true }); ctx.bus.defer('car:overheat', { carIndex: i }); log(state, `${defs[i].name} is on fire!`, 'bad'); }
@@ -360,7 +354,14 @@ export function updateMovement(ctx: SimContext, onEnterTile: (col: number, row: 
   if (t.speed < target) t.speed = Math.min(target, t.speed + accel * dt);
   else t.speed = Math.max(target, t.speed - accel * 2 * dt);
   const pxPerHex = HEX_R * Math.sqrt(3);
-  const step = t.speed * pxPerHex * dt;
+  let blockedIndex = -1;
+  if (state.route.encounters?.some(e => e.status === 'blocked')) {
+    const path = state.route.path;
+    for (let i = t.routeIndex; i + 1 < path.length; i++) {
+      if (blockedTrack(state, path[i], path[i + 1])) { blockedIndex = i; break; }
+    }
+  }
+  const step = Math.max(0, Math.min(t.speed * pxPerHex * dt, blockedIndex >= 0 ? poly.cum[blockedIndex] - s : Infinity));
   // coal / scrap burn
   const hexes = step / pxPerHex;
   const coalNeed = hexes * (TRAIN.coalPerHex + t.totalWeight * TRAIN.coalPerTonPerHex) * ((t.relics ?? []).includes('coal_heart') ? 0.8 : 1);
@@ -372,6 +373,17 @@ export function updateMovement(ctx: SimContext, onEnterTile: (col: number, row: 
   t.distanceTravelled += hexes;
   // advance along the polyline
   let s2 = s + step;
+  // A plan can predate a barricade. Clamp to its near endpoint before any arrival
+  // callbacks or the end-of-plan fast path can carry the train across it.
+  if (blockedIndex >= 0 && s2 >= poly.cum[blockedIndex]) {
+    const moved = blockedIndex > t.routeIndex;
+    t.routeIndex = blockedIndex; t.progress = 0; t.speed = 0;
+    t.stopped = true; t.stopReason = 'no_route'; t.stopTimer = 0;
+    if (moved) onEnterTile(...state.route.path[blockedIndex]);
+    if (state.phase === 'running') inspectTrackEncounter(ctx);
+    computeTrail(state);
+    return;
+  }
   const end = poly.cum[poly.len - 1] ?? 0;
   if (s2 >= end - 0.01) {
     s2 = end;
@@ -444,6 +456,7 @@ export function startReversing(ctx: SimContext): boolean {
   let guard = 0;
   while (unplanLast(ctx).ok && guard++ < 500) { /* pop */ }
   t.reversing = true;
+  t.service = undefined;
   t.stopped = false;
   t.stopReason = 'none';
   t.stopTimer = 0;

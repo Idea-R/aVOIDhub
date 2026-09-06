@@ -23,6 +23,7 @@ import { EXPEDITION } from '../core/config';
 import { gsap, D, isReduced, shake, Particles, popIn } from './motion';
 import { foeSilhouette } from './silhouettes';
 import { CREW_AVATARS, crewPortrait, setCrewPortrait } from './crewArt';
+import { withHotkey, commandKey } from './shortcuts';
 import brassFrame from '/art/ui/expedition-brass-frame-v2.webp?url&inline';
 import ruinApproach from '/art/scenes/ruin-approach-v2.webp?url&inline';
 import buriedConcourse from '/art/scenes/buried-concourse-v2.webp?url&inline';
@@ -115,6 +116,7 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
       el('span', { class: 'rv-exp-a-mode', text: kind === 'strike' ? 'Timed attack' : kind === 'special' ? 'Crew skill' : kind === 'guard' ? 'Brace now' : '' }),
       el('span', { class: 'rv-exp-a-desc', text: desc }));
     b.addEventListener('click', () => act(kind));
+    b.setAttribute('aria-keyshortcuts', key);
     return b;
   };
   const strikeBtn = actionBtn('strike', 'Strike', 'S', 'Press on impact for a perfect hit.');
@@ -796,6 +798,8 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
       tryNext();
     }, { aria: 'Withdraw safely without the final reward' });
     withdraw.dataset.retreat = '';
+    withHotkey(deeper, 'C');
+    withHotkey(withdraw, 'F');
     const card = el('div', { class: 'rv-panel rv-modal rv-exp-depth-card', role: 'group', 'aria-label': 'Next expedition stage' },
       el('div', { class: 'rv-label', text: `Stage ${xs.stage} of ${xs.stageCount} cleared` }),
       el('h2', { text: lowHealth ? 'Your Conductor is low on health' : STAGE_NAMES[nextKey] }),
@@ -803,6 +807,7 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
       el('p', { text: 'Wounds carry forward. Clear the final chamber to earn the reward. You can still retreat on your turn.' }),
       el('div', { class: 'rv-exp-depth-status' }, ...xs.actors.map(a => el('span', { class: a.down ? 'rv-down' : '', text: `${a.name} · ${Math.round(a.hp)} HP · ${cap(a.position)}` }))),
       el('div', { class: 'rv-actions' }, deeper, withdraw),
+      el('div', { class: 'rv-shortcut-hint', text: 'C continue · F retreat · Tab choose · Enter confirm focused choice' }),
     );
     stageGateEl.replaceChildren(card);
     show(stageGateEl, true);
@@ -832,6 +837,7 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
       if (!sim.endExpedition()) ui.audio().ui('error');
     }, { class: 'rv-primary rv-big', aria: 'Continue (Enter)' });
     cont.dataset.autofocus = '';
+    withHotkey(cont, 'C');
     const card = el('div', { class: 'rv-panel rv-modal rv-exp-result rv-res-' + outcome },
       el('div', { class: 'rv-label', text: `Expedition · ${xs.stage}/${xs.stageCount} stages · ${rounds} round${rounds === 1 ? '' : 's'} · void +${expeditionVoidCost(rounds)}s` }),
       el('h1', { text: title }),
@@ -841,6 +847,7 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
         crewPortrait(a.specialty, 'rv-exp-result-portrait'),
         el('span', { text: `${a.name} ${a.down ? '— carried back' : `${Math.round(a.hp)} HP`}` })))),
       el('div', { class: 'rv-actions' }, cont),
+      el('div', { class: 'rv-shortcut-hint', text: 'C / Enter continue' }),
     );
     resultEl.replaceChildren(card);
     show(resultEl, true);
@@ -905,9 +912,14 @@ export function createExpedition(ui: UiShared): ExpeditionScene {
   // ---------- input ----------
   function onKey(e: KeyboardEvent): void {
     if (!ui.isOpen('expedition') || ui.topModal() !== 'expedition') return;
-    if (e.repeat) { if (mode === 'timing' || mode === 'swap') { e.preventDefault(); e.stopImmediatePropagation(); } return; }
+    if (e.repeat) { e.preventDefault(); e.stopImmediatePropagation(); return; }
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     const k = e.key;
+    if (commandKey(e) === 'c' && (mode === 'result' || mode === 'intermission')) {
+      e.preventDefault(); e.stopImmediatePropagation();
+      (mode === 'result' ? resultEl : stageGateEl).querySelector<HTMLButtonElement>('[data-autofocus]')?.click();
+      return;
+    }
     if (mode === 'swap') {
       if (k === 'Escape' || k.toLowerCase() === 'w') { e.preventDefault(); e.stopImmediatePropagation(); closeSwap(); }
       else if (k === 'Tab' || k.startsWith('Arrow')) { e.preventDefault(); moveSwapFocus(k === 'ArrowLeft' || k === 'ArrowUp' || e.shiftKey ? -1 : 1); }

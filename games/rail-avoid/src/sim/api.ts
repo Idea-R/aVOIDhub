@@ -43,6 +43,10 @@ export interface SimApi {
   isReversing(): boolean;
   detachFrom(carIndex: number): boolean;   // drops carIndex..end (carIndex >= 1)
   moveCar(from: number, to: number): boolean;  // reorder (not the locomotive)
+  canReorder(): boolean;
+  canService(): boolean;
+  setServiceHold(on: boolean): boolean;   // stay at a staffed stop; world time continues
+  setFieldRepair(on: boolean): boolean;   // weakest hull first, up to 80%; costs scrap and time
   buyCar(type: CarType, insertAt?: number): boolean;  // only while phase==='shop'
   sellCar(carIndex: number): boolean;
   repairCar(carIndex: number): boolean;    // costs scrap at yards
@@ -59,6 +63,8 @@ export interface SimApi {
   // --- events ---
   chooseEventOption(index: number, expectedStep?: string): boolean;
   cancelExpeditionPreparation(): boolean;
+  /** Reopen an uncleared track encounter from either adjacent endpoint. */
+  inspectTrackEncounter(): boolean;
   /** Relic 1-of-3 choice while phase === 'relic'. */
   chooseRelic(index: number): boolean;
   // --- expeditions (phase === 'expedition') ---
@@ -106,6 +112,8 @@ export interface SimApi {
     offerRelics(): void;
     grantMarks(n: number): void;
     startExpedition(): void;
+    /** Local/ADS fixture only: ordinary world generation does not place these. */
+    placeTrackAmbush(from: [number, number], to: [number, number]): string | null;
     godTrain(): void;   // strong composition for testing
   };
 }

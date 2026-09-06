@@ -1,6 +1,8 @@
 # Sprint 07 — Crew Identity and Readable Combat
 
-Status: UI, generic crew art and the intent/explicit-swap milestone are implemented locally; no active goal or deployment implied. The blocked-link/miniboss slice remains planned. Art acceptance/provenance: [Route and crew pass](ROUTE-AND-CREW-PASS.md). Current combat evidence: [Readable combat](READABLE-COMBAT.md).
+2026-09-05 gameplay triage: [Convoy recovery](CONVOY-RECOVERY.md) is the latest local slice. Ballistic weapons now use shared ammo without adjacency; operational cars have emergency guards, strengthened by living crew. Staffed stops offer reordering and timed field repairs to 80%. This supersedes the earlier ammo-supply explanation/tracing plan below. Power range and heat adjacency still matter. Publishing remains a separate release step.
+
+Status: UI, generic crew art, Keeper conversation and intent/explicit-swap are published in PR #62 (`16d2fbf`). See [Release](RELEASE.md). [Blocked-track foundation](BLOCKED-TRACK.md) is the current opt-in local slice; the Spike Captain and world spawning remain planned. Art acceptance/provenance: [Route and crew pass](ROUTE-AND-CREW-PASS.md). Current combat evidence: [Readable combat](READABLE-COMBAT.md).
 
 2026-09-05: Readable combat adds shared-rule enemy intents, queued targets, round order and explicit cancellable swaps. Front now appears nearest the opposing formation. Existing damage values, timing windows, rewards and art are retained; human timing/pacing acceptance and representative GPU performance remain separate gates before encounter-frequency expansion.
 
@@ -63,7 +65,7 @@ Gate: no unresolved critical playtest issues; accepted art and source hashes bac
 ## Following goals, not hidden scope in this one
 
 - Crew XP/five levels/two authored unlock decisions: implement only after identities and intents are stable. Require save migration, capped deterministic XP, once-only rewards and no surprise changes to posting bonuses.
-- Multi-crew stations and Cab Crew upgrade; visible supply tracing; siding service geography.
+- Multi-crew stations and Cab Crew upgrade; visible power/heat tracing; revisit-aware siding service geography. Ammo adjacency has been removed, not deferred for clearer tooltips.
 - Tempo and four shared conditions, introduced through one tested ability at a time.
 - Main-boss world-avatar handoff, after the miniboss loop proves itself; roaming elites stay in world combat.
 - Shoreline-constrained docks, bridge tiles and weather-specific event pools. The current Drowned Interchange is an illustrated encounter, not a world-generation bridge feature.

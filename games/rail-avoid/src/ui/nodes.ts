@@ -1,4 +1,5 @@
 /** Settlement / node-type presentation: icon, label, colour and a one-line blurb (tooltips, stop pill, legends). */
+import { hasFieldService } from '../sim/service';
 
 export interface NodeMeta { icon: string; label: string; color: string; blurb: string }
 
@@ -20,6 +21,10 @@ export const NODE_META: Record<string, NodeMeta> = {
   mystery:    { icon: '?', label: 'Unknown event', color: '#d6b4f0', blurb: 'An unreadable signal on the main line. Its nature is hidden until arrival.' },
   crossroads: { icon: '⑂', label: 'Crossroads',   color: '#9aa3b8', blurb: 'Where lines meet — choose a branch.' },
 };
+
+for (const [type, meta] of Object.entries(NODE_META)) {
+  if (type !== 'yard' && hasFieldService(type)) meta.blurb += ' Field repairs and car reordering while stopped.';
+}
 
 export function nodeMeta(type: string | null | undefined): NodeMeta {
   return (type && NODE_META[type]) || { icon: '◦', label: type ? type.charAt(0).toUpperCase() + type.slice(1) : 'Settlement', color: '#a9b3cc', blurb: '' };

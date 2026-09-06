@@ -12,6 +12,7 @@ import { DIRECTOR, UPGRADES } from '../core/config';
 import type { LocoUpgradeKind } from '../core/types';
 import { damageEnemy, locoPos } from './helpers';
 import { MYSTERY_EVENTS } from '../core/passengerEvents';
+import { updateFieldService } from './service';
 
 export function onArrive(ctx: SimContext, s: Settlement): void {
   const { state } = ctx;
@@ -89,6 +90,7 @@ export function onArrive(ctx: SimContext, s: Settlement): void {
   }
   // stop
   t.stopped = true;
+  t.service = undefined;
   t.stopTimer = 0;
   if (s.type === 'yard') {
     t.stopReason = 'settlement';
@@ -107,9 +109,10 @@ export function onArrive(ctx: SimContext, s: Settlement): void {
 export function updateStop(ctx: SimContext): void {
   const { state, dt } = ctx;
   const t = state.train;
-  if (!t.stopped || t.stopReason !== 'settlement') return;
+  if (!t.stopped || t.stopReason !== 'settlement') { t.service = undefined; return; }
+  const held = updateFieldService(ctx);
   const here = currentSettlement(ctx);
-  if (here && here.type === 'crossroads') { if (state.phase !== 'shop' && t.stopTimer >= 4) depart(ctx); return; } // no haven at the crossroads
+  if (here && here.type === 'crossroads') { if (!held && state.phase !== 'shop' && t.stopTimer >= 4) depart(ctx); return; } // no haven at the crossroads
   // settlement militia defend the haven while the train is in
   const lp = locoPos(state);
   for (const e of state.enemies) {
@@ -117,7 +120,7 @@ export function updateStop(ctx: SimContext): void {
     if (Math.hypot(e.x - lp.x, e.y - lp.y) > DIRECTOR.havenRadius) continue;
     damageEnemy(ctx, e, DIRECTOR.havenMilitiaDps * dt * (hasRelic(state, 'militia_banner') ? 2 : 1), 'bullet');
   }
-  if (state.phase === 'shop') return;
+  if (state.phase === 'shop' || held) return;
   const stopTime = TRAIN.settlementStopTime * (hasRelic(state, 'old_timetable') ? 0.5 : 1);
   if (t.stopTimer >= stopTime && TRAIN.autoDepart) depart(ctx);
 }
@@ -138,6 +141,7 @@ export function depart(ctx: SimContext): void {
   if (t.stopReason !== 'settlement' && t.stopReason !== 'boss') return;
   const s = currentSettlement(ctx);
   t.stopped = false;
+  t.service = undefined;
   t.stopReason = 'none';
   t.stopTimer = 0;
   // A haven is a true reset beat: do not dump a wave that was nearly due before arrival
@@ -164,8 +168,7 @@ export function buyCar(ctx: SimContext, type: CarType, insertAt?: number): boole
   if (state.train.resources.scrap < def.cost) { ctx.bus.defer('ui:notify', { text: `Need ${def.cost} scrap`, kind: 'warn' }); return false; }
   addResource(ctx, 'scrap', -def.cost);
   // Keep the caboose doing its advertised job as the rear guard. A newly bought car
-  // slots in ahead of it by default, which also avoids silently putting early weapons
-  // outside the starter Cargo Hold's two-car ammo-supply range.
+  // slots in ahead of it by default.
   let at = insertAt;
   if (at === undefined && type !== 'caboose') {
     const caboose = state.train.cars.findIndex(c => c.type === 'caboose');
@@ -174,7 +177,7 @@ export function buyCar(ctx: SimContext, type: CarType, insertAt?: number): boole
   const car = addCar(ctx, type, at);
   if (!car) return false;
   // A purchased ballistic weapon arrives commissioned, not dry. This adds shared
-  // stock; it still needs a live supplier car within TRAIN.ammoRange to feed it.
+  // stock, available to every weapon regardless of car position.
   const loaded = def.weapon && def.weapon.ammoPerShot > 0 ? addResource(ctx, 'ammo', 12) : 0;
   ctx.bus.defer('car:bought', { type });
   log(state, `Coupled a ${def.name}${loaded > 0 ? ` · +${Math.round(loaded)} ammo` : ''}`, 'good');

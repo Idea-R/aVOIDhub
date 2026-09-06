@@ -2,7 +2,7 @@
 
 2026-09-05. Canonical source: `C:/dev/aVOID-railavoid-release/games/rail-avoid`.
 
-Status: implemented and functionally verified locally; ready for human review. Not published.
+Status: published on 2026-09-05 through PR #62 (`16d2fbf`). See [release evidence](RELEASE.md). The original local-only authority and verification notes below record the preceding implementation milestone.
 
 ## Outcome
 
@@ -36,7 +36,7 @@ Success is functional and visual evidence at gameplay size. Software-rendered br
 - Existing expedition-art, seven-size card-layout, 25-state conversation and continuity/retreat suites pass with no browser errors. Production build and 6.44 MB standalone rebuilt; offline starter/conversation/intent/swap/frame checks pass. One known optional-audio file fallback; zero unexpected offline errors.
 - Final `npm run verify` passes its functional gates: opening controls, early/midgame, all three bosses, expedition/relic progression, save/load, both end states, resizing, deterministic replay and screenshot capture. Zero console/page errors, warnings or failed requests. Boss fixtures are boosted and expedition completion uses Perfect timing; neither establishes campaign balance. The headless performance note remains: average 15.3 FPS at auto-low on SwiftShader, not a GPU acceptance result or a before/after comparison. Full generated evidence: `verify/report.md` / `verify/report.json`.
 
-Release status: local only. No GPU-performance or campaign-difficulty claim is made from these fixtures. No new image files or larger textures were introduced; the chooser reuses existing portrait/frame URLs. First-use decoding and residency depend on which portraits were already loaded, and were not benchmarked here. Actual frame-time/performance comparison on representative GPU hardware remains pending.
+Release status: published in PR #62. No GPU-performance or campaign-difficulty claim is made from these fixtures. No new image files or larger textures were introduced in the readable-combat slice; the chooser reuses existing portrait/frame URLs. First-use decoding and residency depend on which portraits were already loaded, and were not benchmarked here. Actual frame-time/performance comparison on representative GPU hardware remains pending.
 
 ## Human review
 

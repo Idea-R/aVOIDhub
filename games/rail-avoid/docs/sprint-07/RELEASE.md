@@ -22,4 +22,10 @@ Next-slice implementation stays separate from this release. Its first local gate
 3. Merge only the tested commit after checking current `main` and required checks. Wait for the corresponding production deployment, then verify the custom domain and repeat the focused checks.
 4. Record PR, commit, preview, production deployment and live verification evidence. Preserve the captured deploy for rollback; do not delete deployment history.
 
-Publication status and final identifiers will be recorded here and in the release PR after verification. This preflight alone does not claim the new game is live.
+## Published
+
+- [PR #62](https://github.com/Idea-R/aVOIDhub/pull/62) merged; candidate `994f45a8829ae8d8ebcd3be9cd5d95117eb73255`, production commit `16d2fbfd4c3102c2e42d218831082906ec285912`.
+- Hosted preview `6a9cb6813770e400075cd660` passed seven shared routes, 25 linked assets and exact game bundle hashes; combat 23 samples, conversation 25 samples, actual-rail clickable junctions at four sizes. Shared release CI run `34001925334` passed.
+- Netlify confirms published production deploy `6a9cb816a256f200088a7a3e` for that production commit. Live at [avoidgame.io/railavoid/](https://avoidgame.io/railavoid/), published 2026-09-06 00:48:19 UTC (September 5 locally).
+- Custom-domain smoke passed all seven routes and 25 assets; all three game bundle hashes match the verified preview/local candidate. Evidence: `verify/screenshots/release-live/site-smoke.json`. Focused production checks and final evidence are recorded in PR #62.
+- Rollback remains the captured previous deploy above. Separate platform PR #61 was not changed. Next work is isolated on `codex/railavoid-blocked-track`, local only.

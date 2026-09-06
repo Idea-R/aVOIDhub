@@ -100,7 +100,6 @@ export interface CarDef {
   cooling: number;       // per second self cooling (radiator etc.)
   storage: ResourceBundle; // capacity added
   passengerCap: number;
-  ammoSupplier: boolean;
   weapon: WeaponDef | null;
   planRangeBonus: number;
   trackCostBonus: number;   // negative reduces cost
@@ -126,6 +125,7 @@ export interface Car {
   boarders: string[];       // enemy ids currently inside this car
   crewId: string | null;
   cooldown: number;         // weapon cooldown remaining
+  guardCooldown?: number;   // independent emergency sidearms; optional for older saves
   workTimer: number;        // fabricator/foundry cycle
   passengers: number;       // riding in this car
   disabled: boolean;        // temporarily disabled (e.g. drone sap)
@@ -136,7 +136,7 @@ export interface Car {
 
 export interface CarDerived {
   powerRatio: number;       // 0..1 how much of powerUse is satisfied
-  hasAmmoSupply: boolean;
+  hasAmmoSupply: boolean;   // shared stock can fund the next shot; no adjacency requirement
   activity: number;         // 0..1 used for heat generation
   targetEnemyId: string | null;
   heatFlowIn: number;       // net heat flow from neighbours (for UI arrows)
@@ -153,6 +153,7 @@ export interface TrainState {
   stopped: boolean;           // at settlement / no route
   stopReason: 'none' | 'no_route' | 'settlement' | 'junction' | 'boss' | 'derailed';
   stopTimer: number;          // seconds stopped (stop pressure)
+  service?: { settlementId: string; repairing: boolean; repairTimer: number };
   stopPressure: number;       // 0..1
   reversing: boolean;         // backing down the traversed track
   locoUpgrades: LocoUpgrades; // engine upgrade tracks bought at yards (0..3 each)
@@ -187,6 +188,19 @@ export interface RouteState {
   planRange: number;               // hexes ahead allowed
   blocked: boolean;                // next tile void/impassable
   sapperCharges: Array<{ col: number; row: number; revealed: boolean; timer: number; id: string }>;
+  /** Opt-in authored rail encounters. Absent in older saves and ordinary worlds. */
+  encounters?: TrackEncounter[];
+}
+
+export interface TrackEncounter {
+  id: string;
+  edge: string;
+  from: [number, number];
+  to: [number, number];
+  status: 'blocked' | 'cleared';
+  attempts: number;
+  settledAttempt: number;
+  lastOutcome?: 'won' | 'lost' | 'fled';
 }
 
 // ---------- Enemies ----------
@@ -300,6 +314,7 @@ export interface ActiveEvent {
   defId: string;
   startedAt: number;
   locationId?: string;
+  trackEncounterId?: string;
   preparingExpedition?: boolean;
   arrival?: { passengers: number; crewName?: string };
   dialogue?: {
@@ -347,6 +362,7 @@ export interface ExpeditionActor { id: string; name: string; specialty: CrewSpec
 export interface ExpeditionFoe { id: string; kind: string; name: string; hp: number; maxHp: number; atk: number; speed: number; stunned: number; desc: string; range: 'melee' | 'ranged' }
 export interface ExpeditionState {
   siteId: string;
+  trackAttempt?: { encounterId: string; attempt: number };
   /** Return to the original location decision after withdrawal; serialized with the fight. */
   returnEvent?: ActiveEvent;
   summary?: string;

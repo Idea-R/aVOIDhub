@@ -141,8 +141,8 @@ export function createHoverCards(ui: UiShared, layout: { freeZone(): Rect }): Ho
     rows.push(row('Heat', `${Math.round(car.heat)}${car.onFire ? ' · ON FIRE' : car.heat >= 80 ? ' · damaging' : ''}`, car.onFire || car.heat >= 80 ? 'rv-danger-text' : ''));
     if (def.powerUse > 0) { const pr = Math.round((car.derived?.powerRatio ?? 1) * 100); rows.push(row('Power', `${pr}%${pr < 100 ? ' brownout' : ''}`, pr < 100 ? 'rv-danger-text' : '')); }
     else if (def.powerGen > 0) rows.push(row('Power', `generator +${def.powerGen + (lvl - 1)}`));
-    if (def.weapon && def.weapon.ammoPerShot > 0) rows.push(row('Ammo', car.derived?.hasAmmoSupply ? 'supplied' : 'NO SUPPLIER', car.derived?.hasAmmoSupply ? 'rv-good-text' : 'rv-danger-text'));
-    else if (def.ammoSupplier) rows.push(row('Ammo', 'supplier'));
+    if (def.weapon && def.weapon.ammoPerShot > 0) rows.push(row('Ammo', car.derived?.hasAmmoSupply ? 'shared stock' : 'OUT OF AMMO', car.derived?.hasAmmoSupply ? 'rv-good-text' : 'rv-danger-text'));
+    else if (def.type === 'foundry') rows.push(row('Ammo', 'produces shared stock'));
     if (car.boarders.length) rows.push(row('Boarders', `${car.boarders.length} aboard`, 'rv-danger-text'));
     if (def.passengerCap > 0) rows.push(row('Passengers', `${car.passengers} / ${def.passengerCap + (lvl - 1) * 4}`));
     const crew = car.crewId ? s.train.crew.find(c => c.id === car.crewId) : null;

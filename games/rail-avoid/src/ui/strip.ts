@@ -233,7 +233,7 @@ export function createStrip(ui: UiShared, hooks: StripHooks = {}): Strip {
     }
     if (def.weapon && def.weapon.ammoPerShot > 0) {
       const has = !!car.derived?.hasAmmoSupply;
-      parts.push(`<span class="rv-badge rv-ammo${has ? '' : ' rv-noammo'}" title="${has ? 'Connected to shared ammo stock' : 'No Cargo Hold, Foundry, or Armoured Cargo within 2 cars'}">${has ? 'SUPPLIED' : 'NO SUPPLY'}</span>`);
+      parts.push(`<span class="rv-badge rv-ammo${has ? '' : ' rv-noammo'}" title="${has ? 'Connected to shared ammo stock' : 'Not enough shared ammo for the next shot'}">${has ? 'AMMO READY' : 'OUT OF AMMO'}</span>`);
     }
     if (car.boarders.length > 0) parts.push(`<span class="rv-badge rv-boarders" title="${car.boarders.length} boarders inside">BOARDERS ${car.boarders.length}</span>`);
     if (car.onFire) parts.push('<span class="rv-badge rv-fireb" title="On fire">FIRE</span>');
@@ -274,7 +274,7 @@ export function createStrip(ui: UiShared, hooks: StripHooks = {}): Strip {
       if (ch.heatFill.style.background !== heatBg) ch.heatFill.style.background = heatBg;
       const html = badgesFor(car, i);
       if (ch.badges.innerHTML !== html) ch.badges.innerHTML = html;
-      const state = car.hp <= 0 ? 'Destroyed' : car.onFire ? 'Fire aboard' : car.boarders.length ? 'Boarded' : car.disabled ? 'Offline' : def.weapon && def.weapon.ammoPerShot > 0 && !car.derived?.hasAmmoSupply ? 'Needs supply' : (def.powerUse > 0 && (car.derived?.powerRatio ?? 1) < .999) ? 'Brownout' : 'Operational';
+      const state = car.hp <= 0 ? 'Destroyed' : car.onFire ? 'Fire aboard' : car.boarders.length ? 'Boarded' : car.disabled ? 'Offline' : def.weapon && def.weapon.ammoPerShot > 0 && !car.derived?.hasAmmoSupply ? 'Out of ammo' : (def.powerUse > 0 && (car.derived?.powerRatio ?? 1) < .999) ? 'Brownout' : 'Operational';
       setText(ch.state, state);
       if (crewMember && crewSpec) {
         ch.crew.hidden = false;

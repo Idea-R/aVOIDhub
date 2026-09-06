@@ -7,6 +7,8 @@ import { TRAIN } from '../core/config';
 import { levelOf, levelPips, levelEffect, hasUpgrades, carUpgradeCost, upgradeApi, MAX_LEVEL, ROMAN } from './levels';
 import { crewPortrait } from './crewArt';
 import { carArtFor } from './carArt';
+import { guardDamage } from '../core/guards';
+import { fieldRepairTarget } from '../sim/service';
 
 export interface Inspector { el: HTMLElement; update(s: SimState, force?: boolean): void; reset(): void }
 
@@ -63,7 +65,7 @@ export function createInspector(ui: UiShared): Inspector {
   interface Dyn {
     hpText: HTMLElement; hpFill: HTMLElement; heatText: HTMLElement; heatFill: HTMLElement;
     powerText: HTMLElement; ammoText: HTMLElement; paxText: HTMLElement | null; boardText: HTMLElement; statusText: HTMLElement;
-    heroStatus: HTMLElement;
+    heroStatus: HTMLElement; guardText: HTMLElement;
     repairBtn: HTMLButtonElement; sellBtn: HTMLButtonElement; leftBtn: HTMLButtonElement; rightBtn: HTMLButtonElement; detachBtn: HTMLButtonElement;
     crewHp: Array<{ id: string; el: HTMLElement }>;
   }
@@ -78,6 +80,7 @@ export function createInspector(ui: UiShared): Inspector {
     const def = CAR_DEFS[car.type];
     const sim = ui.sim();
     const canShop = !!sim && sim.canShop();
+    const canReorder = !!sim?.canReorder();
     const lvl = levelOf(car);
     titleEl.replaceChildren(def.name, levelPips(lvl, 'rv-insp-lvl'));
     setText(subEl, `Car ${String(i + 1).padStart(2, '0')} · ${def.short} · ${carRole(car)}`);
@@ -109,13 +112,15 @@ export function createInspector(ui: UiShared): Inspector {
       statusCell('Upgrade', el('span', { class: 'rv-insp-level', title: levelEffect(car.type) }, levelPips(lvl), el('span', { text: lvl >= MAX_LEVEL ? 'Maximum' : `Level ${ROMAN[lvl]}` }))),
     );
     const capabilityRows: HTMLElement[] = [];
+    const guardText = el('strong');
+    capabilityRows.push(el('div', { class: 'rv-insp-capability' }, el('span', { text: 'Emergency guard' }), guardText));
     const capability = (label: string, value: string) => capabilityRows.push(el('div', { class: 'rv-insp-capability' },
       el('span', { text: label }), el('strong', { text: value })));
     if (def.powerGen > 0) capability('Generation', `+${def.powerGen} power · ${TRAIN.powerRange}-car range`);
     if (def.heatGen > 0 || def.cooling > 0) capability('Thermal', `${def.heatGen > 0 ? `+${def.heatGen} heat/s active` : ''}${def.cooling > 0 ? ` −${def.cooling}/s cooling` : ''}`.trim());
     const storage = Object.entries(def.storage).filter(([, v]) => (v ?? 0) > 0);
     if (storage.length) capability('Storage', storage.map(([k, v]) => `+${v} ${k}`).join(' · '));
-    if (def.ammoSupplier) capability('Supply line', `Weapons within ${TRAIN.ammoRange} cars`);
+    if (def.type === 'foundry') capability('Production', '6 shared ammo / 1 scrap every 4s when powered');
     if (def.planRangeBonus || def.trackCostBonus) capability('Planning', `${def.planRangeBonus ? `+${def.planRangeBonus} range` : ''} ${def.trackCostBonus ? `${def.trackCostBonus} track cost` : ''}`.trim());
 
     const artSrc = carArtFor(car.type, lvl);
@@ -244,10 +249,10 @@ export function createInspector(ui: UiShared): Inspector {
     // footer actions
     const repairBtn = btn('Repair', () => {
       const simA = ui.sim(); if (!simA) return;
-      const ok = simA.repairCar(i);
+      const ok = simA.canShop() ? simA.repairCar(i) : simA.setFieldRepair(!simA.state.train.service?.repairing);
       ui.audio().ui(ok ? 'confirm' : 'error');
-      if (!ok) ui.notify('Cannot repair: need a yard and enough scrap.', 'warn');
-    }, { class: 'rv-small', aria: 'Repair this car' });
+      if (!ok) ui.notify('Need a staffed stop, scrap, and a hull below the repair limit.', 'warn');
+    }, { class: 'rv-small', aria: canShop ? 'Repair this car' : 'Toggle field repairs for the train (P)' });
     const sellBtn = btn('Sell', async () => {
       const simA = ui.sim(); if (!simA) return;
       if (await ui.confirm({ title: 'Sell car', text: `Sell the ${def.name}? Cargo and passengers aboard it are lost.`, yes: 'Sell', danger: true })) {
@@ -270,8 +275,8 @@ export function createInspector(ui: UiShared): Inspector {
     const isLoco = i === 0;
     repairBtn.disabled = !canShop;
     sellBtn.disabled = !canShop || isLoco;
-    leftBtn.disabled = !canShop || i <= 1;
-    rightBtn.disabled = !canShop || isLoco || i >= s.train.cars.length - 1;
+    leftBtn.disabled = !canReorder || i <= 1;
+    rightBtn.disabled = !canReorder || isLoco || i >= s.train.cars.length - 1;
     detachBtn.disabled = isLoco;
     const upgradeBtns: HTMLElement[] = [];
     if (canShop && !isLoco && hasUpgrades(sim)) {
@@ -288,9 +293,11 @@ export function createInspector(ui: UiShared): Inspector {
       upgradeBtns.push(up);
     }
     foot.replaceChildren(repairBtn, ...upgradeBtns, sellBtn, leftBtn, rightBtn, detachBtn, btn('Close', () => { ui.audio().ui('close'); ui.selectCar(-1); }, { class: 'rv-small', aria: 'Close inspector (T)' }));
-    if (!canShop) foot.appendChild(el('div', { class: 'rv-hint', text: 'Repair, sell and reorder are available at repair yards.' }));
+    if (!canShop) foot.appendChild(el('div', { class: 'rv-hint', text: canReorder
+      ? 'Reorder here. Field repairs (P) hold the train and mend the weakest cars to 80%; 1 scrap / 8 HP. The Void keeps moving. Depart with X.'
+      : 'Staffed stops: reorder and repair slowly to 80%. Yards: instant full repair, upgrades and trading.' }));
 
-    dyn = { hpText, hpFill, heatText, heatFill, powerText, ammoText, paxText, boardText, statusText, heroStatus, repairBtn, sellBtn, leftBtn, rightBtn, detachBtn, crewHp };
+    dyn = { hpText, hpFill, heatText, heatFill, powerText, ammoText, paxText, boardText, statusText, heroStatus, guardText, repairBtn, sellBtn, leftBtn, rightBtn, detachBtn, crewHp };
   }
 
   function updateDyn(s: SimState, i: number): void {
@@ -298,6 +305,7 @@ export function createInspector(ui: UiShared): Inspector {
     const car = s.train.cars[i];
     const def = CAR_DEFS[car.type];
     const hpR = car.maxHp > 0 ? car.hp / car.maxHp : 0;
+    setText(dyn.guardText, `${guardDamage(s, car)} damage / ${TRAIN.guardCooldown}s · short range · no ammo · ground & air, not wisps`);
     setText(dyn.hpText, `${Math.ceil(car.hp)} / ${car.maxHp}`);
     setWidth(dyn.hpFill, hpR * 100);
     dyn.hpFill.style.background = hpR < 0.3 ? 'var(--danger)' : hpR < 0.6 ? 'var(--gold)' : 'var(--good)';
@@ -310,10 +318,10 @@ export function createInspector(ui: UiShared): Inspector {
     if (def.weapon) {
       if (def.weapon.ammoPerShot > 0) {
         const has = !!car.derived?.hasAmmoSupply;
-        setText(dyn.ammoText, has ? `supplied (${Math.floor(s.train.resources.ammo)} in stores)` : 'NO SUPPLIER within 2 cars');
+        setText(dyn.ammoText, has ? `Shared stock: ${Math.floor(s.train.resources.ammo)}` : 'Out of ammo — replenish shared stock');
         dyn.ammoText.style.color = has ? 'var(--good)' : 'var(--danger)';
       } else { setText(dyn.ammoText, 'not needed'); dyn.ammoText.style.color = ''; }
-    } else { setText(dyn.ammoText, def.ammoSupplier ? 'supplier' : '—'); dyn.ammoText.style.color = ''; }
+    } else { setText(dyn.ammoText, def.type === 'foundry' ? 'produces shared ammo' : 'not needed'); dyn.ammoText.style.color = ''; }
     if (dyn.paxText) setText(dyn.paxText, `${car.passengers} / ${def.passengerCap}`);
     setText(dyn.boardText, car.boarders.length ? `${car.boarders.length} aboard!` : 'none');
     dyn.boardText.style.color = car.boarders.length ? 'var(--danger)' : '';
@@ -330,8 +338,10 @@ export function createInspector(ui: UiShared): Inspector {
     const sim = ui.sim();
     const canShop = !!sim && sim.canShop();
     const cost = repairCost(car);
-    setText(dyn.repairBtn, cost > 0 ? `Repair (${cost} scrap)` : 'Repair (full)');
-    dyn.repairBtn.disabled = !canShop || cost <= 0 || s.train.resources.scrap < 1;
+    const repairing = !!s.train.service?.repairing;
+    setText(dyn.repairBtn, canShop ? cost > 0 ? `Repair (${cost} scrap)` : 'Repair (full)' : repairing ? 'Stop field repairs (P)' : 'Field repair fleet (P)');
+    dyn.repairBtn.title = canShop ? 'Instant repair for this car' : 'Slowly repair the weakest cars to 80%; 1 scrap / 8 HP. World time continues.';
+    dyn.repairBtn.disabled = canShop ? cost <= 0 || s.train.resources.scrap < 1 : !sim?.canService() || (!repairing && (!fieldRepairTarget(s) || s.train.resources.scrap <= 0));
     for (const c of dyn.crewHp) {
       const crew = s.train.crew.find(x => x.id === c.id);
       if (crew) setText(c.el, `${Math.round(crew.hp)} hp · ${WHERE(crew, s)}`);
@@ -344,7 +354,7 @@ export function createInspector(ui: UiShared): Inspector {
     const car = s.train.cars[i];
     const sim = ui.sim();
     const canShop = !!sim && sim.canShop();
-    const sig = [i, car.id, car.type, car.crewId ?? '', s.train.crew.map(c => `${c.id}:${c.carIndex}`).join(','), canShop ? 1 : 0, s.train.cars.length, levelOf(car), canShop ? Math.floor(s.train.resources.scrap) : 0].join('|');
+    const sig = [i, car.id, car.type, car.crewId ?? '', s.train.crew.map(c => `${c.id}:${c.carIndex}`).join(','), canShop ? 1 : 0, sim?.canReorder(), s.train.cars.length, levelOf(car), canShop ? Math.floor(s.train.resources.scrap) : 0].join('|');
     if (sig !== structSig) { structSig = sig; build(s, i); force = true; }
     const now = performance.now();
     if (!force && now - lastDyn < 200) return;

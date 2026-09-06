@@ -3,7 +3,7 @@ import type { SimState, CarType, Tile, Settlement, CarDef, EnemyDef, ResourceKey
 import type { EventBus } from '../core/events';
 import type { SimApi, SimContext, PlanResult } from './api';
 import { Rng, hashSeed } from '../core/rng';
-import { SIM_DT, MAP_W, MAP_H, REGION_W, REGION_NAMES, EVENTS, SCORE, SAVE_VERSION, HEX_R } from '../core/config';
+import { TRAIN, SIM_DT, MAP_W, MAP_H, REGION_W, REGION_NAMES, EVENTS, SCORE, SAVE_VERSION, HEX_R } from '../core/config';
 import { CAR_DEFS } from '../core/cars';
 import { ENEMY_DEFS } from '../core/enemies';
 import { hexToWorld, tileKey } from '../core/hex';
@@ -13,6 +13,7 @@ import { planRange, plannableTiles, previewPlan, planTile, unplanLast, clearPlan
 import { initWeather, initVoid, updateWeather, updateDayNight, updateVoid, voidDistance } from './weather';
 import { updateEvents, chooseEventOption } from './simEvents';
 import { cancelExpeditionPreparation } from './conversations';
+import { inspectTrackEncounter, placeTrackAmbush } from './trackEncounters';
 import { onArrive, updateStop, depart, buyCar, sellCar, repairCar, repairAll, closeShop, canShop, upgradeCar, upgradeCost, upgradeLoco, locoUpgradeCost } from './settlements';
 import { updateCombat, onTrainEnterTile, clearEnemies } from './combat';
 import { initDirector, updateDirector, spawnWave } from './waves';
@@ -23,6 +24,7 @@ import { startExpedition, expeditionAction, expeditionResolve, advanceExpedition
 import { LOOT } from '../core/config';
 import { tileAt, log, recomputeCapacity, locoPos, addResource, makeCar } from './helpers';
 import { neighbors } from '../core/hex';
+import { canService, canReorder, setServiceHold, setFieldRepair, serviceSite } from './service';
 
 import { killHooks } from './helpers';
 import { dropLoot } from './loot';
@@ -48,7 +50,7 @@ const TUTORIAL: string[] = [
   'Enemies inbound! Turrets fire on their own. Watch AMMO supply and HEAT on the train strip below.',
   'CREW READY means a specialist is waiting. Click that ticket or any car, then use Crew Slot to post them. Their bonus starts immediately.',
   'Boarders on the train! Barracks and flamethrowers clear adjacent cars. Press D to detach the rear car in an emergency.',
-  'At a repair yard, repair before expanding. Power reaches 3 cars, ammo suppliers reach 2, and heat spreads to neighbours.',
+  'Staffed stops let you reorder cars and repair slowly to 80%. Yards offer full repairs and upgrades. Power reaches 3 cars; ammo is shared everywhere.',
   'Junction: click the branch you want to follow. Branches lead to resources — and ambushes.',
   'New region: armoured crawlers resist bullets; cannons and tesla coils crack them. Sappers mine your planned track — a Scout Car reveals them.',
   'The Void Frontier: wisps and the Void Maw ignore bullets and shells. Only Tesla coils and flamethrowers hurt them — and they need full power.',
@@ -276,7 +278,16 @@ export class Sim implements SimApi {
   reverse(on: boolean): void { if (on) startReversing(this.ctx); else stopReversing(this.ctx); this.bus.flush(); }
   isReversing(): boolean { return !!this.state.train.reversing; }
   detachFrom(carIndex: number): boolean { const r = detachFrom(this.ctx, carIndex); this.bus.flush(); return r; }
-  moveCar(from: number, to: number): boolean { if (!canShop(this.ctx)) return false; const r = moveCar(this.ctx, from, to); this.bus.flush(); return r; }
+  moveCar(from: number, to: number): boolean {
+    if (!canReorder(this.ctx)) return false;
+    const r = moveCar(this.ctx, from, to);
+    if (r && !canShop(this.ctx)) setServiceHold(this.ctx, true);
+    this.bus.flush(); return r;
+  }
+  canService(): boolean { return canService(this.ctx); }
+  canReorder(): boolean { return canReorder(this.ctx); }
+  setServiceHold(on: boolean): boolean { const r = setServiceHold(this.ctx, on); this.bus.flush(); return r; }
+  setFieldRepair(on: boolean): boolean { const r = setFieldRepair(this.ctx, on); this.bus.flush(); return r; }
   buyCar(type: CarType, insertAt?: number): boolean { const r = buyCar(this.ctx, type, insertAt); this.bus.flush(); return r; }
   sellCar(carIndex: number): boolean { const r = sellCar(this.ctx, carIndex); this.bus.flush(); return r; }
   repairCar(carIndex: number): boolean { const r = repairCar(this.ctx, carIndex); this.bus.flush(); return r; }
@@ -291,11 +302,12 @@ export class Sim implements SimApi {
 
   chooseEventOption(index: number, expectedStep?: string): boolean { const r = chooseEventOption(this.ctx, index, expectedStep); this.bus.flush(); return r; }
   cancelExpeditionPreparation(): boolean { const r = cancelExpeditionPreparation(this.ctx); this.bus.flush(); return r; }
+  inspectTrackEncounter(): boolean { const r = inspectTrackEncounter(this.ctx); this.bus.flush(); return r; }
   chooseRelic(index: number): boolean { const r = chooseRelic(this.ctx, index); this.bus.flush(); return r; }
   startExpedition(crewIds: string[]): boolean {
     const s = this.state;
     const site = s.settlements.find(x => x.id === s.activeEvent?.locationId) ?? s.settlements.find(x => x.type === 'site' && s.route.path[s.train.routeIndex] && x.col === s.route.path[s.train.routeIndex][0] && x.row === s.route.path[s.train.routeIndex][1]);
-    const r = startExpedition(this.ctx, crewIds, site ? site.name : 'the ruins');
+    const r = startExpedition(this.ctx, crewIds, s.activeEvent?.trackEncounterId ? 'The Barricade' : site ? site.name : 'the ruins');
     this.bus.flush(); return r;
   }
   expeditionAction(kind: ExpeditionActionKind, targetFoe?: number, swapActorIndex?: number): boolean { const r = expeditionAction(this.ctx, kind, targetFoe, swapActorIndex); this.bus.flush(); return r; }
@@ -335,6 +347,8 @@ export class Sim implements SimApi {
       st.storyFlags ??= [];
       this.state = st;
       this.ctx.state = st;
+      if (st.train.service && serviceSite(st)?.id !== st.train.service.settlementId) st.train.service = undefined;
+      if (st.train.service) st.train.service.repairTimer = Math.max(0, Math.min(TRAIN.fieldRepairInterval, Number(st.train.service.repairTimer) || 0));
       if (st.train.reversing === undefined) st.train.reversing = false;
       if (!st.train.locoUpgrades) st.train.locoUpgrades = { speed: 0, power: 0, frame: 0, crew: 0 };
       if (st.train.watchUntil === undefined) st.train.watchUntil = 0;
@@ -388,6 +402,9 @@ export class Sim implements SimApi {
 
   // ---------- debug ----------
   debug = {
+    placeTrackAmbush: (from: [number, number], to: [number, number]): string | null => {
+      const encounter = placeTrackAmbush(this.ctx, from, to); this.bus.flush(); return encounter?.id ?? null;
+    },
     warpToRegion: (region: number) => {
       const s = this.state;
       region = Math.max(0, Math.min(3, Math.floor(region)));

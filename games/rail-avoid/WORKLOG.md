@@ -1,5 +1,20 @@
 # Worklog
 
+## 2026-09-05 — Continue shortcuts and two-person RPG dialogue (local)
+
+- Added visible C shortcuts for descent, results, prepared-team start, keeper receipt and pause resume. Preserved native focused Enter/Space, safe Escape, numeric selection and S/G/E/W/F combat commands. Modified/repeated keys do not fire shortcuts; number selection cannot leak into world speed when a modal closes. Added the convention to Controls.
+- Rebuilt crossroads presentation as fixed Conductor-left/Mara-right upper-body figures with labelled dialogue boxes below and anchored options. Kept dialogue, costs, preparation/cancel, rewards and save behavior intact. Accepted a task-scoped native-alpha GPT Image 1.5 NPC portrait after proper light/dark compositing. Image previews exposed hidden RGB and caused two unnecessary alternatives; corrected the alpha-validation heuristic rather than keying any background out. Only original V1 is used. Raw alternative V2/V3 and the older unaccepted frame remain untouched, outside the committed runtime set.
+- Inventoried the actual content: eight defined/art-backed expedition enemies, six used normally, three battle scenes, four regional sequences of one shared expedition family, three live entrance paths. Crew has no XP/level fields or award system. [Follow-up charter](docs/sprint-07/RPG-DIALOGUE-AND-PROGRESSION.md) separates persisted encounter profiles/objectives, XP reward/migration contracts and future crew relics/synergies.
+- Verification: 89 unit tests pass (one optional skipped); typecheck/build; five-size shortcut flow, 25-state conversation/save/return, seven-size expedition cards and offline build checks pass. Screenshots recorded, Mara native alpha checked; new decoded art cost ~1.10 MiB. Software-rendered functional checks are not real-GPU or gameplay-balance evidence. No production deployment or new enemy/progression mechanics in this pass.
+
+## 2026-09-05 — Live release and the first blocked-track slice
+
+- Published PR #62 from candidate `994f45a` to main `16d2fbf`; Netlify deploy `6a9cb816a256f200088a7a3e` confirmed published for that commit. Whole-site preview and live smoke passed seven routes/25 assets with exact Rail bundle hashes. Preview and production each passed combat (23 samples) and conversation/save/return (25 samples). Four-size real-rail junction preview passed; shared release CI `34001925334` passed. [Release evidence](docs/sprint-07/RELEASE.md). Previous deploy retained for rollback; separate platform PR #61 untouched.
+- Started `codex/railavoid-blocked-track` from production. Added an opt-in saved physical-edge encounter, movement interception, explicit free preparation/cancel/leave, wound-preserving retry and once-only attempt/reward settlement. Existing two-stage Greenbelt foes/art are temporary lifecycle fixtures; no new miniboss, frequency or art claims.
+- 89 unit tests passed (one optional skipped), TypeScript and build passed. New browser flow passes 16 checkpoints at four viewport sizes with no errors; the existing seven-viewport expedition-card regression also passes. Found/fixed the illustrated event's phone two-column overflow and short-screen party controls; the crew roster scrolls independently of Start/Cancel. Full campaign/offline rebuild are still required before releasing this new slice. See [charter and evidence](docs/sprint-07/BLOCKED-TRACK.md).
+- User asked about Blender carts. Read the actual pilot report/source: locomotive/cargo/coach are built and opt-in-integrated only in `C:/dev/aVOID`, not this release checkout or live. No files were silently ported. Recorded the required measured integration step in ROADMAP.
+- Next: finish ordinary-party miniboss/tell/counter fixtures before world spawning. The current new slice remains local-only. Live remains the verified PR #62 milestone.
+
 ## 2026-09-05 — Readable combat and deliberate formation (local)
 
 - Continued the user's next milestone in `C:/dev/aVOID-railavoid-release/games/rail-avoid`, preserving the dirty worktree. Bounded charter: `docs/sprint-07/READABLE-COMBAT.md`. No new goal, branch, commit, push, deployment, paid generation or Blender replacement.
