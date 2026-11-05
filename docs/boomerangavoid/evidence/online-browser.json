@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-11-05T01:36:49.332Z",
+  "case": "two-browser-online-journey",
+  "endpoint": "loopback",
+  "refreshRestoredSameSeats": true,
+  "matchWinner": [
+    "7qViOReLK:0"
+  ],
+  "rounds": 3,
+  "rematchLobby": true,
+  "errors": [],
+  "renderer": "Chrome headless SwiftShader; no hardware performance claim"
+}

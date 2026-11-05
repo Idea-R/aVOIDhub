@@ -1,0 +1,30 @@
+name: BoomerangaVOID local release candidate
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/boomerangavoid-release.yml'
+      - 'games/boomerang-avoid/**'
+      - 'packages/boomerangavoid-*/**'
+      - 'apps/boomerangavoid-server/**'
+      - 'apps/platform/**'
+      - 'tools/verify-boomerangavoid-release.mjs'
+      - 'package*.json'
+      - 'netlify.toml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: boomerangavoid-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  local-candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run verify:boomerangavoid:release

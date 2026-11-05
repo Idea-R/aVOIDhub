@@ -1,0 +1,20 @@
+# Review-only proposal. No service has been created.
+services:
+  - type: web
+    name: boomerangavoid-rooms
+    runtime: docker
+    plan: 0.5c-512mb
+    region: oregon
+    dockerfilePath: ./apps/boomerangavoid-server/Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: BAV_BIND
+        value: 0.0.0.0
+      - key: BAV_REGION
+        value: US West
+      - key: BAV_ALLOWED_ORIGINS
+        value: https://avoidgame.io
+      - key: BOOMERANGAVOID_TICKET_AUDIENCE
+        value: boomerangavoid
+      - key: BOOMERANGAVOID_TICKET_SECRET
+        sync: false

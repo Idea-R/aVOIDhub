@@ -23,6 +23,7 @@ const expectedIds = [
   "flipside",
   "tankavoid",
   "railavoid",
+  "boomerangavoid",
   "bloomfall",
   "acrolis",
   "ttt3d",
@@ -35,7 +36,7 @@ function assert(condition, message) {
 assert(Array.isArray(allGames), "allGames must be an array");
 assert(
   allGames.length === expectedIds.length,
-  "catalog must contain exactly nine V1 titles",
+  "catalog must contain exactly ten catalog titles",
 );
 assert(
   JSON.stringify(allGames.map((game) => game.id)) ===
@@ -138,5 +139,7 @@ assert(
 );
 
 console.log(
-  "Game catalog contract verified: 9 titles, 9 details, 8 play destinations, 1 honest coming-soon state.",
+  "Game catalog contract verified: 10 titles, 10 details, staged BoomerangaVOID and preserved existing destinations.",
 );
+
+const boomerang=getGameById("boomerangavoid");assert(boomerang.status==="soon"&&!boomerang.playHref&&boomerang.score.scope==="none","BoomerangaVOID must stay in development with no unverified ranking or public launch");

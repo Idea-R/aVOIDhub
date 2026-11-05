@@ -1,0 +1,10 @@
+**/node_modules
+**/.next
+**/out
+**/.env*
+.git
+.netlify
+logs
+assets-src
+dist
+**/verify/raw

@@ -1,0 +1,28 @@
+{
+  "name": "@avoid/boomerang-avoid",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview --host 127.0.0.1",
+    "verify": "node verify/online-journey.mjs && node verify/touch-and-couch.mjs",
+    "verify:replay": "node --import tsx verify/replay.mjs",
+    "verify:party": "node verify/mixed-party.mjs"
+  },
+  "dependencies": {
+    "@avoid/boomerangavoid-protocol": "0.1.0",
+    "@avoid/boomerangavoid-sim": "0.1.0",
+    "@colyseus/sdk": "0.18.9",
+    "@fontsource-variable/dm-sans": "5.3.0",
+    "@fontsource-variable/outfit": "5.3.0",
+    "three": "0.187.0"
+  },
+  "devDependencies": {
+    "@types/three": "0.183.1",
+    "playwright": "1.64.1",
+    "vite": "8.3.5"
+  }
+}

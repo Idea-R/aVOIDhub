@@ -1,0 +1,9 @@
+# Names and examples only. No deploy credentials have been created.
+NODE_ENV=production
+PORT=2777
+BAV_BIND=0.0.0.0
+BAV_REGION=choose-approved-region
+BAV_MAX_ROOMS=20
+BAV_ALLOWED_ORIGINS=https://avoidgame.io
+BOOMERANGAVOID_TICKET_AUDIENCE=boomerangavoid
+BOOMERANGAVOID_TICKET_SECRET=configure-approved-minimum-32-character-secret-in-both-server-and-platform

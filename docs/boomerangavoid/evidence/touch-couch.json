@@ -1,0 +1,37 @@
+{
+  "timestamp": "2026-11-05T01:31:30.369Z",
+  "touch": {
+    "simultaneousMoveDash": true,
+    "travel": 3.3171059431524546,
+    "portraitBounds": [
+      {
+        "x": 245,
+        "y": 766,
+        "w": 58,
+        "h": 58,
+        "inside": true
+      },
+      {
+        "x": 310,
+        "y": 693,
+        "w": 66,
+        "h": 58,
+        "inside": true
+      },
+      {
+        "x": 310,
+        "y": 758,
+        "w": 66,
+        "h": 66,
+        "inside": true
+      }
+    ],
+    "landscapeNoOverflow": true
+  },
+  "couch": {
+    "seats": 6,
+    "started": true
+  },
+  "errors": [],
+  "scope": "Headless Chrome and emulated touch; full couch match/rematch, physical controller/mobile performance remain separate gates"
+}

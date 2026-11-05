@@ -7,6 +7,7 @@ const repositoryRoot = path.resolve(scriptDirectory, '../../..')
 const publicRoot = path.join(repositoryRoot, 'apps', 'platform', 'public')
 
 const games = [
+  {name:'BoomerangaVOID', source:path.join(repositoryRoot,'dist','BoomerangaVOID'), target:path.join(publicRoot,'BoomerangaVOID')},
   {
     name: 'VOIDaVOID',
     source: path.join(repositoryRoot, 'dist', 'VOIDaVOID'),

@@ -90,3 +90,12 @@ PRD/
 scripts/
 !apps/platform/scripts/
 !apps/platform/scripts/prepare-games.mjs
+
+# BoomerangaVOID build and local QA artifacts
+dist/BoomerangaVOID/
+apps/platform/public/BoomerangaVOID/
+games/boomerang-avoid/verify/raw/
+
+# Blender recovery copies stay local; the editable master is committed.
+*.blend1
+*.blend2

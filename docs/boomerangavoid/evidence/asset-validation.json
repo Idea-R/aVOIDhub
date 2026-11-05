@@ -1,0 +1,121 @@
+{
+  "assets": [
+    {
+      "id": "pip",
+      "clips": [
+        "idle",
+        "run",
+        "stop_turn",
+        "dash",
+        "slash",
+        "throw",
+        "recall_strain",
+        "catch",
+        "hit",
+        "elimination",
+        "victory",
+        "spawn"
+      ],
+      "height": 1.309500053524971,
+      "animationMovedBody": true
+    },
+    {
+      "id": "kiln",
+      "clips": [
+        "idle",
+        "run",
+        "stop_turn",
+        "dash",
+        "slash",
+        "throw",
+        "recall_strain",
+        "catch",
+        "hit",
+        "elimination",
+        "victory",
+        "spawn"
+      ],
+      "height": 1.0590952187776566,
+      "animationMovedBody": true
+    },
+    {
+      "id": "volt",
+      "clips": [
+        "idle",
+        "run",
+        "stop_turn",
+        "dash",
+        "slash",
+        "throw",
+        "recall_strain",
+        "catch",
+        "hit",
+        "elimination",
+        "victory",
+        "spawn"
+      ],
+      "height": 1.2935000211000443,
+      "animationMovedBody": true
+    },
+    {
+      "id": "nori",
+      "clips": [
+        "idle",
+        "run",
+        "stop_turn",
+        "dash",
+        "slash",
+        "throw",
+        "recall_strain",
+        "catch",
+        "hit",
+        "elimination",
+        "victory",
+        "spawn"
+      ],
+      "height": 1.2885000258684158,
+      "animationMovedBody": true
+    },
+    {
+      "id": "cairn",
+      "clips": [
+        "idle",
+        "run",
+        "stop_turn",
+        "dash",
+        "slash",
+        "throw",
+        "recall_strain",
+        "catch",
+        "hit",
+        "elimination",
+        "victory",
+        "spawn"
+      ],
+      "height": 1.2835000306367874,
+      "animationMovedBody": true
+    },
+    {
+      "id": "comet",
+      "clips": [
+        "idle",
+        "run",
+        "stop_turn",
+        "dash",
+        "slash",
+        "throw",
+        "recall_strain",
+        "catch",
+        "hit",
+        "elimination",
+        "victory",
+        "spawn"
+      ],
+      "height": 1.0834999829530716,
+      "animationMovedBody": true
+    }
+  ],
+  "drawCalls": 85,
+  "triangles": 8180,
+  "renderer": "Chrome headless SwiftShader; visual/export validation only"
+}
