@@ -91,6 +91,8 @@ try {
   await denied(actor(user(3), "select public.platform_team_action('create', p_name => 'forged', p_owner_id => '" + user(1) + "')"), '42883', 'RPC cannot accept a forged owner parameter');
   await denied(actor(user(1), call('publish')), 'PT400', 'unsupported publishing action denied');
   await denied(actor(user(1), call('create', "p_name => 'x'")), 'PT400', 'invalid team name denied');
+  await denied(actor(user(1), call('create', "p_name => E'Invalid\\nteam'")), 'PT400', 'control characters in team name denied by direct RPC');
+  await denied(actor(user(1), call('create', "p_name => U&'Invalid\\0085team'")), 'PT400', 'C1 control characters in team name denied by direct RPC');
   const team = JSON.parse(await asUser(1, call('create', "p_name => 'Owner team'"))).teamId;
   check(await sql(`select notes = '' and notes_revision = 0 from public.platform_teams where id = '${team}'`) === 't', 'team brief starts empty at revision zero');
   await denied(actor(user(3), call('save-notes', `p_team_id => '${team}', p_notes => 'forged edit', p_expected_revision => 0`)), 'PT404', 'unrelated user cannot edit private team brief');

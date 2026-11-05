@@ -83,7 +83,8 @@ begin
   -- Serializes membership/ownership limits for this user, including cross-team accepts.
   perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended(v_actor::text, 615221));
   if p_action = 'create' then
-    if p_name is null or char_length(btrim(p_name)) not between 2 and 80 then
+    if p_name is null or char_length(btrim(p_name)) not between 2 and 80
+      or p_name ~ U&'[\0001-\001F\007F-\009F]' then
       raise exception using errcode = 'PT400', message = 'invalid_team_name';
     end if;
     if (select count(*) from public.platform_teams where owner_id = v_actor) >= 5

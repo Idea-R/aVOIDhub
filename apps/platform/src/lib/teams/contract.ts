@@ -3,8 +3,8 @@ import type { TeamDatabaseRows } from './schema.generated'
 
 const teamId = z.uuid()
 export const teamActionSchema = z.discriminatedUnion('action', [
-  z.object({ action: z.literal('create'), name: z.string().trim().min(2).max(80) }).strict(),
-  z.object({ action: z.literal('invite'), teamId, email: z.email().trim().max(254).transform(value => value.toLowerCase()) }).strict(),
+  z.object({ action: z.literal('create'), name: z.string().trim().min(2).max(80).refine(value => !/[\u0000-\u001f\u007f-\u009f]/.test(value)) }).strict(),
+  z.object({ action: z.literal('invite'), teamId, email: z.string().trim().max(254).pipe(z.email()).transform(value => value.toLowerCase()) }).strict(),
   z.object({ action: z.literal('revoke'), teamId, invitationId: z.uuid() }).strict(),
   z.object({ action: z.literal('accept'), token: z.string().regex(/^[A-Za-z0-9_-]{43}$/) }).strict(),
   z.object({ action: z.literal('remove'), teamId, memberId: z.uuid() }).strict(),

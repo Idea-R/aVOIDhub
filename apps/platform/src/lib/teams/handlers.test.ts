@@ -44,6 +44,9 @@ describe('team HTTP authority and privacy', () => {
     { action: 'invite', teamId, email: 'recipient@example.com', role: 'owner' },
     { action: 'publish', teamId },
     { action: 'create', name: 'a'.repeat(81) },
+    { action: 'create', name: 'Invalid\0team' },
+    { action: 'create', name: 'Invalid\nteam' },
+    { action: 'create', name: 'Invalid\u0085team' },
     { action: 'accept', token: 'bad' },
     { action: 'remove', teamId: 'bad', memberId: teamId },
     { action: 'save-notes', teamId, notes: 'a'.repeat(2001), expectedRevision: 0 },
@@ -90,6 +93,13 @@ describe('team HTTP authority and privacy', () => {
     expect(result.token).toMatch(/^[A-Za-z0-9_-]{43}$/)
     expect(Buffer.from(result.token, 'base64url')).toHaveLength(32)
     expect(ctx.rpc).toHaveBeenCalledExactlyOnceWith('platform_team_action', { p_action: 'invite', p_team_id: teamId, p_email: 'recipient@example.com', p_token_hash: hashToken(result.token) })
+    privateResponse(response)
+  })
+  it('normalizes surrounding email whitespace before validating an invitation', async () => {
+    const ctx = setup()
+    const response = await ctx.POST(request({ action: 'invite', teamId, email: '  Recipient@example.com  ' }))
+    expect(response.status).toBe(201)
+    expect(ctx.rpc.mock.calls[0][1].p_email).toBe('recipient@example.com')
     privateResponse(response)
   })
   it('hashes acceptance tokens without forwarding a submitted actor', async () => {

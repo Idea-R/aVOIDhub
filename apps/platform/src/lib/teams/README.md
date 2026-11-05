@@ -39,7 +39,7 @@ Every route response carries `Cache-Control: private, no-store`,
 origin_not_allowed; 404 team_or_invitation_unavailable; 409 team_action_conflict;
 413 body_too_large; 503 teams_unavailable. Unsupported methods return 405.
 
-Names have 2–80 trimmed characters, addresses at most 254 characters. Limits:
+Names have 2-80 trimmed characters and exclude control characters; addresses are trimmed and normalized before validation, at most 254 characters. Limits:
 five owned teams, twenty memberships per user, twenty members per team, twenty
 pending invitations per team, one hundred invitation creations per team per
 24 hours. Invites expire after seven days. Owners alone invite, revoke and
@@ -70,6 +70,9 @@ This migration remains unapplied to hosted databases. Rollout requires parent
 review, an inventory confirming these new names/signatures do not collide and
 the existing foundation grants remain compatible, then an explicitly authorized
 migration followed by API/UI deployment and real cookie-session smoke checks.
+The checked-in historical SQL, foundation and teams also pass a native rehearsal
+against an explicit synthetic legacy contract; see `docs/foundation-local-rehearsal.md`.
+This does not recover the missing hosted history or certify real Auth/PostgREST.
 Do not enable the UI against a database missing these functions. If recovery is
 needed, disable the team UI/API while retaining the additive tables and data;
 do not drop tables or undo unrelated grants. No provider, email or billing setup
