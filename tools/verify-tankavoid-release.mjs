@@ -25,7 +25,9 @@ run(["run", "test", "--workspace=@avoid/platform"]);
 run(["run", "typecheck", "--workspace=@avoid/platform"]);
 run(["run", "test:catalog", "--workspace=@avoid/platform"]);
 run(["run", "test:foundation"]);
+execFileSync(process.execPath, ["--test", "apps/platform/scripts/game-onboarding.node-test.mjs"], { cwd: repositoryRoot, stdio: "inherit" });
 run(["run", "build:platform:netlify"]);
+execFileSync(process.execPath, ["tools/verify-platform-efficiency.mjs"], { cwd: repositoryRoot, stdio: "inherit" });
 
 const reviewRoot = path.join(
   repositoryRoot,

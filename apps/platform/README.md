@@ -26,9 +26,13 @@ npm run build:platform
 
 The catalog lives in `src/data/games.ts`. TankaVOID must remain `soon` until a verified playable deployment exists.
 
+Build and staging share `game-build-manifest.json`. Follow [game onboarding](../../docs/game-onboarding.md) to add a title without changing the current release boundaries.
+
+Public game details, leaderboards and sign-in shells are prerendered. Public scores and private personal bests use separate requests and cache policies. Teams provide private invitations and a revisioned shared brief; their additive schema is prepared, not applied to hosted storage. See [optimization and rollout evidence](../../docs/site-optimization.md).
+
 ## Deployment boundary
 
-The root Netlify configuration builds this app and stages the three supported Vite games into the Next.js output. Draft PR #1 is the release-candidate path; production remains on the preserved legacy deploy until rollout is explicitly approved.
+The root Netlify configuration builds this app and stages the manifest's five Vite builds into the Next.js output, including TankaVOID's held review build. Public friendly routes and catalog Play actions retain their release gates. Changes to production still require the established review and rollout approval.
 
 ## AdSense boundary
 
