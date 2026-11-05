@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "games": [
+    { "id": "voidavoid", "name": "VOIDaVOID", "workspace": "@avoid/void-main", "source": "dist/VOIDaVOID", "publicDirectory": "VOIDaVOID", "playRoute": "/voidavoid/" },
+    { "id": "wreckavoid", "name": "WreckaVOID", "workspace": "@avoid/wrecka-void", "source": "games/wrecka-void/dist", "publicDirectory": "WreckaVOID", "playRoute": "/wreckavoid/" },
+    { "id": "wordavoid", "name": "WORDaVOID", "workspace": "@avoid/word-avoid", "source": "dist/WORDaVOID", "publicDirectory": "WORDaVOID", "playRoute": "/wordavoid/" },
+    { "id": "tankavoid", "name": "TankaVOID review build", "workspace": "@avoid/tanka-void", "source": "dist/TankaVOID", "publicDirectory": "TankaVOID", "playRoute": null },
+    { "id": "railavoid", "name": "RAILaVOID", "workspace": "@avoid/rail-avoid", "source": "dist/RAILaVOID", "publicDirectory": "RAILaVOID", "playRoute": "/railavoid/" }
+  ]
+}
