@@ -1,38 +1,37 @@
 import 'server-only'
 
+import { createHash } from 'node:crypto'
 import type { User } from '@supabase/supabase-js'
 import { createAdminClient } from '@/lib/supabase/admin'
 
-function profileName(user: User): string {
-  const metadataName = typeof user.user_metadata?.display_name === 'string'
-    ? user.user_metadata.display_name.trim()
-    : ''
-  const emailName = user.email?.split('@')[0]?.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 24)
-  return metadataName.slice(0, 40) || emailName || `player-${user.id.slice(0, 6)}`
-}
-
 export async function ensureUserProfile(user: User) {
   const admin = createAdminClient()
-  const { data: existing, error: readError } = await admin
+  const read = () => admin
     .from('user_profiles')
     .select('id, username')
     .eq('id', user.id)
     .maybeSingle()
 
+  const { data: existing, error: readError } = await read()
   if (readError) throw readError
   if (existing) return existing
 
-  const { data, error } = await admin
-    .from('user_profiles')
-    .insert({
-      id: user.id,
-      username: profileName(user),
-    })
-    .select('id, username')
-    .single()
-
-  if (error) throw error
-  return data
+  // Match the foundation trigger's bounded, non-email handle convention. The
+  // hash is a presentation identifier, never a credential or authority claim.
+  for (let attempt = 0; attempt < 16; attempt++) {
+    const username = `player-${createHash('md5').update(`${user.id.toLowerCase()}:${attempt}`).digest('hex').slice(0, 17)}`
+    const { data, error } = await admin.from('user_profiles')
+      .insert({ id: user.id, username, is_public: false })
+      .select('id, username').single()
+    if (!error) return data
+    if (error.code !== '23505') throw error
+    // A trigger or another request may have created this user's profile. Never
+    // overwrite it or reset their later privacy choice while resolving a race.
+    const current = await read()
+    if (current.error) throw current.error
+    if (current.data) return current.data
+  }
+  throw new Error('profile_creation_conflict')
 }
 
 export async function hasEntitlement(userId: string, entitlementKey: string): Promise<boolean> {
