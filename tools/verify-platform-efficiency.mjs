@@ -31,6 +31,16 @@ await verifyChunks(path.join(repo, 'apps/platform/.next/static/chunks'))
 assert.ok(chunks > 0, 'Production JavaScript must exist before fixture-exclusion verification')
 console.log(`PASS no local fixture controls in ${chunks} production JavaScript chunks.`)
 
+const routing = JSON.parse(await readFile(path.join(repo, 'apps/platform/.next/routes-manifest.json'), 'utf8'))
+for (const route of ['/auth/callback', '/teams', '/api/teams']) {
+  let policy
+  for (const rule of routing.headers) if (new RegExp(rule.regex).test(route)) {
+    for (const header of rule.headers) if (header.key.toLowerCase() === 'referrer-policy') policy = header.value
+  }
+  assert.equal(policy, 'no-referrer', `${route} must not inherit the public referrer policy at the hosting adapter`)
+}
+console.log('PASS private auth/team referrer rules in the built routing manifest.')
+
 if (process.argv[2]) {
   const origin = new URL(process.argv[2])
   assert.ok(origin.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(origin.hostname) && origin.pathname === '/', 'HTTP verification is loopback-only')

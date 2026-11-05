@@ -41,6 +41,8 @@ The candidate integrates the focused Google application code from BoomerangaVOID
 
 Authentication callbacks stay on the same approved deployment origin: `https://avoidgame.io` or this Netlify site's numbered HTTPS previews. Arbitrary hosts, malformed canonical configuration and production/preview mismatches fail before session exchange. HTTP loopback is allowed only in development/test context. Return paths reject control characters, encoded separator tricks and login/callback loops; error redirects preserve only a safe local destination. Callback responses are private/no-store and no-referrer.
 
+A read-only preview cancellation check exposed the global Next header rule overriding the handler's referrer policy at the hosting adapter. Scoped auth/team header rules now follow the public default, and the built routing-manifest verifier checks their final precedence. Hosted verification must inspect the actual response, not just a directly invoked handler's unit test.
+
 Local mocked tests and browser fixtures cover handler behavior, provider-disabled/error states, email preservation, interrupted-return recovery and no eager requests. At 320px, the tested sign-in controls did not overflow. All fixture auth is synthetic and loopback-only; no Google consent or email was sent.
 
 ## Remaining hosted prerequisites

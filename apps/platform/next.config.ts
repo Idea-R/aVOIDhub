@@ -29,6 +29,13 @@ const nextConfig: NextConfig = {
                 },
               ],
             },
+            // The hosting adapter applies these rules too. Keep them after the
+            // public default so callback URLs and private team navigation never
+            // inherit its less restrictive same-origin referrer behavior.
+            ...['/auth/:path*', '/teams/:path*', '/api/teams/:path*'].map(source => ({
+              source,
+              headers: [{ key: 'Referrer-Policy', value: 'no-referrer' }],
+            })),
           ]
         },
       }),
