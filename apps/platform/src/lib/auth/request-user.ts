@@ -15,8 +15,6 @@ export async function getRequestUser(request?: NextRequest): Promise<User | null
   }
 
   const supabase = await createClient()
-  const { data, error } = await supabase.auth.getClaims()
-  if (error || !data?.claims?.sub) return null
   const { data: userData, error: userError } = await supabase.auth.getUser()
   return userError ? null : userData.user
 }

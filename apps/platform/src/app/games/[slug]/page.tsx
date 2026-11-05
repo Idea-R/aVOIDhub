@@ -14,39 +14,15 @@ import {
   Trophy,
 } from "lucide-react";
 import { notFound } from "next/navigation";
+import { PublicScoreBoard } from "@/components/PublicScoreBoard";
+import { resolveBoard } from "@/lib/leaderboards/contract";
 import { SharePageButton } from "@/components/SharePageButton";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { allGames, getGameById, type Game } from "@/data/games";
-import { isPlatformRuntimeConfigured } from "@/lib/env";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { getRequestUser } from "@/lib/auth/request-user";
 
-export const dynamic = "force-dynamic";
-
-type ScoreRow = {
-  id: string;
-  user_id: string | null;
-  player_name: string;
-  score: number;
-  verification_level: string;
-  metadata: Record<string, unknown>;
-  created_at: string;
-};
-
-type ScoreSnapshot = {
-  scores: ScoreRow[];
-  personalBest: number | null;
-  signedIn: boolean;
-  unavailable: boolean;
-};
-
-const emptySnapshot: ScoreSnapshot = {
-  scores: [],
-  personalBest: null,
-  signedIn: false,
-  unavailable: true,
-};
+export const dynamic = "error";
+export const dynamicParams = false;
 
 export function generateStaticParams() {
   return allGames.map((game) => ({ slug: game.id }));
@@ -80,74 +56,6 @@ export async function generateMetadata({
   };
 }
 
-async function getScoreSnapshot(game: Game): Promise<ScoreSnapshot> {
-  if (
-    game.score.scope !== "platform" ||
-    !game.score.gameKey ||
-    !isPlatformRuntimeConfigured()
-  ) {
-    return emptySnapshot;
-  }
-  try {
-    const user = await getRequestUser();
-    const admin = createAdminClient();
-    const modeByGame = {
-      voidavoid: "endless",
-      wreckavoid: "wreck-run",
-      wordavoid: "classic",
-      tankavoid: "five-wave",
-    } as const;
-    const gameKey = game.score.gameKey;
-    const mode = modeByGame[gameKey];
-    const { data, error } = await admin
-      .from("leaderboard_scores")
-      .select(
-        "id, user_id, player_name, score, verification_level, metadata, created_at, submission:score_submissions!inner(status, mode)",
-      )
-      .eq("game_key", gameKey)
-      .eq("submission.status", "accepted")
-      .eq("submission.mode", mode)
-      .order("score", { ascending: false })
-      .order("created_at", { ascending: true })
-      .limit(50);
-    if (error) return { ...emptySnapshot, signedIn: Boolean(user) };
-    let personalBest: number | null = null;
-    if (user) {
-      const { data: best } = await admin
-        .from("leaderboard_scores")
-        .select("score, submission:score_submissions!inner(status, mode)")
-        .eq("game_key", gameKey)
-        .eq("user_id", user.id)
-        .eq("submission.status", "accepted")
-        .eq("submission.mode", mode)
-        .order("score", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      personalBest = typeof best?.score === "number" ? best.score : null;
-    }
-    return {
-      scores: (data ?? []).filter((row, index, rows) =>
-        rows.findIndex((candidate) => (candidate.user_id ?? candidate.player_name) === (row.user_id ?? row.player_name)) === index,
-      ).slice(0, 10).map(
-        ({ id, user_id, player_name, score, verification_level, metadata, created_at }) => ({
-          id,
-          user_id,
-          player_name,
-          score,
-          verification_level,
-          metadata: (metadata ?? {}) as Record<string, unknown>,
-          created_at,
-        }),
-      ) as ScoreRow[],
-      personalBest,
-      signedIn: Boolean(user),
-      unavailable: false,
-    };
-  } catch {
-    return emptySnapshot;
-  }
-}
-
 function getBoundary(game: Game) {
   if (game.hosting === "hosted") {
     return {
@@ -175,7 +83,6 @@ export default async function GameDetailPage({
   const game = getGameById((await params).slug);
   if (!game) notFound();
 
-  const scoreSnapshot = await getScoreSnapshot(game);
   const boundary = getBoundary(game);
   const related = allGames.filter((item) => item.id !== game.id).slice(0, 3);
   const launchesAway = Boolean(game.playHref?.startsWith("http"));
@@ -363,21 +270,7 @@ export default async function GameDetailPage({
           <Trophy aria-hidden="true" />
           <h2 id="score-title">{game.score.headline}</h2>
           <p>{game.score.copy}</p>
-          {game.score.scope === "platform" ? (
-            <div className="gamePersonalBest">
-              <span>Your personal best</span>
-              <strong>
-                {scoreSnapshot.personalBest === null
-                  ? "—"
-                  : scoreSnapshot.personalBest.toLocaleString()}
-              </strong>
-              <small>
-                {scoreSnapshot.signedIn
-                  ? "Best saved result for this account."
-                  : "Sign-in and saved runs open with the platform runtime."}
-              </small>
-            </div>
-          ) : null}
+
         </div>
 
         <div className="gameScoreBoard">
@@ -389,48 +282,17 @@ export default async function GameDetailPage({
             </span>
             <strong>{game.title}</strong>
           </div>
-          {game.score.scope === "platform" && scoreSnapshot.unavailable ? (
-            <p className="gameScoreEmpty">
-              The platform board is staged but not connected on this preview.
-            </p>
-          ) : null}
-          {game.score.scope === "platform" &&
-          !scoreSnapshot.unavailable &&
-          !scoreSnapshot.scores.length ? (
-            <p className="gameScoreEmpty">
-              No saved runs yet. The empty board stays empty rather than making
-              up a crowd.
-            </p>
-          ) : null}
-          {game.score.scope === "platform" ? (
-            scoreSnapshot.scores.map((row, index) => (
-              <div className="gameScoreRow" key={row.id}>
-                <span>
-                  <i>{String(index + 1).padStart(2, "0")}</i>
-                  {row.player_name}
-                </span>
-                <em className={`trustPill trust-${row.verification_level}`}>
-                  {row.metadata.validationCapability === "server_recomputed"
-                    ? "server replay"
-                    : row.metadata.validationCapability === "bounds_recomputed"
-                      ? "bounded"
-                      : row.verification_level}
-                </em>
-                <strong>{row.score.toLocaleString()}</strong>
-              </div>
-            ))
+          {game.score.scope === "platform" && game.score.gameKey ? (
+            <PublicScoreBoard {...resolveBoard(game.score.gameKey, undefined)!} personal />
           ) : (
             <div className="gameIndependentScore">
               <Gamepad2 aria-hidden="true" />
-              <p>
-                {game.score.scope === "none"
-                  ? "There is no live score service for this game."
-                  : `Open ${game.destination} for the records that game chooses to keep.`}
-              </p>
+              <p>{game.score.scope === "none" ? "There is no live score service for this game." : `Open ${game.destination} for the records that game chooses to keep.`}</p>
             </div>
           )}
           {game.score.scope === "platform" ? (
             <Link
+              prefetch={false}
               className="gameBoardLink"
               href={`/leaderboards/?game=${game.score.gameKey}`}
             >
@@ -460,7 +322,7 @@ export default async function GameDetailPage({
           </div>
           <div className="gameMoreLinks">
             {related.map((item) => (
-              <Link href={item.detailHref} key={item.id}>
+              <Link prefetch={false} href={item.detailHref} key={item.id}>
                 <span style={{ background: item.accent }} aria-hidden="true" />
                 <div>
                   <i>{item.eyebrow}</i>

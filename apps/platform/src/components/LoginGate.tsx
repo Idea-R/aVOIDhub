@@ -1,0 +1,33 @@
+'use client'
+import { useSearchParams } from 'next/navigation'
+import { BadgeCheck, Gamepad2, ShieldCheck, Sparkles } from 'lucide-react'
+import { AuthForm } from '@/components/AuthForm'
+import { PlatformPage } from '@/components/PlatformPage'
+import { getSafeReturnPath } from '@/lib/auth/return-path'
+
+
+export function LoginGate({ enabled }: { enabled: boolean }) {
+  const searchParams = useSearchParams()
+  const params = { next: searchParams.get('next'), error: searchParams.get('error') }
+  const nextPath = getSafeReturnPath(params.next)
+  return (
+    <PlatformPage eyebrow="/ sign in" title={<>One identity.<br /><em>Different ways to play.</em></>} intro="One private link opens your player profile and creator workspace. Admin tools only appear on accounts we have approved.">
+      <section className="accessGate">
+        <div className="accessGateStory">
+          <p className="panelLabel">What opens</p>
+          <h2>Your account should feel like part of the arcade.</h2>
+          <div className="accessRoleStack">
+            <article><span>01</span><Gamepad2 aria-hidden="true" /><div><strong>Player deck</strong><p>Profile, favorites, eligible scores, and membership.</p></div></article>
+            <article><span>02</span><Sparkles aria-hidden="true" /><div><strong>Creator bay</strong><p>Application state, private game submissions, and hosting review.</p></div></article>
+            <article><span>03</span><ShieldCheck aria-hidden="true" /><div><strong>Control room</strong><p>Hidden unless the account carries a server-assigned admin role.</p></div></article>
+          </div>
+          <div className="accessReturn"><BadgeCheck aria-hidden="true" /><span>After sign-in</span><strong>{nextPath}</strong></div>
+        </div>
+        <div className="accessGateForm">
+          {params.error === 'link' && <p className="deckWarning">That access link could not be verified. Request a fresh one below.</p>}
+          <AuthForm enabled={enabled} nextPath={nextPath} />
+        </div>
+      </section>
+    </PlatformPage>
+  )
+}

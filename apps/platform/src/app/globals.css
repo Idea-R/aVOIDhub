@@ -3676,6 +3676,8 @@ button {
   .socialInlineControl {
     transition-duration: 0.01ms !important;
   }
+}
+
 .brandLink { display: inline-flex; border-radius: 14px; }
 .brandLink:focus-visible { outline: 3px solid var(--orange); outline-offset: 4px; }
 .brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -0.04em; white-space: nowrap; }

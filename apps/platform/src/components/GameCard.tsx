@@ -116,6 +116,7 @@ export function GameCard({ game, index, compact = false }: GameCardProps) {
 
   return (
     <Link
+      prefetch={false}
       className={`gameCard ${compact ? "gameCardCompact" : ""}`}
       href={game.detailHref}
       aria-label={`${game.title}: view game details`}
