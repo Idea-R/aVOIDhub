@@ -59,7 +59,14 @@ let startAttempted = false;
 try {
   await exec(executable('initdb'), ['-D', dataDirectory, '-U', 'postgres', '-A', 'trust', '--no-locale', '--encoding=UTF8'], { env });
   startAttempted = true;
-  await daemonControl(executable('pg_ctl'), ['-D', dataDirectory, '-l', path.join(resolvedDirectory, 'postgres.log'), '-o', `-h 127.0.0.1 -p ${port}`, '-w', '-t', '30', 'start'], env);
+  // All clients use loopback TCP. Disable Unix sockets so Linux runners never
+  // need write access to a system PostgreSQL socket directory.
+  try {
+    await daemonControl(executable('pg_ctl'), ['-D', dataDirectory, '-l', path.join(resolvedDirectory, 'postgres.log'), '-o', `-h 127.0.0.1 -p ${port} -c unix_socket_directories=`, '-w', '-t', '30', 'start'], env);
+  } catch (error) {
+    const diagnostic = await readFile(path.join(resolvedDirectory, 'postgres.log'), 'utf8').catch(() => 'No owned-cluster startup log was created.');
+    throw new Error(`Temporary PostgreSQL startup failed:\n${diagnostic}`, { cause: error });
+  }
   const fixture = await readFile(path.join(here, 'database/platform_teams_fixture.sql'), 'utf8');
   const migration = await readFile(path.join(here, '../migrations/20261105090000_platform_teams.sql'), 'utf8');
   await sql(fixture);
