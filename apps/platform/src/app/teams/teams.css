@@ -1,0 +1,112 @@
+.teamWorkspace { display: grid; gap: 24px; min-width: 0; margin-bottom: 60px; }
+.teamWorkspace h2, .teamWorkspace h3, .teamWorkspace h4, .teamWorkspace p { margin: 0; }
+.teamWorkspace h2 { font-size: clamp(25px, 3vw, 38px); letter-spacing: -.055em; line-height: 1.08; }
+.teamWorkspace p { color: var(--muted); line-height: 1.6; }
+.teamWorkspace .panelLabel { margin-bottom: 10px; }
+.teamWorkspace svg { flex-shrink: 0; width: 18px; height: 18px; }
+.teamWorkspace button { cursor: pointer; max-width: 100%; }
+.teamWorkspace button:disabled { opacity: .52; cursor: not-allowed; }
+.teamWorkspace :is(input, textarea, button, summary, a):focus-visible { outline: 3px solid var(--teal-dark); outline-offset: 4px; }
+.teamHeading { display: flex; align-items: start; justify-content: space-between; gap: 24px; }
+.teamHeading > div { max-width: 640px; }
+.teamHeading h2 + p { margin-top: 14px; max-width: 58ch; font-size: 14px; }
+.teamHeading > button { flex-shrink: 0; }
+.teamFeedback:empty { display: none; }
+.teamNotice, .teamError { padding: 16px 20px; border-radius: 16px; border: 1px solid var(--line); }
+.teamWorkspace .teamNotice { display: flex; align-items: start; gap: 10px; color: #155c48; background: #e4eedc; }
+.teamError { display: grid; gap: 10px; background: #fae8df; }
+.teamError p, .teamError a { color: #743322; }
+.teamError a, .teamError button { justify-self: start; text-decoration: underline; font-weight: 700; }
+.teamError button { border: 0; padding: 0; background: transparent; color: inherit; }
+.teamJoin { display: flex; gap: 18px; padding: 26px; border: 1px solid #8caf51; border-radius: 24px; background: #eaf2d7; }
+.teamJoin > svg { width: 28px; height: 28px; color: #3c6a23; }
+.teamJoin > div { min-width: 0; }
+.teamJoin h3 { font-size: 24px; letter-spacing: -.04em; }
+.teamJoin p:not(.panelLabel) { margin: 10px 0 18px; max-width: 65ch; }
+.teamActions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.teamCreate { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 30px; align-items: center; padding: 28px; border: 1px solid var(--line); border-radius: 24px; background: rgba(255, 255, 255, .5); }
+.teamCreate label { font-size: 21px; font-weight: 800; letter-spacing: -.04em; }
+.teamCreate p:not(.panelLabel) { font-size: 13px; margin-top: 8px; }
+.teamCreateFields, .teamInputRow { display: flex; gap: 10px; align-items: stretch; min-width: 0; }
+.teamWorkspace input, .teamWorkspace textarea { width: 100%; min-width: 0; border: 1px solid #9a9d91; border-radius: 12px; background: #fffcf6; padding: 14px; font: inherit; font-size: 16px; color: var(--ink); }
+.teamCreateFields input, .teamInputRow input { flex: 1 1 120px; }
+.teamCreateFields button, .teamInputRow button { flex-shrink: 0; }
+.teamList { display: grid; gap: 24px; min-width: 0; }
+.teamCard { min-width: 0; padding: 30px; background: #faf8f1; border: 1px solid var(--line); border-radius: 24px; box-shadow: 0 10px 35px rgba(39, 48, 37, .04); }
+.teamCardHeader { display: flex; align-items: start; justify-content: space-between; gap: 16px; padding-bottom: 24px; border-bottom: 1px solid var(--line); margin-bottom: 24px; }
+.teamCardHeader > div { min-width: 0; }
+.teamCard h3 { font-size: clamp(26px, 3vw, 36px); line-height: 1.1; letter-spacing: -.055em; overflow-wrap: anywhere; }
+.teamRole { flex-shrink: 0; border: 1px solid var(--line); border-radius: 999px; padding: 7px 12px; background: var(--paper-deep); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; }
+.teamSectionHeading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.teamSectionHeading h4 { font-size: 18px; letter-spacing: -.03em; }
+.teamSectionHeading > span { font-size: 12px; color: var(--muted); text-align: right; }
+.teamBrief { margin-bottom: 28px; padding-bottom: 28px; border-bottom: 1px solid var(--line); }
+.teamBrief > p { font-size: 13px; margin-bottom: 12px; }
+.teamBrief form { display: grid; gap: 12px; }
+.teamBrief textarea { resize: vertical; line-height: 1.6; min-height: 150px; }
+.teamBrief textarea[readonly] { background: #ede9df; }
+.teamBrief .teamBriefLimit { font-size: 11px; line-height: 1.5; }
+.teamBrief .teamBriefProblem { padding: 12px 14px; border-radius: 10px; background: #fae8df; color: #743322; font-size: 13px; }
+.teamBriefSaved { margin-top: 16px; font-size: 13px; }
+.teamBriefSaved summary { cursor: pointer; font-weight: 700; color: var(--teal-dark); padding: 5px 0; }
+.teamBriefSaved p { margin-top: 12px; padding: 16px; border-radius: 12px; background: var(--paper-deep); white-space: pre-wrap; overflow-wrap: anywhere; }
+.teamWorkspace ul { list-style: none; padding: 0; margin: 0; }
+.teamMembers li, .teamInviteList li { display: flex; align-items: start; justify-content: space-between; gap: 16px; padding: 16px 0; border-top: 1px solid var(--line); }
+.teamMembers li > div, .teamInviteList li > div { min-width: 0; }
+.teamMembers strong, .teamInviteList strong { display: block; font-size: 14px; overflow-wrap: anywhere; }
+.teamMemberRole { display: inline-block; margin-top: 5px; font-size: 11px; font-weight: 700; color: var(--teal-dark); text-transform: uppercase; letter-spacing: .08em; }
+.teamMemberId { display: block; color: var(--muted); margin-top: 8px; font-size: 11px; }
+.teamMemberId code { display: block; font-size: 11px; line-height: 1.6; overflow-wrap: anywhere; }
+.teamConfirm { max-width: 290px; color: #7a3425; font-size: 13px; }
+.teamConfirm summary { cursor: pointer; font-weight: 700; padding: 4px 0; }
+.teamConfirm p { font-size: 13px; margin: 10px 0; }
+.teamDanger { border: 1px solid #b66a51; border-radius: 9px; color: #7a3425; background: #f7e5dc; padding: 10px 14px; font-size: 13px; font-weight: 700; }
+.teamInvitations { border-top: 1px solid var(--line); padding-top: 24px; margin-top: 20px; }
+.teamInviteForm { display: grid; gap: 10px; }
+.teamInviteForm label { font-size: 13px; font-weight: 700; }
+.teamInviteForm > p { font-size: 12px; }
+.teamShare { display: grid; gap: 12px; padding: 20px; margin: 20px 0; border: 1px solid #85a49a; border-radius: 16px; background: #e7efdf; }
+.teamShare > strong { font-size: 15px; }
+.teamShare p { font-size: 13px; }
+.teamShare textarea { overflow-wrap: anywhere; resize: vertical; font-family: "Courier New", monospace; font-size: 12px; line-height: 1.6; }
+.teamInviteList { margin-top: 24px !important; }
+.teamInviteStatus { display: inline-block; margin-top: 8px; padding: 4px 8px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; border-radius: 6px; background: var(--paper-deep); color: #565a52; }
+.teamInviteStatus[data-state="pending"] { color: #07645b; background: #d9eae1; }
+.teamInviteStatus[data-state="accepted"] { color: #325c24; background: #e2edce; }
+.teamInviteList small { display: block; margin-top: 6px; font-size: 11px; line-height: 1.6; color: var(--muted); }
+.teamTextButton { border: 0; border-bottom: 1px solid currentColor; padding: 5px 0; background: transparent; color: var(--teal-dark); font-size: 12px; font-weight: 700; text-align: left; }
+.teamQuiet { font-size: 13px; margin-top: 20px !important; }
+.teamLeave { display: flex; align-items: start; justify-content: space-between; gap: 18px; border-top: 1px solid var(--line); padding-top: 24px; margin-top: 16px; }
+.teamLeave > p { font-size: 13px; }
+.teamEmpty { padding: 36px 24px; text-align: center; border: 1px dashed #a5a999; border-radius: 24px; }
+.teamEmpty > svg { width: 32px; height: 32px; color: var(--teal-dark); margin-bottom: 12px; }
+.teamEmpty h3 { font-size: 23px; margin-bottom: 8px; letter-spacing: -.04em; }
+.teamEmpty p { font-size: 14px; }
+.teamUnavailable { display: flex; align-items: start; gap: 20px; border: 1px solid var(--line); background: #faf8f1; padding: 30px; border-radius: 24px; }
+.teamUnavailable > svg { width: 30px; height: 30px; color: var(--teal-dark); }
+.teamUnavailable > div { min-width: 0; }
+.teamUnavailable p:not(.panelLabel) { margin: 16px 0 20px; }
+@media (max-width: 800px) {
+  .teamCreate { grid-template-columns: 1fr; gap: 20px; }
+  .teamHeading { flex-direction: column; }
+  .teamCard { padding: 24px; }
+}
+@media (max-width: 540px) {
+  .teamWorkspace { gap: 18px; }
+  .teamWorkspace .primaryButton, .teamWorkspace .secondaryButton { white-space: normal; text-align: center; justify-content: center; min-height: 44px; }
+  .teamCreate, .teamCard, .teamJoin, .teamUnavailable { padding: 20px; border-radius: 20px; }
+  .teamCreateFields, .teamInputRow { flex-direction: column; }
+  .teamCreateFields input, .teamInputRow input { flex: auto; }
+  .teamMembers li, .teamInviteList li, .teamLeave { flex-direction: column; align-items: stretch; }
+  .teamCardHeader { gap: 10px; }
+  .teamRole { padding: 6px 8px; font-size: 10px; }
+  .teamSectionHeading { flex-wrap: wrap; gap: 8px; }
+  .teamSectionHeading > span { text-align: left; }
+  .teamJoin { gap: 10px; }
+  .teamJoin > svg { width: 20px; height: 20px; }
+  .teamActions > button { flex: 1 1 150px; }
+  .teamShare { padding: 14px; }
+  .teamTextButton { align-self: start; }
+  .teamConfirm { width: 100%; }
+  .teamConfirm summary { min-height: 38px; }
+}
