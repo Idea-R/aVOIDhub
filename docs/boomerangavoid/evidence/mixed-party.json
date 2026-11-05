@@ -1,0 +1,26 @@
+{
+  "timestamp": "2026-11-05T01:34:26.935Z",
+  "partySeats": 2,
+  "remoteSeats": 1,
+  "publicQuickJoin": true,
+  "seatsReservedAtomically": true,
+  "independentKeyboardInputs": [
+    {
+      "id": "B4zyLy0vW:0",
+      "dx": 1.7666666666666702,
+      "dy": 0
+    },
+    {
+      "id": "B4zyLy0vW:1",
+      "dx": 1.7666666666666568,
+      "dy": 0
+    },
+    {
+      "id": "T_NEp6NGF:0",
+      "dx": 0,
+      "dy": 0
+    }
+  ],
+  "errors": [],
+  "scope": "Three authoritative seats across two loopback browser contexts; no physical keyboard rollover or internet host claim"
+}

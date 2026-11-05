@@ -11,7 +11,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const params = await searchParams
   const nextPath = getSafeReturnPath(params.next)
   return (
-    <PlatformPage eyebrow="/ sign in" title={<>One identity.<br /><em>Different ways to play.</em></>} intro="One private link opens your player profile and creator workspace. Admin tools only appear on accounts we have approved.">
+    <PlatformPage eyebrow="/ sign in" title={<>One identity.<br /><em>Different ways to play.</em></>} intro="Google or a private email link opens your player profile and creator workspace. Admin tools only appear on accounts we have approved.">
       <section className="accessGate">
         <div className="accessGateStory">
           <p className="panelLabel">What opens</p>
@@ -24,7 +24,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           <div className="accessReturn"><BadgeCheck aria-hidden="true" /><span>After sign-in</span><strong>{nextPath}</strong></div>
         </div>
         <div className="accessGateForm">
-          {params.error === 'link' && <p className="deckWarning">That access link could not be verified. Request a fresh one below.</p>}
+          {params.error === 'link' && <p className="deckWarning">Sign-in was cancelled or could not be verified. Try Google again or request a fresh email link.</p>}
           <AuthForm enabled={isPlatformRuntimeConfigured()} nextPath={nextPath} />
         </div>
       </section>

@@ -21,13 +21,16 @@
     "workspace:hub": "npm run dev --workspace=@avoid/game-hub",
     "workspace:platform": "npm run dev --workspace=@avoid/platform",
     "build:platform": "npm run build --workspace=@avoid/platform",
-    "build:platform:games": "npm run build --workspace=@avoid/void-main && npm run build --workspace=@avoid/wrecka-void && npm run build --workspace=@avoid/word-avoid && npm run build --workspace=@avoid/tanka-void && npm run build --workspace=@avoid/rail-avoid",
+    "build:platform:games": "npm run build --workspace=@avoid/void-main && npm run build --workspace=@avoid/wrecka-void && npm run build --workspace=@avoid/word-avoid && npm run build --workspace=@avoid/tanka-void && npm run build --workspace=@avoid/rail-avoid && npm run build --workspace=@avoid/boomerang-avoid",
     "prepare:platform:games": "node apps/platform/scripts/prepare-games.mjs",
     "build:platform:netlify": "npm run build:platform:games && npm run prepare:platform:games && npm run build:platform",
     "build:platform:preview": "npm run build:platform:games && npm run prepare:platform:games && npm run build:preview --workspace=@avoid/platform",
     "workspace:tanka": "npm run dev --workspace=@avoid/tanka-void",
     "workspace:wrecka": "npm run dev --workspace=@avoid/wrecka-void",
-    "workspace:word": "npm run dev --workspace=@avoid/word-avoid"
+    "workspace:word": "npm run dev --workspace=@avoid/word-avoid",
+    "workspace:boomerang": "npm run dev --workspace=@avoid/boomerang-avoid -- --port 5177",
+    "workspace:boomerang-server": "npm run dev --workspace=@avoid/boomerangavoid-server",
+    "verify:boomerangavoid:release": "node tools/verify-boomerangavoid-release.mjs"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

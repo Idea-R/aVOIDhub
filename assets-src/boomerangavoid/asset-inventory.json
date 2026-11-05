@@ -1,0 +1,139 @@
+{
+  "blender": "5.2.0 LTS",
+  "source": "Original runtime geometry exported through Three.js GLTFExporter; rigged and animated in task-owned Blender CLI",
+  "coordinateContract": "meters, Blender Z-up export glTF Y-up, origin at feet, forward +Z in runtime",
+  "inventory": [
+    {
+      "id": "pip",
+      "meshes": 14,
+      "triangles": 1470,
+      "materials": 14,
+      "bones": 2,
+      "clips": [
+        "idle",
+        "run",
+        "stop_turn",
+        "dash",
+        "slash",
+        "throw",
+        "recall_strain",
+        "catch",
+        "hit",
+        "elimination",
+        "victory",
+        "spawn"
+      ],
+      "bytes": 98008
+    },
+    {
+      "id": "kiln",
+      "meshes": 14,
+      "triangles": 1884,
+      "materials": 14,
+      "bones": 2,
+      "clips": [
+        "idle",
+        "run",
+        "stop_turn",
+        "dash",
+        "slash",
+        "throw",
+        "recall_strain",
+        "catch",
+        "hit",
+        "elimination",
+        "victory",
+        "spawn"
+      ],
+      "bytes": 114592
+    },
+    {
+      "id": "volt",
+      "meshes": 15,
+      "triangles": 1162,
+      "materials": 15,
+      "bones": 2,
+      "clips": [
+        "idle",
+        "run",
+        "stop_turn",
+        "dash",
+        "slash",
+        "throw",
+        "recall_strain",
+        "catch",
+        "hit",
+        "elimination",
+        "victory",
+        "spawn"
+      ],
+      "bytes": 90916
+    },
+    {
+      "id": "nori",
+      "meshes": 16,
+      "triangles": 1198,
+      "materials": 16,
+      "bones": 2,
+      "clips": [
+        "idle",
+        "run",
+        "stop_turn",
+        "dash",
+        "slash",
+        "throw",
+        "recall_strain",
+        "catch",
+        "hit",
+        "elimination",
+        "victory",
+        "spawn"
+      ],
+      "bytes": 94752
+    },
+    {
+      "id": "cairn",
+      "meshes": 13,
+      "triangles": 1192,
+      "materials": 13,
+      "bones": 2,
+      "clips": [
+        "idle",
+        "run",
+        "stop_turn",
+        "dash",
+        "slash",
+        "throw",
+        "recall_strain",
+        "catch",
+        "hit",
+        "elimination",
+        "victory",
+        "spawn"
+      ],
+      "bytes": 97844
+    },
+    {
+      "id": "comet",
+      "meshes": 13,
+      "triangles": 1274,
+      "materials": 13,
+      "bones": 2,
+      "clips": [
+        "idle",
+        "run",
+        "stop_turn",
+        "dash",
+        "slash",
+        "throw",
+        "recall_strain",
+        "catch",
+        "hit",
+        "elimination",
+        "victory",
+        "spawn"
+      ],
+      "bytes": 90392
+    }
+  ]
+}

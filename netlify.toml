@@ -58,6 +58,22 @@
   to = "/RAILaVOID/:splat"
   status = 200
 
+# BoomerangaVOID review route; catalog launch remains in development until release gates pass.
+[[redirects]]
+  from = "/boomerangavoid"
+  to = "/boomerangavoid/"
+  status = 301
+
+[[redirects]]
+  from = "/boomerangavoid/*"
+  to = "/BoomerangaVOID/:splat"
+  status = 200
+
+[[headers]]
+  for = "/BoomerangaVOID/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
 [[headers]]
   for = "/VOIDaVOID/assets/*"
   [headers.values]

@@ -13,17 +13,18 @@
     "test": "vitest --run"
   },
   "dependencies": {
+    "@avoid/boomerangavoid-protocol": "0.1.0",
     "@avoid/tankavoid-contract": "1.0.0",
     "@avoid/voidavoid-contract": "1.0.0",
     "@avoid/wordavoid-contract": "1.0.0",
     "@supabase/ssr": "0.12.4",
     "@supabase/supabase-js": "2.112.3",
     "lucide-react": "^0.468.0",
-    "next": "^16.3.1",
+    "next": "16.4.5",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "stripe": "22.5.0",
-    "zod": "4.4.3"
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@types/node": "^22.16.0",

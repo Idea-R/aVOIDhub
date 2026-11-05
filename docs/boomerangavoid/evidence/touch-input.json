@@ -1,0 +1,32 @@
+{
+  "timestamp": "2026-11-05T01:17:11.163Z",
+  "simultaneousMoveDash": true,
+  "travel": 3.242532299741602,
+  "dashCooldown": 237,
+  "portraitBounds": [
+    {
+      "x": 245,
+      "y": 766,
+      "w": 58,
+      "h": 58,
+      "inside": true
+    },
+    {
+      "x": 310,
+      "y": 693,
+      "w": 66,
+      "h": 58,
+      "inside": true
+    },
+    {
+      "x": 310,
+      "y": 758,
+      "w": 66,
+      "h": 66,
+      "inside": true
+    }
+  ],
+  "landscapeNoOverflow": true,
+  "errors": [],
+  "scope": "Headless Chrome emulated touch; no physical mobile/controller performance claim"
+}

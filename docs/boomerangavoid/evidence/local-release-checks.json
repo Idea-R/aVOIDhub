@@ -1,0 +1,63 @@
+{
+  "timestamp": "2026-11-05T01:37:20.245Z",
+  "node": "v22.23.2",
+  "lockfileSha256": "f0cdf547c463ca788829fccd07c8a6d1a366d09834a356afee84a7fbb2e4a1c8",
+  "checks": [
+    {
+      "command": "npm run typecheck --workspace=@avoid/boomerangavoid-sim",
+      "code": 0,
+      "durationMs": 1355
+    },
+    {
+      "command": "npm run typecheck --workspace=@avoid/boomerangavoid-protocol",
+      "code": 0,
+      "durationMs": 1432
+    },
+    {
+      "command": "npm run typecheck --workspace=@avoid/boomerangavoid-server",
+      "code": 0,
+      "durationMs": 2314
+    },
+    {
+      "command": "npm run typecheck --workspace=@avoid/boomerang-avoid",
+      "code": 0,
+      "durationMs": 2527
+    },
+    {
+      "command": "npm run typecheck --workspace=@avoid/platform",
+      "code": 0,
+      "durationMs": 3412
+    },
+    {
+      "command": "npm run test --workspace=@avoid/boomerangavoid-sim",
+      "code": 0,
+      "durationMs": 1743
+    },
+    {
+      "command": "npm run test --workspace=@avoid/boomerangavoid-protocol",
+      "code": 0,
+      "durationMs": 1084
+    },
+    {
+      "command": "npm run test --workspace=@avoid/platform",
+      "code": 0,
+      "durationMs": 1549
+    },
+    {
+      "command": "npm run test:catalog --workspace=@avoid/platform",
+      "code": 0,
+      "durationMs": 890
+    },
+    {
+      "command": "npm run test --workspace=@avoid/boomerangavoid-server",
+      "code": 0,
+      "durationMs": 136385
+    },
+    {
+      "command": "npm run build:platform:netlify",
+      "code": 0,
+      "durationMs": 57786
+    }
+  ],
+  "scope": "Local source and loopback network/build only; not a production release"
+}

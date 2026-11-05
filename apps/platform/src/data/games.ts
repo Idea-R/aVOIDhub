@@ -111,7 +111,7 @@ export const originalGames: Game[] = [
     destination: "avoidgame.io/wreckavoid",
     availability: "Playable now",
     statusNote:
-      "The playable build is live. Its secure score adapter is staged, while lifecycle, collision, and long-session cleanup remain part of the game’s own V1 sprint.",
+      "The playable build is live. Its secure score adapter is staged, while lifecycle, collision, and long-session cleanup remain part of the gameâ€™s own V1 sprint.",
     facts: [
       { label: "Move", value: "Mouse" },
       { label: "Chain", value: "Hold the mouse to retract" },
@@ -292,7 +292,7 @@ export const originalGames: Game[] = [
       scope: "platform",
       gameKey: "tankavoid",
       headline: "Five waves, one bounded provisional result.",
-      copy: "The platform recomputes the score from a tightly bounded terminal summary and a one-use run. That makes the result provisional—not replay-verified—and keeps old prototype samples off this board.",
+      copy: "The platform recomputes the score from a tightly bounded terminal summary and a one-use run. That makes the result provisionalâ€”not replay-verifiedâ€”and keeps old prototype samples off this board.",
     },
   },
   {
@@ -342,6 +342,59 @@ export const originalGames: Game[] = [
       copy: "Scores and best regions are stored in the browser while the campaign is balanced. Platform leaderboards come with the full release.",
     },
   },
+  {
+  "id": "boomerangavoid",
+  "title": "BoomerangaVOID",
+  "eyebrow": "Garden party arena",
+  "description": "Dash, slash and curve a returning boomerang through a tiny cosmic garden.",
+  "premise": "Pick an original garden creature, read the return lanes, and turn a last-second catch into the next round's comeback.",
+  "genre": "Multiplayer arena party",
+  "image": "",
+  "status": "soon",
+  "hosting": "hosted",
+  "accent": "#a6e29a",
+  "meta": "In development",
+  "detailHref": "/games/boomerangavoid/",
+  "availability": "In development",
+  "statusNote": "Local game and authoritative room-service candidate under testing. Internet rooms and Google login are awaiting service configuration and release verification.",
+  "facts": [
+    {
+      "label": "Party",
+      "value": "2–6 seats; local and online candidate"
+    },
+    {
+      "label": "Actions",
+      "value": "Move, dash, slash, throw and recall"
+    },
+    {
+      "label": "World",
+      "value": "Six original garden arenas"
+    }
+  ],
+  "highlights": [
+    {
+      "title": "What goes out comes back",
+      "copy": "Bend a throw, recall it around cover, and meet an incoming boomerang with a timed slash."
+    },
+    {
+      "title": "A tiny cosmic garden",
+      "copy": "Moss, ceramic, leaf and clockwork creatures bring distinct silhouettes to floating dioramas."
+    },
+    {
+      "title": "Keep the party going",
+      "copy": "Practice with bots, share a couch, or use an invitation room once the online service is released."
+    }
+  ],
+  "deviceSupport": [
+    "Keyboard and controller candidate",
+    "Touch controls under testing"
+  ],
+  "score": {
+    "scope": "none",
+    "headline": "Party results, kept honest.",
+    "copy": "Local matches stay local. No ranked leaderboard is enabled for this release candidate."
+  }
+},
 ];
 
 export const relatedGames: Game[] = [
@@ -438,7 +491,7 @@ export const relatedGames: Game[] = [
       },
       {
         title: "Follow its own roadmap",
-        copy: "The game’s formal V1 work stays in the Acrolis project instead of being duplicated inside aVOID.",
+        copy: "The gameâ€™s formal V1 work stays in the Acrolis project instead of being duplicated inside aVOID.",
       },
     ],
     deviceSupport: [

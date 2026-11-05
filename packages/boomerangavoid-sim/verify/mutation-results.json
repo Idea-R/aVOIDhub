@@ -1,0 +1,25 @@
+[
+  {
+    "mutation": "double-scoring",
+    "exitCode": 1,
+    "detectedBy": [
+      "not ok 7 - sudden-death warning, closing damage and match terminal state are deterministic and score once",
+      "not ok 20 - round score is awarded once, resets completely, and rematch resets totals and RNG",
+      "not ok 21 - teams share round points, friendly fire obeys attacker team, and reflected attack uses deflector team"
+    ]
+  },
+  {
+    "mutation": "dash-extended-one-tick",
+    "exitCode": 1,
+    "detectedBy": [
+      "not ok 3 - dash travels two and a half units in ten ticks, then returns immediately to walking control"
+    ]
+  },
+  {
+    "mutation": "omitted-catch",
+    "exitCode": 1,
+    "detectedBy": [
+      "not ok 11 - throw windup, held input, limited curve, return and catch never auto-rethrow"
+    ]
+  }
+]

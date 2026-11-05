@@ -1,0 +1,28 @@
+TAP version 13
+# Room connection was closed unexpectedly (4002): 
+# Room connection was closed unexpectedly (4002): 
+# [Colyseus reconnection]: ΓÅ│ will retry in 0.2 seconds...
+# [Colyseus reconnection]: ≡ƒöä Re-establishing sessionId 'v2UktLVSM' with roomId '682_Ayk3I'... (attempt 1 of 15)
+# [Colyseus reconnection]: Γ£à reconnection successful!
+# {"case":"six-seat-live-authority","protocol":"bav-1","contentHash":"21ce05ee","roomId":"682_Ayk3I","players":6,"round":12,"winners":["v2UktLVSM:0"],"reconnect":true,"staleInputStops":true,"metrics":{"rooms":1,"rss":107851776,"uptime":1750.7555366,"roomMetrics":[{"seats":6,"rejectedInputs":3346,"tickP95Ms":0.579399999929592}]}}
+# Subtest: six real clients share authoritative rounds, enforce ownership, expire input and reconnect
+ok 1 - six real clients share authoritative rounds, enforce ownership, expire input and reconnect
+  ---
+  duration_ms: 143124.5901
+  type: 'test'
+  ...
+# Subtest: create tickets cannot join a different room by spoofing intent
+ok 2 - create tickets cannot join a different room by spoofing intent # SKIP
+  ---
+  duration_ms: 0.1839
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 147576.5359
