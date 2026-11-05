@@ -1,0 +1,646 @@
+
+> @avoid/monorepo@1.0.0 verify:boomerangavoid:release
+> node tools/verify-boomerangavoid-release.mjs
+
+
+> @avoid/boomerangavoid-sim@0.1.0 typecheck
+> tsc --noEmit
+
+
+> @avoid/boomerangavoid-protocol@0.1.0 typecheck
+> tsc --noEmit
+
+
+> @avoid/boomerangavoid-server@0.1.0 typecheck
+> tsc --noEmit
+
+
+> @avoid/boomerang-avoid@0.1.0 typecheck
+> tsc --noEmit
+
+
+> @avoid/platform@0.1.0 typecheck
+> tsc --noEmit
+
+
+> @avoid/boomerangavoid-sim@0.1.0 test
+> tsx --test test/*.test.ts
+
+TAP version 13
+# Subtest: countdown lasts exactly 180 fixed steps and held countdown actions do not execute at start
+ok 1 - countdown lasts exactly 180 fixed steps and held countdown actions do not execute at start
+  ---
+  duration_ms: 6.401
+  type: 'test'
+  ...
+# Subtest: slash active interval includes its first tick and excludes its exact end tick
+ok 2 - slash active interval includes its first tick and excludes its exact end tick
+  ---
+  duration_ms: 2.3065
+  type: 'test'
+  ...
+# Subtest: dash travels two and a half units in ten ticks, then returns immediately to walking control
+ok 3 - dash travels two and a half units in ten ticks, then returns immediately to walking control
+  ---
+  duration_ms: 0.7519
+  type: 'test'
+  ...
+# Subtest: sector sweep notices angular entry after radial entry, and rejects a backward crossing
+ok 4 - sector sweep notices angular entry after radial entry, and rejects a backward crossing
+  ---
+  duration_ms: 0.2028
+  type: 'test'
+  ...
+# Subtest: deflection uses current attacker team, original return-owner has outbound vulnerability, and friendly fire is optional
+ok 5 - deflection uses current attacker team, original return-owner has outbound vulnerability, and friendly fire is optional
+  ---
+  duration_ms: 1.7525
+  type: 'test'
+  ...
+# Subtest: a dead owner cannot leave a damaging weapon, and explicit recalls do not postpone stuck timeout forever
+ok 6 - a dead owner cannot leave a damaging weapon, and explicit recalls do not postpone stuck timeout forever
+  ---
+  duration_ms: 9.8942
+  type: 'test'
+  ...
+# Subtest: sudden-death warning, closing damage and match terminal state are deterministic and score once
+ok 7 - sudden-death warning, closing damage and match terminal state are deterministic and score once
+  ---
+  duration_ms: 1.3595
+  type: 'test'
+  ...
+# Subtest: every authored map has an accessible central seed and usable alternating delivery zones
+ok 8 - every authored map has an accessible central seed and usable alternating delivery zones
+  ---
+  duration_ms: 0.4373
+  type: 'test'
+  ...
+# Subtest: Relay earliest swept pickup wins and exact ties use stable seat ID
+ok 9 - Relay earliest swept pickup wins and exact ties use stable seat ID
+  ---
+  duration_ms: 4.7658
+  type: 'test'
+  ...
+# Subtest: seed pickup cancels airborne damage at that contact, disables throw and turns armed slash into shove
+ok 10 - seed pickup cancels airborne damage at that contact, disables throw and turns armed slash into shove
+  ---
+  duration_ms: 2.5491
+  type: 'test'
+  ...
+# Subtest: Relay shield hit drops seed, former carrier lockout holds for 500ms, disconnect drops immediately
+ok 11 - Relay shield hit drops seed, former carrier lockout holds for 500ms, disconnect drops immediately
+  ---
+  duration_ms: 1.5712
+  type: 'test'
+  ...
+# Subtest: Relay target dwell pauses when contested, resets when leaving, alternates and locks after delivery
+ok 12 - Relay target dwell pauses when contested, resets when leaving, alternates and locks after delivery
+  ---
+  duration_ms: 4.8306
+  type: 'test'
+  ...
+# Subtest: Relay respawns after three seconds, protection prevents pickup and ends on deliberate attack
+ok 13 - Relay respawns after three seconds, protection prevents pickup and ends on deliberate attack
+  ---
+  duration_ms: 3.3121
+  type: 'test'
+  ...
+# Subtest: Relay first to three wins and tied five-minute clock uses next-delivery sudden death
+ok 14 - Relay first to three wins and tied five-minute clock uses next-delivery sudden death
+  ---
+  duration_ms: 1.0545
+  type: 'test'
+  ...
+# Subtest: each upgrade can be collected; replacement is explicit and a shield is separate from two passives
+ok 15 - each upgrade can be collected; replacement is explicit and a shield is separate from two passives
+  ---
+  duration_ms: 0.9052
+  type: 'test'
+  ...
+# Subtest: Twin Arc is a paired volley; caught slots wait and repeated pickup never duplicates slots
+ok 16 - Twin Arc is a paired volley; caught slots wait and repeated pickup never duplicates slots
+  ---
+  duration_ms: 0.696
+  type: 'test'
+  ...
+# Subtest: Skipstone allows exactly one wall ricochet; Tailwind returns faster and Magnet catches farther away
+ok 17 - Skipstone allows exactly one wall ricochet; Tailwind returns faster and Magnet catches farther away
+  ---
+  duration_ms: 1.0358
+  type: 'test'
+  ...
+# Subtest: Frost Wake slows enemies, Ember Fuse warns then bursts once, Echo Step stays harmless
+ok 18 - Frost Wake slows enemies, Ember Fuse warns then bursts once, Echo Step stays harmless
+  ---
+  duration_ms: 1.8968
+  type: 'test'
+  ...
+# Subtest: all allowed passive pairs remain bounded through throws, dashes, recalls and duplicate pickups
+ok 19 - all allowed passive pairs remain bounded through throws, dashes, recalls and duplicate pickups
+  ---
+  duration_ms: 72.2753
+  type: 'test'
+  ...
+# Subtest: wind lanes change only flying weapon path; paired gates rotate without teleport damage
+ok 20 - wind lanes change only flying weapon path; paired gates rotate without teleport damage
+  ---
+  duration_ms: 0.8319
+  type: 'test'
+  ...
+# Subtest: gaps kill walking seats, dash crosses safely while remaining vulnerable to weapons
+ok 21 - gaps kill walking seats, dash crosses safely while remaining vulnerable to weapons
+  ---
+  duration_ms: 0.8676
+  type: 'test'
+  ...
+# Subtest: all maps run six seeded bots with legal inputs, delayed actions and bounded finite state
+ok 22 - all maps run six seeded bots with legal inputs, delayed actions and bounded finite state
+  ---
+  duration_ms: 350.4934
+  type: 'test'
+  ...
+# Subtest: an open Tideglass bridge supports a continuous walking crossing from outside the gap
+ok 23 - an open Tideglass bridge supports a continuous walking crossing from outside the gap
+  ---
+  duration_ms: 8.6264
+  type: 'test'
+  ...
+# Subtest: movement accelerates, stops, normalizes diagonals, clamps boundaries and sanitizes invalid inputs
+ok 24 - movement accelerates, stops, normalizes diagonals, clamps boundaries and sanitizes invalid inputs
+  ---
+  duration_ms: 11.6847
+  type: 'test'
+  ...
+# Subtest: dash is committed, does not repeat on held input, and buffers a new edge near cooldown expiry
+ok 25 - dash is committed, does not repeat on held input, and buffers a new edge near cooldown expiry
+  ---
+  duration_ms: 3.0771
+  type: 'test'
+  ...
+# Subtest: throw windup, held input, limited curve, return and catch never auto-rethrow
+ok 26 - throw windup, held input, limited curve, return and catch never auto-rethrow
+  ---
+  duration_ms: 6.4011
+  type: 'test'
+  ...
+# Subtest: thin-wall sweep grounds a high-speed weapon before it can damage through cover
+ok 27 - thin-wall sweep grounds a high-speed weapon before it can damage through cover
+  ---
+  duration_ms: 0.9108
+  type: 'test'
+  ...
+# Subtest: blocked return needs a fresh recall and safe rematerialization cannot damage through a wall
+ok 28 - blocked return needs a fresh recall and safe rematerialization cannot damage through a wall
+  ---
+  duration_ms: 3.0184
+  type: 'test'
+  ...
+# Subtest: armed slash trades batch both deaths and gives each exactly one kill
+ok 29 - armed slash trades batch both deaths and gives each exactly one kill
+  ---
+  duration_ms: 1.3228
+  type: 'test'
+  ...
+# Subtest: unarmed slash shoves without eliminating, armed slash outside cone misses
+ok 30 - unarmed slash shoves without eliminating, armed slash outside cone misses
+  ---
+  duration_ms: 0.5479
+  type: 'test'
+  ...
+# Subtest: shield absorbs coincident damage as one charge and grace expires exactly after six ticks
+ok 31 - shield absorbs coincident damage as one charge and grace expires exactly after six ticks
+  ---
+  duration_ms: 0.6097
+  type: 'test'
+  ...
+# Subtest: earlier death invalidates later weapon contacts but exact-time projectiles trade
+ok 32 - earlier death invalidates later weapon contacts but exact-time projectiles trade
+  ---
+  duration_ms: 0.8638
+  type: 'test'
+  ...
+# Subtest: deflection retains return owner and permits reflected outbound to hit original owner
+ok 33 - deflection retains return owner and permits reflected outbound to hit original owner
+  ---
+  duration_ms: 0.9076
+  type: 'test'
+  ...
+# Subtest: head-on flying weapons ground together before applying obsolete target hits
+ok 34 - head-on flying weapons ground together before applying obsolete target hits
+  ---
+  duration_ms: 0.4105
+  type: 'test'
+  ...
+# Subtest: round score is awarded once, resets completely, and rematch resets totals and RNG
+ok 35 - round score is awarded once, resets completely, and rematch resets totals and RNG
+  ---
+  duration_ms: 4.6295
+  type: 'test'
+  ...
+# Subtest: teams share round points, friendly fire obeys attacker team, and reflected attack uses deflector team
+ok 36 - teams share round points, friendly fire obeys attacker team, and reflected attack uses deflector team
+  ---
+  duration_ms: 0.7162
+  type: 'test'
+  ...
+# Subtest: replay cloning preserves buffers, edge memory, RNG, bots and hash for 1200 ticks
+ok 37 - replay cloning preserves buffers, edge memory, RNG, bots and hash for 1200 ticks
+  ---
+  duration_ms: 136.8754
+  type: 'test'
+  ...
+# Subtest: authored arenas and upgrade compatibility have bounded, safe content
+ok 38 - authored arenas and upgrade compatibility have bounded, safe content
+  ---
+  duration_ms: 0.5958
+  type: 'test'
+  ...
+# Subtest: previous contact a few ULPs above or below radius has the same overlap classification
+ok 39 - previous contact a few ULPs above or below radius has the same overlap classification
+  ---
+  duration_ms: 1.3259
+  type: 'test'
+  ...
+# Subtest: overlap tolerance preserves genuine near misses and swept crossing times
+ok 40 - overlap tolerance preserves genuine near misses and swept crossing times
+  ---
+  duration_ms: 0.4829
+  type: 'test'
+  ...
+# Subtest: waiting local parties enter atomically at countdown with safe spawns and no score reset
+ok 41 - waiting local parties enter atomically at countdown with safe spawns and no score reset
+  ---
+  duration_ms: 2.6852
+  type: 'test'
+  ...
+1..41
+# tests 41
+# suites 0
+# pass 41
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 823.1737
+
+> @avoid/boomerangavoid-protocol@0.1.0 test
+> tsx --test test/*.test.ts
+
+TAP version 13
+# Subtest: rejects malformed/fabricated inputs and normalizes diagonal
+ok 1 - rejects malformed/fabricated inputs and normalizes diagonal
+  ---
+  duration_ms: 0.9591
+  type: 'test'
+  ...
+# Subtest: ownership, monotonic sequence and tick/round limits
+ok 2 - ownership, monotonic sequence and tick/round limits
+  ---
+  duration_ms: 0.2704
+  type: 'test'
+  ...
+# Subtest: future queue cannot accelerate movement or attacks and is bounded
+ok 3 - future queue cannot accelerate movement or attacks and is bounded
+  ---
+  duration_ms: 0.2191
+  type: 'test'
+  ...
+# Subtest: ticket is signed, audience/room/expiry bounded and single-use
+ok 4 - ticket is signed, audience/room/expiry bounded and single-use
+  ---
+  duration_ms: 0.7989
+  type: 'test'
+  ...
+# Subtest: a held action sent at 30Hz stays held between server ticks instead of repeating edges
+ok 5 - a held action sent at 30Hz stays held between server ticks instead of repeating edges
+  ---
+  duration_ms: 0.3111
+  type: 'test'
+  ...
+# Subtest: creation preflight verifies authority without consuming the join nonce
+ok 6 - creation preflight verifies authority without consuming the join nonce
+  ---
+  duration_ms: 0.4113
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 356.501
+
+> @avoid/platform@0.1.0 test
+> vitest --run
+
+
+ RUN  v4.1.10 C:/dev/_worktrees/aVOID/boomerangavoid/apps/platform
+
+
+ Test Files  11 passed (11)
+      Tests  45 passed (45)
+   Start at  17:34:03
+   Duration  568ms (transform 720ms, setup 0ms, import 1.41s, tests 102ms, environment 1ms)
+
+
+> @avoid/platform@0.1.0 test:catalog
+> node scripts/verify-game-catalog.mjs
+
+Game catalog contract verified: 10 titles, 10 details, staged BoomerangaVOID and preserved existing destinations.
+{"service":"boomerangavoid","port":56323,"protocol":"bav-1","contentHash":"21ce05ee","guestMode":true}
+
+> @avoid/boomerangavoid-server@0.1.0 test
+> tsx --test test/*.test.ts
+
+TAP version 13
+# Subtest: a reconnecting peer inherits an empty owner role
+ok 1 - a reconnecting peer inherits an empty owner role
+  ---
+  duration_ms: 295.2321
+  type: 'test'
+  ...
+# Subtest: departed loading seats are removed before lobby retry
+ok 2 - departed loading seats are removed before lobby retry
+  ---
+  duration_ms: 20203.8083
+  type: 'test'
+  ...
+# Room connection was closed unexpectedly (4002): 
+# Room connection was closed unexpectedly (4002): 
+# [Colyseus reconnection]: ΓÅ│ will retry in 0.2 seconds...
+# [Colyseus reconnection]: ≡ƒöä Re-establishing sessionId 'jUyf4OsWK' with roomId 'x_Evm8gR3'... (attempt 1 of 15)
+# [Colyseus reconnection]: Γ£à reconnection successful!
+# {"case":"six-seat-live-authority","protocol":"bav-1","contentHash":"21ce05ee","roomId":"x_Evm8gR3","players":6,"round":11,"winners":["jUyf4OsWK:0"],"reconnect":true,"staleInputStops":true,"metrics":{"rooms":1,"rss":94687232,"uptime":136.9282711,"roomMetrics":[{"seats":6,"rejectedInputs":2,"tickP95Ms":0.6150999999954365}]}}
+# Subtest: six real clients share authoritative rounds, enforce ownership, expire input and reconnect
+ok 3 - six real clients share authoritative rounds, enforce ownership, expire input and reconnect
+  ---
+  duration_ms: 135357.8005
+  type: 'test'
+  ...
+# Room connection was closed unexpectedly (4002): 
+# Subtest: create tickets cannot join a different room by spoofing intent
+ok 4 - create tickets cannot join a different room by spoofing intent
+  ---
+  duration_ms: 45.9572
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 135758.6235
+
+> @avoid/monorepo@1.0.0 build:platform:netlify
+> npm run build:platform:games && npm run prepare:platform:games && npm run build:platform
+
+
+> @avoid/monorepo@1.0.0 build:platform:games
+> npm run build --workspace=@avoid/void-main && npm run build --workspace=@avoid/wrecka-void && npm run build --workspace=@avoid/word-avoid && npm run build --workspace=@avoid/tanka-void && npm run build --workspace=@avoid/rail-avoid && npm run build --workspace=@avoid/boomerang-avoid
+
+
+> @avoid/void-main@1.0.0 build
+> vite build
+
+vite v8.2.1 building client environment for production...
+transforming...
+Γ£ô 69 modules transformed.
+rendering chunks...
+computing gzip size...
+../../dist/VOIDaVOID/index.html                   5.56 kB Γöé gzip:  1.68 kB
+../../dist/VOIDaVOID/assets/index-d1UqsBQj.css   11.43 kB Γöé gzip:  3.41 kB
+../../dist/VOIDaVOID/assets/index-CH420hyd.js   276.64 kB Γöé gzip: 80.09 kB
+
+Γ£ô built in 546ms
+
+> @avoid/wrecka-void@0.0.0 build
+> vite build
+
+[PLUGIN_TIMINGS] JavaScript callbacks ran for 6.4s of this 6.4s build (100%).
+The slowest callbacks, timed inside each callback (the wait before a callback starts is excluded, the time it awaits is included):
+  - plugin externalize-deps resolveId (100%, 6.4s, 4 calls)
+See https://rolldown.rs/reference/InputOptions.checks#bundlertimings for more details.
+
+vite v8.2.1 building client environment for production...
+`output.codeSplitting.groups[0].name` is a function. Set `output.codeSplitting.groups[0].debugName` so the bundler timing report can identify this group.
+transforming...
+Γ£ô 1485 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                              1.10 kB Γöé gzip:  0.52 kB
+dist/assets/wreckavoid-logo--urfWQXN.webp   31.84 kB
+dist/assets/index-BPNIQ8Fr.css              25.76 kB Γöé gzip:  5.68 kB
+dist/assets/rolldown-runtime-DN1TCW_I.js     0.09 kB Γöé gzip:  0.08 kB
+dist/assets/game-BwW6ixAC.js                12.08 kB Γöé gzip:  4.98 kB
+dist/assets/index-CUIZc7g7.js               94.45 kB Γöé gzip: 25.77 kB
+dist/assets/vendor-C2jPs_Bx.js             133.35 kB Γöé gzip: 43.30 kB
+
+Γ£ô built in 737ms
+
+> @avoid/word-avoid@1.0.0 build
+> vite build
+
+vite v7.3.6 building client environment for production...
+transforming...
+Γ£ô 3053 modules transformed.
+rendering chunks...
+computing gzip size...
+../../dist/WORDaVOID/index.html                   0.79 kB Γöé gzip:   0.44 kB
+../../dist/WORDaVOID/assets/index-BNQxjR5C.css   30.92 kB Γöé gzip:   6.46 kB
+../../dist/WORDaVOID/assets/index-DvSTTHEa.js   345.20 kB Γöé gzip:  81.80 kB
+../../dist/WORDaVOID/assets/index-CBDuEj6I.js   736.35 kB Γöé gzip: 165.86 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+Γ£ô built in 9.23s
+
+> @avoid/tanka-void@1.0.0 build
+> tsc --noEmit -p tsconfig.app.json && vite build
+
+vite v8.2.1 building client environment for production...
+transforming...
+Γ£ô 36 modules transformed.
+rendering chunks...
+computing gzip size...
+../../dist/TankaVOID/index.html                   0.70 kB Γöé gzip:  0.40 kB
+../../dist/TankaVOID/assets/index-DgrJVZKx.css   17.09 kB Γöé gzip:  4.49 kB
+../../dist/TankaVOID/assets/index-Dbyf2faK.js   203.32 kB Γöé gzip: 64.25 kB
+
+Γ£ô built in 618ms
+
+> @avoid/rail-avoid@1.0.0 build
+> tsc --noEmit && vite build
+
+vite v7.3.6 building client environment for production...
+transforming...
+Γ£ô 170 modules transformed.
+rendering chunks...
+computing gzip size...
+../../dist/RAILaVOID/index.html                                                    2.01 kB Γöé gzip:   1.01 kB
+../../dist/RAILaVOID/assets/quartermaster-portrait-v1-CWEk0m3b.webp                7.50 kB
+../../dist/RAILaVOID/assets/medic-portrait-v1-CFQ2-8om.webp                        7.52 kB
+../../dist/RAILaVOID/assets/mechanic-portrait-v1-hQCIhdW7.webp                     7.57 kB
+../../dist/RAILaVOID/assets/surveyor-portrait-v1-CQcNRSdR.webp                     7.89 kB
+../../dist/RAILaVOID/assets/cinzel-latin-ext-800-normal-BVA5zD9y.woff2             8.34 kB
+../../dist/RAILaVOID/assets/cinzel-latin-ext-600-normal-BEFdM_VE.woff2             8.35 kB
+../../dist/RAILaVOID/assets/engineer-portrait-v1-BQo8qpBG.webp                     8.80 kB
+../../dist/RAILaVOID/assets/cinzel-latin-ext-600-normal-BY9Mq9iK.woff              9.78 kB
+../../dist/RAILaVOID/assets/cinzel-latin-ext-800-normal-gMcvnDsD.woff              9.84 kB
+../../dist/RAILaVOID/assets/gunner-portrait-v1-xflesMiy.webp                      10.17 kB
+../../dist/RAILaVOID/assets/cinzel-latin-600-normal-Dd5YO2UX.woff2                15.20 kB
+../../dist/RAILaVOID/assets/cinzel-latin-800-normal-CwkMVn6z.woff2                15.26 kB
+../../dist/RAILaVOID/assets/cinzel-latin-600-normal-CH_LB4su.woff                 17.50 kB
+../../dist/RAILaVOID/assets/cinzel-latin-800-normal-69OYDlL6.woff                 17.54 kB
+../../dist/RAILaVOID/assets/special-elite-latin-ext-400-normal-ChcxYnmu.woff2     25.20 kB
+../../dist/RAILaVOID/assets/expedition-brass-frame-v2-B5Z-vJVW.webp               25.30 kB
+../../dist/RAILaVOID/assets/special-elite-latin-ext-400-normal-CaJZjSVf.woff      29.99 kB
+../../dist/RAILaVOID/assets/ash-cult-fusilier-v3-B-tHoBeU.webp                    33.64 kB
+../../dist/RAILaVOID/assets/surveyor-combat-v1-BeV7jS29.webp                      34.23 kB
+../../dist/RAILaVOID/assets/medic-combat-v1-BdyV8oHm.webp                         34.36 kB
+../../dist/RAILaVOID/assets/quartermaster-combat-v1-CvPJv4K0.webp                 34.50 kB
+../../dist/RAILaVOID/assets/mechanic-combat-v1-BA41y5F4.webp                      35.35 kB
+../../dist/RAILaVOID/assets/engineer-combat-v1-DgQoWMXW.webp                      37.30 kB
+../../dist/RAILaVOID/assets/rail-thug-v3-BW3gm8ak.webp                            38.09 kB
+../../dist/RAILaVOID/assets/coal-bunker-v1-BF2LGEIj.webp                          40.84 kB
+../../dist/RAILaVOID/assets/coach-v1-BcSM67LV.webp                                42.05 kB
+../../dist/RAILaVOID/assets/gunner-combat-v1-B42O7GvC.webp                        44.00 kB
+../../dist/RAILaVOID/assets/rail-maw-crawler-v3-YmPHV7mz.webp                     45.30 kB
+../../dist/RAILaVOID/assets/iron-sentinel-v3-tlaYQVFA.webp                        47.31 kB
+../../dist/RAILaVOID/assets/barracks-v1-CNyO0Umi.webp                             48.71 kB
+../../dist/RAILaVOID/assets/scrap-brute-v3-5T4AyzOy.webp                          49.22 kB
+../../dist/RAILaVOID/assets/special-elite-latin-400-normal-YjDd9tmf.woff2         53.30 kB
+../../dist/RAILaVOID/assets/gatling-v1-he3gYgGx.webp                              54.87 kB
+../../dist/RAILaVOID/assets/locomotive-v1-CHpVW_XT.webp                           55.09 kB
+../../dist/RAILaVOID/assets/cargo-v1-Co-VzzfO.webp                                56.14 kB
+../../dist/RAILaVOID/assets/gatling-v2-w3LWUhMK.webp                              62.35 kB
+../../dist/RAILaVOID/assets/special-elite-latin-400-normal-BtSRmyJ6.woff          63.41 kB
+../../dist/RAILaVOID/assets/lantern-wraith-v3-Df5_Jvgf.webp                       69.93 kB
+../../dist/RAILaVOID/assets/void-hound-v3-CZvS_L8t.webp                           70.36 kB
+../../dist/RAILaVOID/assets/gatling-v3-BTlGJtLE.webp                              73.73 kB
+../../dist/RAILaVOID/assets/conductor-combat-rNAiX_FX.webp                        80.72 kB
+../../dist/RAILaVOID/assets/mara-dialogue-v1-Dw1K_aLf.webp                        81.74 kB
+../../dist/RAILaVOID/assets/void-shade-v3-HoKR2sA3.webp                           89.42 kB
+../../dist/RAILaVOID/assets/flak-v1-DJritpdw.webp                                 98.89 kB
+../../dist/RAILaVOID/assets/cannon-v1-BYZLzn-0.webp                              110.71 kB
+../../dist/RAILaVOID/assets/medical-v1-AbSXqSOT.webp                             114.05 kB
+../../dist/RAILaVOID/assets/radiator-v1-C0UmdR6_.webp                            118.41 kB
+../../dist/RAILaVOID/assets/rainbound-survivor-v2-qeYXn-50.webp                  136.77 kB
+../../dist/RAILaVOID/assets/lantern-camp-v2-CbYb6kQK.webp                        138.26 kB
+../../dist/RAILaVOID/assets/conductor-3J_wZk4G.webp                              139.19 kB
+../../dist/RAILaVOID/assets/buried-concourse-v2-BMqQlWyh.webp                    166.65 kB
+../../dist/RAILaVOID/assets/abandoned-gun-car-v2-BS4psGle.webp                   171.16 kB
+../../dist/RAILaVOID/assets/void-sanctum-v2-DE-xuF0v.webp                        179.26 kB
+../../dist/RAILaVOID/assets/ruin-approach-v2-CIaG6Z1d.webp                       188.81 kB
+../../dist/RAILaVOID/assets/waterside-rail-dock-v2-BCk1bNC5.webp                 196.84 kB
+../../dist/RAILaVOID/assets/false-signal-v2-OE90kN2U.webp                        208.38 kB
+../../dist/RAILaVOID/assets/index-D11BR0CQ.css                                   192.47 kB Γöé gzip:  36.73 kB
+../../dist/RAILaVOID/assets/index-D_2G23ml.js                                    706.02 kB Γöé gzip: 244.05 kB
+../../dist/RAILaVOID/assets/phaser-DXXWZowi.js                                 1,208.05 kB Γöé gzip: 332.16 kB
+Γ£ô built in 5.31s
+
+> @avoid/boomerang-avoid@0.1.0 build
+> tsc --noEmit && vite build
+
+vite v8.3.5 building client environment for production...
+transforming...
+Γ£ô 63 modules transformed.
+rendering chunks...
+computing gzip size...
+../../dist/BoomerangaVOID/index.html                                                 0.63 kB Γöé gzip:   0.39 kB
+../../dist/BoomerangaVOID/assets/outfit-latin-ext-wght-normal-DdQaqQDo.woff2        14.80 kB
+../../dist/BoomerangaVOID/assets/dm-sans-latin-ext-standard-normal-oos9povj.woff2   31.29 kB
+../../dist/BoomerangaVOID/assets/outfit-latin-wght-normal-Bc-8i84L.woff2            32.29 kB
+../../dist/BoomerangaVOID/assets/dm-sans-latin-standard-normal-Bf69Tn_J.woff2       62.72 kB
+../../dist/BoomerangaVOID/assets/index-Cb5H0XJ-.css                                 36.50 kB Γöé gzip:   8.85 kB
+../../dist/BoomerangaVOID/assets/index-GkPAYgT7.js                                 794.12 kB Γöé gzip: 215.74 kB
+
+[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+Γ£ô built in 243ms
+
+> @avoid/monorepo@1.0.0 prepare:platform:games
+> node apps/platform/scripts/prepare-games.mjs
+
+Prepared BoomerangaVOID at apps\platform\public\BoomerangaVOID
+Prepared VOIDaVOID at apps\platform\public\VOIDaVOID
+Prepared WreckaVOID at apps\platform\public\WreckaVOID
+Prepared WORDaVOID at apps\platform\public\WORDaVOID
+Prepared RAILaVOID at apps\platform\public\RAILaVOID
+Prepared TankaVOID review build at apps\platform\public\TankaVOID
+
+> @avoid/monorepo@1.0.0 build:platform
+> npm run build --workspace=@avoid/platform
+
+
+> @avoid/platform@0.1.0 build
+> next build
+
+Γû▓ Next.js 16.4.5 (Turbopack)
+Γ£ô Running next.config.ts took 59ms
+- Experiments (use with caution):
+  ┬╖ optimizePackageImports
+
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 1581ms
+  Running TypeScript ...
+  Finished TypeScript in 3.5s ...
+  Collecting page data using 19 workers ...
+  Generating static pages using 19 workers (0/33) ...
+  Generating static pages using 19 workers (8/33) 
+  Generating static pages using 19 workers (16/33) 
+  Generating static pages using 19 workers (24/33) 
+Γ£ô Generating static pages using 19 workers (33/33) in 491ms
+  Finalizing page optimization ...
+
+Route (app)
+Γöî Γùï /
+Γö£ Γùï /_not-found
+Γö£ ╞Æ /account
+Γö£ ╞Æ /admin
+Γö£ ╞Æ /ads.txt
+Γö£ ╞Æ /api/admin/review
+Γö£ ╞Æ /api/creators/apply
+Γö£ ╞Æ /api/creators/games
+Γö£ ╞Æ /api/profile
+Γö£ ╞Æ /api/stripe/checkout
+Γö£ ╞Æ /api/stripe/portal
+Γö£ ╞Æ /api/stripe/webhook
+Γö£ ╞Æ /api/v1/boomerangavoid/ticket
+Γö£ ╞Æ /api/v1/player
+Γö£ ╞Æ /api/v1/runs
+Γö£ ╞Æ /api/v1/runs/[runId]/finish
+Γö£ ╞Æ /auth/callback
+Γö£ Γùï /creators/apply
+Γö£ ╞Æ /creators/dashboard
+Γö£ ╞Æ /creators/submit
+Γö£ ╞Æ /games/[slug]
+Γö£ Γùï /icon.svg
+Γö£ ╞Æ /leaderboards
+Γö£ ╞Æ /login
+Γö£ Γùï /manifest.webmanifest
+Γö£ Γùï /membership
+Γö£ ╞Æ /players/[username]
+Γö£ Γùï /privacy
+Γö£ ╞Æ /results/[submissionId]
+Γö£ Γùï /robots.txt
+Γö£ Γùï /sitemap.xml
+Γöö Γùï /terms
+
+
+╞Æ Proxy (Middleware)
+
+Γùï  (Static)   prerendered as static content
+╞Æ  (Dynamic)  server-rendered on demand
+
+Local source/network/build gate passed. Hosted auth, external-network/device/capacity gates remain separate.

@@ -59,7 +59,7 @@ Seeded replay now matches Node22 and Chrome155 across all 18 arena/mode cases ×
 
 Two local keyboard seats plus one remote browser seat passed public Quick Join and independent input routing; see [mixed-party evidence](evidence/mixed-party.json), repeat with `npm run verify:party --workspace=@avoid/boomerang-avoid`.
 
-Evidence: [browser journey](evidence/online-browser.json), [touch input](evidence/touch-input.json), [network impairment](evidence/impaired-network.log), [asset validation](evidence/asset-validation.json), [independent review/fixes](evidence/independent-review.md), and PNG captures in `evidence/`. Screenshots prove appearance at a moment; state/assertions and real inputs support behavior.
+Evidence: [browser journey](evidence/online-browser.json), [touch input](evidence/touch-input.json), [network impairment](evidence/impaired-network.txt), [asset validation](evidence/asset-validation.json), [independent review/fixes](evidence/independent-review.md), and PNG captures in `evidence/`. Screenshots prove appearance at a moment; state/assertions and real inputs support behavior.
 
 A full couch match test under software-rendered Chrome previously exceeded its 180-second wall-clock limit; it is not reported as passed. The finite browser smoke covers touch and six-seat start; complete couch/device acceptance remains open. Native Chrome opened the game visually, but its scoped debugger was unattached, so no native GPU/FPS measurement was obtained.
 
