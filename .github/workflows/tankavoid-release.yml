@@ -35,9 +35,10 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npm run verify:tankavoid:release
-      - name: Verify team authorization and concurrent invitations locally
+      - name: Verify foundation upgrades and team authorization locally
         shell: bash
         run: |
           teams_pg_initdb="$(find /usr/lib/postgresql -type f -name initdb -print | sort -V | tail -n 1)"
           test -n "$teams_pg_initdb"
+          FOUNDATION_TEST_PG_BIN="$(dirname "$teams_pg_initdb")" npm run test:foundation:database
           TEAMS_TEST_PG_BIN="$(dirname "$teams_pg_initdb")" node supabase/tests/verify-platform-teams.mjs

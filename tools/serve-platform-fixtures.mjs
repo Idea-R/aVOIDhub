@@ -4,20 +4,24 @@ import { createServer } from 'vite'
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const fixture = path.join(repo, 'apps/platform/fixtures/optimization')
 const owner = '00000000-0000-4000-8000-000000000001', other = '00000000-0000-4000-8000-000000000002', teamId = '00000000-0000-4000-8000-000000000010'
-let userId = owner, delayNext = false
-const counts = { teamReads: 0, teamWrites: 0, publicReads: 0, personalReads: 0, actions: [] }
+let userId = owner, delayNext = false, authMode = 'disabled'
+const counts = { teamReads: 0, teamWrites: 0, publicReads: 0, personalReads: 0, providerChecks: 0, oauthAttempts: 0, emailAttempts: 0, actions: [] }
 const team = { id: teamId, name: 'Synthetic test crew', owner_id: owner, notes: 'A shared synthetic brief.', notes_revision: 0, created_at: '2026-11-01T00:00:00Z', members: [{ user_id: owner, role: 'owner', joined_at: '2026-11-01T00:00:00Z' }, { user_id: other, role: 'member', joined_at: '2026-11-02T00:00:00Z' }], invitations: [] }
 const json = (res, data, status = 200) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'private, no-store' }); res.end(JSON.stringify(data)) }
 const server = await createServer({
   configFile: false, root: fixture, publicDir: false,
-  resolve: { alias: [{ find: '@/lib/supabase/client', replacement: path.join(fixture, 'auth.ts') }, { find: '@', replacement: path.join(repo, 'apps/platform/src') }] },
+  resolve: { alias: [{ find: '@/lib/supabase/client', replacement: path.join(fixture, 'auth.ts') }, { find: '@/lib/env', replacement: path.join(fixture, 'env.ts') }, { find: '@/lib/auth/google-provider', replacement: path.join(fixture, 'google-provider.ts') }, { find: '@', replacement: path.join(repo, 'apps/platform/src') }] },
+  define: { 'process.env.NEXT_PUBLIC_SITE_URL': JSON.stringify('http://127.0.0.1:4177') },
   oxc: { jsx: { runtime: 'automatic' } },
   plugins: [{ name: 'local-synthetic-api', configureServer(vite) { vite.middlewares.use(async (req, res, next) => {
     const url = new URL(req.url, 'http://127.0.0.1')
     if (!url.pathname.startsWith('/api/') && !url.pathname.startsWith('/__fixture/')) return next()
     let body = {}; if (req.method === 'POST') { let raw = ''; for await (const chunk of req) { raw += chunk; if (raw.length > 8192) return json(res, { error: 'fixture_body_limit' }, 413) } body = JSON.parse(raw || '{}') }
     if (url.pathname === '/__fixture/status') return json(res, counts)
-    if (url.pathname === '/__fixture/control') { if ('userId' in body) userId = body.userId; if (body.delayNext) delayNext = true; if (body.editBrief) { team.notes = 'Saved by another member.'; team.notes_revision++ } return json(res, { ok: true }) }
+    if (url.pathname === '/__fixture/control') { if ('userId' in body) userId = body.userId; if (body.delayNext) delayNext = true; if (body.authMode) authMode = body.authMode; if (body.editBrief) { team.notes = 'Saved by another member.'; team.notes_revision++ } return json(res, { ok: true }) }
+    if (url.pathname === '/__fixture/auth-settings') { counts.providerChecks++; return json(res, { enabled: authMode !== 'disabled' }) }
+    if (url.pathname === '/__fixture/oauth') { counts.oauthAttempts++; return json(res, authMode === 'failed' ? { data: { url: null }, error: { message: 'synthetic provider failure' } } : { data: { url: 'http://127.0.0.1:4177/__fixture/fake-google' }, error: null }) }
+    if (url.pathname === '/__fixture/email') { counts.emailAttempts++; return json(res, { error: null }) }
     if (url.pathname === '/api/leaderboards') { counts.publicReads++; return json(res, { game: 'voidavoid', mode: 'endless', scores: [{ id: 'fixture-score', playerName: 'Synthetic pilot', score: 314, trust: 'provisional', recordedAt: new Date().toISOString() }], observedAt: new Date().toISOString(), legacy: false }) }
     if (url.pathname === '/api/player/best') { counts.personalReads++; return userId ? json(res, { personalBest: 123 }) : json(res, { error: 'authentication_required' }, 401) }
     if (url.pathname !== '/api/teams') return json(res, { error: 'fixture_route_not_found' }, 404)

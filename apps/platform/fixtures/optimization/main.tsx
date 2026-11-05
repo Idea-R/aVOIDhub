@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { TeamWorkspace } from '../../src/components/TeamWorkspace'
 import { PublicScoreBoard } from '../../src/components/PublicScoreBoard'
+import { AuthForm } from '../../src/components/AuthForm'
 import { setFixtureUser } from './auth'
 import '../../src/app/globals.css'
 import '../../src/app/teams/teams.css'
@@ -17,8 +18,13 @@ function Fixture() {
         <button onClick={() => void fetch('/__fixture/control', { method: 'POST', body: JSON.stringify({ delayNext: true }) })}>Fixture: delay next read</button>
         <button onClick={() => void fetch('/__fixture/control', { method: 'POST', body: JSON.stringify({ editBrief: true }) })}>Fixture: concurrent brief edit</button>
         <button onClick={async () => setStatus(JSON.stringify(await (await fetch('/__fixture/status')).json()))}>Inspect fixture requests</button>
+        <button onClick={() => void fetch('/__fixture/control', { method: 'POST', body: JSON.stringify({ authMode: 'disabled' }) })}>Fixture: Google disabled</button>
+        <button onClick={() => void fetch('/__fixture/control', { method: 'POST', body: JSON.stringify({ authMode: 'failed' }) })}>Fixture: Google fails</button>
+        <button onClick={() => void fetch('/__fixture/control', { method: 'POST', body: JSON.stringify({ authMode: 'enabled' }) })}>Fixture: Google available</button>
+        <button onClick={() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }))}>Fixture: interrupted return</button>
       </div><output style={{ display: 'block', overflowWrap: 'anywhere' }}>{status}</output>
     </aside>
+    <h2>Local sign-in fixture</h2><AuthForm enabled nextPath="/teams/" />
     <h2>Public score panel</h2><PublicScoreBoard game="voidavoid" mode="endless" personal />
     <h2 style={{ marginTop: 32 }}>Team workspace</h2><TeamWorkspace initialUserId={new URLSearchParams(window.location.search).has('signed-out') ? null : owner}/>
   </main>

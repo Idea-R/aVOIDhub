@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { readFile } from 'node:fs/promises'
+import { readFile, readdir } from 'node:fs/promises'
 import { createHash } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
@@ -14,6 +14,22 @@ for (const route of ['/account', '/admin', '/teams', '/creators/dashboard', '/cr
   assert.equal(prerender.routes[route], undefined, `${route} must never be in the public prerender cache`)
 }
 console.log(`PASS ${publicPaths.length} public static routes, including ${catalog.allGames.length} game pages; private account/team routes remain uncached.`)
+
+let chunks = 0
+async function verifyChunks(directory) {
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    const filename = path.join(directory, entry.name)
+    if (entry.isDirectory()) await verifyChunks(filename)
+    else if (entry.isFile() && entry.name.endsWith('.js')) {
+      chunks++
+      const source = await readFile(filename, 'utf8')
+      assert.doesNotMatch(source, /__fixture\/|setFixtureUser|Local fixtures|synthetic-public-only/, `Local test controls must not ship: ${entry.name}`)
+    }
+  }
+}
+await verifyChunks(path.join(repo, 'apps/platform/.next/static/chunks'))
+assert.ok(chunks > 0, 'Production JavaScript must exist before fixture-exclusion verification')
+console.log(`PASS no local fixture controls in ${chunks} production JavaScript chunks.`)
 
 if (process.argv[2]) {
   const origin = new URL(process.argv[2])

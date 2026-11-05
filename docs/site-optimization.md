@@ -42,7 +42,7 @@ Team data, invitation emails and briefs stay private and uncached. Account chang
 
 Briefs use server revisions. Refresh preserves the original revision of an unsaved draft; two writers cannot silently overwrite one another. A conflict keeps the draft, disables retries and requires an explicit **Use saved brief** read/discard before another edit. Both database and UI bound text, and the API independently bounds total streamed request bytes.
 
-The additive migration is **unapplied to hosted storage**. Native PostgreSQL fixtures prove authorization, replay, concurrency, prior-schema upgrade and unrelated-sentinel preservation. They use a minimal auth shim, not a copy of the full hosted migration history. A full foundation/history rehearsal and real distinct-account Supabase/PostgREST smoke checks remain release gates. See the [team service contract](../apps/platform/src/lib/teams/README.md).
+The additive migration is **unapplied to hosted storage**. Native PostgreSQL fixtures prove authorization, replay, concurrency, prior-schema upgrade and unrelated-sentinel preservation. A further rehearsal now applies both checked-in historical fragments, the actual foundation and teams against an explicit synthetic legacy contract, with 87 native assertions. It repairs demonstrated replay/signup/run failures but cannot replace the missing production history or real Auth/PostgREST checks. See the [foundation/auth rehearsal](foundation-local-rehearsal.md) and [team service contract](../apps/platform/src/lib/teams/README.md).
 
 ## Verification commands
 
@@ -55,11 +55,14 @@ npm run typecheck --workspace=@avoid/platform
 npm run build:platform:netlify
 node tools/verify-platform-efficiency.mjs
 node supabase/tests/verify-platform-teams.mjs
+npm run test:foundation:database
 ```
 
 The PostgreSQL test defaults to the existing Windows PostgreSQL 17 binaries. Set `TEAMS_TEST_PG_BIN` to an existing installation on another host. It creates, stops and removes only its own temporary loopback cluster, never using project credentials or existing databases. The existing release workflow also runs the local PostgreSQL suite using an installed runner binary directory.
 
 Observed Windows verification: the complete existing release-candidate command passed, including all five game builds, the platform build/typecheck, 156 platform tests, 9 TankaVOID contract cases, 44 TankaVOID game cases, onboarding cases, catalog verification and foundation static checks. A final reserved-route collision regression brought the focused onboarding suite to 18 passing cases. Independent native PostgreSQL 17.5 verification passed all 93 assertions and removed its owned cluster. WORDaVOID's separate release check passed typechecking, lint, 33 tests and its production build after unused-dependency removal. These counts describe separate suites, not a deduplicated grand total.
+
+The subsequent auth/foundation follow-up passed the complete candidate again with **254 platform tests across 22 files**, all five game builds, typechecking and the 18 onboarding cases. Independent native runs passed **87 foundation/history/team-coexistence assertions** and **95 focused team assertions** on PostgreSQL 17.5. The production artifact check also excludes synthetic fixture markers from the actual JavaScript chunks. Local browser auth fixtures confirmed zero eager provider/auth calls, disabled/error recovery, explicit mocked Google/email attempts and interrupted-return recovery; these are not real Google consent or email delivery.
 
 Browser fixtures confirmed zero automatic public/personal score requests on the detail-style panel and one respective request after each button; invitation creation and explicit acceptance; fragment scrubbing while signed out; account/401 cleanup and delayed-response isolation; owner/member brief editing; pinned drafts through refresh and conflicts; and explicit saved-version recovery. The tested 320px layout had no overflowing inner controls. A guest VOIDaVOID run entered and paused without console errors, and static login return handling rejected an external destination while retaining `/teams/`. Synthetic auth events do not establish real Google sign-in or multi-device behavior.
 
@@ -72,6 +75,8 @@ For component journeys without any Supabase/Netlify access, run `node tools/serv
 Next.js is pinned to patched 16.4.5, including patched sharp 0.35.5; platform Zod is 4.6.7 and source-map-js is refreshed within its compatible range. WORDaVOID's unused Zod dependency is removed, with its release checks retained. A malformed existing reduced-motion CSS block is closed so subsequent styles are no longer accidentally scoped inside it; stylesheet parsing is regression-tested.
 
 The final production-dependency audit reports zero critical/high/moderate findings and four low findings in the existing Resend email dependency chain. This is not a claim that every dependency is vulnerability-free, nor a change to any email provider.
+
+The Google application action and safer shared email/OAuth callback are now integrated locally. Neither loads provider settings automatically. Profile fallback creation uses private, bounded non-email handles with collision/race recovery. The separate BoomerangaVOID branch and its release policy remain untouched. Real Google provider setup and consent are still unverified; see the rehearsal document for origin/configuration and hosted gates.
 
 Keep Netlify Pro. No new hosting, analytics product, paid resource, secret or OAuth grant is required by this candidate. Existing Supabase configuration and the foundation schema remain prerequisites. The new team migration, hosted compatibility tests, application release and real Google sign-in checks require the established authorized rollout. Do not merge or publish this candidate until those gates and the required approval are satisfied.
 
