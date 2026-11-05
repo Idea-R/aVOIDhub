@@ -35,5 +35,5 @@ export const rankedGameRegistry = {
 export type RankedGameKey = keyof typeof rankedGameRegistry
 
 export function isRankedGameKey(value: unknown): value is RankedGameKey {
-  return typeof value === 'string' && value in rankedGameRegistry
+  return typeof value === 'string' && Object.hasOwn(rankedGameRegistry, value)
 }

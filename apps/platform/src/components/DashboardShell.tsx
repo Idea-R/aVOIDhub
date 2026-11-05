@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { ArrowUpRight, CircleUserRound, Gamepad2, LayoutDashboard, ShieldCheck, Sparkles } from 'lucide-react'
+import { ArrowUpRight, CircleUserRound, Gamepad2, LayoutDashboard, ShieldCheck, Sparkles, Users } from 'lucide-react'
 
 export type DashboardSection = 'overview' | 'profile' | 'creator' | 'admin'
 
@@ -7,6 +7,7 @@ const navItems = [
   { id: 'overview', href: '/account/', label: 'Player deck', icon: LayoutDashboard },
   { id: 'profile', href: '/account/#profile-studio', label: 'Profile studio', icon: CircleUserRound },
   { id: 'creator', href: '/creators/dashboard/', label: 'Creator bay', icon: Gamepad2 },
+  { id: 'teams', href: '/teams/', label: 'Teams', icon: Users },
 ] as const
 
 export function DashboardShell({

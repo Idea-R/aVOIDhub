@@ -16,6 +16,12 @@ select has_table('public', 'game_submissions', 'game submissions table exists');
 select has_table('public', 'game_favorites', 'game favorites table exists');
 select has_table('public', 'game_run_sessions', 'run sessions table exists');
 select has_table('public', 'score_submissions', 'score submissions table exists');
+select has_table('public', 'platform_foundation_migration_state', 'foundation completion marker exists');
+select is(
+  has_table_privilege('authenticated', 'public.platform_foundation_migration_state', 'INSERT'),
+  false,
+  'browser roles cannot forge foundation completion'
+);
 
 select has_column('public', 'leaderboard_scores', 'submission_id', 'scores link to submissions');
 select has_column('public', 'leaderboard_scores', 'verification_level', 'scores expose trust level');
@@ -237,6 +243,7 @@ select is(
     where trigger_schema = 'public'
       and trigger_name in (
         'trigger_update_user_stats_on_score_insert',
+        'trigger_update_user_game_stats',
         'trigger_sync_leaderboard_player_name'
       )
   ),

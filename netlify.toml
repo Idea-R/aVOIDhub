@@ -91,7 +91,12 @@
     Cache-Control = "public, max-age=31536000, immutable"
 
 [[headers]]
-  for = "/games/*"
+  for = "/games/*.webp"
+  [headers.values]
+    Cache-Control = "public, max-age=86400, stale-while-revalidate=604800"
+
+[[headers]]
+  for = "/games/*.png"
   [headers.values]
     Cache-Control = "public, max-age=86400, stale-while-revalidate=604800"
 

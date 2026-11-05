@@ -24,10 +24,17 @@ BEGIN
   -- Check if the problematic 'current_time' column exists
   IF EXISTS (
     SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'user_profiles' AND column_name = 'current_time'
+    WHERE table_schema = 'public' AND table_name = 'user_profiles' AND column_name = 'current_time'
   ) THEN
+    IF EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'user_profiles'
+        AND column_name = 'current_survival_time'
+    ) THEN
+      RAISE EXCEPTION 'ambiguous_legacy_survival_columns' USING ERRCODE = '55000';
+    END IF;
     -- Rename the problematic column to the safe name
-    ALTER TABLE user_profiles RENAME COLUMN current_time TO current_survival_time;
+    ALTER TABLE public.user_profiles RENAME COLUMN "current_time" TO current_survival_time;
     RAISE NOTICE 'Renamed current_time column to current_survival_time';
   ELSE
     RAISE NOTICE 'current_time column does not exist, no rename needed';
@@ -165,4 +172,4 @@ GRANT EXECUTE ON FUNCTION public.update_game_statistics(UUID, INTEGER, INTEGER, 
 -- Step 6: Create performance indexes
 CREATE INDEX IF NOT EXISTS idx_user_profiles_best_score ON public.user_profiles(best_game_score DESC);
 CREATE INDEX IF NOT EXISTS idx_user_profiles_total_meteors ON public.user_profiles(total_meteors_destroyed DESC);
-CREATE INDEX IF NOT EXISTS idx_user_profiles_total_time ON public.user_profiles(total_survival_time DESC); 
+CREATE INDEX IF NOT EXISTS idx_user_profiles_total_time ON public.user_profiles(total_survival_time DESC);

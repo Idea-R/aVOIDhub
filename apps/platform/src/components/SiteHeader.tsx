@@ -11,6 +11,7 @@ const navigation = [
   { href: '/creators/apply/', label: 'Creators' },
   { href: '/membership/', label: 'Membership' },
   { href: '/account/', label: 'Account' },
+  { href: '/teams/', label: 'Teams' },
 ]
 
 export function SiteHeader() {
