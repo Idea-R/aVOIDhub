@@ -2,6 +2,37 @@
 --
 -- This is an intentionally coordinated migration: the run API and game clients must
 -- deploy with it because direct browser writes to leaderboard_scores are removed.
+-- Execute atomically in the migration runner's transaction; this file deliberately
+-- does not BEGIN/COMMIT an enclosing provider transaction. An unmarked existing
+-- foundation requires operator reconciliation, never an inferred successful run.
+do $$
+begin
+  if to_regclass('public.platform_foundation_migration_state') is null
+    and (to_regclass('public.membership_plans') is not null
+      or to_regclass('public.score_submissions') is not null
+      or to_regprocedure('public.finish_provisional_run(uuid,uuid,text,integer,jsonb)') is not null) then
+    raise exception 'unmarked_platform_foundation_requires_review' using errcode = '55000';
+  end if;
+end;
+$$;
+
+create table if not exists public.platform_foundation_migration_state (
+  version text primary key check (version = '20260820064235'),
+  completed_at timestamptz not null default now()
+);
+alter table public.platform_foundation_migration_state enable row level security;
+revoke all on public.platform_foundation_migration_state from public, anon, authenticated;
+-- A leftover/empty marker table is not evidence of a completed migration.
+do $$
+begin
+  if not exists(select 1 from public.platform_foundation_migration_state where version='20260820064235')
+    and (to_regclass('public.membership_plans') is not null
+      or to_regclass('public.score_submissions') is not null
+      or to_regprocedure('public.finish_provisional_run(uuid,uuid,text,integer,jsonb)') is not null) then
+    raise exception 'unmarked_platform_foundation_requires_review' using errcode = '55000';
+  end if;
+end;
+$$;
 
 create extension if not exists pgcrypto with schema extensions;
 
@@ -293,7 +324,9 @@ insert into public.membership_plans (plan_key, name, audience) values
 on conflict (plan_key) do update set
   name = excluded.name,
   audience = excluded.audience,
-  updated_at = now();
+  updated_at = now()
+where (membership_plans.name, membership_plans.audience)
+  is distinct from (excluded.name, excluded.audience);
 
 insert into public.entitlement_definitions (entitlement_key, description) values
   ('platform.ad_free', 'Do not request platform display ads for this member.'),
@@ -328,10 +361,31 @@ alter table public.game_submissions enable row level security;
 alter table public.game_favorites enable row level security;
 alter table public.game_run_sessions enable row level security;
 alter table public.score_submissions enable row level security;
+-- Existing grants/policies do not establish that legacy tables actually enforce
+-- RLS. Reassert it before exposing the scoped read/presentation surface below.
+alter table public.games enable row level security;
+alter table public.leaderboard_scores enable row level security;
+alter table public.user_profiles enable row level security;
+alter table public.game_scores enable row level security;
 
--- Start from a deny-by-default Data API surface. Production currently grants all
--- table privileges to both browser roles, including the two manual backup tables.
-revoke all on all tables in schema public from public, anon, authenticated;
+-- Close inherited legacy Data API privileges, including the manual backups.
+do $$
+begin
+  if not exists(select 1 from public.platform_foundation_migration_state where version='20260820064235') then
+    revoke all on all tables in schema public from public, anon, authenticated;
+    revoke execute on all functions in schema public from public, anon, authenticated;
+  end if;
+end;
+$$;
+-- Replays repair only the foundation surface. Later extensions retain their
+-- explicitly authorized grants; the initial global legacy lockdown runs once.
+revoke all on public.games, public.leaderboard_scores, public.user_profiles,
+  public.game_scores, public.leaderboard_scores_backup_manual, public.user_profiles_backup_manual,
+  public.membership_plans, public.entitlement_definitions, public.plan_entitlements,
+  public.user_entitlements, public.billing_accounts, public.billing_subscriptions,
+  public.stripe_webhook_events, public.creator_applications, public.creator_profiles,
+  public.game_submissions, public.game_favorites, public.game_run_sessions, public.score_submissions
+  from public, anon, authenticated;
 alter default privileges in schema public revoke all on tables from public, anon, authenticated;
 alter default privileges in schema public revoke execute on functions from public;
 
@@ -412,22 +466,28 @@ create policy "Users add own favorites" on public.game_favorites
 create policy "Users remove own favorites" on public.game_favorites
   for delete to authenticated using ((select auth.uid()) = user_id);
 
--- Privacy-first profiles: new rows are private, and the 15 legacy rows are held
+-- Privacy-first profiles: new rows are private, and legacy rows are held
 -- private until their owners choose to publish them from the rebuilt profile UI.
 alter table public.user_profiles alter column is_public set default false;
 
 -- Retire browser-era side effects before the new server-owned score path is used.
 drop trigger if exists trigger_update_user_stats_on_score_insert on public.leaderboard_scores;
+drop trigger if exists trigger_update_user_game_stats on public.leaderboard_scores;
 drop trigger if exists trigger_sync_leaderboard_player_name on public.user_profiles;
 drop trigger if exists update_user_profiles_updated_at on public.user_profiles;
 drop function if exists public.update_user_profile_stats();
 drop function if exists public.sync_leaderboard_player_name();
 
-update public.user_profiles set is_public = false where is_public is distinct from false;
+do $$
+begin
+  if not exists(select 1 from public.platform_foundation_migration_state where version='20260820064235') then
+    update public.user_profiles set is_public = false where is_public is distinct from false;
+  end if;
+end;
+$$;
 
--- Remove every inherited or explicit Data API execute grant, then add back only the
--- two service-role functions needed by the foundation workflow.
-revoke execute on all functions in schema public from public, anon, authenticated;
+-- The initial global revocation occurs above; each foundation RPC below also
+-- revokes its own browser execute grants on every replay.
 
 create or replace function public.create_user_profile()
 returns trigger
@@ -438,23 +498,33 @@ as $$
 declare
   v_display_name text;
   v_username text;
+  v_attempt integer := 0;
 begin
   v_display_name := coalesce(
     nullif(btrim(new.raw_user_meta_data ->> 'display_name'), ''),
     'Player'
   );
   v_display_name := left(v_display_name, 60);
-  v_username := 'player-' || left(replace(new.id::text, '-', ''), 20);
-
-  insert into public.user_profiles (
-    id, username, display_name, bio, cursor_color, social_links, is_public,
-    total_games_played, total_meteors_destroyed, total_survival_time,
-    created_at, updated_at
-  ) values (
-    new.id, v_username, v_display_name, null, '#06b6d4', '{}'::jsonb, false,
-    0, 0, 0, now(), now()
-  )
-  on conflict (id) do nothing;
+  loop
+    -- Full UUID input avoids shared-prefix collisions; 24 characters also fit
+    -- the profile API. Retry safely if an existing owner chose the same handle.
+    v_username := 'player-' || left(md5(new.id::text || ':' || v_attempt::text), 17);
+    begin
+      insert into public.user_profiles (
+        id, username, display_name, bio, cursor_color, social_links, is_public,
+        total_games_played, total_meteors_destroyed, total_survival_time,
+        created_at, updated_at
+      ) values (
+        new.id, v_username, v_display_name, null, '#06b6d4', '{}'::jsonb, false,
+        0, 0, 0, now(), now()
+      )
+      on conflict (id) do nothing;
+      exit;
+    exception when unique_violation then
+      v_attempt := v_attempt + 1;
+      if v_attempt >= 16 then raise; end if;
+    end;
+  end loop;
 
   return new;
 end;
@@ -467,32 +537,39 @@ security definer
 set search_path = ''
 as $$
 declare
-  v_profiles_created integer;
+  v_profiles_created integer := 0;
+  v_inserted integer;
+  v_user record;
+  v_attempt integer;
 begin
-  insert into public.user_profiles (
-    id, username, display_name, bio, cursor_color, social_links, is_public,
-    total_games_played, total_meteors_destroyed, total_survival_time,
-    created_at, updated_at
-  )
-  select
-    au.id,
-    'player-' || left(replace(au.id::text, '-', ''), 20),
-    left(coalesce(nullif(btrim(au.raw_user_meta_data ->> 'display_name'), ''), 'Player'), 60),
-    null,
-    '#06b6d4',
-    '{}'::jsonb,
-    false,
-    0,
-    0,
-    0,
-    au.created_at,
-    now()
-  from auth.users as au
-  left join public.user_profiles as up on up.id = au.id
-  where up.id is null
-  on conflict (id) do nothing;
-
-  get diagnostics v_profiles_created = row_count;
+  for v_user in
+    select au.* from auth.users as au
+    left join public.user_profiles as up on up.id = au.id
+    where up.id is null
+  loop
+    v_attempt := 0;
+    loop
+      begin
+        insert into public.user_profiles (
+          id, username, display_name, bio, cursor_color, social_links, is_public,
+          total_games_played, total_meteors_destroyed, total_survival_time,
+          created_at, updated_at
+        ) values (
+          v_user.id,
+          'player-' || left(md5(v_user.id::text || ':' || v_attempt::text), 17),
+          left(coalesce(nullif(btrim(v_user.raw_user_meta_data ->> 'display_name'), ''), 'Player'), 60),
+          null, '#06b6d4', '{}'::jsonb, false, 0, 0, 0,
+          v_user.created_at, now()
+        ) on conflict (id) do nothing;
+        get diagnostics v_inserted = row_count;
+        v_profiles_created := v_profiles_created + v_inserted;
+        exit;
+      exception when unique_violation then
+        v_attempt := v_attempt + 1;
+        if v_attempt >= 16 then raise; end if;
+      end;
+    end loop;
+  end loop;
   return v_profiles_created;
 end;
 $$;
@@ -537,7 +614,11 @@ security definer
 set search_path = ''
 as $$
 begin
-  if games_increment not between 0 and 1
+  if p_user_id is null or games_increment is null or meteors_increment is null
+    or survival_increment is null or distance_increment is null
+    or current_score is null or current_meteors is null
+    or current_survival_time is null or current_distance is null
+    or games_increment not between 0 and 1
     or meteors_increment not between 0 and 100000
     or survival_increment not between 0 and 86400
     or distance_increment not between 0 and 1000000000
@@ -555,7 +636,7 @@ begin
     total_distance_traveled = coalesce(up.total_distance_traveled, 0) + distance_increment,
     best_game_score = greatest(coalesce(up.best_game_score, 0), current_score),
     best_game_meteors = greatest(coalesce(up.best_game_meteors, 0), current_meteors),
-    best_game_time = greatest(coalesce(up.best_game_time, 0), current_survival_time),
+    best_game_time = greatest(coalesce(up.best_game_time, 0), update_game_statistics.current_survival_time),
     best_game_distance = greatest(coalesce(up.best_game_distance, 0), current_distance),
     updated_at = now()
   where up.id = p_user_id;
@@ -594,14 +675,14 @@ declare
   v_verification_level text;
   v_player_name text;
 begin
-  if p_score < 0 or p_score > 2147483647 then
+  if p_score is null or p_score < 0 or p_score > 2147483647 then
     raise exception 'score_out_of_range' using errcode = '22003';
   end if;
   if jsonb_typeof(coalesce(p_metrics, '{}'::jsonb)) <> 'object'
     or octet_length(coalesce(p_metrics, '{}'::jsonb)::text) > 8192 then
     raise exception 'metrics_invalid' using errcode = '22023';
   end if;
-  if p_ticket_hash !~ '^[a-f0-9]{64}$' then
+  if p_ticket_hash is null or p_ticket_hash !~ '^[a-f0-9]{64}$' then
     raise exception 'invalid_run_ticket' using errcode = '28000';
   end if;
 
@@ -610,7 +691,7 @@ begin
   where id = p_run_id
   for update;
 
-  if not found or v_run.user_id <> p_user_id then
+  if not found or p_user_id is null or v_run.user_id <> p_user_id then
     raise exception 'run_not_found' using errcode = 'P0002';
   end if;
   if v_run.ticket_hash <> p_ticket_hash then
@@ -634,7 +715,7 @@ begin
   if v_run.status <> 'started' then
     raise exception 'run_already_consumed' using errcode = '23505';
   end if;
-  if v_run.expires_at <= now() then
+  if v_run.expires_at <= clock_timestamp() then
     raise exception 'run_expired' using errcode = '22023';
   end if;
   insert into public.score_submissions (
@@ -673,3 +754,6 @@ grant execute on function public.finish_provisional_run(uuid, uuid, text, intege
 
 comment on function public.finish_provisional_run(uuid, uuid, text, integer, jsonb) is
   'Consumes a server-issued one-use run ticket and returns the same provisional receipt on an authenticated retry. Service role only.';
+
+insert into public.platform_foundation_migration_state(version)
+values ('20260820064235') on conflict do nothing;
