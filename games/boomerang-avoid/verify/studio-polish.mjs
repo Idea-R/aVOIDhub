@@ -1,0 +1,32 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
+const out=new URL('../../../docs/boomerangavoid/evidence/polish/',import.meta.url);await fs.mkdir(out,{recursive:true});
+const browser=await chromium.launch({channel:'chrome',headless:true,args:['--no-sandbox']});const errors=[];
+try{
+ const page=await browser.newPage({viewport:{width:1440,height:900}});page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('http://127.0.0.1:5188/boomerangavoid/?studio=1');await page.getByRole('heading',{name:'Garden workshop'}).waitFor();
+ await page.locator('#ads-template').selectOption('moss-court');
+ const getDraft=async()=>{await page.locator('[data-tab="exchange"]').click();const d=JSON.parse(await page.locator('#ads-json').inputValue());await page.locator('[data-tab="maps"]').click();return d;};
+ const before=await getDraft(),shape=page.locator('[data-object="moss-0"] rect'),bounds=await shape.boundingBox();
+ assert.ok(bounds);await page.mouse.move(bounds.x+bounds.width/2,bounds.y+bounds.height/2);await page.mouse.down();await page.mouse.move(bounds.x+bounds.width/2+34,bounds.y+bounds.height/2,{steps:8});await page.mouse.up();
+ const moved=await getDraft();assert.notEqual(moved.arena.obstacles[0].x,before.arena.obstacles[0].x);
+ await page.locator('[data-do="undo"]').click();const undone=await getDraft();assert.deepEqual(undone,before);
+ await page.locator('[data-do="redo"]').click();const redone=await getDraft();assert.deepEqual(redone,moved);
+ await page.locator('[data-tab="reports"]').click();await page.locator('#ads-note').fill('Review the adjusted cover lane near spawn one.');
+ await page.locator('[data-do="report"]').click();await page.waitForFunction(()=>document.querySelectorAll('.ads-report').length===1);
+ let records=JSON.parse(await page.locator('#ads-reports').inputValue());assert.equal(records.length,1);assert.ok(records[0].mapSnapshot.startsWith('data:image/png;base64,'));
+ await page.locator('[data-fix-note]').fill('Moved cover and completed a playtest.');await page.locator('[data-report-status="fixed"]').click();records=JSON.parse(await page.locator('#ads-reports').inputValue());assert.equal(records[0].status,'fixed');assert.match(records[0].fixNote,/playtest/);
+ await page.screenshot({path:fileURLToPath(new URL('studio-reports.png',out))});
+ await page.locator('[data-tab="maps"]').click();await page.screenshot({path:fileURLToPath(new URL('studio-drag.png',out))});
+ await page.getByRole('button',{name:'Back to game',exact:true}).click();await page.locator('[data-action="party"]').click();
+ await page.locator('.power-pool summary').click();await page.locator('[data-power-pool="twin"]').uncheck();await page.locator('[data-power-pool="ember"]').uncheck();
+ await page.locator('[data-config="mapId"]').selectOption('moonwell');await page.locator('[data-action="start"]').click();await page.waitForFunction(()=>window.__BOOMERANGAVOID__.state.phase==='playing',null,{timeout:30000});
+ const state=await page.evaluate(()=>window.__BOOMERANGAVOID__.state);assert.ok(!state.config.enabledUpgrades.includes('twin'));assert.ok(!state.config.enabledUpgrades.includes('ember'));
+ await page.screenshot({path:fileURLToPath(new URL('moonwell-gameplay.png',out))});
+ await page.locator('.pause-button').click();await page.locator('[data-action="exit-match"]').click();await page.locator('[data-action="party"]').click();await page.locator('[data-config="mapId"]').selectOption('kiln-courtyard');await page.locator('[data-action="start"]').click();await page.waitForFunction(()=>window.__BOOMERANGAVOID__.state.phase==='playing',null,{timeout:30000});
+ await page.screenshot({path:fileURLToPath(new URL('kiln-gameplay.png',out))});
+ const debug=await page.evaluate(()=>window.__BOOMERANGAVOID__);
+ const result={timestamp:new Date().toISOString(),pointerDragQuarterUnit:true,undoRedoExact:true,mapSnapshotReport:true,fixedReportPersists:true,couchPowerPoolSelected:true,environmentCaptures:['moonwell','kiln-courtyard'],drawCalls:debug.metrics.drawCalls,triangles:debug.metrics.triangles,scope:'Chrome headless visual/input checks; not physical GPU performance',errors};await fs.writeFile(new URL('studio-browser.json',out),JSON.stringify(result,null,2));console.log(JSON.stringify(result));assert.deepEqual(errors,[]);
+}finally{await browser.close();}

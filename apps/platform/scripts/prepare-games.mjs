@@ -8,6 +8,11 @@ const publicRoot = path.join(repositoryRoot, 'apps', 'platform', 'public')
 
 const games = [
   {
+    name: 'BoomerangaVOID local-play preview',
+    source: path.join(repositoryRoot, 'dist', 'BoomerangaVOID'),
+    target: path.join(publicRoot, 'BoomerangaVOID'),
+  },
+  {
     name: 'VOIDaVOID',
     source: path.join(repositoryRoot, 'dist', 'VOIDaVOID'),
     target: path.join(publicRoot, 'VOIDaVOID'),

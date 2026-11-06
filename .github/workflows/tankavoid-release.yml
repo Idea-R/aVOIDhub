@@ -7,11 +7,19 @@ on:
       - "apps/platform/**"
       - "games/tanka-void/**"
       - "packages/tankavoid-contract/**"
+      - "games/boomerang-avoid/**"
+      - "packages/boomerangavoid-protocol/**"
+      - "packages/boomerangavoid-sim/**"
+      - "docs/boomerangavoid/static-release/**"
+      - "docs/boomerangavoid/evidence/ads-powers/two-hard-fixture-walltime.json"
+      - "assets-src/boomerangavoid/gamefeel/manifest.json"
+      - ".gitattributes"
       - "supabase/**"
       - "netlify.toml"
       - "package.json"
       - "package-lock.json"
       - "tools/verify-tankavoid-release.mjs"
+      - "tools/verify-boomerang*.mjs"
   workflow_dispatch:
 
 permissions:
@@ -33,3 +41,7 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npm run verify:tankavoid:release
+      - run: npm run typecheck --workspace=@avoid/boomerangavoid-sim --workspace=@avoid/boomerangavoid-protocol --workspace=@avoid/boomerang-avoid
+      - run: npm test --workspace=@avoid/boomerangavoid-sim --workspace=@avoid/boomerangavoid-protocol --workspace=@avoid/boomerang-avoid
+      - run: node --test tools/verify-boomerang-static-boundary.node-test.mjs
+      - run: node tools/verify-boomerangavoid-static-site.mjs --staged

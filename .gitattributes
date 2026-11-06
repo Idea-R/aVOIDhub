@@ -1,0 +1,6 @@
+# Preserve the frozen candidate's exact source bytes on every build host.
+games/boomerang-avoid/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+packages/boomerangavoid-protocol/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+packages/boomerangavoid-sim/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+assets-src/boomerangavoid/gamefeel/manifest.json -text
+docs/boomerangavoid/evidence/ads-powers/two-hard-fixture-walltime.json -text

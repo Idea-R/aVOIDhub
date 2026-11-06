@@ -1,0 +1,788 @@
+{
+  "candidateCommit": "c9866d5fd370f348702da6cbae499b8f9adbdefc",
+  "candidateBranch": "integration/boomerangavoid-local-launch",
+  "cleanAtPackaging": true,
+  "ancestry": "04326f -> e14a69b -> a52f5718 -> candidate; no merge or cherry-pick required",
+  "buildMode": "local-release",
+  "publicPath": "/boomerangavoid/",
+  "physicalSiteDirectory": "site-root/BoomerangaVOID/",
+  "ruleset": "boomerangavoid-v1-rc.5",
+  "contentVersion": "garden-3",
+  "contentHash": "d7459615",
+  "treeHashAlgorithm": "sha256(JSON.stringify(ordered artifactFiles)); paths relative to BoomerangaVOID",
+  "artifactTreeSha256": "7b7eb9642a9a550cbc78203c07eceb0eff00499ced7b7fc5314fa65b9c3ba31b",
+  "artifactBytes": 3355786,
+  "artifactFiles": [
+    {
+      "path": "assets/dm-sans-latin-ext-standard-normal-oos9povj.woff2",
+      "bytes": 31292,
+      "sha256": "5d18d31d23ada61ebee1d589b11d5da30db9e158f589d5e35221ba2b1a45de54"
+    },
+    {
+      "path": "assets/dm-sans-latin-standard-normal-Bf69Tn_J.woff2",
+      "bytes": 62724,
+      "sha256": "ca72d2bcea8f4daa783dbdfa2d9b46068c3ce38168e05918fb867aa453b4f890"
+    },
+    {
+      "path": "assets/index-CjUhD4wv.js",
+      "bytes": 958217,
+      "sha256": "11fc3d5f84cbe08d6763fb87da31be95bd6924fbdcf9be9dd851a7a8c9352641"
+    },
+    {
+      "path": "assets/index-k0EVOpHb.css",
+      "bytes": 38905,
+      "sha256": "758bcaf46898790978aff4ba3f4a8212101a255da8a7444a0bc1b9ed9af0bd33"
+    },
+    {
+      "path": "assets/outfit-latin-ext-wght-normal-DdQaqQDo.woff2",
+      "bytes": 14808,
+      "sha256": "0f53d1c03b3918d744a843b5039001ee31695ca1e255e3914188df81beb461e9"
+    },
+    {
+      "path": "assets/outfit-latin-wght-normal-Bc-8i84L.woff2",
+      "bytes": 32292,
+      "sha256": "6c18d579fd87c3776be068b762cbc83fde3acb543d49eabd3ade842eb987e887"
+    },
+    {
+      "path": "index.html",
+      "bytes": 640,
+      "sha256": "8b0adfdf3d24b6451a59236e58bf5988aea07e83881782451a3921bf4d407967"
+    },
+    {
+      "path": "licenses/ORIGINAL-ASSET-PROVENANCE.md",
+      "bytes": 1541,
+      "sha256": "728c0ca35c11a64c9caba2c0387ea5f709d1f762238dd50b238dedf3ba9f8833"
+    },
+    {
+      "path": "licenses/THIRD-PARTY-NOTICES.txt",
+      "bytes": 23167,
+      "sha256": "495ceed04f8b18a0afa8a088a9cfd98be5e7dd25186de1717acf19fa96736969"
+    },
+    {
+      "path": "models/cairn.glb",
+      "bytes": 97844,
+      "sha256": "e0375b1a5a4cd3789ed2447477515d6a3f79012cef9d84d434ce59b5e38e83e6"
+    },
+    {
+      "path": "models/comet.glb",
+      "bytes": 90392,
+      "sha256": "13c38bf379a3169989aabd06a4193d325b8d1e2126e574a9b3141dba5d105e02"
+    },
+    {
+      "path": "models/gamefeel/cairn.glb",
+      "bytes": 280112,
+      "sha256": "b6470a17809c6407eb256438706c060e646a7762459f59ad73edcffd450b6a6f"
+    },
+    {
+      "path": "models/gamefeel/comet.glb",
+      "bytes": 252216,
+      "sha256": "9edb79492510d3adc359efc6af9c17efae32fead2eec902f71794947f635b348"
+    },
+    {
+      "path": "models/gamefeel/kiln.glb",
+      "bytes": 281728,
+      "sha256": "8685b002d7c49d404c966e390c9ecdbd28db6efb545a5e8af79038082c39aa1a"
+    },
+    {
+      "path": "models/gamefeel/nori.glb",
+      "bytes": 248476,
+      "sha256": "374eedee522da49de1aa858851aa24bc37f2cfbefe55593d255ad9c8f31feef5"
+    },
+    {
+      "path": "models/gamefeel/pip.glb",
+      "bytes": 270516,
+      "sha256": "009767c3886214935b0b9a7fe7245c914ede9e9d0a2db90c2b008ffc1b37a4d8"
+    },
+    {
+      "path": "models/gamefeel/volt.glb",
+      "bytes": 272648,
+      "sha256": "5516c7486db24b08f59423c2a753852fd32883d538316d84f4dbe47fbdb62673"
+    },
+    {
+      "path": "models/kiln.glb",
+      "bytes": 114592,
+      "sha256": "f91872e10fac8efcc4cdde97cb06533cba9d8c47d37009eba589b0830a484f21"
+    },
+    {
+      "path": "models/nori.glb",
+      "bytes": 94752,
+      "sha256": "672fe4ed8a49a2a34fdc2e2550b4f432123543d747b13c4aa21a44bdf9728aff"
+    },
+    {
+      "path": "models/pip.glb",
+      "bytes": 98008,
+      "sha256": "ddf799745084cc3db7a438f14a0aa4aa3ac370ce93919a33cf539f78192d966a"
+    },
+    {
+      "path": "models/volt.glb",
+      "bytes": 90916,
+      "sha256": "c76f07118de1305f731838aa8ef7965777153566f1b398c12c27b22ddadb539f"
+    }
+  ],
+  "packages": [
+    {
+      "path": "BoomerangaVOID-local-c9866d5fd370.zip",
+      "bytes": 934702,
+      "sha256": "c26497483d985a6a2d341a29ea9c49b52d428aee918318639774865074f980a3"
+    },
+    {
+      "path": "BoomerangaVOID-browser-source-c9866d5fd370.zip",
+      "bytes": 900088,
+      "sha256": "869d39ea1cdae1b9bf690b513690615698bbe4ebce26057c26230bab2f68a17f"
+    }
+  ],
+  "sourceFiles": [
+    {
+      "path": "games/boomerang-avoid/ART.md",
+      "bytes": 1119,
+      "sha256": "59b4a729712842d2b606299b24da812345682461893e21a5b63672042b83cea5"
+    },
+    {
+      "path": "games/boomerang-avoid/ATTRIBUTIONS.md",
+      "bytes": 904,
+      "sha256": "7624968c9c7c23d82c07db7475ade6ec7374a801932f5405c679f55eac509763"
+    },
+    {
+      "path": "games/boomerang-avoid/index.html",
+      "bytes": 510,
+      "sha256": "79e3d02c41d34e48210124ffc08c64287ea217050d7b79b6ddea02aadec572d3"
+    },
+    {
+      "path": "games/boomerang-avoid/package.json",
+      "bytes": 1213,
+      "sha256": "84da5a9ff6c94fe2844871974962c7bbc009bb23fb8f61b71fe58fbc83b14947"
+    },
+    {
+      "path": "games/boomerang-avoid/public/licenses/ORIGINAL-ASSET-PROVENANCE.md",
+      "bytes": 1567,
+      "sha256": "f946ebf202d36e0a45e246673a568baadaebed9a16485262b711b946ebbc7991"
+    },
+    {
+      "path": "games/boomerang-avoid/public/licenses/THIRD-PARTY-NOTICES.txt",
+      "bytes": 23167,
+      "sha256": "495ceed04f8b18a0afa8a088a9cfd98be5e7dd25186de1717acf19fa96736969"
+    },
+    {
+      "path": "games/boomerang-avoid/public/models/cairn.glb",
+      "bytes": 97844,
+      "sha256": "e0375b1a5a4cd3789ed2447477515d6a3f79012cef9d84d434ce59b5e38e83e6"
+    },
+    {
+      "path": "games/boomerang-avoid/public/models/comet.glb",
+      "bytes": 90392,
+      "sha256": "13c38bf379a3169989aabd06a4193d325b8d1e2126e574a9b3141dba5d105e02"
+    },
+    {
+      "path": "games/boomerang-avoid/public/models/gamefeel/cairn.glb",
+      "bytes": 280112,
+      "sha256": "b6470a17809c6407eb256438706c060e646a7762459f59ad73edcffd450b6a6f"
+    },
+    {
+      "path": "games/boomerang-avoid/public/models/gamefeel/comet.glb",
+      "bytes": 252216,
+      "sha256": "9edb79492510d3adc359efc6af9c17efae32fead2eec902f71794947f635b348"
+    },
+    {
+      "path": "games/boomerang-avoid/public/models/gamefeel/kiln.glb",
+      "bytes": 281728,
+      "sha256": "8685b002d7c49d404c966e390c9ecdbd28db6efb545a5e8af79038082c39aa1a"
+    },
+    {
+      "path": "games/boomerang-avoid/public/models/gamefeel/nori.glb",
+      "bytes": 248476,
+      "sha256": "374eedee522da49de1aa858851aa24bc37f2cfbefe55593d255ad9c8f31feef5"
+    },
+    {
+      "path": "games/boomerang-avoid/public/models/gamefeel/pip.glb",
+      "bytes": 270516,
+      "sha256": "009767c3886214935b0b9a7fe7245c914ede9e9d0a2db90c2b008ffc1b37a4d8"
+    },
+    {
+      "path": "games/boomerang-avoid/public/models/gamefeel/volt.glb",
+      "bytes": 272648,
+      "sha256": "5516c7486db24b08f59423c2a753852fd32883d538316d84f4dbe47fbdb62673"
+    },
+    {
+      "path": "games/boomerang-avoid/public/models/kiln.glb",
+      "bytes": 114592,
+      "sha256": "f91872e10fac8efcc4cdde97cb06533cba9d8c47d37009eba589b0830a484f21"
+    },
+    {
+      "path": "games/boomerang-avoid/public/models/nori.glb",
+      "bytes": 94752,
+      "sha256": "672fe4ed8a49a2a34fdc2e2550b4f432123543d747b13c4aa21a44bdf9728aff"
+    },
+    {
+      "path": "games/boomerang-avoid/public/models/pip.glb",
+      "bytes": 98008,
+      "sha256": "ddf799745084cc3db7a438f14a0aa4aa3ac370ce93919a33cf539f78192d966a"
+    },
+    {
+      "path": "games/boomerang-avoid/public/models/volt.glb",
+      "bytes": 90916,
+      "sha256": "c76f07118de1305f731838aa8ef7965777153566f1b398c12c27b22ddadb539f"
+    },
+    {
+      "path": "games/boomerang-avoid/README.md",
+      "bytes": 2416,
+      "sha256": "34b8dabd3e7d5089bf303a01b7332622c0bdd9c3da5e83fa0788140e029a5057"
+    },
+    {
+      "path": "games/boomerang-avoid/src/account.ts",
+      "bytes": 20584,
+      "sha256": "8519c9160031ffb53eec51de687804d76ae31a327e559d4fed2a78aacb0dd5a1"
+    },
+    {
+      "path": "games/boomerang-avoid/src/asset-studio.ts",
+      "bytes": 4484,
+      "sha256": "83e453bd3bcd254048b1aca64c109b80d380d39e6632f7d29d5402b594f4a1ca"
+    },
+    {
+      "path": "games/boomerang-avoid/src/audio.ts",
+      "bytes": 3820,
+      "sha256": "f26b6e61b2710da47d48ae54a81cb86ac3b1d08295dd4b37f594897ce7176b87"
+    },
+    {
+      "path": "games/boomerang-avoid/src/character-library.ts",
+      "bytes": 2813,
+      "sha256": "cc3ce98025c15e6cd98985bb8ecf4f087d74f699cc7a04f7cf0e4a2d09d72592"
+    },
+    {
+      "path": "games/boomerang-avoid/src/combat-motion.ts",
+      "bytes": 9463,
+      "sha256": "5c2fe07fd8aa301348eb50117d1e7b382449d35c897ad2527c2652068ba4d002"
+    },
+    {
+      "path": "games/boomerang-avoid/src/control-help.ts",
+      "bytes": 4780,
+      "sha256": "c39ac3007575328362831502a18f8bf5466b18004dc253c5b7cee3d97e51aa87"
+    },
+    {
+      "path": "games/boomerang-avoid/src/controller-menu.ts",
+      "bytes": 2254,
+      "sha256": "92c59fe0cdaecdfca0809d9b3d09f4d800117b3d9494761a45a903213254712e"
+    },
+    {
+      "path": "games/boomerang-avoid/src/environment-kit.ts",
+      "bytes": 16919,
+      "sha256": "c5422c8afafe869972e163a2b0e7865235d578a91d4dd8d4d392086b0953c6fc"
+    },
+    {
+      "path": "games/boomerang-avoid/src/gamepad.ts",
+      "bytes": 2311,
+      "sha256": "0be0d69f16e839897e05b5073bd60976b2fc0a27d0eb25eab5e508ec9ca2ece4"
+    },
+    {
+      "path": "games/boomerang-avoid/src/haptics.ts",
+      "bytes": 5026,
+      "sha256": "c7d7110573e37394ef15c55e381e6017d2ab94e37a73b7ac3fb5dd8012cf3d78"
+    },
+    {
+      "path": "games/boomerang-avoid/src/input-session.ts",
+      "bytes": 1939,
+      "sha256": "e1c09f78d24438a66f40cedd548e27554574d4c6cdf0714f3fc9388afd1f4b35"
+    },
+    {
+      "path": "games/boomerang-avoid/src/input.ts",
+      "bytes": 15405,
+      "sha256": "5d9991c9f32acfdfb86d5c61b18f7f93673e3272a8fcb4d30a44bdbb7a6f74f3"
+    },
+    {
+      "path": "games/boomerang-avoid/src/main.ts",
+      "bytes": 75284,
+      "sha256": "daf1160de90fceed2cb902635b0195be9ef10d7326260d07b493e1376d21318d"
+    },
+    {
+      "path": "games/boomerang-avoid/src/net.ts",
+      "bytes": 14985,
+      "sha256": "c42b3a19aece530ce2aa370e0912c61f6d9dcbe96f6f0d1cc6184c93b355cb5d"
+    },
+    {
+      "path": "games/boomerang-avoid/src/prediction.ts",
+      "bytes": 4862,
+      "sha256": "7907b4a7a51722a71073cd3d0fecdadafb21f213294426f93b3a74464f3d82ff"
+    },
+    {
+      "path": "games/boomerang-avoid/src/release-scope.ts",
+      "bytes": 166,
+      "sha256": "eaa049fb1f76b4e2c25c8a21f5d39468964af80e31d33ea869e9599e07eb132e"
+    },
+    {
+      "path": "games/boomerang-avoid/src/render-quality.ts",
+      "bytes": 2874,
+      "sha256": "7a1fd8074fb28f9e508604915eabbcbf61881ca049f8112dbacf038e3e772c13"
+    },
+    {
+      "path": "games/boomerang-avoid/src/render.ts",
+      "bytes": 44782,
+      "sha256": "09f6ee9387db41fc42f299301d5cf47dbdb1829d889d3ae2cf2b8d0f90bd435d"
+    },
+    {
+      "path": "games/boomerang-avoid/src/round-preparation.ts",
+      "bytes": 2252,
+      "sha256": "ae1d3ca47678e0cd23d8b8b563c7395f2aff5a349694c7132baeacfa330aa44f"
+    },
+    {
+      "path": "games/boomerang-avoid/src/snapshot-clock.ts",
+      "bytes": 942,
+      "sha256": "d98886e3544b59c6f626c9efe119c4f8298a974961e33aee940dc69f25591464"
+    },
+    {
+      "path": "games/boomerang-avoid/src/studio-contract.ts",
+      "bytes": 11207,
+      "sha256": "5cfe261d61505354847878d374ebe0421f2add78ec90d6b878031b5011c30cf5"
+    },
+    {
+      "path": "games/boomerang-avoid/src/studio-edit.ts",
+      "bytes": 1319,
+      "sha256": "a7e0be4cff842a934766cdfe388e605738ba083b655e51fe474b9e3d4e323ca9"
+    },
+    {
+      "path": "games/boomerang-avoid/src/studio-history.ts",
+      "bytes": 1401,
+      "sha256": "428aa0b70a6510310c82f0afc225698421a98ef0924ffee10b33c5478934e018"
+    },
+    {
+      "path": "games/boomerang-avoid/src/studio-reports.ts",
+      "bytes": 3084,
+      "sha256": "8414fee2f542ad10cfeea306f7a7d46931f6e5ddca470e5853d2ec0b22841d68"
+    },
+    {
+      "path": "games/boomerang-avoid/src/studio.css",
+      "bytes": 3454,
+      "sha256": "4e3e77eb3894df1e55e41ea11b24a1d2eea69de2c1458ddced5487bbc83d095e"
+    },
+    {
+      "path": "games/boomerang-avoid/src/studio.ts",
+      "bytes": 27958,
+      "sha256": "265b44caba0fc62f575640a2ad4f2ee4a0c5d7cfcbbffcae98ed3ccde07d9ed7"
+    },
+    {
+      "path": "games/boomerang-avoid/src/style.css",
+      "bytes": 51499,
+      "sha256": "29109b03a6034cc72c94eff10d01177ecdc15c2a0eb75e1b308c61512b61561b"
+    },
+    {
+      "path": "games/boomerang-avoid/test/combat-motion.test.ts",
+      "bytes": 10414,
+      "sha256": "97a09c83213369f71cca501bef81f3ff3abe26f52ad23e1f4ad7fecef1a421dd"
+    },
+    {
+      "path": "games/boomerang-avoid/test/control-help.test.ts",
+      "bytes": 4074,
+      "sha256": "20609ec00c6f71f34d6f7097d4b02f9d9cb85b6392430bb65dfa3278c400af9c"
+    },
+    {
+      "path": "games/boomerang-avoid/test/device-preferences.test.ts",
+      "bytes": 2564,
+      "sha256": "c8a006e6a97e0830355e8df5a84d6976911da797651feebade098a458ad13694"
+    },
+    {
+      "path": "games/boomerang-avoid/test/gamepad.test.ts",
+      "bytes": 4857,
+      "sha256": "5529ce319eb85557905a6d94303287169ef2fff53fd97c57f6830f239935c987"
+    },
+    {
+      "path": "games/boomerang-avoid/test/haptics.test.ts",
+      "bytes": 5269,
+      "sha256": "b27c5f5550558077842b3cd5f5b5a51ab8e6a833642bff52d320436d402233a3"
+    },
+    {
+      "path": "games/boomerang-avoid/test/input-session.test.ts",
+      "bytes": 5729,
+      "sha256": "0f5d3f07150be0463d3bc80735d566252f95b29815dd182d264ac4aa6b66996d"
+    },
+    {
+      "path": "games/boomerang-avoid/test/input-viewport.test.ts",
+      "bytes": 2078,
+      "sha256": "3800d68ef2e6f92dc84a83ed918a8237df29d06211944f2723f14b88394ce7b7"
+    },
+    {
+      "path": "games/boomerang-avoid/test/prediction.test.ts",
+      "bytes": 8206,
+      "sha256": "602d661bc6493d97ccefab4e83e893ea2a8c0ab9cfa71653e092aa61d7ad3db3"
+    },
+    {
+      "path": "games/boomerang-avoid/test/render-quality.test.ts",
+      "bytes": 3671,
+      "sha256": "a4c6d68961babcd6436e9b8db1207150460132b2e2e5350bef3bdb56dd0ba6c5"
+    },
+    {
+      "path": "games/boomerang-avoid/test/round-preparation.test.ts",
+      "bytes": 3368,
+      "sha256": "7d6531243c4dedf3be29fb8388670c50fc8135c41b9632b2f316fc6383c0322a"
+    },
+    {
+      "path": "games/boomerang-avoid/test/snapshot-clock.test.ts",
+      "bytes": 1582,
+      "sha256": "e7b3253d3854d21cdbbc0df98bdbc9da0a9d2ef01ba3f7c9310786d6d4a5e682"
+    },
+    {
+      "path": "games/boomerang-avoid/test/studio-history.test.ts",
+      "bytes": 5079,
+      "sha256": "dc7eb26a77665119b062d507cc49e921df0b9b9b7b338cdbbd2c6ae838663849"
+    },
+    {
+      "path": "games/boomerang-avoid/test/studio-power-flow.test.ts",
+      "bytes": 1741,
+      "sha256": "cc429918d48c6c91317a8652df1f5acaa7b4dd74e73246b0e0a84ba4b96f21a2"
+    },
+    {
+      "path": "games/boomerang-avoid/test/studio-workflow.test.ts",
+      "bytes": 3438,
+      "sha256": "dccb1949b200d320e011512c8c3bd61f208bed3b38dc8485af5a607c8565a877"
+    },
+    {
+      "path": "games/boomerang-avoid/test/studio.test.ts",
+      "bytes": 4158,
+      "sha256": "e6151eae8aa75c070a5089d2081f5730ac688484db3c0f3b179dc2097dad9552"
+    },
+    {
+      "path": "games/boomerang-avoid/tsconfig.json",
+      "bytes": 349,
+      "sha256": "8e9ed5497f3cc6068f9b6f85ee58bb6f02c7b5533390332e749c84cf629324ec"
+    },
+    {
+      "path": "games/boomerang-avoid/verify/account-browser.mjs",
+      "bytes": 6827,
+      "sha256": "700c5c925ff85512579701e7e1134e84c672205d5e92ff4643c0316acd997335"
+    },
+    {
+      "path": "games/boomerang-avoid/verify/ads-arena-roundtrip.mjs",
+      "bytes": 3155,
+      "sha256": "248c0a95862cb29a7c16386c4aafba01cf84de0d494fd71d4cbbe90f8206b9fc"
+    },
+    {
+      "path": "games/boomerang-avoid/verify/ads-atomic-edits.mjs",
+      "bytes": 11406,
+      "sha256": "24848eadaa3fd47ffa01f95dba1a7084d35148be97d5f729a13c49a1b357bf84"
+    },
+    {
+      "path": "games/boomerang-avoid/verify/ads-full-loops.mjs",
+      "bytes": 11823,
+      "sha256": "c4200674cbf1f813386c9dfbb0857b667f4ccfc4672542acd93ba191cd876c3d"
+    },
+    {
+      "path": "games/boomerang-avoid/verify/ads-power-fixtures.ts",
+      "bytes": 2502,
+      "sha256": "f3d9d63e8ca4e2e8fa936d59450a28a0c026575573856d51b712fe971f2e4f3e"
+    },
+    {
+      "path": "games/boomerang-avoid/verify/ads-power-flow.mjs",
+      "bytes": 10346,
+      "sha256": "cd6a3c1caa999673ba979571d1a76a296635c0df179abbf95b7d65d9391b9a9f"
+    },
+    {
+      "path": "games/boomerang-avoid/verify/bot-boundary-replay.mjs",
+      "bytes": 4901,
+      "sha256": "6a05d22f9966aa420e3c49ed7dcc9281a6fce37d6ea6e9a32a836ea810735744"
+    },
+    {
+      "path": "games/boomerang-avoid/verify/bot-boundary.mjs",
+      "bytes": 7894,
+      "sha256": "db4073ebebb0070a8b968899e6f9c7da65b4fd2c1d650cc5cca0daaa56859df9"
+    },
+    {
+      "path": "games/boomerang-avoid/verify/combat-polish.mjs",
+      "bytes": 10978,
+      "sha256": "ec984e5b83c1aa1ec45ad5fc433df8f3b7a8809c209ea99003f4ce4310e79a11"
+    },
+    {
+      "path": "games/boomerang-avoid/verify/controller-accessibility.mjs",
+      "bytes": 6888,
+      "sha256": "5bb77cdf34b6a2df20831201f01249defa09949d91a34aa53343a3bef61b1a3b"
+    },
+    {
+      "path": "games/boomerang-avoid/verify/controller-polish.mjs",
+      "bytes": 6146,
+      "sha256": "02964f5040f07455969555152f0ef7aa21ee5eeaf71c312518fd704f55e4a154"
+    },
+    {
+      "path": "games/boomerang-avoid/verify/gamefeel-replay.mjs",
+      "bytes": 2608,
+      "sha256": "3a6d87c7c7e15620bc48c0382175087130c3627510fdea0e99c4f4ec8c3b50f1"
+    },
+    {
+      "path": "games/boomerang-avoid/verify/gamefeel-studio.mjs",
+      "bytes": 9505,
+      "sha256": "1707e77403168bb8c94f94faf3aa2139548f6979d700a12b6b121a82507d4d81"
+    },
+    {
+      "path": "games/boomerang-avoid/verify/impaired-browser.mjs",
+      "bytes": 11195,
+      "sha256": "dc661a18b393ef3fb85eda7aadf3a8d0a82a7a0e28658f0fee3d5a4cfe14ac13"
+    },
+    {
+      "path": "games/boomerang-avoid/verify/keyboard-completion.mjs",
+      "bytes": 3932,
+      "sha256": "165b64470944891d381697d7bbc615a8d47da278e6793944cb55779fe2de910b"
+    },
+    {
+      "path": "games/boomerang-avoid/verify/loopback-fixture.mjs",
+      "bytes": 8479,
+      "sha256": "c61912d106922c0727dd1afb025f5655ac42f9a94a8f915a76d84d732b6a313a"
+    },
+    {
+      "path": "games/boomerang-avoid/verify/low-power.mjs",
+      "bytes": 13267,
+      "sha256": "97b292b3c8d47eced270442c4556faf628d04c2c51aa6bea44ad912ba4654069"
+    },
+    {
+      "path": "games/boomerang-avoid/verify/mixed-party.mjs",
+      "bytes": 3173,
+      "sha256": "e6c3cd18ab9b68685453eb87c3997fc73dbd543e8ac69376ff471e7407bcc81b"
+    },
+    {
+      "path": "games/boomerang-avoid/verify/new-arenas.mjs",
+      "bytes": 8863,
+      "sha256": "5fd4ba90a9781aca5314d0d77e99b4bd073fc761c6e00d76d3bd3690ca6d0c70"
+    },
+    {
+      "path": "games/boomerang-avoid/verify/onboarding.mjs",
+      "bytes": 17148,
+      "sha256": "d0dfcdd2d67d1eb741ad70fff28a97ec2c0f29b0a54565e830cc1d507111e0c4"
+    },
+    {
+      "path": "games/boomerang-avoid/verify/online-journey.mjs",
+      "bytes": 5692,
+      "sha256": "d408bdf6cab7566201e8629ba83d3cdededeae60dc59ca6ab7e9be5ed96e7327"
+    },
+    {
+      "path": "games/boomerang-avoid/verify/online-polish.mjs",
+      "bytes": 5940,
+      "sha256": "a3bf46aabfffab4ba0e1e7c745317c38f3113a4df371ae054bf2ef78708cee92"
+    },
+    {
+      "path": "games/boomerang-avoid/verify/recovery-polish.mjs",
+      "bytes": 7047,
+      "sha256": "375d36ed99ff2c502379cae7a168ca862107e31d6154fd225bb3f2325160d1d7"
+    },
+    {
+      "path": "games/boomerang-avoid/verify/render-effects.mjs",
+      "bytes": 15764,
+      "sha256": "14c8423c8fdae3ef16a420f6be5d39ba2ebd8074dac05505d719444ba2d679b4"
+    },
+    {
+      "path": "games/boomerang-avoid/verify/replay-state.mjs",
+      "bytes": 1443,
+      "sha256": "68c2a1e0934426d87dfae618f7678968058e3d71d5f0f5ef0b1876a7fbce1a6d"
+    },
+    {
+      "path": "games/boomerang-avoid/verify/replay.mjs",
+      "bytes": 2003,
+      "sha256": "3ed9a6a1bfde93899f03b774e24b4c9e5120809b91d336bf4d2059fde81a4dae"
+    },
+    {
+      "path": "games/boomerang-avoid/verify/static-release.mjs",
+      "bytes": 11529,
+      "sha256": "2b63b705b8cba2a89f8608aa2b9abe736c192a3c8605dca18bf98fddf6dc3fca"
+    },
+    {
+      "path": "games/boomerang-avoid/verify/studio-polish.mjs",
+      "bytes": 4435,
+      "sha256": "3d463ca7f35e2910466aaf53c7ac935307e45400ae4412dbace49966fe78d7eb"
+    },
+    {
+      "path": "games/boomerang-avoid/verify/touch-and-couch.mjs",
+      "bytes": 4036,
+      "sha256": "a6eae5941351245a72c5e7dec49b3f74cedea8c16aaf9026032411526b33c752"
+    },
+    {
+      "path": "games/boomerang-avoid/verify/touch-completion.mjs",
+      "bytes": 5065,
+      "sha256": "13ff4b475772adbd41abe3f9faee348b6760511ec00907bb7a0762380fa2a307"
+    },
+    {
+      "path": "games/boomerang-avoid/vite.config.ts",
+      "bytes": 207,
+      "sha256": "16abc15fcfa35fd221530dddfc92e6d9ffd5fadf243c459d8b2765148a390af7"
+    },
+    {
+      "path": "package-lock.json",
+      "bytes": 397793,
+      "sha256": "6c8c1be77832deebac01dae0619d5372b8ad8d3729472de3c2b05e2343fb4c9c"
+    },
+    {
+      "path": "package.json",
+      "bytes": 2514,
+      "sha256": "672ebe82950042e8670e77be5157557c6b882b91aa02d0d9425eb61c472104a1"
+    },
+    {
+      "path": "packages/boomerangavoid-protocol/package.json",
+      "bytes": 603,
+      "sha256": "95db2a0a374a30378eb806ebbf69be1fd0207bc2542b0995321f7e92cedc500c"
+    },
+    {
+      "path": "packages/boomerangavoid-protocol/src/admission-config.ts",
+      "bytes": 527,
+      "sha256": "5e66593f2b310f73118402a9c50ef5bd59c3eff43de24611c1ef35e16c535f6b"
+    },
+    {
+      "path": "packages/boomerangavoid-protocol/src/admission.ts",
+      "bytes": 5604,
+      "sha256": "801d2189f444046205f3d2ab3dc119f80f9b8ee68848eb6c82a71c13472289ce"
+    },
+    {
+      "path": "packages/boomerangavoid-protocol/src/index.ts",
+      "bytes": 4886,
+      "sha256": "9d022ea0d4b0c35f08ff2c765e3d2ce6865564458d9ecbe1eefe17b4d5f25695"
+    },
+    {
+      "path": "packages/boomerangavoid-protocol/src/preferences.ts",
+      "bytes": 3230,
+      "sha256": "54c437b1678f53226454cb95d1c6cca7f5d8662df8c7fb1cfc12561fb5e403c2"
+    },
+    {
+      "path": "packages/boomerangavoid-protocol/src/receipts.ts",
+      "bytes": 12819,
+      "sha256": "85b5f5351628a27daabc2ee1d426dd55c433b596489785f5e9a00913784ba7b1"
+    },
+    {
+      "path": "packages/boomerangavoid-protocol/src/tickets.ts",
+      "bytes": 2052,
+      "sha256": "11e3c736939cf4d424512f7f20efc1390ae2d899fdcf4aa009e6057f85e26edf"
+    },
+    {
+      "path": "packages/boomerangavoid-protocol/test/admission.test.ts",
+      "bytes": 8242,
+      "sha256": "3bd9d9f675b6081d18bc31388d252df44af9449b33539852fb72a57f0496b482"
+    },
+    {
+      "path": "packages/boomerangavoid-protocol/test/preferences.test.ts",
+      "bytes": 19894,
+      "sha256": "53d92b0eb53f59058825f328a45e9de8f4f2c1db7fd3ad4c6c1ea443279e4826"
+    },
+    {
+      "path": "packages/boomerangavoid-protocol/test/protocol.test.ts",
+      "bytes": 3200,
+      "sha256": "d1a54d1252e041c9f4c6a077ecfd3369e60c306568a4ed9a612a103de7dfe3aa"
+    },
+    {
+      "path": "packages/boomerangavoid-protocol/test/receipts.test.ts",
+      "bytes": 17201,
+      "sha256": "bc27cca8db4d49eacb2e61c9239747e30233cc20d216b51c82c0e8492dcba635"
+    },
+    {
+      "path": "packages/boomerangavoid-protocol/tsconfig.json",
+      "bytes": 273,
+      "sha256": "07a2c02585580316af7a60529a3676ecbf16cf8ab294154a4ada0d0b084b4298"
+    },
+    {
+      "path": "packages/boomerangavoid-sim/package.json",
+      "bytes": 290,
+      "sha256": "4f852ec19e2a43641411a7c5b54528b1225f70393f7ae958f550af622687e1c6"
+    },
+    {
+      "path": "packages/boomerangavoid-sim/README.md",
+      "bytes": 4730,
+      "sha256": "af57d58d054ed594ea6117abf57f25469d105339abf8437814b288ea1c379d29"
+    },
+    {
+      "path": "packages/boomerangavoid-sim/src/content.ts",
+      "bytes": 10642,
+      "sha256": "def0e9b5422df48323af249ebbcb0266ce137a0f50cd37b68a396a66250a0584"
+    },
+    {
+      "path": "packages/boomerangavoid-sim/src/geometry.ts",
+      "bytes": 3951,
+      "sha256": "55140ab010db21d487e777d3e76d79fa4661f1a70f87025932924774d5dfac2f"
+    },
+    {
+      "path": "packages/boomerangavoid-sim/src/index.ts",
+      "bytes": 62019,
+      "sha256": "7853a6883b28134c90acc7fa877b6786efbaeda4f745bfde628e22663ff95261"
+    },
+    {
+      "path": "packages/boomerangavoid-sim/src/types.ts",
+      "bytes": 4917,
+      "sha256": "70419ee7479f068cf7a06e067ec3f89e06f54e797ba50dc27dc00025df326142"
+    },
+    {
+      "path": "packages/boomerangavoid-sim/test/bot-boundary.test.ts",
+      "bytes": 3392,
+      "sha256": "1826f6f76474366a97c71abb47a66210a6846084850801f908598c83f2b429f6"
+    },
+    {
+      "path": "packages/boomerangavoid-sim/test/bot-difficulty.test.ts",
+      "bytes": 2253,
+      "sha256": "6365c11b8e3d9a6eaeed4bb8d35bfec0d510d7dc934cd9d2eb38aeda8a562074"
+    },
+    {
+      "path": "packages/boomerangavoid-sim/test/bot-tactics.test.ts",
+      "bytes": 8714,
+      "sha256": "16c11aec727616cc922309e8a19ec401ce6f22a45722b8378ca1d2117d3cfd45"
+    },
+    {
+      "path": "packages/boomerangavoid-sim/test/boundaries.test.ts",
+      "bytes": 7174,
+      "sha256": "37a506c525281e4562d9bf8ddae0905b1da6bd118c7e2bf025d0735cb31cec9d"
+    },
+    {
+      "path": "packages/boomerangavoid-sim/test/content-modes.test.ts",
+      "bytes": 16771,
+      "sha256": "76d1e3e59ba4471315ddb57fa74c7eff2fa9f6d9713028b9743222efd0dda723"
+    },
+    {
+      "path": "packages/boomerangavoid-sim/test/core.test.ts",
+      "bytes": 12636,
+      "sha256": "afa1e1570ba3858f7a6f16c972e82290f8d0736066e67c049b1e267fd3a9f918"
+    },
+    {
+      "path": "packages/boomerangavoid-sim/test/geometry.test.ts",
+      "bytes": 2037,
+      "sha256": "bdabd8db316102bfc520029add79525b2a9744b5bd1a9db9d75dc9a3f04f7b5c"
+    },
+    {
+      "path": "packages/boomerangavoid-sim/test/new-arenas.test.ts",
+      "bytes": 4648,
+      "sha256": "732def36ecab7b97e1169c9a977e6e483641cd1669fb4b82d3f79160b2b348d6"
+    },
+    {
+      "path": "packages/boomerangavoid-sim/test/party-boundary.test.ts",
+      "bytes": 940,
+      "sha256": "45d201aaccf9b75ceb802e5913e783e1563312760d368d1155cb99d8c919b5d5"
+    },
+    {
+      "path": "packages/boomerangavoid-sim/test/relay-seed-tie.test.ts",
+      "bytes": 3229,
+      "sha256": "df1a88375d072f3c5377182ea95760d4c3ea39799f3b3c213379a85e042138b9"
+    },
+    {
+      "path": "packages/boomerangavoid-sim/test/traversal.test.ts",
+      "bytes": 9782,
+      "sha256": "602a63d356ecf118f1b2a58f05695dbf83084560204739396fe4455b73e8f471"
+    },
+    {
+      "path": "packages/boomerangavoid-sim/tsconfig.json",
+      "bytes": 273,
+      "sha256": "07a2c02585580316af7a60529a3676ecbf16cf8ab294154a4ada0d0b084b4298"
+    },
+    {
+      "path": "packages/boomerangavoid-sim/verify/mutation-results.json",
+      "bytes": 845,
+      "sha256": "5a1f5211daf92033017b24d36004667b03d5e629828056710dbb075e6e4dca2d"
+    }
+  ],
+  "sourceImport": "Only the three browser workspaces were imported; original candidate root metadata was verified and retained in separate staging, not copied over the production site.",
+  "allowedArtifactTextNormalization": {
+    "path": "licenses/ORIGINAL-ASSET-PROVENANCE.md",
+    "normalization": "CRLF to LF only, retained independent-rebuild evidence; runtime code/fonts/models stay exact",
+    "normalizedSha256": "728c0ca35c11a64c9caba2c0387ea5f709d1f762238dd50b238dedf3ba9f8833"
+  },
+  "supportingFixtures": [
+    {
+      "path": "docs/boomerangavoid/evidence/ads-powers/two-hard-fixture-walltime.json",
+      "bytes": 3496,
+      "sha256": "1de02718114a9005af84b9422419d37c14ef5687c6170ae15b52ec60558291f1",
+      "originSha256": "ed86b150aea9decfe5545382a7497df935bb4329cc8279abe583c1836a8e17a2",
+      "transformation": "Only expected.first.config and expected.first.seats retained; added fixture-purpose label."
+    },
+    {
+      "path": "assets-src/boomerangavoid/gamefeel/manifest.json",
+      "bytes": 7327,
+      "sha256": "37b793ab2ea495328c8b8afaf6ca65da46cd5fdc658ad2672ebf5f0ee46290f5",
+      "originSha256": "2f2a743299ad6d15309b4b11dec8a75a32da5536999970a1de62d73baf3c2051",
+      "transformation": "Removed machine-specific reference_paths; all other authoring manifest fields retained."
+    }
+  ]
+}

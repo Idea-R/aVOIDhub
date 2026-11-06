@@ -37,6 +37,7 @@ export default function HomePage() {
           <div className="heroActions">
             <a className="primaryButton" href="#games">Pick a game <ArrowDown size={17} /></a>
             <a className="textButton" href="#creators">What we&apos;re building <ArrowRight size={16} /></a>
+            <a className="textButton" href="/boomerangavoid/">BoomerangaVOID local preview <ArrowRight size={16} /></a>
           </div>
           <dl className="heroFacts" aria-label="Current catalog facts">
             <div><dt>04</dt><dd>playable aVOID games</dd></div>
