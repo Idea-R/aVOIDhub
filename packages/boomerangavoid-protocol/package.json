@@ -1,0 +1,24 @@
+{
+  "name": "@avoid/boomerangavoid-protocol",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./admission": "./src/admission.ts",
+    "./admission-config": "./src/admission-config.ts",
+    "./tickets": "./src/tickets.ts",
+    "./receipts": "./src/receipts.ts",
+    "./preferences": "./src/preferences.ts"
+  },
+  "scripts": {
+    "test": "tsx --test test/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@avoid/boomerangavoid-sim": "0.1.0"
+  },
+  "devDependencies": {
+    "tsx": "4.23.15"
+  }
+}

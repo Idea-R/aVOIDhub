@@ -1,0 +1,19 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
+const out=new URL('../../../docs/boomerangavoid/evidence/completion/',import.meta.url);await fs.mkdir(out,{recursive:true});
+const browser=await chromium.launch({channel:'chrome',headless:true,args:['--no-sandbox']});const errors=[];
+try{
+ const page=await browser.newPage({viewport:{width:1440,height:900}});page.on('pageerror',e=>errors.push(e.message));await page.goto('http://127.0.0.1:5188/boomerangavoid/');await page.locator('[data-action="practice"]').waitFor();
+ assert.equal(await page.evaluate(()=>document.activeElement?.getAttribute('data-action')),'practice');await page.keyboard.press('Enter');await page.waitForFunction(()=>window.__BOOMERANGAVOID__.state.phase==='playing');
+ const player=()=>page.evaluate(()=>{const p=window.__BOOMERANGAVOID__.state.players[0];return {x:p.x,y:p.y,dash:p.dashCooldown,slash:p.slashCooldown};});
+ const before=await player();await page.keyboard.down('KeyD');await page.waitForTimeout(350);await page.keyboard.up('KeyD');const moved=await player();assert.ok(moved.x-before.x>.7);
+ await page.keyboard.press('Space');await page.waitForFunction(()=>window.__BOOMERANGAVOID__.state.players[0].dashCooldown>0);await page.keyboard.press('KeyJ');await page.waitForFunction(()=>window.__BOOMERANGAVOID__.state.players[0].slashCooldown>0);
+ await page.keyboard.press('KeyK');await page.waitForFunction(()=>window.__BOOMERANGAVOID__.state.weapons.some(w=>w.ownerId===window.__BOOMERANGAVOID__.state.players[0].id&&w.phase==='outbound'));await page.keyboard.press('KeyK');await page.waitForFunction(()=>window.__BOOMERANGAVOID__.state.weapons.some(w=>w.ownerId===window.__BOOMERANGAVOID__.state.players[0].id&&w.phase==='held'),null,{timeout:10000});
+ assert.match(await page.locator('.bottom-hints').innerText(),/WASD/);await page.keyboard.press('Escape');await page.locator('.pause-panel').waitFor();for(let i=0;i<7;i++){await page.keyboard.press('Tab');assert.equal(await page.evaluate(()=>!!document.activeElement?.closest('.pause-panel')),true);}
+ await page.keyboard.press('Escape');await page.waitForFunction(()=>window.__BOOMERANGAVOID__.screen==='playing');await page.keyboard.press('Escape');await page.keyboard.press('Tab');assert.equal(await page.evaluate(()=>document.activeElement?.getAttribute('data-action')),'settings');await page.keyboard.press('Enter');await page.getByRole('heading',{name:'Settings',exact:true}).waitFor();await page.keyboard.press('Escape');await page.locator('.pause-panel').waitFor();await page.keyboard.press('Enter');
+ await page.keyboard.down('KeyS');await page.waitForTimeout(100);await page.evaluate(()=>dispatchEvent(new Event('blur')));await page.waitForTimeout(120);const stopped=await player();await page.keyboard.down('KeyS');await page.waitForTimeout(200);const held=await player();assert.ok(Math.hypot(held.x-stopped.x,held.y-stopped.y)<.05,'held key repeat cannot resume after blur');await page.keyboard.up('KeyS');await page.keyboard.down('KeyS');await page.waitForTimeout(200);await page.keyboard.up('KeyS');const resumed=await player();assert.ok(resumed.y-held.y>.3);
+ await page.keyboard.press('Escape');await page.screenshot({path:fileURLToPath(new URL('keyboard-pause.png',out))});
+ const result={timestamp:new Date().toISOString(),browser:'Chrome headless',actualKeyboardApi:true,keyboardOnlyStartAndSettings:true,movementAndCombat:true,throwRecallCatch:true,modalTabContained:true,emulatedBlurHeldRepeatRejected:true,freshKeyResumes:true,errors,limits:'Browser keyboard events and a dispatched blur event; no physical keyboard rollover or OS focus-loss certification'};await fs.writeFile(new URL('keyboard-browser.json',out),JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result));assert.deepEqual(errors,[]);
+}finally{await browser.close();}

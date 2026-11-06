@@ -58,6 +58,27 @@
   to = "/RAILaVOID/:splat"
   status = 200
 
+# Standalone local-play preview. Online rooms and account sync are not enabled.
+[[redirects]]
+  from = "/boomerangavoid"
+  to = "/boomerangavoid/"
+  status = 301
+
+[[redirects]]
+  from = "/boomerangavoid/*"
+  to = "/BoomerangaVOID/:splat"
+  status = 200
+
+[[headers]]
+  for = "/boomerangavoid/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/BoomerangaVOID/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
 [[headers]]
   for = "/VOIDaVOID/assets/*"
   [headers.values]

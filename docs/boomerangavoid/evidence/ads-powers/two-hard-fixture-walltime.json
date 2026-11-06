@@ -1,0 +1,157 @@
+{
+  "fixturePurpose": "Retained deterministic bot-boundary regression scenario; not a hosted browser success report.",
+  "candidateCommit": "c9866d5fd370f348702da6cbae499b8f9adbdefc",
+  "expected": {
+    "first": {
+      "config": {
+        "mode": "ffa",
+        "wins": 5,
+        "mapId": "moss-court",
+        "seed": 41827,
+        "friendlyFire": false,
+        "upgrades": true,
+        "enabledUpgrades": [
+          "tailwind"
+        ],
+        "stageIds": [
+          "moss-court"
+        ],
+        "arenaDraft": {
+          "id": "moss-court",
+          "name": "Power-up off proving yard",
+          "subtitle": "Open lanes and four mossy cover islands",
+          "color": 9422487,
+          "ground": 2637121,
+          "sky": 1252658,
+          "width": 22,
+          "height": 17,
+          "spawns": [
+            {
+              "x": -8,
+              "y": -5
+            },
+            {
+              "x": 8,
+              "y": 5
+            },
+            {
+              "x": -8,
+              "y": 5
+            },
+            {
+              "x": 8,
+              "y": -5
+            },
+            {
+              "x": 0,
+              "y": -6
+            },
+            {
+              "x": 0,
+              "y": 6
+            }
+          ],
+          "obstacles": [
+            {
+              "id": "moss-0",
+              "x": -3,
+              "y": -2,
+              "w": 1.5,
+              "h": 1.5,
+              "height": 1,
+              "kind": "stone"
+            },
+            {
+              "id": "moss-1",
+              "x": 3,
+              "y": 2,
+              "w": 1.5,
+              "h": 1.5,
+              "height": 1,
+              "kind": "stone"
+            },
+            {
+              "id": "moss-2",
+              "x": -3,
+              "y": 3,
+              "w": 1.5,
+              "h": 1.5,
+              "height": 1,
+              "kind": "stone"
+            },
+            {
+              "id": "moss-3",
+              "x": 3,
+              "y": -3,
+              "w": 1.5,
+              "h": 1.5,
+              "height": 1,
+              "kind": "stone"
+            }
+          ],
+          "hazards": [],
+          "targets": [
+            {
+              "x": -7,
+              "y": 0
+            },
+            {
+              "x": 7,
+              "y": 0
+            }
+          ]
+        }
+      },
+      "seats": [
+        {
+          "id": "studio-0",
+          "name": "Local player",
+          "character": "pip",
+          "color": 9555560,
+          "team": 0,
+          "bot": null
+        },
+        {
+          "id": "studio-1",
+          "name": "Bot 1",
+          "character": "kiln",
+          "color": 15702123,
+          "team": 1,
+          "bot": "easy"
+        },
+        {
+          "id": "studio-2",
+          "name": "Bot 2",
+          "character": "volt",
+          "color": 15980380,
+          "team": 0,
+          "bot": "hard"
+        },
+        {
+          "id": "studio-3",
+          "name": "Bot 3",
+          "character": "nori",
+          "color": 6805436,
+          "team": 1,
+          "bot": "normal"
+        },
+        {
+          "id": "studio-4",
+          "name": "Bot 4",
+          "character": "cairn",
+          "color": 10923507,
+          "team": 0,
+          "bot": "normal"
+        },
+        {
+          "id": "studio-5",
+          "name": "Bot 5",
+          "character": "comet",
+          "color": 15900362,
+          "team": 1,
+          "bot": "hard"
+        }
+      ]
+    }
+  }
+}
